@@ -1,4 +1,7 @@
 import './App.css'
+
+import { Layout } from './components/Layout/Layout'
+
 import { AlertaDesempenhoCard } from './components/ui/AlertaDesempenhoCard'
 import { AlternativaButton } from './components/ui/AlternativaButton'
 import { AlternativaCard } from './components/ui/AlternativaCard'
@@ -6,10 +9,14 @@ import { AniversarianteCard } from './components/ui/AniversarianteCard'
 import { Banner } from './components/ui/Banner'
 import { Button } from './components/ui/Button'
 import { DataTable } from './components/ui/DataTable'
-import { Flag, FileText } from 'lucide-react'
 import { Input } from './components/ui/Input/Input'
 import { Select } from './components/ui/Select/Select'
 import { EnunciadoSimuladoCard } from './components/ui/EnunciadoSImuladoCard/EnunciadoSImuladoCard'
+import { Header } from './components/ui/Header/Header'
+import { DatePicker } from './components/ui/DatePicker/DatePicker'
+import { DesempenhoCard } from './components/ui/DesempenhoCard/DesempenhoCard'
+
+import { Flag, FileText } from 'lucide-react'
 
 interface TurmaData {
   turma: string
@@ -37,72 +44,65 @@ function App() {
   ]
 
   return (
-    <div
-      style={{
-        padding: 40,
-        display: 'flex',
-        justifyContent: 'center'
-      }}
-    >
-      <div
-        style={{
-          width: 800,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16
-        }}
-      >
-        <AlertaDesempenhoCard
-          titulo="Alerta"
-          descricao="Desempenho baixo no conteúdo frações"
-          media="45%"
-        />
+    <Layout>
 
-        <AlternativaButton letra="A" texto="Vaca" />
-        <AlternativaButton letra="B" texto="Cavalo" />
-        <AlternativaButton letra="C" texto="Galinha" selecionado />
+      <Header titulo="Turmas" />
 
-        <AlternativaCard letra="A" texto="Vaca" status="correta" />
-        <AlternativaCard letra="B" texto="Cachorro" status="incorreta" />
+      <AlertaDesempenhoCard
+        titulo="Alerta"
+        descricao="Desempenho baixo no conteúdo frações"
+        media="45%"
+      />
 
-        <AniversarianteCard nome="Cristian Gonzaga" data="16/03/2025" />
+      <AlternativaButton letra="A" texto="Vaca" />
+      <AlternativaButton letra="B" texto="Cavalo" />
+      <AlternativaButton letra="C" texto="Galinha" selecionado />
 
-        <Banner
-          titulo="Continue seus estudos!"
-          subtitulo="Você já completou 70% da trilha de Direito Civil."
-          mascoteSrc="/images/mascote.png"
-        />
+      <AlternativaCard letra="A" texto="Vaca" status="correta" />
+      <AlternativaCard letra="B" texto="Cachorro" status="incorreta" />
 
-        <Button
-          label="Registrar aula"
-        />
+      <AniversarianteCard nome="Cristian Gonzaga" data="16/03/2025" />
 
-        <DataTable
-          columns={colunas}
-          data={dados}
-          renderActions={() => (
-            <div style={{ display: 'flex', gap: '12px', cursor: 'pointer' }}>
-              <Flag size={18} color="#64748b" />
-              <FileText size={18} color="#64748b" />
-            </div>
-          )}
-        />
+      <Banner
+        titulo="Continue seus estudos!"
+        subtitulo="Você já completou 70% da trilha de Direito Civil."
+        mascoteSrc="/images/mascote.png"
+      />
 
-        <Input
-          placeholder="Buscar turma..."
-          onChange={(e) => console.log(e.target.value)}
-        />
+      <Button label="Registrar aula" />
 
-        <Select
-          options={opcoesDatas}
-        />
+      <DataTable
+        columns={colunas}
+        data={dados}
+        renderActions={() => (
+          <div style={{ display: 'flex', gap: '12px', cursor: 'pointer' }}>
+            <Flag size={18} color="#64748b" />
+            <FileText size={18} color="#64748b" />
+          </div>
+        )}
+      />
 
-        <EnunciadoSimuladoCard
-          enunciado="Qual é o animal que muge?"
-          onPlayAudio={() => console.log("Tocando áudio...")}
-        />
-      </div>
-    </div>
+      <Input
+        placeholder="Buscar turma..."
+        onChange={(e) => console.log(e.target.value)}
+      />
+
+      <Select options={opcoesDatas} />
+
+      <EnunciadoSimuladoCard
+        enunciado="Qual é o animal que muge?"
+        onPlayAudio={() => console.log("Tocando áudio...")}
+      />
+
+      <DatePicker />
+
+      <DesempenhoCard
+        titulo="Por conteúdo"
+        descricao="Desempenho por matéria"
+        porcentagem={45}
+      />
+
+    </Layout>
   )
 }
 
