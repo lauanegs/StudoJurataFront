@@ -66,9 +66,8 @@ export const PageButton = styled.button`
   height: 32px;
   border-radius: 6px;
   border: none;
-  background-color: #e2e8f0;
+  background-color: #f8fafc;
   cursor: pointer;
-  color: #475569;
 
   &:hover {
     background-color: #cbd5e1;

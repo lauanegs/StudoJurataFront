@@ -15,7 +15,7 @@ export function DataTable<T>({ columns, data, renderActions }: DataTableProps<T>
             ))}
           </S.Tr>
         </S.THead>
-        
+
         <tbody>
           {data.map((item, rowIndex) => (
             <S.Tr key={rowIndex}>
@@ -32,9 +32,9 @@ export function DataTable<T>({ columns, data, renderActions }: DataTableProps<T>
       </S.Table>
 
       <S.Pagination>
-        <S.PageButton><ChevronLeft size={18} color='#4b4b4b' /></S.PageButton>
+        <ChevronLeft size={18} color='#4b4b4b' />
         <span>1 - 20 de 36</span>
-        <S.PageButton><ChevronRight size={18} color='#4b4b4b' /></S.PageButton>
+        <ChevronRight size={18} color='#4b4b4b' />
       </S.Pagination>
     </S.Container>
   )

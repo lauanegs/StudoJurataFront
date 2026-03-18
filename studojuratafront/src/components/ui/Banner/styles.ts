@@ -7,9 +7,11 @@ export const Container = styled.section`
   gap: 24px;
 
   width: 100%;
+  max-height: 250px;
   padding: 32px;
   background-color: #8b5cf6;
   border-radius: 12px;
+  overflow: hidden;
 
   @media (min-width: 768px) {
     flex-direction: row;
@@ -22,10 +24,6 @@ export const Mascote = styled.img`
   width: 140px;
   height: auto;
   object-fit: contain;
-
-  @media (min-width: 768px) {
-    width: 180px;
-  }
 `
 
 export const Content = styled.div`
@@ -39,23 +37,15 @@ export const Content = styled.div`
 `
 
 export const Titulo = styled.h1`
-  font-size: 28px;
+  font-size: clamp(20px, 4vw, 40px);
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 8px;
-
-  @media (min-width: 768px) {
-    font-size: 40px;
-  }
 `
 
 export const Subtitulo = styled.p`
-  font-size: 16px;
+  font-size: clamp(14px, 2.5vw, 22px);
   font-weight: 500;
   color: #ffffff;
   opacity: 0.9;
-
-  @media (min-width: 768px) {
-    font-size: 22px;
-  }
 `

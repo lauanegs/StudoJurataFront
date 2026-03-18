@@ -14,7 +14,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom"
 // import NovaTurma from "../pages/adm/Turmas/NovaTurma"
 // import MatricularAluno from "../pages/adm/Turmas/MatricularAluno"
 
-// import ProfessorHome from "../pages/professor/Home"
+import ProfessorHome from "../pages/professor/Home"
 import ProfessorTurmas from "../pages/professor/Turmas/Turmas"
 // import TurmaDetalhada from "../pages/professor/Turmas/TurmaDetalhada"
 // import RegistrarAula from "../pages/professor/Turmas/RegistrarAula"
@@ -61,7 +61,7 @@ export default function AppRoutes() {
 
                 {/* PROFESSOR */}
                 <Route path="/professor">
-                    {/* <Route index element={<ProfessorHome />} /> */}
+                     <Route index element={<ProfessorHome />} />
 
                     <Route path="turmas">
                         <Route index element={<ProfessorTurmas />} />
