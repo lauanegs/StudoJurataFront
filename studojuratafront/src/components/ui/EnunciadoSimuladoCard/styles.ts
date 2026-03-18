@@ -7,7 +7,7 @@ export const Container = styled.div`
   
   width: 100%;
   padding: 32px;
-  background-color: #12a1c1; /* Azul do fundo */
+  background: linear-gradient(180deg, #049DBF 0%, #049DBF 100%);
   border-radius: 16px;
   position: relative;
 `
@@ -58,7 +58,7 @@ export const AudioButton = styled.button`
   
   width: 54px;
   height: 54px;
-  background-color: #12a1c1;
+  background-color: #049DBF;
   border: none;
   border-radius: 50%;
   color: #ffffff;

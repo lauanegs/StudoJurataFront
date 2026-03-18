@@ -8,7 +8,7 @@ export const Container = styled.div`
   width: 100%;
   padding: 16px 20px;
 
-  background: #f5f5f5;
+  background: #ffffff;
   border: 2px solid #f2b705;
   border-radius: 12px;
 `
@@ -22,7 +22,6 @@ export const Icon = styled.img`
 export const Content = styled.div`
   display: flex;
   flex-direction: column;
-  /* Garante que os textos comecem sempre da esquerda */
   align-items: flex-start; 
   text-align: left;
 `

@@ -4,7 +4,7 @@ import { Volume2 } from 'lucide-react'
 
 export function EnunciadoSimuladoCard({
   enunciado,
-  mascoteSrc = "/images/mascote.png",
+  mascoteSrc = "/images/mascoteEnunciado.png",
   onPlayAudio
 }: EnunciadoSimuladoCardProps) {
   return (

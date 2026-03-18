@@ -10,7 +10,9 @@ export const Container = styled.aside`
 
   padding: 32px 20px;
 
-  background: linear-gradient(180deg, #1aa6b8 0%, #197aa3 100%);
+  background: 
+  linear-gradient(180deg, rgba(4,157,191,1), rgba(4,157,191,0.8)),
+  #662E9B;
   color: white;
 `
 
@@ -24,6 +26,9 @@ export const Profile = styled.div`
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
+  margin-top: 32px;
+  margin-bottom: 32px;
+  gap: 4px;
 `
 
 export const UserName = styled.span`
@@ -78,7 +83,7 @@ export const Footer = styled.div`
 
   padding: 12px;
 
-  background: rgba(255,255,255,0.9);
+  background: #ffffff;
   border-radius: 10px;
 
   color: #1c7fa0;
@@ -87,18 +92,19 @@ export const Footer = styled.div`
 `
 
 export const FooterLogo = styled.img`
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
 `
 
 export const FooterText = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 4px;
 
   span {
     font-weight: 600;
-    font-size: 16px;
+    font-size: 18px;
   }
 
   small {

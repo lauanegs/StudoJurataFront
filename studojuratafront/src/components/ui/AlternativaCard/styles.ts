@@ -30,7 +30,7 @@ export const Container = styled.div<{ status: AlternativaStatus }>`
 
   border-radius: 10px;
   border: 1px solid ${({ status }) => statusColors[status].border};
-  background: #F8F8F8;
+  background: #ffffff;
 
   overflow: hidden;
 `

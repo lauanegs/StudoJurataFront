@@ -8,9 +8,9 @@ export function AlternativaButton({
   onClick
 }: AlternativaButtonProps) {
   return (
-    <S.Container onClick={onClick}>
+    <S.Container selecionado={selecionado} onClick={onClick}>
       <S.LetraBox selecionado={selecionado}>{letra}</S.LetraBox>
-      <S.TextoBox selecionado={selecionado}>{texto}</S.TextoBox>
+      <S.TextoBox>{texto}</S.TextoBox>
     </S.Container>
   )
 }
