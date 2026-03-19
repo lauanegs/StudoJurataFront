@@ -6,6 +6,7 @@ export const Container = styled.div`
   border: 2px solid rgba(115, 115, 115, 0.15);
   border-radius: 8px;
   overflow: hidden;
+  margin-bottom: 16px;
 `
 
 export const Header = styled.div`

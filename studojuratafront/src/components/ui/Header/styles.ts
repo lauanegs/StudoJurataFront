@@ -2,7 +2,7 @@ import styled from 'styled-components'
 
 export const Container = styled.header`
   width: 100%;
-  height: 120px;
+  min-height: 120px;
 
   display: flex;
   flex-direction: column;
@@ -18,16 +18,15 @@ export const Title = styled.h1`
   font-size: 32px;
   font-weight: 500;
   color: #6b6b6b;
-
-  text-align: left;
 `
 
-export const InputRow = styled.div`
-  display: flex;
-  justify-content: flex-end;
-
+export const Actions = styled.div`
   width: 100%;
 
-  max-width: 300px;
-  align-self: flex-end;
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: row-reverse; 
+  gap: 12px;
+
+  margin-top: 16px;
 `
