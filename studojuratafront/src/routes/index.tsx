@@ -23,6 +23,10 @@ import PlanoEnsino from "../pages/professor/PlanoEnsino/PlanoEnsino"
 import NovoPlanoEnsino from "../pages/professor/PlanoEnsino/NovoPlanoEnsino"
 import ConteudoPlanoEnsino from "../pages/professor/PlanoEnsino/ConteudoPlanoEnsino"
 import NovoConteudoPlanoEnsino from "../pages/professor/PlanoEnsino/NovoConteudo"
+import PlanoAula from "../pages/professor/PlanoAula/PlanoAula"
+import NovoPlanoAula from "../pages/professor/PlanoAula/NovoPlanoAula"
+import Aulas from "../pages/professor/PlanoAula/Aulas"
+import NovaAula from "../pages/professor/PlanoAula/NovaAula"
 
 // import AlunoHome from "../pages/aluno/Home"
 // import Notas from "../pages/aluno/Notas"
@@ -83,6 +87,13 @@ export default function AppRoutes() {
                     <Route path="novo-plano-ensino" element={<NovoPlanoEnsino />} />
                     <Route path="conteudo-plano-ensino" element={<ConteudoPlanoEnsino />} />
                     <Route path="novo-conteudo-plano-ensino" element={<NovoConteudoPlanoEnsino />} />
+                    </Route>
+
+                    <Route path="planoAula">
+                    <Route index element={<PlanoAula />} />
+                    <Route path="novo-plano-aula" element={<NovoPlanoAula />} />
+                    <Route path="aulas" element={<Aulas />} />
+                    <Route path="nova-aula" element={<NovaAula />} />
                     </Route>
 
                 </Route>
