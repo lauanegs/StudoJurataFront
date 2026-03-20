@@ -28,8 +28,8 @@ import NovoPlanoAula from "../pages/professor/PlanoAula/NovoPlanoAula"
 import Aulas from "../pages/professor/PlanoAula/Aulas"
 import NovaAula from "../pages/professor/PlanoAula/NovaAula"
 
-// import AlunoHome from "../pages/aluno/Home"
-// import Notas from "../pages/aluno/Notas"
+import AlunoHome from "../pages/aluno/Home"
+import AlunoNotas from "../pages/aluno/Notas"
 // import Reforco from "../pages/aluno/Reforço"
 // import Simulado from "../pages/aluno/Simulado"
 
@@ -99,12 +99,12 @@ export default function AppRoutes() {
                 </Route>
 
                 {/* ALUNO */}
-                {/* <Route path="/aluno">
+                <Route path="/aluno">
                     <Route index element={<AlunoHome />} />
-                    <Route path="notas" element={<Notas />} />
-                    <Route path="reforco" element={<Reforco />} />
-                    <Route path="simulado" element={<Simulado />} />
-                </Route> */}
+                    <Route path="notas" element={<AlunoNotas />} />
+                    {/* <Route path="reforco" element={<Reforco />} />
+                    <Route path="simulado" element={<Simulado />} /> */}
+                </Route>
 
             </Routes>
         </BrowserRouter>
