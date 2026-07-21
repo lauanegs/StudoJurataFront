@@ -8,4 +8,5 @@ export interface DataTableProps<T> {
   columns: Column<T>[]
   data: T[]
   renderActions?: (item: T) => React.ReactNode
+  onRowClick?: (item: T) => void
 }

@@ -2,7 +2,7 @@ import * as S from './styles'
 import type { DataTableProps } from './types'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-export function DataTable<T>({ columns, data, renderActions }: DataTableProps<T>) {
+export function DataTable<T>({ columns, data, renderActions, onRowClick }: DataTableProps<T>) {
   return (
     <S.Container>
       <S.Table>
@@ -18,7 +18,11 @@ export function DataTable<T>({ columns, data, renderActions }: DataTableProps<T>
 
         <tbody>
           {data.map((item, rowIndex) => (
-            <S.Tr key={rowIndex}>
+            <S.Tr
+              key={rowIndex}
+              onClick={() => onRowClick?.(item)}
+              style={onRowClick ? { cursor: 'pointer' } : undefined}
+            >
               {columns.map((col, colIndex) => (
                 <S.Td key={colIndex}>
                   {col.accessor === 'actions' && renderActions

@@ -1,0 +1,1 @@
+export { SimuladoHeader } from './SimuladoHeader'

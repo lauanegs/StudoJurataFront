@@ -3,12 +3,15 @@ import { Header } from '../../../components/ui/Header/Header'
 import { DataTable } from '../../../components/ui/DataTable'
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Input } from '../../../components/ui/Input/Input'
 import { Button } from '../../../components/ui/Button'
 import { SeparadorCard } from '../../../components/ui/SeparadorCard/SeparadorCard'
 import { Card } from '../../../components/ui/Card/Card'
+import { BarChart3 } from 'lucide-react'
 
-interface TurmaData {
+interface AulaData {
+    id: string
     numero: string
     dataAula: string
     horarios: string
@@ -19,6 +22,7 @@ interface TurmaData {
 
 export default function Aulas() {
     const [busca, setBusca] = useState('')
+    const navigate = useNavigate()
 
     const colunas = [
         { header: 'Numero', accessor: 'numero' as const },
@@ -29,35 +33,15 @@ export default function Aulas() {
         { header: 'Data da publicação', accessor: 'dataPublicacao' as const },
     ]
 
-    const dados: TurmaData[] = [
-        {
-            numero: '1',
-            dataAula: 'Módulo 1',
-            horarios: 'Lógica de programação com blocos',
-            conteudo: 'blabvla',
-            titulo: 'blabla',
-            dataPublicacao: 'blabla'
-
-        },
-        {
-            numero: '1',
-            dataAula: 'Módulo 1',
-            horarios: 'Lógica de programação com blocos',
-            conteudo: 'blabvla',
-            titulo: 'blabla',
-            dataPublicacao: 'blabla'
-
-        },
-        {
-            numero: '1',
-            dataAula: 'Módulo 1',
-            horarios: 'Lógica de programação com blocos',
-            conteudo: 'blabvla',
-            titulo: 'blabla',
-            dataPublicacao: 'blabla'
-
-        },
-    ]
+    const dados: AulaData[] = Array.from({ length: 4 }).map((_, i) => ({
+        id: String(i + 1),
+        numero: '1',
+        dataAula: '01/02/2026',
+        horarios: '02',
+        conteudo: 'Conteúdo 1; Conteúdo 2',
+        titulo: 'Aula 1',
+        dataPublicacao: '01/02/2026',
+    }))
 
     const dadosFiltrados = dados.filter((item) =>
         item.titulo.toLowerCase().includes(busca.toLowerCase()) ||
@@ -65,9 +49,9 @@ export default function Aulas() {
     )
 
     return (
-        <Layout>
+        <Layout perfil="professor">
             <Header titulo="Aulas">
-                <Button label="Adicionar aula" />
+                <Button label="Adicionar aula" onClick={() => navigate('/professor/planoAula/nova-aula')} />
                 <Input
                     placeholder="Buscar aula..."
                     value={busca}
@@ -75,18 +59,21 @@ export default function Aulas() {
                 />
             </Header>
 
-            <SeparadorCard>
+            <SeparadorCard title="Estatísticas" icon={<BarChart3 size={16} />}>
                 <Card>
-                    Titulo
+                    <span style={{ fontSize: '13px', color: '#6b7280' }}>Aulas realizadas</span>
+                    <strong style={{ fontSize: '24px' }}>26/56</strong>
                 </Card>
                 <Card>
-                    Titulo
+                    <span style={{ fontSize: '13px', color: '#6b7280' }}>Carga horária realizada</span>
+                    <strong style={{ fontSize: '24px' }}>246hrs</strong>
                 </Card>
             </SeparadorCard>
 
             <DataTable
                 columns={colunas}
                 data={dadosFiltrados}
+                onRowClick={(row) => navigate(`/professor/planoAula/nova-aula?id=${row.id}`)}
             />
         </Layout>
     )

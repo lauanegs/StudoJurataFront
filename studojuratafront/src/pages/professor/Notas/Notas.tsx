@@ -19,9 +19,9 @@ interface Disciplina {
 }
 
 export default function Notas() {
-    const [turma, setTurma] = useState('')
-    const [disciplina, setDisciplina] = useState('')
-    const [aluno, setAluno] = useState('')
+    const [turma, setTurma] = useState<string | number>('')
+    const [contexto, setContexto] = useState<string | number>('')
+    const [contextoEspecifico, setContextoEspecifico] = useState<string | number>('')
 
     const dados: Disciplina[] = [
         {
@@ -50,15 +50,17 @@ export default function Notas() {
     ]
 
     return (
-        <Layout>
+        <Layout perfil="professor">
             <Header titulo="Notas">
-
+                <Select options={[{ value: '1', label: 'Geek Junior' }]} value={turma} onChange={setTurma} placeholder="Turma" />
+                <Select
+                    options={[{ value: 'disciplina', label: 'Disciplina' }, { value: 'aluno', label: 'Aluno' }]}
+                    value={contexto}
+                    onChange={setContexto}
+                    placeholder="Disciplina / Aluno"
+                />
+                <Select options={[{ value: '1', label: 'Robótica' }]} value={contextoEspecifico} onChange={setContextoEspecifico} placeholder="Disciplina / Aluno (Específico)" />
                 <Button label="Buscar" />
-
-                <Select options={[]} />
-                <Select options={[]} />
-                <Select options={[]} />
-
             </Header>
 
             <Card>

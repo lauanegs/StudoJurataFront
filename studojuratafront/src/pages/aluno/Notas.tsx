@@ -19,13 +19,11 @@ interface Disciplina {
 }
 
 export default function AlunoNotas() {
-    const [turma, setTurma] = useState('')
-    const [disciplina, setDisciplina] = useState('')
-    const [aluno, setAluno] = useState('')
+    const [disciplina, setDisciplina] = useState<string | number>('')
 
     const dados: Disciplina[] = [
         {
-            nome: 'Disciplina / Aluno',
+            nome: 'Robótica',
             notaTotal: '18/20',
             itens: [
                 { titulo: 'Simulado predicados', nota: '9/10' },
@@ -50,28 +48,32 @@ export default function AlunoNotas() {
     ]
 
     return (
-        <Layout>
+        <Layout perfil="aluno">
             <Header titulo="Notas">
-
+                <Select
+                    options={dados.map((d) => ({ value: d.nome, label: d.nome }))}
+                    value={disciplina}
+                    onChange={setDisciplina}
+                    placeholder="Disciplina"
+                />
                 <Button label="Buscar" />
-
-                <Select options={[]} />
-
             </Header>
 
             <Card>
-                {dados.map((item, index) => (
-                    <DropDown
-                        key={index}
-                        title={item.nome}
-                        grade={`Nota: ${item.notaTotal}`}
-                        defaultOpen={index === 0}
-                        items={item.itens.map((sub) => ({
-                            label: sub.titulo,
-                            value: `Nota: ${sub.nota}`,
-                        }))}
-                    />
-                ))}
+                {dados
+                    .filter((item) => !disciplina || item.nome === disciplina)
+                    .map((item, index) => (
+                        <DropDown
+                            key={index}
+                            title={item.nome}
+                            grade={`Nota: ${item.notaTotal}`}
+                            defaultOpen={index === 0}
+                            items={item.itens.map((sub) => ({
+                                label: sub.titulo,
+                                value: `Nota: ${sub.nota}`,
+                            }))}
+                        />
+                    ))}
             </Card>
         </Layout>
     )

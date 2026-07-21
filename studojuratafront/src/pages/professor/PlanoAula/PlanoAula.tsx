@@ -3,10 +3,12 @@ import { Header } from '../../../components/ui/Header/Header'
 import { DataTable } from '../../../components/ui/DataTable'
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Input } from '../../../components/ui/Input/Input'
 import { Button } from '../../../components/ui/Button'
 
 interface TurmaData {
+  id: string
   turma: string
   curso: string
   disciplina: string
@@ -14,6 +16,7 @@ interface TurmaData {
 
 export default function PlanoAula() {
   const [busca, setBusca] = useState('')
+  const navigate = useNavigate()
 
   const colunas = [
     { header: 'Turma', accessor: 'turma' as const },
@@ -22,21 +25,9 @@ export default function PlanoAula() {
   ]
 
   const dados: TurmaData[] = [
-    {
-      turma: 'Geek Junior',
-      curso: 'Robótica',
-      disciplina: 'Lógica',
-    },
-    {
-      turma: 'Geek Teen',
-      curso: 'Programação',
-      disciplina: 'JavaScript',
-    },
-    {
-      turma: 'Geek Kids',
-      curso: 'Design',
-      disciplina: 'Figma',
-    },
+    { id: '1', turma: 'Geek Junior', curso: 'Robótica', disciplina: 'Lógica' },
+    { id: '2', turma: 'Geek Teen', curso: 'Programação', disciplina: 'JavaScript' },
+    { id: '3', turma: 'Geek Kids', curso: 'Design', disciplina: 'Figma' },
   ]
 
   const dadosFiltrados = dados.filter((item) =>
@@ -44,11 +35,11 @@ export default function PlanoAula() {
   )
 
   return (
-    <Layout>
+    <Layout perfil="professor">
       <Header titulo="Planos de Aula">
-        <Button label="Adicionar plano" />
-        <Input 
-          placeholder="Buscar plano..." 
+        <Button label="Adicionar plano" onClick={() => navigate('/professor/planoAula/novo-plano-aula')} />
+        <Input
+          placeholder="Buscar plano..."
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
         />
@@ -57,6 +48,7 @@ export default function PlanoAula() {
       <DataTable
         columns={colunas}
         data={dadosFiltrados}
+        onRowClick={(row) => navigate(`/professor/planoAula/aulas?id=${row.id}`)}
       />
     </Layout>
   )

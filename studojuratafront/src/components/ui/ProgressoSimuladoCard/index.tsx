@@ -1,0 +1,1 @@
+export { ProgressoSimuladoCard } from './ProgressoSimuladoCard'

@@ -6,32 +6,33 @@ import { DataTable } from '../../../components/ui/DataTable'
 import { Input } from '../../../components/ui/Input/Input'
 import { Button } from '../../../components/ui/Button'
 import { Pencil, Trash2 } from 'lucide-react'
+import { formatarCelular } from '../../../utils/format'
 
-const PROFESSORES = Array.from({ length: 4 }).map((_, i) => ({
+const RESPONSAVEIS = Array.from({ length: 3 }).map((_, i) => ({
   id: String(i + 1),
   nome: 'Cristian Gonzaga Campos',
-  disciplinas: 'Robótica; Jogos;',
+  celular: formatarCelular('34999999999'),
 }))
 
-export default function Professores() {
+export default function Responsaveis() {
   const [busca, setBusca] = useState('')
   const navigate = useNavigate()
 
   const colunas = [
     { header: 'Nome', accessor: 'nome' as const },
-    { header: 'Disciplinas', accessor: 'disciplinas' as const },
+    { header: 'Celular', accessor: 'celular' as const },
     { header: 'Ações', accessor: 'actions' as const, width: '100px' },
   ]
 
-  const dadosFiltrados = PROFESSORES.filter((item) =>
+  const dadosFiltrados = RESPONSAVEIS.filter((item) =>
     item.nome.toLowerCase().includes(busca.toLowerCase()),
   )
 
   return (
     <Layout perfil="adm">
-      <Header titulo="Professores">
-        <Button label="+ Adicionar professor" onClick={() => navigate('/adm/professores/novo')} />
-        <Input placeholder="Buscar professor..." value={busca} onChange={(e) => setBusca(e.target.value)} />
+      <Header titulo="Responsáveis">
+        <Button label="+ Adicionar responsável" onClick={() => navigate('/adm/responsaveis/novo')} />
+        <Input placeholder="Buscar responsável..." value={busca} onChange={(e) => setBusca(e.target.value)} />
       </Header>
 
       <DataTable
@@ -39,7 +40,7 @@ export default function Professores() {
         data={dadosFiltrados}
         renderActions={(row) => (
           <div style={{ display: 'flex', gap: '12px', cursor: 'pointer' }}>
-            <Pencil size={18} color="#64748b" onClick={() => navigate(`/adm/professores/novo?id=${row.id}`)} />
+            <Pencil size={18} color="#64748b" onClick={() => navigate(`/adm/responsaveis/novo?id=${row.id}`)} />
             <Trash2 size={18} color="#64748b" />
           </div>
         )}

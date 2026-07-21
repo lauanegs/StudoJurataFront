@@ -2,12 +2,13 @@ import { Layout } from '../../../components/layout/Layout'
 import { Header } from '../../../components/ui/Header/Header'
 import { DataTable } from '../../../components/ui/DataTable'
 
-import { Flag, FileText } from 'lucide-react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Input } from '../../../components/ui/Input/Input'
 import { Button } from '../../../components/ui/Button'
 
 interface TurmaData {
+  id: string
   turma: string
   curso: string
   disciplina: string
@@ -17,6 +18,7 @@ interface TurmaData {
 
 export default function PlanoEnsino() {
   const [busca, setBusca] = useState('')
+  const navigate = useNavigate()
 
   const colunas = [
     { header: 'Turma', accessor: 'turma' as const },
@@ -27,27 +29,9 @@ export default function PlanoEnsino() {
   ]
 
   const dados: TurmaData[] = [
-    {
-      turma: 'Geek Junior',
-      curso: 'Robótica',
-      disciplina: 'Lógica',
-      periodo: '2025',
-      carga: '40h'
-    },
-    {
-      turma: 'Geek Teen',
-      curso: 'Programação',
-      disciplina: 'JavaScript',
-      periodo: '2025',
-      carga: '60h'
-    },
-    {
-      turma: 'Geek Kids',
-      curso: 'Design',
-      disciplina: 'Figma',
-      periodo: '2025',
-      carga: '30h'
-    },
+    { id: '1', turma: 'Geek Junior', curso: 'Robótica', disciplina: 'Lógica', periodo: '2025', carga: '40h' },
+    { id: '2', turma: 'Geek Teen', curso: 'Programação', disciplina: 'JavaScript', periodo: '2025', carga: '60h' },
+    { id: '3', turma: 'Geek Kids', curso: 'Design', disciplina: 'Figma', periodo: '2025', carga: '30h' },
   ]
 
   const dadosFiltrados = dados.filter((item) =>
@@ -55,11 +39,11 @@ export default function PlanoEnsino() {
   )
 
   return (
-    <Layout>
+    <Layout perfil="professor">
       <Header titulo="Planos de Ensino">
-        <Button label="Adicionar plano" />
-        <Input 
-          placeholder="Buscar plano..." 
+        <Button label="Adicionar plano" onClick={() => navigate('/professor/planoEnsino/novo-plano-ensino')} />
+        <Input
+          placeholder="Buscar plano..."
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
         />
@@ -68,6 +52,7 @@ export default function PlanoEnsino() {
       <DataTable
         columns={colunas}
         data={dadosFiltrados}
+        onRowClick={(row) => navigate(`/professor/planoEnsino/conteudo-plano-ensino?id=${row.id}`)}
       />
     </Layout>
   )

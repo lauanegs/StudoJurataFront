@@ -1,3 +1,4 @@
+import { useNavigate, useLocation } from 'react-router-dom'
 import * as S from './styles'
 import type { SidebarProps } from './types'
 
@@ -6,16 +7,13 @@ import {
   ChevronRight
 } from 'lucide-react'
 
-export function Sidebar({ usuario, cargo }: SidebarProps) {
-  const menus = [
-    'Home',
-    'Turmas',
-    'Alunos',
-    'Reforço',
-    'Notas',
-    'Planos de Ensino',
-    'Planos de Aula'
-  ]
+export function Sidebar({ usuario, cargo, menus }: SidebarProps) {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  function isActive(path: string) {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`)
+  }
 
   return (
     <S.Container>
@@ -26,11 +24,15 @@ export function Sidebar({ usuario, cargo }: SidebarProps) {
         </S.Profile>
 
         <S.Menu>
-          {menus.map((item, index) => (
-            <S.MenuItem key={index} active={index === 0}>
+          {menus.map((item) => (
+            <S.MenuItem
+              key={item.path}
+              active={isActive(item.path)}
+              onClick={() => navigate(item.path)}
+            >
               <S.MenuLeft>
                 <Folder size={18} />
-                <span>{item}</span>
+                <span>{item.label}</span>
               </S.MenuLeft>
 
               <ChevronRight size={18} />

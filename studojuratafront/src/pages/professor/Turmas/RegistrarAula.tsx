@@ -17,8 +17,11 @@ interface AlunoData {
 }
 
 export default function RegistrarAula() {
-    const [busca, setBusca] = useState('')
     const [tabAtiva, setTabAtiva] = useState('chamada')
+    const [data, setData] = useState('')
+    const [disciplina, setDisciplina] = useState<string | number>('')
+    const [titulo, setTitulo] = useState('')
+    const [observacoes, setObservacoes] = useState('')
 
     const colunas = [
         { header: 'Ações', accessor: 'actions' as const, width: '120px' },
@@ -32,16 +35,12 @@ export default function RegistrarAula() {
         { aluno: 'Pedro Lima', cargaHoraria: 5 },
     ]
 
-    const dadosFiltrados = dados.filter((item) =>
-        item.aluno.toLowerCase().includes(busca.toLowerCase())
-    )
-
     return (
-        <Layout>
-            <Header titulo="Registrar aula">
+        <Layout perfil="professor">
+            <Header titulo="Geek Júnior">
+                <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+                <Select options={[{ value: '1', label: 'Robótica' }]} value={disciplina} onChange={setDisciplina} placeholder="Disciplina" />
                 <Button label='Salvar'/>
-                <Select options={[]}/>
-                <Select options={[]}/>
             </Header>
 
             <Tab
@@ -56,8 +55,8 @@ export default function RegistrarAula() {
             {tabAtiva === 'chamada' && (
                 <DataTable
                     columns={colunas}
-                    data={dadosFiltrados}
-                    renderActions={(row) => (
+                    data={dados}
+                    renderActions={() => (
                         <CheckBox />
                     )}
                 />
@@ -66,8 +65,13 @@ export default function RegistrarAula() {
             {tabAtiva === 'conteudo' && (
                 <Card>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <Input placeholder="Título da aula" />
-                        <TextArea placeholder="Descreva o conteúdo ministrado..." />
+                        <Input placeholder="Título da aula" value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+                        <Button label="Vincular conteúdo do plano de ensino" />
+                        <TextArea
+                            placeholder="Observações..."
+                            value={observacoes}
+                            onChange={(e) => setObservacoes(e.target.value)}
+                        />
                     </div>
                 </Card>
             )}
