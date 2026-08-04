@@ -1,27 +1,12 @@
-import * as S from './styles'
-import type { DatePickerProps } from './types'
 import { Calendar } from 'lucide-react'
-import { useRef } from 'react'
 
-export function DatePicker({ ...rest }: DatePickerProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
+import { Input } from '../Input'
+import type { DatePickerProps } from './types'
 
-  function handleOpenCalendar() {
-    inputRef.current?.showPicker?.()
-    inputRef.current?.focus()
-  }
-
-  return (
-    <S.Wrapper>
-      <S.IconContainer onClick={handleOpenCalendar}>
-        <Calendar size={20} />
-      </S.IconContainer>
-
-      <S.InputElement
-        ref={inputRef}
-        type="date"
-        {...rest}
-      />
-    </S.Wrapper>
-  )
+/**
+ * Campo de data. `modo="dataHora"` produz o formato que o back espera nos
+ * campos LocalDateTime (Evento.dataHorario, Simulado.dataInicio/dataFim).
+ */
+export function DatePicker({ modo = 'data', ...resto }: DatePickerProps) {
+  return <Input type={modo === 'data' ? 'date' : 'datetime-local'} icon={<Calendar />} {...resto} />
 }

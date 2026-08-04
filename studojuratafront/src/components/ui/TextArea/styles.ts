@@ -1,36 +1,50 @@
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 
-export const Wrapper = styled.div`
-  display: flex;
-  align-items: flex-start;
-  
+export const Moldura = styled.div<{ $erro?: boolean; $disabled?: boolean }>`
   width: 100%;
-  max-width: 400px;
-  padding: 12px 16px;
-  
-  background: #ffffff;
-  border: 2px solid #d1d5db;
-  border-radius: 12px;
-  transition: border-color 0.2s ease-in-out;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+
+  background: ${({ theme }) => theme.colors.white};
+  border: 2px solid ${({ theme, $erro }) => ($erro ? theme.colors.error : theme.colors.buttonPurple)};
+  border-radius: ${({ theme }) => theme.radius.md};
+  box-shadow: ${({ theme }) => theme.shadow.base};
+
+  transition:
+    border-color ${({ theme }) => theme.transition.base},
+    box-shadow ${({ theme }) => theme.transition.base};
 
   &:focus-within {
-    border-color: #8b5cf6;
+    box-shadow: ${({ theme, $erro }) => ($erro ? theme.shadow.focusError : theme.shadow.focus)};
   }
+
+  ${({ $disabled, theme }) =>
+    $disabled &&
+    css`
+      background: ${theme.colors.background};
+      border-color: rgba(115, 115, 115, 0.15);
+      box-shadow: none;
+      opacity: 0.75;
+    `}
 `
 
-export const TextAreaElement = styled.textarea`
-  flex: 1;
+export const Controle = styled.textarea<{ $autoAltura?: boolean }>`
+  width: 100%;
+  min-height: 96px;
+
   border: none;
   outline: none;
   background: transparent;
+  resize: ${({ $autoAltura }) => ($autoAltura ? 'none' : 'vertical')};
 
-  font-size: 16px;
-  color: #4b5563;
-
-  resize: none; /* opcional: remove resize manual */
-  min-height: 100px;
+  font-size: ${({ theme }) => theme.typography.sizes.sm};
+  line-height: ${({ theme }) => theme.typography.lineHeight.normal};
+  color: ${({ theme }) => theme.colors.textStrong};
 
   &::placeholder {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.colors.textDisabled};
+  }
+
+  &:disabled {
+    cursor: not-allowed;
   }
 `

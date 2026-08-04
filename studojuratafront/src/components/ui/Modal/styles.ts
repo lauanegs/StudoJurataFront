@@ -1,63 +1,85 @@
-import styled from 'styled-components'
+import styled, { keyframes } from 'styled-components'
+
+const surgir = keyframes`
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+`
+
+const aparecer = keyframes`
+  from { opacity: 0; }
+  to   { opacity: 1; }
+`
 
 export const Overlay = styled.div`
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: ${({ theme }) => theme.zIndex.modal};
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  background: rgba(15, 23, 42, 0.45);
-  padding: 24px;
+  padding: ${({ theme }) => theme.spacing.lg};
+
+  /* Doc §6.5: overlay com desfoque de fundo. */
+  background: rgba(24, 39, 75, 0.35);
+  backdrop-filter: blur(4px);
+
+  animation: ${aparecer} ${({ theme }) => theme.transition.base};
 `
 
-export const Container = styled.div<{ $width?: string }>`
+export const Container = styled.div<{ $largura?: string }>`
+  display: flex;
+  flex-direction: column;
+
   width: 100%;
-  max-width: ${({ $width }) => $width ?? '440px'};
+  max-width: ${({ $largura }) => $largura ?? '440px'};
   max-height: 90vh;
-  overflow-y: auto;
 
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 32px;
+  background: ${({ theme }) => theme.colors.white};
+  border-radius: ${({ theme }) => theme.radius.md};
+  box-shadow: ${({ theme }) => theme.shadow.floating};
 
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: ${surgir} ${({ theme }) => theme.transition.base};
 `
 
-export const Header = styled.div`
+export const Cabecalho = styled.header`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
 
-  margin-bottom: 24px;
+  padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.xl} 0;
 `
 
-export const Title = styled.h2`
-  font-size: 20px;
-  font-weight: 600;
-  color: #374151;
+export const Titulos = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xxs};
 `
 
-export const CloseButton = styled.button`
+export const Titulo = styled.h2`
+  font-size: ${({ theme }) => theme.typography.sizes.md};
+  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+  color: ${({ theme }) => theme.colors.textSecondary};
+`
+
+export const Descricao = styled.p`
+  font-size: ${({ theme }) => theme.typography.sizes.xs};
+  color: ${({ theme }) => theme.colors.textSecondary};
+`
+
+export const Corpo = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
+`
+
+export const Rodape = styled.footer`
   display: flex;
   align-items: center;
-  justify-content: center;
-
-  background: transparent;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-
-  &:hover {
-    color: #374151;
-  }
-`
-
-export const Footer = styled.div`
-  display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
+  gap: ${({ theme }) => theme.spacing.md};
+
+  padding: 0 ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.xl};
 `

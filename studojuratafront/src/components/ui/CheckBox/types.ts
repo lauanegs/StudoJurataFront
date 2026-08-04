@@ -1,6 +1,9 @@
-import type { InputHTMLAttributes } from 'react'
+import type { InputHTMLAttributes, ReactNode } from 'react'
 
-export interface CheckBoxProps
-  extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string
+export interface CheckBoxProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+  label?: ReactNode
+  description?: string
+  error?: string
+  /** Estado visual de "parcialmente marcado" (seleção em massa de tabela). */
+  indeterminate?: boolean
 }

@@ -1,45 +1,157 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Layout } from '../../../components/layout/Layout'
-import { Header } from '../../../components/ui/Header/Header'
-import { DataTable } from '../../../components/ui/DataTable'
-import { Input } from '../../../components/ui/Input/Input'
-import { Button } from '../../../components/ui/Button'
-import { Pencil, Trash2 } from 'lucide-react'
+import { BookOpen, Pencil, Plus, Trash2 } from 'lucide-react'
 
-const DISCIPLINAS = Array.from({ length: 4 }).map((_, i) => ({
-  id: String(i + 1),
-  nome: 'Robótica',
-}))
+import { Layout } from '../../../components/layout'
+import { BuscaInput } from '../../../components/ui/BuscaInput'
+import { Button } from '../../../components/ui/Button'
+import { DataTable } from '../../../components/ui/DataTable'
+import { Header } from '../../../components/ui/Header'
+import { IconButton } from '../../../components/ui/IconButton'
+import { Tag } from '../../../components/ui/Tag'
+import { useConfirm } from '../../../contexts/confirmContexto'
+import { useToast } from '../../../contexts/toastContexto'
+import { useDebounce } from '../../../hooks/useDebounce'
+import { usePaginacao } from '../../../hooks/usePaginacao'
+import { useRequisicao } from '../../../hooks/useRequisicao'
+import { ApiError } from '../../../services/api'
+import { disciplinas as servicoDisciplinas } from '../../../services/endpoints'
+import { formatarCargaHoraria, normalizar } from '../../../utils/format'
+import { ROTULO_ATIVO_INATIVO, ATIVO_INATIVO_VARIANT } from '../../../utils/labels'
+import type { Disciplina } from '../../../types'
+import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function Disciplinas() {
+  const navegar = useNavigate()
+  const toast = useToast()
+  const confirmar = useConfirm()
+
   const [busca, setBusca] = useState('')
-  const navigate = useNavigate()
+  const buscaAtrasada = useDebounce(busca)
 
-  const colunas = [
-    { header: 'Nome', accessor: 'nome' as const },
-    { header: 'Ações', accessor: 'actions' as const, width: '100px' },
-  ]
-
-  const dadosFiltrados = DISCIPLINAS.filter((item) =>
-    item.nome.toLowerCase().includes(busca.toLowerCase()),
+  const { data, loading, error, reload } = useRequisicao(
+    () => servicoDisciplinas.listar(),
+    [],
   )
 
+  const filtradas = useMemo(() => {
+    const lista = data ?? []
+    if (!buscaAtrasada.trim()) return lista
+
+    const termo = normalizar(buscaAtrasada)
+    return lista.filter((disciplina) => normalizar(disciplina.titulo).includes(termo))
+  }, [data, buscaAtrasada])
+
+  const paginacao = usePaginacao(filtradas)
+
+  async function excluir(disciplina: Disciplina) {
+    const confirmado = await confirmar({
+      titulo: 'Excluir disciplina?',
+      descricao: `"${disciplina.titulo}" será desativada. Notas e simulados já lançados são preservados.`,
+      rotuloConfirmar: 'Excluir',
+      tone: 'danger',
+    })
+
+    if (!confirmado) return
+
+    try {
+      await servicoDisciplinas.excluir(disciplina.id)
+      toast.success('Disciplina excluída')
+      await reload()
+    } catch (erroExclusao) {
+      toast.error(
+        'Não foi possível excluir',
+        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+      )
+    }
+  }
+
+  const colunas: Coluna<Disciplina>[] = [
+    {
+      key: 'titulo',
+      cabecalho: 'Disciplina',
+      ordenavel: true,
+      valorOrdenacao: (disciplina) => disciplina.titulo ?? '',
+      render: (disciplina) => disciplina.titulo ?? '—',
+    },
+    {
+      key: 'carga',
+      cabecalho: 'Carga horária',
+      ordenavel: true,
+      valorOrdenacao: (disciplina) => disciplina.cargaHoraria ?? 0,
+      render: (disciplina) => formatarCargaHoraria(disciplina.cargaHoraria),
+    },
+    {
+      key: 'status',
+      cabecalho: 'Status',
+      render: (disciplina) =>
+        disciplina.status ? (
+          <Tag variant={ATIVO_INATIVO_VARIANT[disciplina.status]} ponto>
+            {ROTULO_ATIVO_INATIVO[disciplina.status]}
+          </Tag>
+        ) : (
+          '—'
+        ),
+    },
+  ]
+
   return (
-    <Layout perfil="adm">
-      <Header titulo="Disciplinas">
-        <Button label="+ Adicionar disciplina" onClick={() => navigate('/adm/disciplinas/nova')} />
-        <Input placeholder="Buscar disciplina..." value={busca} onChange={(e) => setBusca(e.target.value)} />
-      </Header>
+    <Layout>
+      <Header
+        titulo="Disciplinas"
+        subtitulo={!loading && !error ? `${filtradas.length} disciplina(s)` : undefined}
+        actions={
+          <Button icon={<Plus />} onClick={() => navegar('/adm/disciplinas/nova')}>
+            Adicionar disciplina
+          </Button>
+        }
+        filtros={<BuscaInput value={busca} onChange={setBusca} placeholder="Buscar disciplina..." />}
+      />
 
       <DataTable
+        descricao="Lista de disciplinas"
         columns={colunas}
-        data={dadosFiltrados}
-        renderActions={(row) => (
-          <div style={{ display: 'flex', gap: '12px', cursor: 'pointer' }}>
-            <Pencil size={18} color="#64748b" onClick={() => navigate(`/adm/disciplinas/nova?id=${row.id}`)} />
-            <Trash2 size={18} color="#64748b" />
-          </div>
+        data={paginacao.itensDaPagina}
+        rowKey={(disciplina) => disciplina.id}
+        loading={loading}
+        error={error}
+        onReload={reload}
+        onRowClick={(disciplina) => navegar(`/adm/disciplinas/${disciplina.id}`)}
+        paginacao={{
+          pagina: paginacao.pagina,
+          totalPaginas: paginacao.totalPaginas,
+          label: paginacao.label,
+          temAnterior: paginacao.temAnterior,
+          temProxima: paginacao.temProxima,
+          onPrevious: paginacao.anterior,
+          onNext: paginacao.proxima,
+        }}
+        empty={{
+          titulo: busca ? 'Nenhuma disciplina encontrada' : 'Nenhuma disciplina cadastrada',
+          descricao: busca
+            ? 'Revise o termo buscado ou limpe o filtro.'
+            : 'As disciplinas organizam planos de ensino, simulados e notas.',
+          icon: <BookOpen />,
+          acao: !busca && (
+            <Button icon={<Plus />} onClick={() => navegar('/adm/disciplinas/nova')}>
+              Cadastrar disciplina
+            </Button>
+          ),
+        }}
+        actions={(disciplina) => (
+          <>
+            <IconButton
+              label={`Editar ${disciplina.titulo}`}
+              icon={<Pencil />}
+              onClick={() => navegar(`/adm/disciplinas/${disciplina.id}`)}
+            />
+            <IconButton
+              label={`Excluir ${disciplina.titulo}`}
+              icon={<Trash2 />}
+              variant="danger"
+              onClick={() => excluir(disciplina)}
+            />
+          </>
         )}
       />
     </Layout>

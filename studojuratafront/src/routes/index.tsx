@@ -1,136 +1,506 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { lazy, Suspense } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import styled from 'styled-components'
 
-import Login from "../pages/auth/Login"
-import Unauthorized from "../pages/auth/Unauthorized"
+import { RotaProtegida } from './RotaProtegida'
 
-import AdmHome from "../pages/adm/Home"
-import Eventos from "../pages/adm/Eventos/Eventos"
-import Alunos from "../pages/adm/Alunos/Alunos"
-import NovoAluno from "../pages/adm/Alunos/NovoAluno"
-import Disciplinas from "../pages/adm/Disciplinas/Disciplinas"
-import NovaDisciplina from "../pages/adm/Disciplinas/NovaDisciplina"
-import Professores from "../pages/adm/Professores/Professores"
-import NovoProfessor from "../pages/adm/Professores/NovoProfessor"
-import TurmasAdm from "../pages/adm/Turmas/Turmas"
-import NovaTurma from "../pages/adm/Turmas/NovaTurma"
-import MatricularAluno from "../pages/adm/Turmas/MatricularAluno"
-import Responsaveis from "../pages/adm/Responsaveis/Responsaveis"
-import NovoResponsavel from "../pages/adm/Responsaveis/NovoResponsavel"
+/**
+ * Rotas da aplicação.
+ *
+ * As páginas são carregadas sob demanda (lazy) para que o bundle inicial
+ * contenha apenas o login. Cada área é protegida pelo perfil correspondente,
+ * espelhando as regras do SecurityConfig do back.
+ */
 
-import ProfessorHome from "../pages/professor/Home"
-import ProfessorTurmas from "../pages/professor/Turmas/Turmas"
-import TurmaDetalhada from "../pages/professor/Turmas/TurmaDetalhada"
-import RegistrarAula from "../pages/professor/Turmas/RegistrarAula"
-import Notas from "../pages/professor/Notas/Notas"
-import PlanoEnsino from "../pages/professor/PlanoEnsino/PlanoEnsino"
-import NovoPlanoEnsino from "../pages/professor/PlanoEnsino/NovoPlanoEnsino"
-import ConteudoPlanoEnsino from "../pages/professor/PlanoEnsino/ConteudoPlanoEnsino"
-import NovoConteudoPlanoEnsino from "../pages/professor/PlanoEnsino/NovoConteudo"
-import PlanoAula from "../pages/professor/PlanoAula/PlanoAula"
-import NovoPlanoAula from "../pages/professor/PlanoAula/NovoPlanoAula"
-import Aulas from "../pages/professor/PlanoAula/Aulas"
-import NovaAula from "../pages/professor/PlanoAula/NovaAula"
-import ReforcoDashboard from "../pages/professor/Reforco/Dashboard"
-import SimuladosRealizados from "../pages/professor/Reforco/SimuladosRealizados"
-import SimuladoRealizadoDetalhado from "../pages/professor/Reforco/SimuladoRealizadoDetalhado"
-import SimuladoRealizadoDetalhadoAluno from "../pages/professor/Reforco/SimuladoRealizadoDetalhadoAluno"
-import LancarSimulado from "../pages/professor/Reforco/LancarSimulado"
-import NovoSimulado from "../pages/professor/Reforco/NovoSimulado"
+// --- Autenticação ----------------------------------------------------------
+const Login = lazy(() => import('../pages/auth/Login'))
+const NaoAutorizado = lazy(() => import('../pages/auth/NaoAutorizado'))
+const NaoEncontrada = lazy(() => import('../pages/auth/NaoEncontrada'))
 
-import AlunoHome from "../pages/aluno/Home"
-import AlunoNotas from "../pages/aluno/Notas"
-import AlunoReforco from "../pages/aluno/Reforço"
-import AlunoSimulado from "../pages/aluno/Simulado"
+// --- Administrador ---------------------------------------------------------
+const AdmHome = lazy(() => import('../pages/adm/Home'))
+const AdmTurmas = lazy(() => import('../pages/adm/Turmas/Turmas'))
+const AdmTurmaFormulario = lazy(() => import('../pages/adm/Turmas/TurmaFormulario'))
+const AdmMatricularAluno = lazy(() => import('../pages/adm/Turmas/MatricularAluno'))
+const AdmAlunos = lazy(() => import('../pages/adm/Alunos/Alunos'))
+const AdmAlunoFormulario = lazy(() => import('../pages/adm/Alunos/AlunoFormulario'))
+const AdmProfessores = lazy(() => import('../pages/adm/Professores/Professores'))
+const AdmProfessorFormulario = lazy(() => import('../pages/adm/Professores/ProfessorFormulario'))
+const AdmResponsaveis = lazy(() => import('../pages/adm/Responsaveis/Responsaveis'))
+const AdmResponsavelFormulario = lazy(
+  () => import('../pages/adm/Responsaveis/ResponsavelFormulario'),
+)
+const AdmCursos = lazy(() => import('../pages/adm/Cursos/Cursos'))
+const AdmCursoFormulario = lazy(() => import('../pages/adm/Cursos/CursoFormulario'))
+const AdmDisciplinas = lazy(() => import('../pages/adm/Disciplinas/Disciplinas'))
+const AdmDisciplinaFormulario = lazy(
+  () => import('../pages/adm/Disciplinas/DisciplinaFormulario'),
+)
+const AdmEventos = lazy(() => import('../pages/adm/Eventos/Eventos'))
 
-export default function AppRoutes() {
-    return (
-        <BrowserRouter>
-            <Routes>
+// --- Professor -------------------------------------------------------------
+const ProfessorHome = lazy(() => import('../pages/professor/Home'))
+const ProfessorTurmas = lazy(() => import('../pages/professor/Turmas/Turmas'))
+const ProfessorTurmaDetalhada = lazy(() => import('../pages/professor/Turmas/TurmaDetalhada'))
+const ProfessorPlanosEnsino = lazy(() => import('../pages/professor/PlanoEnsino/PlanosEnsino'))
+const ProfessorPlanoEnsinoFormulario = lazy(
+  () => import('../pages/professor/PlanoEnsino/PlanoEnsinoFormulario'),
+)
+const ProfessorConteudosPlano = lazy(() => import('../pages/professor/PlanoEnsino/ConteudosPlano'))
+const ProfessorPlanosAula = lazy(() => import('../pages/professor/PlanoAula/PlanosAula'))
+const ProfessorPlanoAulaFormulario = lazy(
+  () => import('../pages/professor/PlanoAula/PlanoAulaFormulario'),
+)
+const ProfessorAulas = lazy(() => import('../pages/professor/PlanoAula/Aulas'))
+const ProfessorAulaFormulario = lazy(() => import('../pages/professor/PlanoAula/AulaFormulario'))
+const ProfessorRegistrarAula = lazy(() => import('../pages/professor/PlanoAula/RegistrarAula'))
+const ProfessorNotas = lazy(() => import('../pages/professor/Notas/Notas'))
+const ProfessorReforco = lazy(() => import('../pages/professor/Reforco/Dashboard'))
+const ProfessorSimulados = lazy(() => import('../pages/professor/Reforco/Simulados'))
+const ProfessorSimuladoFormulario = lazy(
+  () => import('../pages/professor/Reforco/SimuladoFormulario'),
+)
+const ProfessorResultadosSimulado = lazy(
+  () => import('../pages/professor/Reforco/ResultadosSimulado'),
+)
+const ProfessorResultadoAluno = lazy(() => import('../pages/professor/Reforco/ResultadoAluno'))
+const ProfessorQuestoesPendentes = lazy(
+  () => import('../pages/professor/Reforco/QuestoesPendentes'),
+)
+const ProfessorRevisarQuestao = lazy(() => import('../pages/professor/Reforco/RevisarQuestao'))
 
-                {/* AUTH */}
-                <Route path="/" element={<Login />} />
-                <Route path="/unauthorized" element={<Unauthorized />} />
+// --- Aluno -----------------------------------------------------------------
+const AlunoHome = lazy(() => import('../pages/aluno/Home'))
+const AlunoReforco = lazy(() => import('../pages/aluno/Reforco'))
+const AlunoSimulado = lazy(() => import('../pages/aluno/Simulado'))
+const AlunoNotas = lazy(() => import('../pages/aluno/Notas'))
+const AlunoPerfil = lazy(() => import('../pages/aluno/Perfil'))
 
-                {/* ADM */}
-                <Route path="/adm">
-                    <Route index element={<AdmHome />} />
+const Carregando = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-                    <Route path="eventos" element={<Eventos />} />
+  width: 100%;
+  min-height: 100vh;
 
-                    <Route path="alunos">
-                        <Route index element={<Alunos />} />
-                        <Route path="novo" element={<NovoAluno />} />
-                    </Route>
+  font-size: ${({ theme }) => theme.typography.sizes.sm};
+  color: ${({ theme }) => theme.colors.textSecondary};
+`
 
-                    <Route path="disciplinas">
-                        <Route index element={<Disciplinas />} />
-                        <Route path="nova" element={<NovaDisciplina />} />
-                    </Route>
+export function AppRoutes() {
+  return (
+    <Suspense fallback={<Carregando role="status">Carregando...</Carregando>}>
+      <Routes>
+        {/* Autenticação */}
+        <Route path="/" element={<Login />} />
+        <Route path="/nao-autorizado" element={<NaoAutorizado />} />
 
-                    <Route path="professores">
-                        <Route index element={<Professores />} />
-                        <Route path="novo" element={<NovoProfessor />} />
-                    </Route>
+        {/* Administrador */}
+        <Route
+          path="/adm"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmHome />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/turmas"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmTurmas />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/turmas/nova"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmTurmaFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/turmas/:id"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmTurmaFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/turmas/:turmaId/matricular"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmMatricularAluno />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/alunos"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmAlunos />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/alunos/novo"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmAlunoFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/alunos/:id"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmAlunoFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/professores"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmProfessores />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/professores/novo"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmProfessorFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/professores/:id"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmProfessorFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/responsaveis"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmResponsaveis />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/responsaveis/novo"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmResponsavelFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/responsaveis/:id"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmResponsavelFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/cursos"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmCursos />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/cursos/novo"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmCursoFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/cursos/:id"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmCursoFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/disciplinas"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmDisciplinas />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/disciplinas/nova"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmDisciplinaFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/disciplinas/:id"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmDisciplinaFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/eventos"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmEventos />
+            </RotaProtegida>
+          }
+        />
 
-                    <Route path="turmas">
-                        <Route index element={<TurmasAdm />} />
-                        <Route path="nova" element={<NovaTurma />} />
-                        <Route path="matricular" element={<MatricularAluno />} />
-                    </Route>
+        {/* Professor */}
+        <Route
+          path="/professor"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorHome />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/turmas"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorTurmas />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/turmas/:turmaDisciplinaId"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorTurmaDetalhada />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-ensino"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorPlanosEnsino />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-ensino/novo"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorPlanoEnsinoFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-ensino/:id"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorPlanoEnsinoFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-ensino/:planoId/conteudos"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorConteudosPlano />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-aula"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorPlanosAula />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-aula/novo"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorPlanoAulaFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-aula/:id"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorPlanoAulaFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-aula/:planoAulaId/aulas"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorAulas />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-aula/:planoAulaId/aulas/nova"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorAulaFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-aula/:planoAulaId/aulas/:aulaId"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorAulaFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/aulas/:aulaId/registrar"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorRegistrarAula />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/notas"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorNotas />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorReforco />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/simulados"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorSimulados />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/simulados/novo"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorSimuladoFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/simulados/:id"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorSimuladoFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/simulados/:simuladoId/resultados"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorResultadosSimulado />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/simulados/:simuladoId/resultados/:simuladoAlunoId"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorResultadoAluno />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/questoes"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorQuestoesPendentes />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/questoes/:questaoId"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorRevisarQuestao />
+            </RotaProtegida>
+          }
+        />
 
-                    <Route path="responsaveis">
-                        <Route index element={<Responsaveis />} />
-                        <Route path="novo" element={<NovoResponsavel />} />
-                    </Route>
-                </Route>
+        {/* Aluno */}
+        <Route
+          path="/aluno"
+          element={
+            <RotaProtegida perfis={['ALUNO']}>
+              <AlunoHome />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/aluno/reforco"
+          element={
+            <RotaProtegida perfis={['ALUNO']}>
+              <AlunoReforco />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/aluno/simulado/:simuladoAlunoId"
+          element={
+            <RotaProtegida perfis={['ALUNO']}>
+              <AlunoSimulado />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/aluno/notas"
+          element={
+            <RotaProtegida perfis={['ALUNO']}>
+              <AlunoNotas />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/aluno/perfil"
+          element={
+            <RotaProtegida perfis={['ALUNO']}>
+              <AlunoPerfil />
+            </RotaProtegida>
+          }
+        />
 
-                {/* PROFESSOR */}
-                <Route path="/professor">
-                    <Route index element={<ProfessorHome />} />
+        {/* Compatibilidade com os endereços antigos */}
+        <Route path="/unauthorized" element={<Navigate to="/nao-autorizado" replace />} />
+        <Route path="/professor/planoEnsino/*" element={<Navigate to="/professor/plano-ensino" replace />} />
+        <Route path="/professor/planoAula/*" element={<Navigate to="/professor/plano-aula" replace />} />
 
-                    <Route path="turmas">
-                        <Route index element={<ProfessorTurmas />} />
-                        <Route path="detalhada" element={<TurmaDetalhada />} />
-                        <Route path="registrar-aula" element={<RegistrarAula />} />
-                    </Route>
-
-                    <Route path="notas">
-                        <Route index element={<Notas />} />
-                    </Route>
-
-                    <Route path="planoEnsino">
-                        <Route index element={<PlanoEnsino />} />
-                        <Route path="novo-plano-ensino" element={<NovoPlanoEnsino />} />
-                        <Route path="conteudo-plano-ensino" element={<ConteudoPlanoEnsino />} />
-                        <Route path="novo-conteudo-plano-ensino" element={<NovoConteudoPlanoEnsino />} />
-                    </Route>
-
-                    <Route path="planoAula">
-                        <Route index element={<PlanoAula />} />
-                        <Route path="novo-plano-aula" element={<NovoPlanoAula />} />
-                        <Route path="aulas" element={<Aulas />} />
-                        <Route path="nova-aula" element={<NovaAula />} />
-                    </Route>
-
-                    <Route path="reforco">
-                        <Route index element={<ReforcoDashboard />} />
-                        <Route path="simulados-realizados" element={<SimuladosRealizados />} />
-                        <Route path="simulados-realizados/disciplina" element={<SimuladoRealizadoDetalhado />} />
-                        <Route path="simulados-realizados/aluno" element={<SimuladoRealizadoDetalhadoAluno />} />
-                        <Route path="lancar-simulado" element={<LancarSimulado />} />
-                        <Route path="novo-simulado" element={<NovoSimulado />} />
-                    </Route>
-                </Route>
-
-                {/* ALUNO */}
-                <Route path="/aluno">
-                    <Route index element={<AlunoHome />} />
-                    <Route path="notas" element={<AlunoNotas />} />
-                    <Route path="reforco" element={<AlunoReforco />} />
-                    <Route path="simulado" element={<AlunoSimulado />} />
-                </Route>
-
-            </Routes>
-        </BrowserRouter>
-    )
+        <Route path="*" element={<NaoEncontrada />} />
+      </Routes>
+    </Suspense>
+  )
 }

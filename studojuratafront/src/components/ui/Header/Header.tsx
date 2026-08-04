@@ -1,14 +1,39 @@
+import { ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+
 import * as S from './styles'
 import type { HeaderProps } from './types'
 
-export function Header({ titulo, children }: HeaderProps) {
+export function Header({
+  titulo,
+  subtitulo,
+  voltarPara,
+  rotuloVoltar = 'Voltar',
+  filtros,
+  actions,
+  children,
+}: HeaderProps) {
+  const navegar = useNavigate()
+
   return (
     <S.Container>
-      <S.Title>{titulo}</S.Title>
+      {voltarPara && (
+        <S.Voltar type="button" onClick={() => navegar(voltarPara)}>
+          <ArrowLeft aria-hidden="true" />
+          {rotuloVoltar}
+        </S.Voltar>
+      )}
 
-      <S.Actions>
-        {children}
-      </S.Actions>
+      <S.Linha>
+        <S.Titulos>
+          <S.Titulo>{titulo}</S.Titulo>
+          {subtitulo && <S.Subtitulo>{subtitulo}</S.Subtitulo>}
+        </S.Titulos>
+
+        {(actions || children) && <S.Acoes>{actions ?? children}</S.Acoes>}
+      </S.Linha>
+
+      {filtros && <S.Filtros>{filtros}</S.Filtros>}
     </S.Container>
   )
 }

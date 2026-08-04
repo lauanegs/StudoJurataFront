@@ -1,53 +1,209 @@
-import { useState } from 'react'
-import { Layout } from '../../../components/layout/Layout'
-import { Header } from '../../../components/ui/Header/Header'
-import { Card } from '../../../components/ui/Card/Card'
-import { Input } from '../../../components/ui/Input/Input'
-import { Button } from '../../../components/ui/Button'
-import { Select } from '../../../components/ui/Select/Select'
+import { useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import styled from 'styled-components'
+import { Save } from 'lucide-react'
 
-const ALUNOS_DISPONIVEIS = [
-  { value: '1', label: 'Cristian Gonzaga Campos' },
-  { value: '2', label: 'Ana Souza' },
-  { value: '3', label: 'Pedro Lima' },
-]
+import { Layout } from '../../../components/layout'
+import { Button } from '../../../components/ui/Button'
+import { Card } from '../../../components/ui/Card'
+import { DatePicker } from '../../../components/ui/DatePicker'
+import { Header } from '../../../components/ui/Header'
+import { Select } from '../../../components/ui/Select'
+import { Tag } from '../../../components/ui/Tag'
+import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
+import { useToast } from '../../../contexts/toastContexto'
+import { useRequisicao } from '../../../hooks/useRequisicao'
+import { ApiError } from '../../../services/api'
+import { alunos as servicoAlunos, matriculas, turmas as servicoTurmas } from '../../../services/endpoints'
+import { formatarCpf } from '../../../utils/format'
+import { intervaloDeDatas } from '../../../utils/validacao'
+
+const Coluna = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+const Grade = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+const Aviso = styled.p`
+  padding: ${({ theme }) => theme.spacing.sm};
+  background: ${({ theme }) => theme.colors.warningBackground};
+  border-radius: ${({ theme }) => theme.radius.md};
+
+  font-size: ${({ theme }) => theme.typography.sizes.xs};
+  color: ${({ theme }) => theme.colors.warningText};
+`
 
 export default function MatricularAluno() {
-  const [aluno, setAluno] = useState<string | number>('')
-  const [dataInicio, setDataInicio] = useState('')
+  const { turmaId } = useParams()
+  const navegar = useNavigate()
+  const toast = useToast()
+
+  const idTurma = Number(turmaId)
+
+  const [alunoId, setAlunoId] = useState<number | null>(null)
+  const [dataInicio, setDataInicio] = useState(() => new Date().toISOString().slice(0, 10))
   const [dataFim, setDataFim] = useState('')
-  const [status, setStatus] = useState('')
+  const [erros, setErros] = useState<Record<string, string | undefined>>({})
+  const [salvando, setSalvando] = useState(false)
+
+  const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(idTurma), [idTurma])
+  const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [])
+  const requisicaoAtivos = useRequisicao(() => matriculas.ativosPorTurma(idTurma), [idTurma])
+
+  const opcoesAlunos = useMemo(() => {
+    const jaMatriculados = new Set(
+      (requisicaoAtivos.data ?? []).map((matricula) => matricula.aluno?.id),
+    )
+
+    return (requisicaoAlunos.data ?? [])
+      .filter((aluno) => !jaMatriculados.has(aluno.id))
+      .map((aluno) => ({
+        value: aluno.id,
+        label: aluno.pessoa?.nome ?? `Aluno ${aluno.id}`,
+        descricao: formatarCpf(aluno.pessoa?.cpf),
+      }))
+  }, [requisicaoAlunos.data, requisicaoAtivos.data])
+
+  const turma = requisicaoTurma.data
+  const ativos = requisicaoAtivos.data ?? []
+  const lotada = Boolean(turma?.capacidadeMaxima && ativos.length >= turma.capacidadeMaxima)
+
+  function validar() {
+    const encontrados: Record<string, string | undefined> = {}
+
+    if (!alunoId) encontrados.alunoId = 'Selecione o aluno'
+    if (!dataInicio) encontrados.dataInicio = 'Informe a data de início'
+
+    const erroPeriodo = intervaloDeDatas(dataInicio, dataFim)
+    if (erroPeriodo) encontrados.dataFim = erroPeriodo
+
+    setErros(encontrados)
+    return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
+  }
+
+  async function salvar() {
+    if (!validar() || !turma) return
+
+    const aluno = (requisicaoAlunos.data ?? []).find((item) => item.id === alunoId)
+    if (!aluno) return
+
+    setSalvando(true)
+
+    try {
+      await matriculas.matricular({
+        aluno,
+        turma,
+        dataInicio,
+        dataFim: dataFim || undefined,
+        status: 'ATIVA',
+      })
+
+      toast.success('Aluno matriculado', `${aluno.pessoa?.nome} entrou em ${turma.titulo}.`)
+      navegar(`/adm/turmas/${idTurma}`)
+    } catch (erroSalvar) {
+      toast.error(
+        'Não foi possível matricular',
+        erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
+      )
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  if (requisicaoTurma.error) {
+    return (
+      <Layout>
+        <Header titulo="Matricular aluno" voltarPara="/adm/turmas" />
+        <ErroCarregamento
+          mensagem={requisicaoTurma.error}
+          onRetry={requisicaoTurma.reload}
+        />
+      </Layout>
+    )
+  }
 
   return (
-    <Layout perfil="adm">
-      <Header titulo="Matricular aluno">
-        <Button label="Excluir matrícula" style={{ background: '#e0525c' }} />
-        <Button label="Salvar" style={{ background: '#1db954' }} />
-      </Header>
+    <Layout>
+      <Header
+        titulo="Matricular aluno"
+        subtitulo={
+          turma && (
+            <>
+              <strong>{turma.titulo}</strong>
+              {turma.capacidadeMaxima && (
+                <Tag variant={lotada ? 'error' : 'neutral'}>
+                  {ativos.length} / {turma.capacidadeMaxima} vagas
+                </Tag>
+              )}
+            </>
+          )
+        }
+        voltarPara={`/adm/turmas/${idTurma}`}
+        rotuloVoltar="Voltar para a turma"
+        actions={
+          <>
+            <Button
+              variant="danger"
+              onClick={() => navegar(`/adm/turmas/${idTurma}`)}
+              disabled={salvando}
+            >
+              Cancelar
+            </Button>
+            <Button variant="success" icon={<Save />} loading={salvando} onClick={salvar}>
+              Matricular
+            </Button>
+          </>
+        }
+      />
 
-      <Card>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div>
-            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Aluno:</div>
-            <Select options={ALUNOS_DISPONIVEIS} value={aluno} onChange={setAluno} placeholder="Selecione o aluno..." />
-          </div>
+      <Card titulo="Dados da matrícula">
+        <Coluna>
+          {lotada && (
+            <Aviso role="status">
+              A turma atingiu a capacidade máxima informada. A matrícula ainda é possível, mas
+              confirme com a coordenação antes de prosseguir.
+            </Aviso>
+          )}
 
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Data início da matrícula:</div>
-              <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Data fim da matrícula:</div>
-              <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
-            </div>
-          </div>
+          <Select<number>
+            label="Aluno"
+            required
+            options={opcoesAlunos}
+            value={alunoId}
+            loading={requisicaoAlunos.loading}
+            error={erros.alunoId}
+            searchable
+            placeholder="Selecionar aluno..."
+            emptyText="Todos os alunos já estão matriculados nesta turma"
+            onChange={setAlunoId}
+          />
 
-          <div>
-            <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Status da matrícula:</div>
-            <Input placeholder="Ativo/Inativo" value={status} onChange={(e) => setStatus(e.target.value)} />
-          </div>
-        </div>
+          <Grade>
+            <DatePicker
+              label="Início da matrícula"
+              required
+              value={dataInicio}
+              error={erros.dataInicio}
+              disabled={salvando}
+              onChange={(evento) => setDataInicio(evento.target.value)}
+            />
+
+            <DatePicker
+              label="Término previsto"
+              value={dataFim}
+              error={erros.dataFim}
+              disabled={salvando}
+              hint="Opcional. Deixe em branco para matrícula em aberto."
+              onChange={(evento) => setDataFim(evento.target.value)}
+            />
+          </Grade>
+        </Coluna>
       </Card>
     </Layout>
   )

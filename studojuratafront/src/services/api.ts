@@ -1,57 +1,166 @@
-// Camada de acesso a dados do StudoJurata.
-//
-// Hoje o front-end trabalha com dados mockados (ver cada página em src/pages),
-// então este serviço só concentra a configuração básica que será usada quando
-// o backend (Spring Boot) estiver integrado. Nenhuma tela depende deste
-// arquivo para funcionar enquanto os mocks estiverem em uso.
+/**
+ * Cliente HTTP do StudoJurata.
+ *
+ * O back usa sessão via cookie (Spring Security com HttpSessionSecurityContext
+ * Repository), então toda requisição precisa de `credentials: 'include'` — sem
+ * isso o servidor devolve 401 mesmo depois do login.
+ */
 
-export const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL ?? 'http://localhost:8080'
+/**
+ * Base das requisições.
+ *
+ * O padrão `/api` é servido pelo proxy do Vite (ver vite.config.ts), o que
+ * mantém front e back na mesma origem em desenvolvimento — sem CORS e com o
+ * cookie de sessão funcionando naturalmente. Em produção, defina
+ * `VITE_API_BASE_URL` com a URL absoluta da API.
+ */
+export const API_BASE_URL =
+  (import.meta.env?.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? '/api'
 
-interface RequestOptions extends RequestInit {
-  params?: Record<string, string | number | undefined>
+export class ApiError extends Error {
+  readonly status: number
+  readonly corpo: unknown
+
+  constructor(status: number, mensagem: string, corpo?: unknown) {
+    super(mensagem)
+    this.name = 'ApiError'
+    this.status = status
+    this.corpo = corpo
+  }
+
+  get naoAutenticado() {
+    return this.status === 401
+  }
+
+  get semPermissao() {
+    return this.status === 403
+  }
+
+  get naoEncontrado() {
+    return this.status === 404
+  }
+
+  get erroDeNegocio() {
+    return this.status === 400 || this.status === 409 || this.status === 422
+  }
 }
 
-function buildUrl(path: string, params?: RequestOptions['params']) {
-  const url = new URL(path.replace(/^\//, ''), `${API_BASE_URL}/`)
+type Parametros = Record<string, string | number | boolean | undefined | null>
+
+interface OpcoesRequisicao extends Omit<RequestInit, 'body'> {
+  params?: Parametros
+  body?: unknown
+}
+
+const ouvintesSessaoExpirada = new Set<() => void>()
+
+export function aoExpirarSessao(ouvinte: () => void) {
+  ouvintesSessaoExpirada.add(ouvinte)
+  return () => ouvintesSessaoExpirada.delete(ouvinte)
+}
+
+function montarUrl(caminho: string, params?: Parametros) {
+  const rota = caminho.startsWith('/') ? caminho : `/${caminho}`
+
+  // `origin` é só a referência para bases relativas ("/api"); quando
+  // API_BASE_URL é absoluta, ela prevalece.
+  const url = new URL(
+    `${API_BASE_URL}${rota}`,
+    typeof window === 'undefined' ? 'http://localhost' : window.location.origin,
+  )
 
   if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined) url.searchParams.set(key, String(value))
+    Object.entries(params).forEach(([chave, valor]) => {
+      if (valor !== undefined && valor !== null && valor !== '') {
+        url.searchParams.set(chave, String(valor))
+      }
     })
   }
 
   return url.toString()
 }
 
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { params, headers, ...rest } = options
+/** Extrai a mensagem mais útil do corpo de erro do GlobalExceptionHandler. */
+function mensagemDoErro(status: number, corpo: unknown): string {
+  if (corpo && typeof corpo === 'object') {
+    const dados = corpo as Record<string, unknown>
 
-  const response = await fetch(buildUrl(path, params), {
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-    ...rest,
-  })
+    if (typeof dados.mensagem === 'string') return dados.mensagem
+    if (typeof dados.message === 'string') return dados.message
+    if (typeof dados.error === 'string') return dados.error
 
-  if (!response.ok) {
-    throw new Error(`Erro ${response.status} ao chamar ${path}`)
+    // Erros de @Valid chegam como { campo: "mensagem" }.
+    const primeiro = Object.values(dados).find((v) => typeof v === 'string')
+    if (typeof primeiro === 'string') return primeiro
   }
 
-  if (response.status === 204) return undefined as T
+  const padroes: Record<number, string> = {
+    400: 'Dados inválidos. Revise os campos e tente novamente.',
+    401: 'Sua sessão expirou. Faça login novamente.',
+    403: 'Você não tem permissão para executar esta ação.',
+    404: 'Registro não encontrado.',
+    409: 'Já existe um registro com estes dados.',
+    500: 'Erro interno no servidor. Tente novamente em instantes.',
+  }
 
-  return response.json() as Promise<T>
+  return padroes[status] ?? `Erro ${status} ao comunicar com o servidor.`
+}
+
+async function requisitar<T>(caminho: string, opcoes: OpcoesRequisicao = {}): Promise<T> {
+  const { params, body, headers, ...resto } = opcoes
+
+  let resposta: Response
+
+  try {
+    resposta = await fetch(montarUrl(caminho, params), {
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...headers,
+      },
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      ...resto,
+    })
+  } catch {
+    throw new ApiError(0, 'Não foi possível conectar ao servidor. Verifique sua conexão.')
+  }
+
+  if (resposta.status === 204 || resposta.status === 205) {
+    return undefined as T
+  }
+
+  const texto = await resposta.text()
+  const corpo = texto ? (safeJson(texto) ?? texto) : null
+
+  if (!resposta.ok) {
+    if (resposta.status === 401) {
+      ouvintesSessaoExpirada.forEach((ouvinte) => ouvinte())
+    }
+    throw new ApiError(resposta.status, mensagemDoErro(resposta.status, corpo), corpo)
+  }
+
+  return corpo as T
+}
+
+function safeJson(texto: string): unknown {
+  try {
+    return JSON.parse(texto)
+  } catch {
+    return null
+  }
 }
 
 export const api = {
-  get: <T>(path: string, params?: RequestOptions['params']) =>
-    request<T>(path, { method: 'GET', params }),
+  get: <T>(caminho: string, params?: Parametros) =>
+    requisitar<T>(caminho, { method: 'GET', params }),
 
-  post: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
+  post: <T>(caminho: string, body?: unknown, params?: Parametros) =>
+    requisitar<T>(caminho, { method: 'POST', body, params }),
 
-  put: <T>(path: string, body?: unknown) =>
-    request<T>(path, { method: 'PUT', body: body ? JSON.stringify(body) : undefined }),
+  put: <T>(caminho: string, body?: unknown, params?: Parametros) =>
+    requisitar<T>(caminho, { method: 'PUT', body, params }),
 
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  delete: <T = void>(caminho: string, params?: Parametros) =>
+    requisitar<T>(caminho, { method: 'DELETE', params }),
 }

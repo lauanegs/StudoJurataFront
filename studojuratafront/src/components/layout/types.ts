@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
 
-export type Perfil = 'adm' | 'professor' | 'aluno'
-
 export interface LayoutProps {
   children: ReactNode
-  perfil?: Perfil
+  /** Largura máxima do conteúdo. `larga` remove o limite de 1280px. */
+  largura?: 'default' | 'wide'
 }

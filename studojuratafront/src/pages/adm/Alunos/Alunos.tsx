@@ -1,47 +1,164 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Layout } from '../../../components/layout/Layout'
-import { Header } from '../../../components/ui/Header/Header'
-import { DataTable } from '../../../components/ui/DataTable'
-import { Input } from '../../../components/ui/Input/Input'
-import { Button } from '../../../components/ui/Button'
-import { Pencil, Trash2 } from 'lucide-react'
+import { GraduationCap, Pencil, Plus, Trash2 } from 'lucide-react'
 
-const ALUNOS = Array.from({ length: 3 }).map((_, i) => ({
-  id: String(i + 1),
-  nome: 'Cristian Gonzaga Campos',
-  idade: 4,
-}))
+import { Layout } from '../../../components/layout'
+import { BuscaInput } from '../../../components/ui/BuscaInput'
+import { Button } from '../../../components/ui/Button'
+import { DataTable } from '../../../components/ui/DataTable'
+import { Header } from '../../../components/ui/Header'
+import { IconButton } from '../../../components/ui/IconButton'
+import { Tag } from '../../../components/ui/Tag'
+import { useConfirm } from '../../../contexts/confirmContexto'
+import { useToast } from '../../../contexts/toastContexto'
+import { useDebounce } from '../../../hooks/useDebounce'
+import { usePaginacao } from '../../../hooks/usePaginacao'
+import { useRequisicao } from '../../../hooks/useRequisicao'
+import { ApiError } from '../../../services/api'
+import { alunos as servicoAlunos } from '../../../services/endpoints'
+import { formatarCpf, formatarIdade, normalizar } from '../../../utils/format'
+import type { Aluno } from '../../../types'
+import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function Alunos() {
-  const [busca, setBusca] = useState('')
-  const navigate = useNavigate()
+  const navegar = useNavigate()
+  const toast = useToast()
+  const confirmar = useConfirm()
 
-  const colunas = [
-    { header: 'Nome', accessor: 'nome' as const },
-    { header: 'Idade', accessor: 'idade' as const },
-    { header: 'Ações', accessor: 'actions' as const, width: '100px' },
+  const [busca, setBusca] = useState('')
+  const buscaAtrasada = useDebounce(busca)
+
+  const { data, loading, error, reload } = useRequisicao(() => servicoAlunos.listar(), [])
+
+  const filtrados = useMemo(() => {
+    const lista = data ?? []
+    if (!buscaAtrasada.trim()) return lista
+
+    const termo = normalizar(buscaAtrasada)
+
+    return lista.filter(
+      (aluno) =>
+        normalizar(aluno.pessoa?.nome).includes(termo) ||
+        normalizar(aluno.pessoa?.cpf).includes(termo) ||
+        normalizar(aluno.matricula).includes(termo),
+    )
+  }, [data, buscaAtrasada])
+
+  const paginacao = usePaginacao(filtrados)
+
+  async function excluir(aluno: Aluno) {
+    const confirmado = await confirmar({
+      titulo: 'Excluir aluno?',
+      descricao: `${aluno.pessoa?.nome} será desativado. As matrículas e o histórico de simulados continuam preservados.`,
+      rotuloConfirmar: 'Excluir',
+      tone: 'danger',
+    })
+
+    if (!confirmado) return
+
+    try {
+      await servicoAlunos.excluir(aluno.id)
+      toast.success('Aluno excluído', `${aluno.pessoa?.nome} foi removido da listagem.`)
+      await reload()
+    } catch (erroExclusao) {
+      toast.error(
+        'Não foi possível excluir',
+        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+      )
+    }
+  }
+
+  const colunas: Coluna<Aluno>[] = [
+    {
+      key: 'nome',
+      cabecalho: 'Nome',
+      ordenavel: true,
+      valorOrdenacao: (aluno) => aluno.pessoa?.nome ?? '',
+      render: (aluno) => aluno.pessoa?.nome ?? '—',
+    },
+    {
+      key: 'cpf',
+      cabecalho: 'CPF',
+      ocultarEmTelaPequena: true,
+      render: (aluno) => formatarCpf(aluno.pessoa?.cpf),
+    },
+    {
+      key: 'idade',
+      cabecalho: 'Idade',
+      ordenavel: true,
+      valorOrdenacao: (aluno) => aluno.pessoa?.dataNascimento ?? '',
+      render: (aluno) => formatarIdade(aluno.pessoa?.dataNascimento),
+    },
+    {
+      key: 'matricula',
+      cabecalho: 'Matrícula',
+      ocultarEmTelaPequena: true,
+      render: (aluno) =>
+        aluno.matricula ? <Tag variant="neutral">{aluno.matricula}</Tag> : '—',
+    },
   ]
 
-  const dadosFiltrados = ALUNOS.filter((item) =>
-    item.nome.toLowerCase().includes(busca.toLowerCase()),
-  )
-
   return (
-    <Layout perfil="adm">
-      <Header titulo="Alunos">
-        <Button label="+ Adicionar aluno" onClick={() => navigate('/adm/alunos/novo')} />
-        <Input placeholder="Buscar aluno..." value={busca} onChange={(e) => setBusca(e.target.value)} />
-      </Header>
+    <Layout>
+      <Header
+        titulo="Alunos"
+        subtitulo={
+          !loading && !error ? `${filtrados.length} aluno(s) cadastrado(s)` : undefined
+        }
+        actions={
+          <Button icon={<Plus />} onClick={() => navegar('/adm/alunos/novo')}>
+            Adicionar aluno
+          </Button>
+        }
+        filtros={
+          <BuscaInput value={busca} onChange={setBusca} placeholder="Buscar por nome, CPF ou matrícula..." />
+        }
+      />
 
       <DataTable
+        descricao="Lista de alunos"
         columns={colunas}
-        data={dadosFiltrados}
-        renderActions={(row) => (
-          <div style={{ display: 'flex', gap: '12px', cursor: 'pointer' }}>
-            <Pencil size={18} color="#64748b" onClick={() => navigate(`/adm/alunos/novo?id=${row.id}`)} />
-            <Trash2 size={18} color="#64748b" />
-          </div>
+        data={paginacao.itensDaPagina}
+        rowKey={(aluno) => aluno.id}
+        loading={loading}
+        error={error}
+        onReload={reload}
+        onRowClick={(aluno) => navegar(`/adm/alunos/${aluno.id}`)}
+        paginacao={{
+          pagina: paginacao.pagina,
+          totalPaginas: paginacao.totalPaginas,
+          label: paginacao.label,
+          temAnterior: paginacao.temAnterior,
+          temProxima: paginacao.temProxima,
+          onPrevious: paginacao.anterior,
+          onNext: paginacao.proxima,
+        }}
+        empty={{
+          titulo: busca ? 'Nenhum aluno encontrado' : 'Nenhum aluno cadastrado',
+          descricao: busca
+            ? 'Revise o termo buscado ou limpe o filtro.'
+            : 'Cadastre o primeiro aluno para começar a montar as turmas.',
+          icon: <GraduationCap />,
+          acao: !busca && (
+            <Button icon={<Plus />} onClick={() => navegar('/adm/alunos/novo')}>
+              Cadastrar aluno
+            </Button>
+          ),
+        }}
+        actions={(aluno) => (
+          <>
+            <IconButton
+              label={`Editar ${aluno.pessoa?.nome}`}
+              icon={<Pencil />}
+              onClick={() => navegar(`/adm/alunos/${aluno.id}`)}
+            />
+            <IconButton
+              label={`Excluir ${aluno.pessoa?.nome}`}
+              icon={<Trash2 />}
+              variant="danger"
+              onClick={() => excluir(aluno)}
+            />
+          </>
         )}
       />
     </Layout>

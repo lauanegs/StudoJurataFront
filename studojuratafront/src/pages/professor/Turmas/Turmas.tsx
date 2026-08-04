@@ -1,57 +1,132 @@
-import { Layout } from '../../../components/layout/Layout'
-import { Header } from '../../../components/ui/Header/Header'
-import { DataTable } from '../../../components/ui/DataTable'
-
-import { Flag, FileText } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Input } from '../../../components/ui/Input/Input'
+import { ClipboardList, Users } from 'lucide-react'
 
-interface TurmaData {
-  id: string
-  turma: string
-  alunos: number
-}
+import { Layout } from '../../../components/layout'
+import { BuscaInput } from '../../../components/ui/BuscaInput'
+import { Button } from '../../../components/ui/Button'
+import { DataTable } from '../../../components/ui/DataTable'
+import { Header } from '../../../components/ui/Header'
+import { Tag } from '../../../components/ui/Tag'
+import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
+import { useDebounce } from '../../../hooks/useDebounce'
+import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
+import { useRequisicao } from '../../../hooks/useRequisicao'
+import { professores as servicoProfessores } from '../../../services/endpoints'
+import { normalizar } from '../../../utils/format'
+import { ROTULO_STATUS_TURMA } from '../../../utils/labels'
+import type { TurmaDisciplina } from '../../../types'
+import type { Coluna } from '../../../components/ui/DataTable/types'
 
-export default function Turmas() {
+/**
+ * Turmas do professor logado.
+ *
+ * O back expõe isso como GET /professores/{id}/turmas, que devolve
+ * TurmaDisciplina — ou seja, um registro por par turma+disciplina.
+ */
+export default function TurmasProfessor() {
+  const navegar = useNavigate()
+  const { professorId, loading: carregandoProfessor, error: erroProfessor } = useProfessorLogado()
+
   const [busca, setBusca] = useState('')
-  const navigate = useNavigate()
+  const buscaAtrasada = useDebounce(busca)
 
-  const colunas = [
-    { header: 'Turma', accessor: 'turma' as const },
-    { header: 'Alunos', accessor: 'alunos' as const },
-    { header: 'Ações', accessor: 'actions' as const, width: '120px' }
-  ]
-
-  const dados: TurmaData[] = Array.from({ length: 6 }).map((_, i) => ({
-    id: String(i + 1),
-    turma: 'Geek Junior - quarta - 8:00',
-    alunos: 4,
-  }))
-
-  const dadosFiltrados = dados.filter((item) =>
-    item.turma.toLowerCase().includes(busca.toLowerCase())
+  const { data, loading, error, reload } = useRequisicao(
+    () => servicoProfessores.turmasLecionadas(professorId as number),
+    [professorId],
+    { ativo: Boolean(professorId) },
   )
 
+  const filtrados = useMemo(() => {
+    const lista = (data ?? []).filter((vinculo) => vinculo.status !== 'INATIVO')
+    if (!buscaAtrasada.trim()) return lista
+
+    const termo = normalizar(buscaAtrasada)
+
+    return lista.filter(
+      (vinculo) =>
+        normalizar(vinculo.turma?.titulo).includes(termo) ||
+        normalizar(vinculo.disciplina?.titulo).includes(termo),
+    )
+  }, [data, buscaAtrasada])
+
+  const colunas: Coluna<TurmaDisciplina>[] = [
+    {
+      key: 'turma',
+      cabecalho: 'Turma',
+      ordenavel: true,
+      valorOrdenacao: (vinculo) => vinculo.turma?.titulo ?? '',
+      render: (vinculo) => vinculo.turma?.titulo ?? '—',
+    },
+    {
+      key: 'disciplina',
+      cabecalho: 'Disciplina',
+      render: (vinculo) => <Tag variant="purple">{vinculo.disciplina?.titulo ?? '—'}</Tag>,
+    },
+    {
+      key: 'curso',
+      cabecalho: 'Curso',
+      ocultarEmTelaPequena: true,
+      render: (vinculo) => vinculo.turma?.curso?.nome ?? '—',
+    },
+    {
+      key: 'status',
+      cabecalho: 'Situação da turma',
+      render: (vinculo) =>
+        vinculo.turma?.status ? (
+          <Tag variant={vinculo.turma.status === 'ATIVA' ? 'success' : 'neutral'} ponto>
+            {ROTULO_STATUS_TURMA[vinculo.turma.status]}
+          </Tag>
+        ) : (
+          '—'
+        ),
+    },
+  ]
+
+  if (erroProfessor) {
+    return (
+      <Layout>
+        <Header titulo="Minhas turmas" />
+        <ErroCarregamento mensagem={erroProfessor} />
+      </Layout>
+    )
+  }
+
   return (
-    <Layout perfil="professor">
-      <Header titulo="Turmas">
-        <Input
-          placeholder="Buscar turma..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-        />
-      </Header>
+    <Layout>
+      <Header
+        titulo="Minhas turmas"
+        subtitulo={
+          !loading && !error ? `${filtrados.length} vínculo(s) turma/disciplina` : undefined
+        }
+        filtros={<BuscaInput value={busca} onChange={setBusca} placeholder="Buscar turma ou disciplina..." />}
+      />
 
       <DataTable
+        descricao="Turmas em que você leciona"
         columns={colunas}
-        data={dadosFiltrados}
-        onRowClick={(row) => navigate(`/professor/turmas/detalhada?id=${row.id}`)}
-        renderActions={(row) => (
-          <div style={{ display: 'flex', gap: '12px', cursor: 'pointer' }}>
-            <Flag size={18} color="#64748b" onClick={(e) => { e.stopPropagation(); navigate(`/professor/turmas/registrar-aula?turmaId=${row.id}`) }} />
-            <FileText size={18} color="#64748b" onClick={(e) => { e.stopPropagation(); navigate(`/professor/turmas/detalhada?id=${row.id}`) }} />
-          </div>
+        data={filtrados}
+        rowKey={(vinculo) => vinculo.id}
+        loading={loading || carregandoProfessor}
+        error={error}
+        onReload={reload}
+        onRowClick={(vinculo) => navegar(`/professor/turmas/${vinculo.id}`)}
+        empty={{
+          titulo: busca ? 'Nenhuma turma encontrada' : 'Você ainda não leciona em nenhuma turma',
+          descricao: busca
+            ? 'Revise o termo buscado ou limpe o filtro.'
+            : 'A coordenação vincula professores às turmas na tela de cadastro da turma.',
+          icon: <Users />,
+        }}
+        actions={(vinculo) => (
+          <Button
+            variant="subtle"
+            size="small"
+            icon={<ClipboardList />}
+            onClick={() => navegar(`/professor/turmas/${vinculo.id}`)}
+          >
+            Abrir
+          </Button>
         )}
       />
     </Layout>

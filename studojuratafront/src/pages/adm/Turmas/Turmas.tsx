@@ -1,57 +1,201 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Layout } from '../../../components/layout/Layout'
-import { Header } from '../../../components/ui/Header/Header'
-import { DataTable } from '../../../components/ui/DataTable'
-import { Input } from '../../../components/ui/Input/Input'
+import { Pencil, Plus, Trash2, Users } from 'lucide-react'
+
+import { Layout } from '../../../components/layout'
+import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
-import { Pencil, Trash2 } from 'lucide-react'
-
-interface TurmaLinha {
-  id: string
-  turma: string
-  alunosAtivos: number
-}
-
-const TURMAS: TurmaLinha[] = Array.from({ length: 6 }).map((_, index) => ({
-  id: String(index + 1),
-  turma: 'Geek Junior - quarta - 8:00',
-  alunosAtivos: 4,
-}))
+import { DataTable } from '../../../components/ui/DataTable'
+import { Header } from '../../../components/ui/Header'
+import { IconButton } from '../../../components/ui/IconButton'
+import { Tag } from '../../../components/ui/Tag'
+import { useConfirm } from '../../../contexts/confirmContexto'
+import { useToast } from '../../../contexts/toastContexto'
+import { useDebounce } from '../../../hooks/useDebounce'
+import { usePaginacao } from '../../../hooks/usePaginacao'
+import { useRequisicao } from '../../../hooks/useRequisicao'
+import { ApiError } from '../../../services/api'
+import { matriculas, turmas as servicoTurmas } from '../../../services/endpoints'
+import { formatarData, normalizar } from '../../../utils/format'
+import { ROTULO_STATUS_TURMA } from '../../../utils/labels'
+import type { Turma } from '../../../types'
+import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function Turmas() {
-  const [busca, setBusca] = useState('')
-  const navigate = useNavigate()
+  const navegar = useNavigate()
+  const toast = useToast()
+  const confirmar = useConfirm()
 
-  const colunas = [
-    { header: 'Turma', accessor: 'turma' as const },
-    { header: 'Alunos ativos', accessor: 'alunosAtivos' as const },
-    { header: 'Ações', accessor: 'actions' as const, width: '100px' },
+  const [busca, setBusca] = useState('')
+  const buscaAtrasada = useDebounce(busca)
+
+  const { data, loading, error, reload } = useRequisicao(() => servicoTurmas.listar(), [])
+
+  /**
+   * A quantidade de alunos ativos é derivada das matrículas (Turma não
+   * persiste esse número). Carregamos todas as matrículas uma vez e contamos
+   * no cliente — mais barato que um GET /turmas/{id}/alunos-ativos por linha.
+   */
+  const requisicaoMatriculas = useRequisicao(() => matriculas.listar(), [])
+
+  const ativosPorTurma = useMemo(() => {
+    const contagem: Record<number, number> = {}
+
+    ;(requisicaoMatriculas.data ?? []).forEach((matricula) => {
+      if (matricula.status !== 'ATIVA' || !matricula.turma?.id) return
+      contagem[matricula.turma.id] = (contagem[matricula.turma.id] ?? 0) + 1
+    })
+
+    return contagem
+  }, [requisicaoMatriculas.data])
+
+  const filtradas = useMemo(() => {
+    const lista = data ?? []
+    if (!buscaAtrasada.trim()) return lista
+
+    const termo = normalizar(buscaAtrasada)
+
+    return lista.filter(
+      (turma) =>
+        normalizar(turma.titulo).includes(termo) || normalizar(turma.curso?.nome).includes(termo),
+    )
+  }, [data, buscaAtrasada])
+
+  const paginacao = usePaginacao(filtradas)
+
+  async function excluir(turma: Turma) {
+    const confirmado = await confirmar({
+      titulo: 'Excluir turma?',
+      descricao: `"${turma.titulo}" será desativada. O histórico de matrículas é preservado.`,
+      rotuloConfirmar: 'Excluir',
+      tone: 'danger',
+    })
+
+    if (!confirmado) return
+
+    try {
+      await servicoTurmas.excluir(turma.id)
+      toast.success('Turma excluída')
+      await reload()
+    } catch (erroExclusao) {
+      toast.error(
+        'Não foi possível excluir',
+        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+      )
+    }
+  }
+
+  const colunas: Coluna<Turma>[] = [
+    {
+      key: 'titulo',
+      cabecalho: 'Turma',
+      ordenavel: true,
+      valorOrdenacao: (turma) => turma.titulo ?? '',
+      render: (turma) => turma.titulo ?? '—',
+    },
+    {
+      key: 'curso',
+      cabecalho: 'Curso',
+      ocultarEmTelaPequena: true,
+      render: (turma) => turma.curso?.nome ?? '—',
+    },
+    {
+      key: 'alunos',
+      cabecalho: 'Alunos ativos',
+      alinhamento: 'center',
+      ordenavel: true,
+      valorOrdenacao: (turma) => ativosPorTurma[turma.id] ?? 0,
+      render: (turma) => {
+        const ativos = ativosPorTurma[turma.id] ?? 0
+        const capacidade = turma.capacidadeMaxima
+
+        return (
+          <Tag variant={capacidade && ativos >= capacidade ? 'warning' : 'neutral'}>
+            {capacidade ? `${ativos} / ${capacidade}` : ativos}
+          </Tag>
+        )
+      },
+    },
+    {
+      key: 'periodo',
+      cabecalho: 'Período',
+      ocultarEmTelaPequena: true,
+      render: (turma) =>
+        turma.dataInicio
+          ? `${formatarData(turma.dataInicio)} — ${turma.dataFim ? formatarData(turma.dataFim) : 'em aberto'}`
+          : '—',
+    },
+    {
+      key: 'status',
+      cabecalho: 'Status',
+      render: (turma) =>
+        turma.status ? (
+          <Tag variant={turma.status === 'ATIVA' ? 'success' : 'neutral'} ponto>
+            {ROTULO_STATUS_TURMA[turma.status]}
+          </Tag>
+        ) : (
+          '—'
+        ),
+    },
   ]
 
-  const dadosFiltrados = TURMAS.filter((item) =>
-    item.turma.toLowerCase().includes(busca.toLowerCase()),
-  )
-
   return (
-    <Layout perfil="adm">
-      <Header titulo="Turmas">
-        <Button label="+ Adicionar turma" onClick={() => navigate('/adm/turmas/nova')} />
-        <Input
-          placeholder="Buscar turma..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-        />
-      </Header>
+    <Layout>
+      <Header
+        titulo="Turmas"
+        subtitulo={!loading && !error ? `${filtradas.length} turma(s)` : undefined}
+        actions={
+          <Button icon={<Plus />} onClick={() => navegar('/adm/turmas/nova')}>
+            Adicionar turma
+          </Button>
+        }
+        filtros={<BuscaInput value={busca} onChange={setBusca} placeholder="Buscar por turma ou curso..." />}
+      />
 
       <DataTable
+        descricao="Lista de turmas"
         columns={colunas}
-        data={dadosFiltrados}
-        renderActions={(row) => (
-          <div style={{ display: 'flex', gap: '12px', cursor: 'pointer' }}>
-            <Pencil size={18} color="#64748b" onClick={() => navigate(`/adm/turmas/nova?id=${row.id}`)} />
-            <Trash2 size={18} color="#64748b" />
-          </div>
+        data={paginacao.itensDaPagina}
+        rowKey={(turma) => turma.id}
+        loading={loading}
+        error={error}
+        onReload={reload}
+        onRowClick={(turma) => navegar(`/adm/turmas/${turma.id}`)}
+        paginacao={{
+          pagina: paginacao.pagina,
+          totalPaginas: paginacao.totalPaginas,
+          label: paginacao.label,
+          temAnterior: paginacao.temAnterior,
+          temProxima: paginacao.temProxima,
+          onPrevious: paginacao.anterior,
+          onNext: paginacao.proxima,
+        }}
+        empty={{
+          titulo: busca ? 'Nenhuma turma encontrada' : 'Nenhuma turma cadastrada',
+          descricao: busca
+            ? 'Revise o termo buscado ou limpe o filtro.'
+            : 'Crie a primeira turma para começar a matricular alunos.',
+          icon: <Users />,
+          acao: !busca && (
+            <Button icon={<Plus />} onClick={() => navegar('/adm/turmas/nova')}>
+              Criar turma
+            </Button>
+          ),
+        }}
+        actions={(turma) => (
+          <>
+            <IconButton
+              label={`Editar ${turma.titulo}`}
+              icon={<Pencil />}
+              onClick={() => navegar(`/adm/turmas/${turma.id}`)}
+            />
+            <IconButton
+              label={`Excluir ${turma.titulo}`}
+              icon={<Trash2 />}
+              variant="danger"
+              onClick={() => excluir(turma)}
+            />
+          </>
         )}
       />
     </Layout>

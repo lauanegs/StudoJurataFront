@@ -1,9 +1,13 @@
 import type { ReactNode } from 'react'
 
 export interface ModalProps {
-  isOpen: boolean
+  aberto: boolean
   onClose: () => void
-  title: string
+  titulo: string
+  descricao?: string
   children: ReactNode
-  width?: string
+  rodape?: ReactNode
+  largura?: string
+  /** Impede fechar por Esc / clique no overlay (durante um salvamento). */
+  bloqueado?: boolean
 }

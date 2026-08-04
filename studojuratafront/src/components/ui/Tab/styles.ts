@@ -2,48 +2,75 @@ import styled from 'styled-components'
 
 export const Container = styled.div`
   display: flex;
-  align-items: center;
-  gap: 32px;
+  align-items: stretch;
 
   width: 100%;
-  padding: 24px 32px;
+  overflow-x: auto;
 
-  background-color: #ffffff;
-  border-radius: 12px;
+  &::-webkit-scrollbar {
+    height: 0;
+  }
 `
 
-export const TabItem = styled.button<{ $active?: boolean }>`
+/**
+ * Confirmado no Figma (aba "Realizar chamada"): estilo de sublinhado, não
+ * pílula. Ativo/inativo variam só por fundo e borda inferior — o texto
+ * mantém a mesma cor e peso nos dois estados.
+ */
+export const Item = styled.button<{ $ativa: boolean }>`
   position: relative;
 
-  border: none;
-  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.xs};
 
-  padding: 12px 8px;
+  height: 52px;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
+  border-radius: ${({ theme }) => theme.radius.md} ${({ theme }) => theme.radius.md} 0 0;
+  border-bottom: 2px solid
+    ${({ theme, $ativa }) => ($ativa ? theme.colors.buttonPurple : theme.colors.border)};
+  box-shadow: ${({ theme }) => theme.shadow.base};
 
-  font-size: 15px;
-  font-weight: 500;
+  font-size: ${({ theme }) => theme.typography.sizes.md};
+  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+  letter-spacing: -0.8px;
+  white-space: nowrap;
 
-  color: ${({ $active }) => ($active ? '#374151' : '#6b7280')};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  background: ${({ $ativa }) => ($ativa ? 'rgba(230, 234, 242, 0.3)' : 'transparent')};
 
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: background ${({ theme }) => theme.transition.base};
 
-  &:hover {
-    color: #374151;
+  &:focus-visible {
+    outline: none;
+    box-shadow: ${({ theme }) => theme.shadow.focus};
   }
 
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-
-    width: ${({ $active }) => ($active ? '100%' : '0%')};
-    height: 2px;
-
-    background-color: #8b5cf6;
-    border-radius: 2px;
-
-    transition: width 0.25s ease-in-out;
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`
+
+export const Contador = styled.span<{ $ativa: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+
+  border-radius: ${({ theme }) => theme.radius.pill};
+  background: ${({ theme, $ativa }) => ($ativa ? theme.colors.purple : theme.colors.background)};
+  color: ${({ theme, $ativa }) => ($ativa ? theme.colors.white : theme.colors.textSecondary)};
+
+  font-size: 11px;
+  font-weight: ${({ theme }) => theme.typography.weights.bold};
 `
