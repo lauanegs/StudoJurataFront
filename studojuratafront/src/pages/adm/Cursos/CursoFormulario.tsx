@@ -16,7 +16,7 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useEscola } from '../../../hooks/useEscola'
 import { useHidratar } from '../../../hooks/useHidratar'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { cursos as servicoCursos } from '../../../services/endpoints'
 
@@ -51,7 +51,6 @@ export default function CursoFormulario() {
   const [descricao, setDescricao] = useState('')
   const [ativo, setAtivo] = useState(true)
   const [erros, setErros] = useState<{ nome?: string; cargaHoraria?: string }>({})
-  const [salvando, setSalvando] = useState(false)
 
   const requisicao = useRequisicao(() => servicoCursos.buscar(cursoId as number), [cursoId], {
     ativo: Boolean(cursoId),
@@ -78,15 +77,13 @@ export default function CursoFormulario() {
     return Object.keys(encontrados).length === 0
   }
 
-  async function salvar() {
+  const { executar: salvar, executando: salvando } = useAcao(async () => {
     if (!validar()) return
 
     if (!escola) {
       toast.error('Escola não encontrada', 'Cadastre uma escola antes de criar cursos.')
       return
     }
-
-    setSalvando(true)
 
     try {
       const corpo = {
@@ -110,34 +107,31 @@ export default function CursoFormulario() {
         'Não foi possível salvar',
         erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
       )
-    } finally {
-      setSalvando(false)
     }
-  }
+  })
 
-  async function excluir() {
+  const { executar: excluir, executando: excluindo } = useAcao(async () => {
     if (!cursoId) return
 
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Excluir curso?',
       descricao: 'Turmas e planos de ensino já vinculados continuam existindo.',
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoCursos.excluir(cursoId)
+          toast.success('Curso excluído')
+          navegar('/adm/cursos')
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoCursos.excluir(cursoId)
-      toast.success('Curso excluído')
-      navegar('/adm/cursos')
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   if (edicao && requisicao.error) {
     return (
@@ -157,18 +151,28 @@ export default function CursoFormulario() {
         actions={
           <>
             {edicao && (
-              <Button variant="danger" icon={<Trash2 />} onClick={excluir} disabled={salvando}>
+              <Button
+                variant="danger"
+                icon={<Trash2 />}
+                loading={excluindo}
+                onClick={excluir}
+                disabled={salvando}
+              >
                 Excluir
               </Button>
             )}
-            <Button variant="danger" onClick={() => navegar('/adm/cursos')} disabled={salvando}>
+            <Button
+              variant="danger"
+              onClick={() => navegar('/adm/cursos')}
+              disabled={salvando || excluindo}
+            >
               Cancelar
             </Button>
             <Button
               variant="success"
               icon={<Save />}
               loading={salvando}
-              disabled={carregandoEscola}
+              disabled={carregandoEscola || excluindo}
               onClick={salvar}
             >
               Salvar

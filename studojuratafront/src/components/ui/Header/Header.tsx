@@ -24,16 +24,19 @@ export function Header({
         </S.Voltar>
       )}
 
-      <S.Linha>
+      <S.Cartao>
         <S.Titulos>
           <S.Titulo>{titulo}</S.Titulo>
           {subtitulo && <S.Subtitulo>{subtitulo}</S.Subtitulo>}
         </S.Titulos>
 
-        {(actions || children) && <S.Acoes>{actions ?? children}</S.Acoes>}
-      </S.Linha>
-
-      {filtros && <S.Filtros>{filtros}</S.Filtros>}
+        {(actions || children || filtros) && (
+          <S.LinhaAcoes>
+            {(actions || children) && <S.Acoes>{actions ?? children}</S.Acoes>}
+            {filtros && <S.Filtros>{filtros}</S.Filtros>}
+          </S.LinhaAcoes>
+        )}
+      </S.Cartao>
     </S.Container>
   )
 }

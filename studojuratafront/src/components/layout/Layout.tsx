@@ -31,16 +31,15 @@ export function Layout({ children, largura = 'default' }: LayoutProps) {
   }, [colapsada])
 
   async function confirmarSaida() {
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Sair do Studo Jurata?',
       descricao: 'Você precisará entrar novamente com seu usuário e senha.',
       rotuloConfirmar: 'Sair',
+      aoConfirmar: async () => {
+        await sair()
+        navegar('/', { replace: true })
+      },
     })
-
-    if (!confirmado) return
-
-    await sair()
-    navegar('/', { replace: true })
   }
 
   if (!usuario) return null

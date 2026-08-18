@@ -10,13 +10,15 @@ import { Header } from '../../../components/ui/Header'
 import { IconButton } from '../../../components/ui/IconButton'
 import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
+import { Tag } from '../../../components/ui/Tag'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
+import { useFormulario } from '../../../hooks/useFormulario'
 import { useHidratar } from '../../../hooks/useHidratar'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
   alunos as servicoAlunos,
@@ -24,16 +26,16 @@ import {
   responsaveis as servicoResponsaveis,
   vinculosResponsavel,
 } from '../../../services/endpoints'
-import { OPCOES_PARENTESCO } from '../../../utils/labels'
+import { formatarData } from '../../../utils/format'
+import { OPCOES_PARENTESCO, TEXTO_VERSAO_LGPD } from '../../../utils/labels'
 import type { Parentesco } from '../../../types'
 import { PessoaCampos } from '../_compartilhado/PessoaCampos'
 import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
 import { dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
 
 const LinhaResponsavel = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr auto;
-  align-items: end;
+  display: flex;
+  flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
 
   padding-bottom: ${({ theme }) => theme.spacing.sm};
@@ -43,10 +45,24 @@ const LinhaResponsavel = styled.div`
     border-bottom: none;
     padding-bottom: 0;
   }
+`
+
+const CamposResponsavel = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  align-items: end;
+  gap: ${({ theme }) => theme.spacing.sm};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
     grid-template-columns: 1fr;
   }
+`
+
+const LinhaTermos = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
 `
 
 const Lista = styled.div`
@@ -63,6 +79,10 @@ interface VinculoForm {
   parentesco: Parentesco | null
   erroResponsavel?: string
   erroParentesco?: string
+  /** Item 10.3 (LGPD) — só existem depois que o vínculo já foi salvo (tem id). */
+  aceitouTermos?: boolean
+  dataAceite?: string
+  textoVersao?: string
 }
 
 function novoVinculo(): VinculoForm {
@@ -78,12 +98,12 @@ export default function AlunoFormulario() {
   const edicao = Boolean(id)
   const alunoId = id ? Number(id) : null
 
-  const [pessoa, setPessoa] = useState<DadosPessoa>(PESSOA_VAZIA)
+  const formulario = useFormulario<DadosPessoa>({
+    valoresIniciais: PESSOA_VAZIA,
+    validarTudo: validarPessoa,
+  })
   const [matricula, setMatricula] = useState('')
   const [vinculos, setVinculos] = useState<VinculoForm[]>([])
-  const [tocados, setTocados] = useState<Partial<Record<keyof DadosPessoa, boolean>>>({})
-  const [tentouSalvar, setTentouSalvar] = useState(false)
-  const [salvando, setSalvando] = useState(false)
 
   const requisicaoAluno = useRequisicao(
     () => servicoAlunos.buscar(alunoId as number),
@@ -100,7 +120,7 @@ export default function AlunoFormulario() {
   const requisicaoResponsaveis = useRequisicao(() => servicoResponsaveis.listar(), [])
 
   useHidratar(requisicaoAluno.data, (aluno) => {
-    setPessoa(dePessoa(aluno.pessoa))
+    formulario.reiniciar(dePessoa(aluno.pessoa))
     setMatricula(aluno.matricula ?? '')
   })
 
@@ -111,6 +131,9 @@ export default function AlunoFormulario() {
         chave: String(vinculo.id),
         responsavelId: vinculo.responsavel?.id ?? null,
         parentesco: vinculo.parentesco ?? null,
+        aceitouTermos: vinculo.aceitouTermos ?? false,
+        dataAceite: vinculo.dataAceite,
+        textoVersao: vinculo.textoVersao,
       })),
     )
   })
@@ -125,17 +148,18 @@ export default function AlunoFormulario() {
     [requisicaoResponsaveis.data],
   )
 
-  const errosPessoa = useMemo(() => validarPessoa(pessoa), [pessoa])
-
+  // PessoaCampos espera um objeto de erros "só os visíveis" (campo tocado ou
+  // já tentou enviar) — useFormulario expõe isso por campo via erroDe().
   const errosVisiveis = useMemo(() => {
     const visiveis: Partial<Record<keyof DadosPessoa, string>> = {}
 
-    ;(Object.keys(errosPessoa) as (keyof DadosPessoa)[]).forEach((campo) => {
-      if (tocados[campo] || tentouSalvar) visiveis[campo] = errosPessoa[campo]
+    ;(Object.keys(formulario.erros) as (keyof DadosPessoa)[]).forEach((campo) => {
+      const erro = formulario.erroDe(campo)
+      if (erro) visiveis[campo] = erro
     })
 
     return visiveis
-  }, [errosPessoa, tocados, tentouSalvar])
+  }, [formulario])
 
   function validarVinculos(): boolean {
     let valido = true
@@ -159,55 +183,6 @@ export default function AlunoFormulario() {
     }
 
     return valido
-  }
-
-  async function salvar() {
-    setTentouSalvar(true)
-
-    if (Object.keys(errosPessoa).length > 0) {
-      toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
-      return
-    }
-
-    if (!validarVinculos()) return
-
-    setSalvando(true)
-
-    try {
-      const payloadPessoa = paraPayloadPessoa(pessoa)
-
-      // Aluno e Pessoa são entidades separadas no back (@OneToOne), então a
-      // Pessoa é gravada primeiro e o Aluno referencia o id retornado.
-      const pessoaSalva = edicao
-        ? await servicoPessoas.atualizar(requisicaoAluno.data!.pessoa.id, payloadPessoa)
-        : await servicoPessoas.criar(payloadPessoa)
-
-      const alunoSalvo = edicao
-        ? await servicoAlunos.atualizar(alunoId as number, {
-            pessoa: pessoaSalva,
-            matricula: matricula.trim() || undefined,
-          })
-        : await servicoAlunos.criar({
-            pessoa: pessoaSalva,
-            matricula: matricula.trim() || undefined,
-          })
-
-      await sincronizarVinculos(alunoSalvo.id)
-
-      toast.success(
-        edicao ? 'Aluno atualizado' : 'Aluno cadastrado',
-        `${pessoaSalva.nome} foi salvo com sucesso.`,
-      )
-
-      navegar('/adm/alunos')
-    } catch (erroSalvar) {
-      toast.error(
-        'Não foi possível salvar',
-        erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
-      )
-    } finally {
-      setSalvando(false)
-    }
   }
 
   async function sincronizarVinculos(idDoAluno: number) {
@@ -234,29 +209,101 @@ export default function AlunoFormulario() {
     )
   }
 
-  async function excluirAluno() {
+  const { executar: salvar, executando: salvando } = useAcao(async () => {
+    const enviado = await formulario.aoEnviar(async (pessoa) => {
+      if (!validarVinculos()) return
+
+      try {
+        const payloadPessoa = paraPayloadPessoa(pessoa)
+
+        // Aluno e Pessoa são entidades separadas no back (@OneToOne), então a
+        // Pessoa é gravada primeiro e o Aluno referencia o id retornado.
+        const pessoaSalva = edicao
+          ? await servicoPessoas.atualizar(requisicaoAluno.data!.pessoa.id, payloadPessoa)
+          : await servicoPessoas.criar(payloadPessoa)
+
+        const alunoSalvo = edicao
+          ? await servicoAlunos.atualizar(alunoId as number, {
+              pessoa: pessoaSalva,
+              matricula: matricula.trim() || undefined,
+            })
+          : await servicoAlunos.criar({
+              pessoa: pessoaSalva,
+              matricula: matricula.trim() || undefined,
+            })
+
+        await sincronizarVinculos(alunoSalvo.id)
+
+        toast.success(
+          edicao ? 'Aluno atualizado' : 'Aluno cadastrado',
+          `${pessoaSalva.nome} foi salvo com sucesso.`,
+        )
+
+        navegar('/adm/alunos')
+      } catch (erroSalvar) {
+        toast.error(
+          'Não foi possível salvar',
+          erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
+        )
+      }
+    })()
+
+    if (!enviado) {
+      toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
+    }
+  })
+
+  /** Item 10.3 — checkbox de aceite dos termos LGPD, só disponível para vínculo já salvo. */
+  async function registrarAceite(vinculo: VinculoForm) {
+    if (!vinculo.id) return
+
+    try {
+      const atualizado = await vinculosResponsavel.aceitarTermos(vinculo.id, TEXTO_VERSAO_LGPD)
+
+      setVinculos((atuais) =>
+        atuais.map((item) =>
+          item.chave === vinculo.chave
+            ? {
+                ...item,
+                aceitouTermos: atualizado.aceitouTermos,
+                dataAceite: atualizado.dataAceite,
+                textoVersao: atualizado.textoVersao,
+              }
+            : item,
+        ),
+      )
+
+      toast.success('Aceite registrado')
+    } catch (erroAceite) {
+      toast.error(
+        'Não foi possível registrar o aceite',
+        erroAceite instanceof ApiError ? erroAceite.message : undefined,
+      )
+    }
+  }
+
+  const { executar: excluirAluno, executando: excluindo } = useAcao(async () => {
     if (!alunoId) return
 
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Excluir aluno?',
       descricao: 'O aluno deixará de aparecer nas listagens, mas o histórico é preservado.',
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoAlunos.excluir(alunoId)
+          toast.success('Aluno excluído')
+          navegar('/adm/alunos')
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoAlunos.excluir(alunoId)
-      toast.success('Aluno excluído')
-      navegar('/adm/alunos')
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   if (edicao && requisicaoAluno.error) {
     return (
@@ -278,14 +325,30 @@ export default function AlunoFormulario() {
         actions={
           <>
             {edicao && (
-              <Button variant="danger" icon={<Trash2 />} onClick={excluirAluno} disabled={salvando}>
+              <Button
+                variant="danger"
+                icon={<Trash2 />}
+                loading={excluindo}
+                onClick={excluirAluno}
+                disabled={salvando}
+              >
                 Excluir
               </Button>
             )}
-            <Button variant="danger" onClick={() => navegar('/adm/alunos')} disabled={salvando}>
+            <Button
+              variant="danger"
+              onClick={() => navegar('/adm/alunos')}
+              disabled={salvando || excluindo}
+            >
               Cancelar
             </Button>
-            <Button variant="success" icon={<Save />} loading={salvando} onClick={salvar}>
+            <Button
+              variant="success"
+              icon={<Save />}
+              loading={salvando}
+              disabled={excluindo}
+              onClick={salvar}
+            >
               Salvar
             </Button>
           </>
@@ -299,10 +362,10 @@ export default function AlunoFormulario() {
           <Card titulo="Dados do aluno">
             <Lista>
               <PessoaCampos
-                valores={pessoa}
+                valores={formulario.valores}
                 erros={errosVisiveis}
-                onChange={(campo, value) => setPessoa((atual) => ({ ...atual, [campo]: value }))}
-                onExit={(campo) => setTocados((atual) => ({ ...atual, [campo]: true }))}
+                onChange={(campo, value) => formulario.definirCampo(campo, value)}
+                onExit={(campo) => formulario.marcarTocado(campo)}
                 disabled={salvando}
                 rotuloNome="Nome do aluno"
               />
@@ -343,56 +406,75 @@ export default function AlunoFormulario() {
               <Lista>
                 {vinculos.map((vinculo) => (
                   <LinhaResponsavel key={vinculo.chave}>
-                    <Select<number>
-                      label="Responsável"
-                      required
-                      options={opcoesResponsaveis}
-                      value={vinculo.responsavelId}
-                      loading={requisicaoResponsaveis.loading}
-                      error={vinculo.erroResponsavel}
-                      searchable
-                      placeholder="Selecione o responsável..."
-                      emptyText="Cadastre um responsável primeiro"
-                      onChange={(value) =>
-                        setVinculos((atuais) =>
-                          atuais.map((item) =>
-                            item.chave === vinculo.chave
-                              ? { ...item, responsavelId: value, erroResponsavel: undefined }
-                              : item,
-                          ),
-                        )
-                      }
-                    />
+                    <CamposResponsavel>
+                      <Select<number>
+                        label="Responsável"
+                        required
+                        options={opcoesResponsaveis}
+                        value={vinculo.responsavelId}
+                        loading={requisicaoResponsaveis.loading}
+                        error={vinculo.erroResponsavel}
+                        searchable
+                        placeholder="Selecione o responsável..."
+                        emptyText="Cadastre um responsável primeiro"
+                        onChange={(value) =>
+                          setVinculos((atuais) =>
+                            atuais.map((item) =>
+                              item.chave === vinculo.chave
+                                ? { ...item, responsavelId: value, erroResponsavel: undefined }
+                                : item,
+                            ),
+                          )
+                        }
+                      />
 
-                    <Select<Parentesco>
-                      label="Parentesco"
-                      required
-                      options={OPCOES_PARENTESCO.map((opcao) => ({
-                        value: opcao.value,
-                        label: opcao.label,
-                      }))}
-                      value={vinculo.parentesco}
-                      error={vinculo.erroParentesco}
-                      placeholder="Selecione..."
-                      onChange={(value) =>
-                        setVinculos((atuais) =>
-                          atuais.map((item) =>
-                            item.chave === vinculo.chave
-                              ? { ...item, parentesco: value, erroParentesco: undefined }
-                              : item,
-                          ),
-                        )
-                      }
-                    />
+                      <Select<Parentesco>
+                        label="Parentesco"
+                        required
+                        options={OPCOES_PARENTESCO.map((opcao) => ({
+                          value: opcao.value,
+                          label: opcao.label,
+                        }))}
+                        value={vinculo.parentesco}
+                        error={vinculo.erroParentesco}
+                        placeholder="Selecione..."
+                        onChange={(value) =>
+                          setVinculos((atuais) =>
+                            atuais.map((item) =>
+                              item.chave === vinculo.chave
+                                ? { ...item, parentesco: value, erroParentesco: undefined }
+                                : item,
+                            ),
+                          )
+                        }
+                      />
 
-                    <IconButton
-                      label="Remover responsável"
-                      icon={<Trash2 />}
-                      variant="danger"
-                      onClick={() =>
-                        setVinculos((atuais) => atuais.filter((item) => item.chave !== vinculo.chave))
-                      }
-                    />
+                      <IconButton
+                        label="Remover responsável"
+                        icon={<Trash2 />}
+                        variant="danger"
+                        onClick={() =>
+                          setVinculos((atuais) => atuais.filter((item) => item.chave !== vinculo.chave))
+                        }
+                      />
+                    </CamposResponsavel>
+
+                    <LinhaTermos>
+                      <Tag variant={vinculo.aceitouTermos ? 'success' : 'warning'}>
+                        {vinculo.aceitouTermos
+                          ? `Termos aceitos em ${formatarData(vinculo.dataAceite)}`
+                          : 'Termos pendentes'}
+                      </Tag>
+
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        disabled={!vinculo.id || vinculo.aceitouTermos || salvando}
+                        onClick={() => registrarAceite(vinculo)}
+                      >
+                        Registrar aceite
+                      </Button>
+                    </LinhaTermos>
                   </LinhaResponsavel>
                 ))}
               </Lista>

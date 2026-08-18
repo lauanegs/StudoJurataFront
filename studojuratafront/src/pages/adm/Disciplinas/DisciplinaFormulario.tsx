@@ -15,7 +15,7 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useEscola } from '../../../hooks/useEscola'
 import { useHidratar } from '../../../hooks/useHidratar'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { disciplinas as servicoDisciplinas } from '../../../services/endpoints'
 
@@ -23,16 +23,6 @@ const Coluna = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    grid-template-columns: 1fr;
-  }
 `
 
 export default function DisciplinaFormulario() {
@@ -46,10 +36,8 @@ export default function DisciplinaFormulario() {
   const disciplinaId = id ? Number(id) : null
 
   const [titulo, setTitulo] = useState('')
-  const [cargaHoraria, setCargaHoraria] = useState('')
   const [ativa, setAtiva] = useState(true)
-  const [erros, setErros] = useState<{ titulo?: string; cargaHoraria?: string }>({})
-  const [salvando, setSalvando] = useState(false)
+  const [erros, setErros] = useState<{ titulo?: string }>({})
 
   const requisicao = useRequisicao(
     () => servicoDisciplinas.buscar(disciplinaId as number),
@@ -59,7 +47,6 @@ export default function DisciplinaFormulario() {
 
   useHidratar(requisicao.data, (disciplina) => {
     setTitulo(disciplina.titulo ?? '')
-    setCargaHoraria(disciplina.cargaHoraria?.toString() ?? '')
     setAtiva(disciplina.status !== 'INATIVO')
   })
 
@@ -68,15 +55,11 @@ export default function DisciplinaFormulario() {
 
     if (!titulo.trim()) encontrados.titulo = 'Informe o nome da disciplina'
 
-    if (cargaHoraria && (!Number.isFinite(Number(cargaHoraria)) || Number(cargaHoraria) <= 0)) {
-      encontrados.cargaHoraria = 'Informe um número de horas maior que zero'
-    }
-
     setErros(encontrados)
     return Object.keys(encontrados).length === 0
   }
 
-  async function salvar() {
+  const { executar: salvar, executando: salvando } = useAcao(async () => {
     if (!validar()) return
 
     if (!escola) {
@@ -84,13 +67,10 @@ export default function DisciplinaFormulario() {
       return
     }
 
-    setSalvando(true)
-
     try {
       const corpo = {
         escola,
         titulo: titulo.trim(),
-        cargaHoraria: cargaHoraria ? Number(cargaHoraria) : undefined,
         status: ativa ? ('ATIVO' as const) : ('INATIVO' as const),
       }
 
@@ -107,34 +87,31 @@ export default function DisciplinaFormulario() {
         'Não foi possível salvar',
         erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
       )
-    } finally {
-      setSalvando(false)
     }
-  }
+  })
 
-  async function excluir() {
+  const { executar: excluir, executando: excluindo } = useAcao(async () => {
     if (!disciplinaId) return
 
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Excluir disciplina?',
       descricao: 'Notas e simulados já lançados continuam existindo.',
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoDisciplinas.excluir(disciplinaId)
+          toast.success('Disciplina excluída')
+          navegar('/adm/disciplinas')
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoDisciplinas.excluir(disciplinaId)
-      toast.success('Disciplina excluída')
-      navegar('/adm/disciplinas')
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   if (edicao && requisicao.error) {
     return (
@@ -154,14 +131,20 @@ export default function DisciplinaFormulario() {
         actions={
           <>
             {edicao && (
-              <Button variant="danger" icon={<Trash2 />} onClick={excluir} disabled={salvando}>
+              <Button
+                variant="danger"
+                icon={<Trash2 />}
+                loading={excluindo}
+                onClick={excluir}
+                disabled={salvando}
+              >
                 Excluir
               </Button>
             )}
             <Button
               variant="danger"
               onClick={() => navegar('/adm/disciplinas')}
-              disabled={salvando}
+              disabled={salvando || excluindo}
             >
               Cancelar
             </Button>
@@ -169,7 +152,7 @@ export default function DisciplinaFormulario() {
               variant="success"
               icon={<Save />}
               loading={salvando}
-              disabled={carregandoEscola}
+              disabled={carregandoEscola || excluindo}
               onClick={salvar}
             >
               Salvar
@@ -183,30 +166,16 @@ export default function DisciplinaFormulario() {
       ) : (
         <Card titulo="Dados da disciplina">
           <Coluna>
-            <Grade>
-              <Input
-                label="Nome da disciplina"
-                required
-                placeholder="Ex.: Robótica"
-                value={titulo}
-                error={erros.titulo}
-                disabled={salvando}
-                maxLength={120}
-                onChange={(evento) => setTitulo(evento.target.value)}
-              />
-
-              <Input
-                label="Carga horária"
-                type="number"
-                min={1}
-                placeholder="Ex.: 40"
-                value={cargaHoraria}
-                error={erros.cargaHoraria}
-                disabled={salvando}
-                hint="Em horas."
-                onChange={(evento) => setCargaHoraria(evento.target.value)}
-              />
-            </Grade>
+            <Input
+              label="Nome da disciplina"
+              required
+              placeholder="Ex.: Robótica"
+              value={titulo}
+              error={erros.titulo}
+              disabled={salvando}
+              maxLength={120}
+              onChange={(evento) => setTitulo(evento.target.value)}
+            />
 
             <Toggle
               ligado={ativa}

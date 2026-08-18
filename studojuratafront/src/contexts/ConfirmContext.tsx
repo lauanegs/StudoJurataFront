@@ -3,24 +3,22 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ConfirmDialog } from '../components/feedback/ConfirmDialog'
 import { ConfirmContexto, type PedidoConfirmacao } from './confirmContexto'
 
-type Resolucao = (confirmado: boolean) => void
-
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [pedido, setPedido] = useState<PedidoConfirmacao | null>(null)
   const [processando, setProcessando] = useState(false)
-  const resolver = useRef<Resolucao | null>(null)
+  const resolver = useRef<(() => void) | null>(null)
 
   const confirmar = useCallback(
     (novoPedido: PedidoConfirmacao) =>
-      new Promise<boolean>((resolve) => {
+      new Promise<void>((resolve) => {
         resolver.current = resolve
         setPedido(novoPedido)
       }),
     [],
   )
 
-  const responder = useCallback((confirmado: boolean) => {
-    resolver.current?.(confirmado)
+  const fechar = useCallback(() => {
+    resolver.current?.()
     resolver.current = null
     setPedido(null)
     setProcessando(false)
@@ -40,11 +38,22 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         rotuloCancelar={pedido?.rotuloCancelar}
         tone={pedido?.tone}
         processando={processando}
-        onConfirmar={() => {
+        onConfirmar={async () => {
+          if (!pedido || processando) return
+
           setProcessando(true)
-          responder(true)
+
+          try {
+            await pedido.aoConfirmar()
+          } catch {
+            // `aoConfirmar` já trata seu próprio erro com toast (padrão do
+            // projeto); isto é só uma rede de segurança para o modal nunca
+            // ficar preso aberto se algum erro escapar sem ser capturado.
+          } finally {
+            fechar()
+          }
         }}
-        onCancelar={() => responder(false)}
+        onCancelar={fechar}
       />
     </ConfirmContexto.Provider>
   )

@@ -2,37 +2,28 @@ import styled, { css } from 'styled-components'
 
 import type { LetterState } from './types'
 
-const sizes = {
-  small: css`
-    width: 28px;
-    height: 28px;
-    font-size: ${({ theme }) => theme.typography.sizes.xs};
-  `,
-  medium: css`
-    width: 36px;
-    height: 36px;
-    font-size: ${({ theme }) => theme.typography.sizes.sm};
-  `,
-  large: css`
-    width: 48px;
-    height: 48px;
-    font-size: ${({ theme }) => theme.typography.sizes.lg};
-  `,
-}
-
-export const Container = styled.span<{ $state: LetterState; $size: 'small' | 'medium' | 'large' }>`
+/**
+ * Confirmado no Figma (nós 1:939-950 execução, 1:996-1002 revisão): a letra
+ * não é um badge circular solto — é um bloco retangular fundido à borda
+ * esquerda da linha, ocupando a altura inteira (align-self: stretch),
+ * arredondado só nos cantos esquerdos.
+ */
+export const Container = styled.span<{ $state: LetterState }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  align-self: stretch;
 
-  border-radius: ${({ theme }) => theme.radius.circle};
+  padding: 0 ${({ theme }) => theme.spacing.lg};
+
+  border-radius: ${({ theme }) => theme.radius.md} 0 0 ${({ theme }) => theme.radius.md};
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+
+  font-size: ${({ theme }) => theme.typography.sizes.lg};
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+  letter-spacing: -0.9px;
   color: ${({ theme }) => theme.colors.white};
-
-  ${({ $size }) => sizes[$size]}
-
-  box-shadow: ${({ theme }) => theme.shadow.base};
 
   ${({ theme, $state }) =>
     ({
@@ -43,10 +34,10 @@ export const Container = styled.span<{ $state: LetterState; $size: 'small' | 'me
         background: ${theme.gradients.sidebar};
       `,
       correct: css`
-        background: ${theme.colors.success};
+        background: ${theme.gradients.success};
       `,
       incorrect: css`
-        background: ${theme.colors.error};
+        background: ${theme.gradients.danger};
       `,
     })[$state]}
 `

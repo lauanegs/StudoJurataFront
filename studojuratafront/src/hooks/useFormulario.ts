@@ -19,7 +19,7 @@ interface OpcoesFormulario<T> {
  * depois da primeira tentativa de envio — não enquanto ele ainda está
  * digitando pela primeira vez.
  */
-export function useFormulario<T extends Record<string, unknown>>({
+export function useFormulario<T extends object>({
   valoresIniciais,
   regras = {},
   validarTudo,

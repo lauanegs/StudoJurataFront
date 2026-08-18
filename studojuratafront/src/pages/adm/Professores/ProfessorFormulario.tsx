@@ -11,8 +11,9 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
+import { useFormulario } from '../../../hooks/useFormulario'
 import { useHidratar } from '../../../hooks/useHidratar'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
   pessoas as servicoPessoas,
@@ -31,11 +32,11 @@ export default function ProfessorFormulario() {
   const edicao = Boolean(id)
   const professorId = id ? Number(id) : null
 
-  const [pessoa, setPessoa] = useState<DadosPessoa>(PESSOA_VAZIA)
+  const formulario = useFormulario<DadosPessoa>({
+    valoresIniciais: PESSOA_VAZIA,
+    validarTudo: validarPessoa,
+  })
   const [ativo, setAtivo] = useState(true)
-  const [tocados, setTocados] = useState<Partial<Record<keyof DadosPessoa, boolean>>>({})
-  const [tentouSalvar, setTentouSalvar] = useState(false)
-  const [salvando, setSalvando] = useState(false)
 
   const requisicao = useRequisicao(
     () => servicoProfessores.buscar(professorId as number),
@@ -44,82 +45,77 @@ export default function ProfessorFormulario() {
   )
 
   useHidratar(requisicao.data, (professor) => {
-    setPessoa(dePessoa(professor.pessoa))
+    formulario.reiniciar(dePessoa(professor.pessoa))
     setAtivo(professor.status !== 'INATIVO')
   })
 
-  const erros = useMemo(() => validarPessoa(pessoa), [pessoa])
-
+  // PessoaCampos espera um objeto de erros "só os visíveis" (campo tocado ou
+  // já tentou enviar) — useFormulario expõe isso por campo via erroDe().
   const errosVisiveis = useMemo(() => {
     const visiveis: Partial<Record<keyof DadosPessoa, string>> = {}
 
-    ;(Object.keys(erros) as (keyof DadosPessoa)[]).forEach((campo) => {
-      if (tocados[campo] || tentouSalvar) visiveis[campo] = erros[campo]
+    ;(Object.keys(formulario.erros) as (keyof DadosPessoa)[]).forEach((campo) => {
+      const erro = formulario.erroDe(campo)
+      if (erro) visiveis[campo] = erro
     })
 
     return visiveis
-  }, [erros, tocados, tentouSalvar])
+  }, [formulario])
 
-  async function salvar() {
-    setTentouSalvar(true)
+  const { executar: salvar, executando: salvando } = useAcao(async () => {
+    const enviado = await formulario.aoEnviar(async (pessoa) => {
+      try {
+        const payloadPessoa = paraPayloadPessoa(pessoa)
 
-    if (Object.keys(erros).length > 0) {
-      toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
-      return
-    }
+        const pessoaSalva = edicao
+          ? await servicoPessoas.atualizar(requisicao.data!.pessoa.id, payloadPessoa)
+          : await servicoPessoas.criar(payloadPessoa)
 
-    setSalvando(true)
+        const corpo = { pessoa: pessoaSalva, status: ativo ? ('ATIVO' as const) : ('INATIVO' as const) }
 
-    try {
-      const payloadPessoa = paraPayloadPessoa(pessoa)
+        if (edicao) {
+          await servicoProfessores.atualizar(professorId as number, corpo)
+        } else {
+          await servicoProfessores.criar(corpo)
+        }
 
-      const pessoaSalva = edicao
-        ? await servicoPessoas.atualizar(requisicao.data!.pessoa.id, payloadPessoa)
-        : await servicoPessoas.criar(payloadPessoa)
-
-      const corpo = { pessoa: pessoaSalva, status: ativo ? ('ATIVO' as const) : ('INATIVO' as const) }
-
-      if (edicao) {
-        await servicoProfessores.atualizar(professorId as number, corpo)
-      } else {
-        await servicoProfessores.criar(corpo)
+        toast.success(edicao ? 'Professor atualizado' : 'Professor cadastrado', pessoaSalva.nome)
+        navegar('/adm/professores')
+      } catch (erroSalvar) {
+        toast.error(
+          'Não foi possível salvar',
+          erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
+        )
       }
+    })()
 
-      toast.success(edicao ? 'Professor atualizado' : 'Professor cadastrado', pessoaSalva.nome)
-      navegar('/adm/professores')
-    } catch (erroSalvar) {
-      toast.error(
-        'Não foi possível salvar',
-        erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
-      )
-    } finally {
-      setSalvando(false)
+    if (!enviado) {
+      toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
     }
-  }
+  })
 
-  async function excluir() {
+  const { executar: excluir, executando: excluindo } = useAcao(async () => {
     if (!professorId) return
 
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Excluir professor?',
       descricao: 'As turmas em que ele leciona precisarão de um novo responsável.',
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoProfessores.excluir(professorId)
+          toast.success('Professor excluído')
+          navegar('/adm/professores')
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoProfessores.excluir(professorId)
-      toast.success('Professor excluído')
-      navegar('/adm/professores')
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   if (edicao && requisicao.error) {
     return (
@@ -139,14 +135,24 @@ export default function ProfessorFormulario() {
         actions={
           <>
             {edicao && (
-              <Button variant="danger" icon={<Trash2 />} onClick={excluir} disabled={salvando}>
+              <Button
+                variant="danger"
+                icon={<Trash2 />}
+                loading={excluindo}
+                onClick={excluir}
+                disabled={salvando}
+              >
                 Excluir
               </Button>
             )}
-            <Button variant="danger" onClick={() => navegar('/adm/professores')} disabled={salvando}>
+            <Button
+              variant="danger"
+              onClick={() => navegar('/adm/professores')}
+              disabled={salvando || excluindo}
+            >
               Cancelar
             </Button>
-            <Button variant="success" icon={<Save />} loading={salvando} onClick={salvar}>
+            <Button variant="success" icon={<Save />} loading={salvando} disabled={excluindo} onClick={salvar}>
               Salvar
             </Button>
           </>
@@ -159,10 +165,10 @@ export default function ProfessorFormulario() {
         <Card titulo="Dados do professor">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <PessoaCampos
-              valores={pessoa}
+              valores={formulario.valores}
               erros={errosVisiveis}
-              onChange={(campo, valor) => setPessoa((atual) => ({ ...atual, [campo]: valor }))}
-              onExit={(campo) => setTocados((atual) => ({ ...atual, [campo]: true }))}
+              onChange={(campo, valor) => formulario.definirCampo(campo, valor)}
+              onExit={(campo) => formulario.marcarTocado(campo)}
               disabled={salvando}
               rotuloNome="Nome do professor"
             />

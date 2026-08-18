@@ -18,10 +18,11 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { aulas as servicoAulas, conteudosPlano, matriculas } from '../../../services/endpoints'
 import { formatarData } from '../../../utils/format'
+import { theme as tokens } from '../../../styles/theme'
 import type { AlunoTurma } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
@@ -80,9 +81,6 @@ export default function RegistrarAula() {
   const [aba, setAba] = useState<Aba>('chamada')
   const [edicoes, setEdicoes] = useState<Record<number, Partial<LinhaChamada>>>({})
   const [conteudoSelecionado, setConteudoSelecionado] = useState<number | null>(null)
-  const [salvandoChamada, setSalvandoChamada] = useState(false)
-  const [vinculando, setVinculando] = useState(false)
-  const [publicando, setPublicando] = useState(false)
 
   const requisicaoAula = useRequisicao(() => servicoAulas.buscar(idAula), [idAula])
 
@@ -98,17 +96,28 @@ export default function RegistrarAula() {
   const requisicaoConteudosAula = useRequisicao(() => servicoAulas.listarConteudos(idAula), [idAula])
   const requisicaoConteudosPlano = useRequisicao(() => conteudosPlano.listar(), [])
 
+  // Data de referência da aula, para não chamar quem matriculou depois dela.
+  const dataAula = requisicaoAula.data?.dataPrevista ?? requisicaoAula.data?.dataPublicacao ?? null
+
   /**
    * A chamada é derivada dos alunos ativos + frequências já lançadas, e só o
    * que o professor alterou nesta sessão fica em estado (`edicoes`). Assim, um
    * recarregamento dos data não apaga o que ele acabou de marcar.
+   *
+   * Um aluno cuja matrícula começou depois da data desta aula não deveria
+   * aparecer na chamada — ele ainda não fazia parte da turma naquele dia.
    */
   const linhas = useMemo<LinhaChamada[]>(() => {
     const lancadas = new Map(
       (requisicaoFrequencias.data ?? []).map((frequencia) => [frequencia.aluno?.id, frequencia]),
     )
 
-    return (requisicaoMatriculas.data ?? []).map((matricula: AlunoTurma) => {
+    const elegiveis = (requisicaoMatriculas.data ?? []).filter((matricula: AlunoTurma) => {
+      if (!dataAula || !matricula.dataInicio) return true
+      return matricula.dataInicio.slice(0, 10) <= dataAula.slice(0, 10)
+    })
+
+    return elegiveis.map((matricula: AlunoTurma) => {
       const existente = lancadas.get(matricula.aluno?.id)
       const edicao = edicoes[matricula.aluno.id]
 
@@ -120,7 +129,7 @@ export default function RegistrarAula() {
         justificativa: edicao?.justificativa ?? existente?.justificativa ?? '',
       }
     })
-  }, [requisicaoMatriculas.data, requisicaoFrequencias.data, edicoes])
+  }, [requisicaoMatriculas.data, requisicaoFrequencias.data, edicoes, dataAula])
 
   const conteudosDisponiveis = useMemo(() => {
     const vinculados = new Set(
@@ -173,13 +182,11 @@ export default function RegistrarAula() {
     }))
   }
 
-  async function salvarChamada() {
+  const { executar: salvarChamada, executando: salvandoChamada } = useAcao(async () => {
     if (linhas.length === 0) {
       toast.warning('Sem alunos', 'Esta turma não tem alunos com matrícula ativa.')
       return
     }
-
-    setSalvandoChamada(true)
 
     try {
       await servicoAulas.registrarChamada(idAula, {
@@ -197,18 +204,14 @@ export default function RegistrarAula() {
         'Não foi possível registrar a chamada',
         erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
       )
-    } finally {
-      setSalvandoChamada(false)
     }
-  }
+  })
 
-  async function vincularConteudo() {
+  const { executar: vincularConteudo, executando: vinculando } = useAcao(async () => {
     if (!conteudoSelecionado) {
       toast.warning('Selecione um conteúdo')
       return
     }
-
-    setVinculando(true)
 
     try {
       await servicoAulas.vincularConteudo(idAula, conteudoSelecionado)
@@ -220,10 +223,8 @@ export default function RegistrarAula() {
         'Não foi possível vincular',
         erroVincular instanceof ApiError ? erroVincular.message : undefined,
       )
-    } finally {
-      setVinculando(false)
     }
-  }
+  })
 
   async function desvincularConteudo(conteudoPlanoId: number) {
     try {
@@ -238,31 +239,26 @@ export default function RegistrarAula() {
     }
   }
 
-  async function publicar() {
-    const confirmado = await confirmar({
+  const { executar: publicar, executando: publicando } = useAcao(async () => {
+    await confirmar({
       titulo: 'Marcar aula como ministrada?',
       descricao:
         'A data de hoje será registrada como data de publicação. A aula passa a contar nas estatísticas do plano.',
       rotuloConfirmar: 'Marcar como ministrada',
+      aoConfirmar: async () => {
+        try {
+          await servicoAulas.publicar(idAula, new Date().toISOString().slice(0, 10))
+          toast.success('Aula publicada')
+          await requisicaoAula.reload()
+        } catch (erroPublicar) {
+          toast.error(
+            'Não foi possível publicar',
+            erroPublicar instanceof ApiError ? erroPublicar.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    setPublicando(true)
-
-    try {
-      await servicoAulas.publicar(idAula, new Date().toISOString().slice(0, 10))
-      toast.success('Aula publicada')
-      await requisicaoAula.reload()
-    } catch (erroPublicar) {
-      toast.error(
-        'Não foi possível publicar',
-        erroPublicar instanceof ApiError ? erroPublicar.message : undefined,
-      )
-    } finally {
-      setPublicando(false)
-    }
-  }
+  })
 
   const colunas: Coluna<LinhaChamada>[] = [
     {
@@ -288,7 +284,7 @@ export default function RegistrarAula() {
       cabecalho: 'Justificativa da falta',
       render: (linha) =>
         linha.presente ? (
-          <span style={{ color: '#A3A3A3' }}>—</span>
+          <span style={{ color: tokens.colors.textDisabled }}>—</span>
         ) : (
           <Input
             placeholder="Ex.: atestado médico"
@@ -344,6 +340,7 @@ export default function RegistrarAula() {
           <>
             {!aula?.dataPublicacao && (
               <Button
+                size="large"
                 variant="secondary"
                 icon={<Send />}
                 loading={publicando}
@@ -352,7 +349,7 @@ export default function RegistrarAula() {
                 Marcar como ministrada
               </Button>
             )}
-            <Button icon={<Save />} loading={salvandoChamada} onClick={salvarChamada}>
+            <Button size="large" icon={<Save />} loading={salvandoChamada} onClick={salvarChamada}>
               Salvar chamada
             </Button>
           </>

@@ -1,13 +1,12 @@
 import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Clock, Target } from 'lucide-react'
+import { Target } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { AlternativaCard } from '../../../components/ui/AlternativaCard'
 import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
-import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -20,7 +19,7 @@ import {
   simuladoAlunos,
   simulados as servicoSimulados,
 } from '../../../services/endpoints'
-import { formatarNota, formatarTempo, letraAlternativa } from '../../../utils/format'
+import { formatarTempo, letraAlternativa } from '../../../utils/format'
 import type { AlternativaResponse } from '../../../types'
 
 const Lista = styled.div`
@@ -40,6 +39,13 @@ const Enunciado = styled.p`
   font-size: ${({ theme }) => theme.typography.sizes.sm};
   color: ${({ theme }) => theme.colors.textSecondary};
   line-height: ${({ theme }) => theme.typography.lineHeight.normal};
+`
+
+/* Confirmado no Figma: "Aluno(a): X", "Acertos: X/Y", "Tempo: HH:MM:SS" em
+   linhas separadas de texto simples no header — não tags. */
+const Info = styled.div`
+  display: flex;
+  flex-direction: column;
 `
 
 export default function ResultadoAluno() {
@@ -112,45 +118,20 @@ export default function ResultadoAluno() {
     )
   }
 
-  const maxima = simulado?.notaMaxima ?? 10
-  const percentual = tentativa?.nota !== undefined && maxima ? (tentativa.nota / maxima) * 100 : null
-
   return (
     <Layout>
       <Header
-        titulo={nomeAluno || 'Correção da tentativa'}
+        titulo={simulado?.titulo ?? 'Correção da tentativa'}
         subtitulo={
           tentativa && (
-            <>
-              <strong>{simulado?.titulo}</strong>
-
-              {typeof tentativa.nota === 'number' && (
-                <Tag
-                  variant={
-                    percentual !== null && percentual >= 70
-                      ? 'success'
-                      : percentual !== null && percentual >= 50
-                        ? 'warning'
-                        : 'error'
-                  }
-                  icon={<Target />}
-                >
-                  Nota {formatarNota(tentativa.nota)} de {formatarNota(maxima)}
-                </Tag>
-              )}
-
-              {typeof tentativa.quantidadeAcertos === 'number' && (
-                <Tag variant="neutral">{tentativa.quantidadeAcertos} acerto(s)</Tag>
-              )}
-
-              <Tag variant="neutral" icon={<Clock />}>
-                {formatarTempo(tentativa.tempoGasto)}
-              </Tag>
-
-              {tentativa.finalizadoPorTempo && (
-                <Tag variant="warning">Finalizado por esgotamento do tempo</Tag>
-              )}
-            </>
+            <Info>
+              <span>Aluno(a): {nomeAluno}</span>
+              <span>
+                Acertos: {typeof tentativa.quantidadeAcertos === 'number' ? tentativa.quantidadeAcertos : '—'}
+                {simulado?.quantidadeQuestoes ? ` / ${simulado.quantidadeQuestoes}` : ''}
+              </span>
+              <span>Tempo: {formatarTempo(tentativa.tempoGasto)}</span>
+            </Info>
           )
         }
         voltarPara={`/professor/reforco/simulados/${idSimulado}/resultados`}
@@ -169,38 +150,7 @@ export default function ResultadoAluno() {
         <Lista>
           {correcao.map((item, indice) => (
             <Card key={item.respostaId}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                  flexWrap: 'wrap',
-                  marginBottom: '8px',
-                }}
-              >
-                <strong>Questão {indice + 1}</strong>
-
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {item.emBranco ? (
-                    <Tag variant="neutral">Em branco</Tag>
-                  ) : item.acertou ? (
-                    <Tag variant="success" ponto>
-                      Acertou
-                    </Tag>
-                  ) : (
-                    <Tag variant="error" ponto>
-                      Errou
-                    </Tag>
-                  )}
-
-                  {item.tempoResposta ? (
-                    <Tag variant="neutral" icon={<Clock />}>
-                      {formatarTempo(item.tempoResposta)}
-                    </Tag>
-                  ) : null}
-                </div>
-              </div>
+              <strong style={{ display: 'block', marginBottom: '8px' }}>Questão {indice + 1}</strong>
 
               <Enunciado>{item.enunciado}</Enunciado>
 

@@ -1,214 +1,286 @@
 import { useMemo, useState } from 'react'
 import styled from 'styled-components'
-import { NotebookPen, RefreshCcw } from 'lucide-react'
+import { NotebookPen, Search } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
-import { DataTable } from '../../../components/ui/DataTable'
+import { DropDown } from '../../../components/ui/DropDown'
 import { Header } from '../../../components/ui/Header'
-import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
-import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
-import { useConfirm } from '../../../contexts/confirmContexto'
+import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
+import { Skeleton } from '../../../components/feedback/Skeleton'
+import { usePeriodoLetivo } from '../../../contexts/periodoLetivoContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import { ApiError } from '../../../services/api'
-import { matriculas, notas as servicoNotas, professores } from '../../../services/endpoints'
+import {
+  matriculas,
+  notas as servicoNotas,
+  professores as servicoProfessores,
+  simuladoAlunos,
+  simulados as servicoSimulados,
+} from '../../../services/endpoints'
 import { formatarNota } from '../../../utils/format'
-import type { Nota } from '../../../types'
-import type { Coluna } from '../../../components/ui/DataTable/types'
+import type { SimuladoAlunoResponse } from '../../../types'
 
-const Filtros = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  align-items: end;
-  gap: ${({ theme }) => theme.spacing.sm};
-  width: 100%;
+type TipoFiltro = 'disciplina' | 'aluno'
+
+/* Confirmado no Figma: os 3 selects + botão Buscar dividem uma linha só,
+   sem rótulo separado acima de cada campo (o texto do campo é o rótulo,
+   mostrado como placeholder dentro da própria caixa). */
+const CamposCabecalho = styled.div`
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
 `
 
-interface LinhaNota {
+/* Largura fixa (não flex: 1): o slot de filtros do Header (S.Filtros) é
+   width:fit-content — um filho em flex:1 não tem contra o que crescer
+   dentro de um pai que só se ajusta ao próprio conteúdo, e os campos
+   colapsavam pro min-width. 211px vem do Figma: 830px de linha inteira
+   (3 campos + botão) menos os 150px do botão e os 3 gaps de 16px,
+   dividido por 3. */
+const CampoLargura = styled.div`
+  width: 211px;
+`
+
+const LarguraBotao = styled.div`
+  width: 150px;
+  flex-shrink: 0;
+
+  button {
+    width: 100%;
+  }
+`
+
+/* Confirmado no Figma: 32px de padding ao redor da lista de acordeões e
+   16px de gap entre eles — por isso o Card usa semPadding (o padding padrão
+   dele é 24px, não bate) e este wrapper aplica os valores certos. */
+const Lista = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.xl};
+`
+
+interface FiltroAplicado {
+  turmaId: number
+  tipo: TipoFiltro
+  especificoId: number
+}
+
+interface LinhaAcordeao {
+  chave: string
+  titulo: string
   alunoId: number
-  alunoNome: string
-  nota: Nota | null
+  disciplinaId: number
 }
 
 /**
- * Notas por turma/disciplina.
+ * Notas por turma, filtradas por disciplina OU por aluno (o professor
+ * escolhe o tipo). O resultado é um acordeão: filtrando por aluno, uma linha
+ * por disciplina que o professor leciona nessa turma; filtrando por
+ * disciplina, uma linha por aluno matriculado. Cada linha expande pra
+ * mostrar os simulados individuais que compõem a nota.
  *
- * Nota é sempre derivada dos simulados concluídos: o back removeu o POST/PUT
- * de total livre e só expõe POST /notas/recalcular. A tela reflete isso — não
- * há campo editável de nota, apenas o recálculo.
+ * Nota é sempre derivada dos simulados concluídos — não há lançamento
+ * manual. O recálculo deixou de ser uma ação desta tela: acontece sozinho,
+ * pra todas as turmas do professor, quando o período letivo muda na sidebar
+ * (ver PeriodoLetivoContext) — esta tela só lê o período atual.
  */
 export default function Notas() {
   const toast = useToast()
-  const confirmar = useConfirm()
   const { professorId } = useProfessorLogado()
+  const { periodoLetivo } = usePeriodoLetivo()
 
-  const [turmaDisciplinaEscolhida, setTurmaDisciplinaId] = useState<number | null>(null)
-  const [periodo, setPeriodo] = useState('')
-  const [recalculando, setRecalculando] = useState(false)
+  const [turmaId, setTurmaId] = useState<number | null>(null)
+  const [tipo, setTipo] = useState<TipoFiltro | null>(null)
+  const [especificoId, setEspecificoId] = useState<number | null>(null)
+  const [filtro, setFiltro] = useState<FiltroAplicado | null>(null)
 
   const requisicaoVinculos = useRequisicao(
-    () => professores.turmasLecionadas(professorId as number),
+    () => servicoProfessores.turmasLecionadas(professorId as number),
     [professorId],
     { ativo: Boolean(professorId) },
   )
 
-  const turmaDisciplinaId =
-    turmaDisciplinaEscolhida ?? requisicaoVinculos.data?.[0]?.id ?? null
+  const opcoesTurmas = useMemo(() => {
+    const unicas = new Map<number, string>()
+    for (const vinculo of requisicaoVinculos.data ?? []) {
+      if (vinculo.turma && vinculo.status !== 'INATIVO') {
+        unicas.set(vinculo.turma.id, vinculo.turma.titulo)
+      }
+    }
+    return [...unicas.entries()].map(([value, label]) => ({ value, label }))
+  }, [requisicaoVinculos.data])
 
-  const vinculo = useMemo(
-    () => (requisicaoVinculos.data ?? []).find((item) => item.id === turmaDisciplinaId) ?? null,
-    [requisicaoVinculos.data, turmaDisciplinaId],
+  const opcoesTipo: { value: TipoFiltro; label: string }[] = [
+    { value: 'disciplina', label: 'Disciplina' },
+    { value: 'aluno', label: 'Aluno' },
+  ]
+
+  const disciplinasDaTurma = useMemo(
+    () =>
+      (requisicaoVinculos.data ?? [])
+        .filter((vinculo) => vinculo.turma?.id === turmaId && vinculo.status !== 'INATIVO' && vinculo.disciplina)
+        .map((vinculo) => ({ value: vinculo.disciplina!.id, label: vinculo.disciplina?.titulo ?? '—' })),
+    [requisicaoVinculos.data, turmaId],
   )
 
-  const turmaId = vinculo?.turma?.id ?? null
-  const disciplinaId = vinculo?.disciplina?.id ?? null
-
-  const requisicaoMatriculas = useRequisicao(
+  const requisicaoMatriculasTurma = useRequisicao(
     () => matriculas.ativosPorTurma(turmaId as number),
     [turmaId],
-    { ativo: Boolean(turmaId) },
+    { ativo: Boolean(turmaId) && tipo === 'aluno' },
   )
 
-  const requisicaoNotas = useRequisicao(() => servicoNotas.listar(), [])
+  const opcoesEspecifico = useMemo(() => {
+    if (tipo === 'disciplina') return disciplinasDaTurma
 
-  const opcoesVinculos = useMemo(
-    () =>
-      (requisicaoVinculos.data ?? []).map((item) => ({
-        value: item.id,
-        label: `${item.turma?.titulo ?? 'Turma'} · ${item.disciplina?.titulo ?? 'Disciplina'}`,
-      })),
-    [requisicaoVinculos.data],
-  )
+    if (tipo === 'aluno') {
+      return (requisicaoMatriculasTurma.data ?? []).map((matricula) => ({
+        value: matricula.aluno.id,
+        label: matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`,
+      }))
+    }
 
-  const linhas = useMemo<LinhaNota[]>(() => {
-    const alunos = requisicaoMatriculas.data ?? []
-    const todasNotas = requisicaoNotas.data ?? []
+    return []
+  }, [tipo, disciplinasDaTurma, requisicaoMatriculasTurma.data])
 
-    return alunos.map((matricula) => {
-      const nota =
-        todasNotas.find(
-          (item) =>
-            item.aluno?.id === matricula.aluno?.id &&
-            item.disciplina?.id === disciplinaId &&
-            (!periodo.trim() || item.periodoLetivo === periodo.trim()),
-        ) ?? null
-
-      return {
-        alunoId: matricula.aluno.id,
-        alunoNome: matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`,
-        nota,
-      }
-    })
-  }, [requisicaoMatriculas.data, requisicaoNotas.data, disciplinaId, periodo])
-
-  const media = useMemo(() => {
-    const comNota = linhas.filter((linha) => typeof linha.nota?.total === 'number')
-    if (comNota.length === 0) return null
-
-    const soma = comNota.reduce((total, linha) => total + (linha.nota?.total ?? 0), 0)
-    return soma / comNota.length
-  }, [linhas])
-
-  async function recalcular(alunoId?: number) {
-    if (!disciplinaId) {
-      toast.warning('Selecione a turma e a disciplina')
+  function buscar() {
+    if (!turmaId || !tipo || !especificoId) {
+      toast.warning('Selecione turma, tipo de filtro e o item específico antes de buscar.')
       return
     }
 
-    if (!periodo.trim()) {
-      toast.warning('Informe o período letivo', 'O recálculo é sempre por período (ex.: 2026/1).')
-      return
-    }
-
-    const alvos = alunoId ? [alunoId] : linhas.map((linha) => linha.alunoId)
-
-    if (!alunoId) {
-      const confirmado = await confirmar({
-        titulo: 'Recalcular notas da turma?',
-        descricao: `As notas de ${alvos.length} aluno(s) serão recalculadas a partir dos simulados concluídos no período ${periodo.trim()}.`,
-        rotuloConfirmar: 'Recalcular',
-      })
-
-      if (!confirmado) return
-    }
-
-    setRecalculando(true)
-
-    try {
-      await Promise.all(
-        alvos.map((id) => servicoNotas.recalcular(id, disciplinaId, periodo.trim())),
-      )
-
-      toast.success(
-        'Notas recalculadas',
-        `${alvos.length} aluno(s) atualizados com base nos simulados concluídos.`,
-      )
-      await requisicaoNotas.reload()
-    } catch (erroRecalcular) {
-      toast.error(
-        'Não foi possível recalcular',
-        erroRecalcular instanceof ApiError ? erroRecalcular.message : undefined,
-      )
-    } finally {
-      setRecalculando(false)
-    }
+    setFiltro({ turmaId, tipo, especificoId })
   }
 
-  const colunas: Coluna<LinhaNota>[] = [
-    {
-      key: 'aluno',
-      cabecalho: 'Aluno',
-      ordenavel: true,
-      valorOrdenacao: (linha) => linha.alunoNome,
-      render: (linha) => linha.alunoNome,
+  // Dados pra montar os acordeões — sempre ativos: a tela abre com a lista
+  // completa (todas as turmas/disciplinas do professor), sem exigir Buscar.
+  const requisicaoMatriculasResultado = useRequisicao(
+    () => matriculas.ativosPorTurma(filtro?.turmaId as number),
+    [filtro?.turmaId],
+    { ativo: filtro?.tipo === 'disciplina' },
+  )
+  const requisicaoNotas = useRequisicao(() => servicoNotas.listar(), [])
+  const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
+
+  // Sem filtro: uma matrícula por (turma, disciplina) do professor —
+  // equivalente a rodar o modo "por disciplina" pra cada vínculo dele.
+  const vinculosAtivos = useMemo(
+    () => (requisicaoVinculos.data ?? []).filter((v) => v.turma && v.disciplina && v.status !== 'INATIVO'),
+    [requisicaoVinculos.data],
+  )
+  const turmasUnicas = useMemo(
+    () => [...new Set(vinculosAtivos.map((v) => v.turma!.id))],
+    [vinculosAtivos],
+  )
+  const requisicaoMatriculasTodas = useRequisicao(
+    async () => {
+      const listas = await Promise.all(turmasUnicas.map((id) => matriculas.ativosPorTurma(id)))
+      return new Map(turmasUnicas.map((id, indice) => [id, listas[indice]]))
     },
-    {
-      key: 'nota',
-      cabecalho: 'Nota total',
-      alinhamento: 'center',
-      ordenavel: true,
-      valorOrdenacao: (linha) => linha.nota?.total ?? -1,
-      render: (linha) =>
-        typeof linha.nota?.total === 'number' ? (
-          <Tag
-            variant={
-              linha.nota.total >= 7 ? 'success' : linha.nota.total >= 5 ? 'warning' : 'error'
-            }
-          >
-            {formatarNota(linha.nota.total)}
-          </Tag>
-        ) : (
-          <Tag variant="neutral">Sem nota</Tag>
-        ),
+    [turmasUnicas],
+    { ativo: !filtro && turmasUnicas.length > 0 },
+  )
+
+  const linhasAcordeao = useMemo<LinhaAcordeao[]>(() => {
+    if (!filtro) {
+      return vinculosAtivos.flatMap((vinculo) => {
+        const alunosDaTurma = requisicaoMatriculasTodas.data?.get(vinculo.turma!.id) ?? []
+
+        return alunosDaTurma.map((matricula) => ({
+          chave: `${vinculo.id}-${matricula.aluno.id}`,
+          titulo: `${matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`} · ${vinculo.turma!.titulo} · ${vinculo.disciplina!.titulo}`,
+          alunoId: matricula.aluno.id,
+          disciplinaId: vinculo.disciplina!.id,
+        }))
+      })
+    }
+
+    if (filtro.tipo === 'aluno') {
+      return disciplinasDaTurma.map((disciplina) => ({
+        chave: `disciplina-${disciplina.value}`,
+        titulo: disciplina.label,
+        alunoId: filtro.especificoId,
+        disciplinaId: disciplina.value,
+      }))
+    }
+
+    return (requisicaoMatriculasResultado.data ?? []).map((matricula) => ({
+      chave: `aluno-${matricula.aluno.id}`,
+      titulo: matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`,
+      alunoId: matricula.aluno.id,
+      disciplinaId: filtro.especificoId,
+    }))
+  }, [filtro, disciplinasDaTurma, requisicaoMatriculasResultado.data, vinculosAtivos, requisicaoMatriculasTodas.data])
+
+  // Tentativas de simulado de cada aluno envolvido, buscadas uma vez por aluno distinto.
+  const alunosEnvolvidos = useMemo(
+    () => [...new Set(linhasAcordeao.map((linha) => linha.alunoId))],
+    [linhasAcordeao],
+  )
+
+  const requisicaoTentativas = useRequisicao(
+    async () => {
+      const listas = await Promise.all(alunosEnvolvidos.map((id) => simuladoAlunos.listarPorAluno(id)))
+      return new Map<number, SimuladoAlunoResponse[]>(alunosEnvolvidos.map((id, indice) => [id, listas[indice]]))
     },
-    {
-      key: 'simulados',
-      cabecalho: 'Simulados considerados',
-      alinhamento: 'center',
-      ocultarEmTelaPequena: true,
-      render: (linha) => linha.nota?.quantidadeSimuladosConsiderados ?? '—',
-    },
-    {
-      key: 'periodo',
-      cabecalho: 'Período',
-      ocultarEmTelaPequena: true,
-      render: (linha) => linha.nota?.periodoLetivo ?? '—',
-    },
-  ]
+    [alunosEnvolvidos],
+    { ativo: alunosEnvolvidos.length > 0 },
+  )
+
+  const porSimulado = useMemo(
+    () => new Map((requisicaoSimulados.data ?? []).map((simulado) => [simulado.id, simulado])),
+    [requisicaoSimulados.data],
+  )
+
+  function notaDaLinha(alunoId: number, disciplinaId: number) {
+    return (
+      (requisicaoNotas.data ?? []).find(
+        (nota) =>
+          nota.aluno?.id === alunoId &&
+          nota.disciplina?.id === disciplinaId &&
+          nota.periodoLetivo === periodoLetivo,
+      ) ?? null
+    )
+  }
+
+  function simuladosDaLinha(alunoId: number, disciplinaId: number) {
+    const tentativas = requisicaoTentativas.data?.get(alunoId) ?? []
+
+    return tentativas
+      .filter((tentativa) => {
+        if (tentativa.status !== 'CONCLUIDO') return false
+        return porSimulado.get(tentativa.simuladoId)?.disciplinaId === disciplinaId
+      })
+      .map((tentativa) => {
+        const simulado = porSimulado.get(tentativa.simuladoId)
+
+        return {
+          label: simulado?.titulo ?? `Simulado ${tentativa.simuladoId}`,
+          value: `${formatarNota(tentativa.nota)} / ${formatarNota(simulado?.notaMaxima ?? 10)}`,
+        }
+      })
+  }
+
+  const carregandoResultado =
+    requisicaoMatriculasResultado.loading ||
+    requisicaoMatriculasTodas.loading ||
+    requisicaoNotas.loading ||
+    requisicaoSimulados.loading
 
   if (requisicaoVinculos.error) {
     return (
       <Layout>
         <Header titulo="Notas" />
-        <ErroCarregamento
-          mensagem={requisicaoVinculos.error}
-          onRetry={requisicaoVinculos.reload}
-        />
+        <ErroCarregamento mensagem={requisicaoVinculos.error} onRetry={requisicaoVinculos.reload} />
       </Layout>
     )
   }
@@ -217,88 +289,86 @@ export default function Notas() {
     <Layout>
       <Header
         titulo="Notas"
-        subtitulo={
-          media !== null ? (
-            <>
-              <span>Média da turma</span>
-              <Tag variant={media >= 7 ? 'success' : media >= 5 ? 'warning' : 'error'}>
-                {formatarNota(media)}
-              </Tag>
-            </>
-          ) : undefined
-        }
-        actions={
-          <Button
-            icon={<RefreshCcw />}
-            loading={recalculando}
-            disabled={!turmaDisciplinaId || linhas.length === 0}
-            onClick={() => recalcular()}
-          >
-            Recalcular turma
-          </Button>
-        }
         filtros={
-          <Filtros>
-            <Select<number>
-              label="Turma e disciplina"
-              options={opcoesVinculos}
-              value={turmaDisciplinaId}
-              loading={requisicaoVinculos.loading}
-              searchable
-              placeholder="Selecionar..."
-              emptyText="Você ainda não leciona em nenhuma turma"
-              onChange={setTurmaDisciplinaId}
-            />
+          <CamposCabecalho>
+            <CampoLargura>
+              <Select
+                placeholder="Turma"
+                options={opcoesTurmas}
+                value={turmaId}
+                loading={requisicaoVinculos.loading}
+                emptyText="Você não leciona em nenhuma turma"
+                onChange={(valor) => {
+                  setTurmaId(valor)
+                  setEspecificoId(null)
+                }}
+              />
+            </CampoLargura>
 
-            <Input
-              label="Período letivo"
-              placeholder="Ex.: 2026/1"
-              value={periodo}
-              maxLength={10}
-              hint="Obrigatório para recalcular."
-              onChange={(evento) => setPeriodo(evento.target.value)}
-            />
-          </Filtros>
+            <CampoLargura>
+              <Select<TipoFiltro>
+                placeholder="Disciplina / Aluno"
+                options={opcoesTipo}
+                value={tipo}
+                emptyText="—"
+                onChange={(valor) => {
+                  setTipo(valor)
+                  setEspecificoId(null)
+                }}
+              />
+            </CampoLargura>
+
+            <CampoLargura>
+              <Select
+                placeholder="Disc/Aluno (Específico)"
+                options={opcoesEspecifico}
+                value={especificoId}
+                disabled={!tipo || !turmaId}
+                loading={tipo === 'aluno' && requisicaoMatriculasTurma.loading}
+                emptyText="Selecione turma e tipo primeiro"
+                onChange={setEspecificoId}
+              />
+            </CampoLargura>
+
+            <LarguraBotao>
+              <Button size="large" icon={<Search />} onClick={buscar}>
+                Buscar
+              </Button>
+            </LarguraBotao>
+          </CamposCabecalho>
         }
       />
 
-      <Card
-        semPadding
-        actions={
-          <span style={{ fontSize: '12px', color: '#737373' }}>
-            A nota é derivada automaticamente dos simulados concluídos — não há lançamento manual.
-          </span>
-        }
-        titulo={vinculo ? `${vinculo.turma?.titulo} · ${vinculo.disciplina?.titulo}` : 'Selecione uma turma'}
-      >
-        <DataTable
-          descricao="Notas dos alunos"
-          columns={colunas}
-          data={linhas}
-          rowKey={(linha) => linha.alunoId}
-          loading={requisicaoMatriculas.loading || requisicaoNotas.loading}
-          error={requisicaoNotas.error}
-          onReload={requisicaoNotas.reload}
-          empty={{
-            titulo: turmaDisciplinaId ? 'Nenhum aluno matriculado' : 'Selecione uma turma',
-            descricao: turmaDisciplinaId
-              ? 'A secretaria precisa matricular alunos nesta turma.'
-              : 'Escolha a turma e a disciplina para ver as notas.',
-            icon: <NotebookPen />,
-          }}
-          actions={(linha) => (
-            <Button
-              variant="subtle"
-              size="small"
-              icon={<RefreshCcw />}
-              disabled={recalculando || !periodo.trim()}
-              onClick={() => recalcular(linha.alunoId)}
-            >
-              Recalcular
-            </Button>
-          )}
-        />
-      </Card>
+      {carregandoResultado ? (
+        <Skeleton $altura="240px" $raio="8px" />
+      ) : linhasAcordeao.length === 0 ? (
+        <Card>
+          <EstadoVazio
+            titulo="Nada encontrado"
+            descricao={filtro ? 'Não há dados para esse filtro.' : 'Você ainda não leciona em nenhuma turma.'}
+            icon={<NotebookPen />}
+          />
+        </Card>
+      ) : (
+        <Card semPadding>
+          <Lista>
+            {linhasAcordeao.map((linha, indice) => {
+              const nota = notaDaLinha(linha.alunoId, linha.disciplinaId)
+
+              return (
+                <DropDown
+                  key={linha.chave}
+                  titulo={linha.titulo}
+                  resumo={typeof nota?.total === 'number' ? `Nota: ${formatarNota(nota.total)}` : 'Sem nota'}
+                  abertoInicialmente={indice === 0}
+                  itens={simuladosDaLinha(linha.alunoId, linha.disciplinaId)}
+                  emptyText="Nenhum simulado concluído considerado nesta nota."
+                />
+              )
+            })}
+          </Lista>
+        </Card>
+      )}
     </Layout>
   )
 }

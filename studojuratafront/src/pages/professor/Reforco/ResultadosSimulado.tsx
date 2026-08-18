@@ -1,36 +1,29 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { CheckCircle2, Clock, Percent, Users } from 'lucide-react'
+import { Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
+import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
-import { InfoCard } from '../../../components/ui/InfoCard'
-import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
-import { Skeleton } from '../../../components/feedback/Skeleton'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import {
   alunos as servicoAlunos,
   simuladoAlunos,
   simulados as servicoSimulados,
 } from '../../../services/endpoints'
-import { formatarNota, formatarPorcentagem, formatarTempo } from '../../../utils/format'
-import {
-  ROTULO_STATUS_SIMULADO,
-  ROTULO_STATUS_SIMULADO_ALUNO,
-  STATUS_SIMULADO_VARIANT,
-  STATUS_SIMULADO_ALUNO_VARIANT,
-} from '../../../utils/labels'
+import { formatarPorcentagem, formatarTempo } from '../../../utils/format'
 import type { SimuladoAlunoResponse } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
-const Indicadores = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
+/* Confirmado no Figma: "Participação: X/Y" e "Média geral: Z%" em linhas
+   separadas de texto simples — não cards de indicador. */
+const Info = styled.div`
+  display: flex;
+  flex-direction: column;
 `
 
 export default function ResultadosSimulado() {
@@ -61,14 +54,11 @@ export default function ResultadosSimulado() {
     const maxima = simulado?.notaMaxima ?? 10
 
     const somaNotas = concluidas.reduce((total, tentativa) => total + (tentativa.nota ?? 0), 0)
-    const somaTempos = concluidas.reduce((total, tentativa) => total + (tentativa.tempoGasto ?? 0), 0)
 
     return {
       total: tentativas.length,
       concluidas: concluidas.length,
-      mediaNota: concluidas.length ? somaNotas / concluidas.length : null,
       mediaPercentual: concluidas.length && maxima ? (somaNotas / concluidas.length / maxima) * 100 : null,
-      tempoMedio: concluidas.length ? somaTempos / concluidas.length : null,
     }
   }, [tentativas, simulado])
 
@@ -79,18 +69,6 @@ export default function ResultadosSimulado() {
       ordenavel: true,
       valorOrdenacao: (tentativa) => nomeAluno(tentativa.alunoId),
       render: (tentativa) => nomeAluno(tentativa.alunoId),
-    },
-    {
-      key: 'status',
-      cabecalho: 'Situação',
-      render: (tentativa) =>
-        tentativa.status ? (
-          <Tag variant={STATUS_SIMULADO_ALUNO_VARIANT[tentativa.status]} ponto>
-            {ROTULO_STATUS_SIMULADO_ALUNO[tentativa.status]}
-          </Tag>
-        ) : (
-          '—'
-        ),
     },
     {
       key: 'acertos',
@@ -106,39 +84,10 @@ export default function ResultadosSimulado() {
           : '—',
     },
     {
-      key: 'nota',
-      cabecalho: 'Nota',
-      alinhamento: 'center',
-      ordenavel: true,
-      valorOrdenacao: (tentativa) => tentativa.nota ?? -1,
-      render: (tentativa) => {
-        if (typeof tentativa.nota !== 'number') return '—'
-
-        const maxima = simulado?.notaMaxima ?? 10
-        const percentual = maxima ? (tentativa.nota / maxima) * 100 : 0
-
-        return (
-          <Tag variant={percentual >= 70 ? 'success' : percentual >= 50 ? 'warning' : 'error'}>
-            {formatarNota(tentativa.nota)}
-          </Tag>
-        )
-      },
-    },
-    {
       key: 'tempo',
       cabecalho: 'Tempo',
       alinhamento: 'center',
-      ocultarEmTelaPequena: true,
-      render: (tentativa) => (
-        <>
-          {formatarTempo(tentativa.tempoGasto)}
-          {tentativa.finalizadoPorTempo && (
-            <Tag variant="warning" size="small">
-              por tempo
-            </Tag>
-          )}
-        </>
-      ),
+      render: (tentativa) => formatarTempo(tentativa.tempoGasto),
     },
   ]
 
@@ -159,74 +108,18 @@ export default function ResultadosSimulado() {
       <Header
         titulo={simulado?.titulo ?? 'Resultados do simulado'}
         subtitulo={
-          simulado && (
-            <>
-              {simulado.status && (
-                <Tag variant={STATUS_SIMULADO_VARIANT[simulado.status]} ponto>
-                  {ROTULO_STATUS_SIMULADO[simulado.status]}
-                </Tag>
-              )}
-              {simulado.quantidadeQuestoes ? (
-                <span>{simulado.quantidadeQuestoes} questões</span>
-              ) : null}
-              {simulado.tempoLimite ? <span>· {simulado.tempoLimite} min</span> : null}
-            </>
-          )
+          <Info>
+            <span>Participação: {resumo.concluidas}/{resumo.total}</span>
+            <span>
+              Média geral: {resumo.mediaPercentual !== null ? formatarPorcentagem(resumo.mediaPercentual) : '—'}
+            </span>
+          </Info>
         }
         voltarPara="/professor/reforco/simulados"
         rotuloVoltar="Voltar para simulados"
       />
 
-      {requisicaoTentativas.loading ? (
-        <Indicadores>
-          <Skeleton $altura="80px" $raio="16px" />
-          <Skeleton $altura="80px" $raio="16px" />
-          <Skeleton $altura="80px" $raio="16px" />
-          <Skeleton $altura="80px" $raio="16px" />
-        </Indicadores>
-      ) : (
-        <Indicadores>
-          <InfoCard
-            value={`${resumo.concluidas}/${resumo.total}`}
-            label="tentativas concluídas"
-            icon={<CheckCircle2 />}
-            tone="success"
-          />
-          <InfoCard value={resumo.total} label="alunos com o simulado" icon={<Users />} tone="purple" />
-          <InfoCard
-            value={resumo.mediaNota !== null ? formatarNota(resumo.mediaNota) : '—'}
-            label="nota média"
-            icon={<Percent />}
-            tone="blue"
-          />
-          <InfoCard
-            value={resumo.tempoMedio !== null ? formatarTempo(resumo.tempoMedio) : '—'}
-            label="tempo médio"
-            icon={<Clock />}
-            tone="warning"
-          />
-        </Indicadores>
-      )}
-
-      <Card
-        semPadding
-        titulo="Desempenho por aluno"
-        actions={
-          resumo.mediaPercentual !== null ? (
-            <Tag
-              variant={
-                resumo.mediaPercentual >= 70
-                  ? 'success'
-                  : resumo.mediaPercentual >= 50
-                    ? 'warning'
-                    : 'error'
-              }
-            >
-              Aproveitamento médio {formatarPorcentagem(resumo.mediaPercentual)}
-            </Tag>
-          ) : undefined
-        }
-      >
+      <Card semPadding>
         <DataTable
           descricao="Resultados por aluno"
           columns={colunas}
@@ -235,15 +128,21 @@ export default function ResultadosSimulado() {
           loading={requisicaoTentativas.loading || requisicaoAlunos.loading}
           error={requisicaoTentativas.error}
           onReload={requisicaoTentativas.reload}
-          onRowClick={(tentativa) =>
-            navegar(`/professor/reforco/simulados/${idSimulado}/resultados/${tentativa.id}`)
-          }
           empty={{
             titulo: 'Simulado ainda não lançado',
             descricao:
               'Nenhuma tentativa foi criada. Use "Lançar" na lista de simulados para distribuí-lo aos alunos.',
             icon: <Users />,
           }}
+          actions={(tentativa) => (
+            <Button
+              variant="subtle"
+              size="small"
+              onClick={() => navegar(`/professor/reforco/simulados/${idSimulado}/resultados/${tentativa.id}`)}
+            >
+              Detalhar
+            </Button>
+          )}
         />
       </Card>
     </Layout>

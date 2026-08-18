@@ -62,7 +62,7 @@ export function CircularProgress({
           />
         </S.Svg>
 
-        <S.Centro $cor={corFinal} $size={size}>
+        <S.Centro $cor={corFinal} $size={size} $espessura={espessura}>
           {textoCentral ?? `${Math.round(percentual)}%`}
         </S.Centro>
       </S.Anel>

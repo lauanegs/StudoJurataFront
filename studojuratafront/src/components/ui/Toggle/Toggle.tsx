@@ -1,6 +1,6 @@
-import { useId } from 'react'
+import { Switch } from '@mantine/core'
 
-import * as S from './styles'
+import { theme as tokens } from '../../../styles/theme'
 import type { ToggleProps } from './types'
 
 /**
@@ -19,33 +19,43 @@ export function Toggle({
   disabled,
   id,
 }: ToggleProps) {
-  const idGerado = useId()
-  const idCampo = id ?? idGerado
-
   return (
-    <S.Container>
-      <S.Linha htmlFor={idCampo} $disabled={disabled}>
-        <S.Entrada
-          id={idCampo}
-          type="checkbox"
-          role="switch"
-          checked={ligado}
-          disabled={disabled}
-          aria-label={rotuloAcessivel ?? label}
-          aria-checked={ligado}
-          onChange={(evento) => onChange(evento.target.checked)}
-        />
-
-        <S.Trilho $ligado={ligado} aria-hidden="true" />
-
-        {label && <S.Texto>{label}</S.Texto>}
-
-        {(textoLigado || textoDesligado) && (
-          <S.Estado $ligado={ligado}>{ligado ? textoLigado : textoDesligado}</S.Estado>
-        )}
-      </S.Linha>
-
-      {descricao && <S.Descricao>{descricao}</S.Descricao>}
-    </S.Container>
+    <Switch
+      id={id}
+      checked={ligado}
+      onChange={(evento) => onChange(evento.currentTarget.checked)}
+      disabled={disabled}
+      aria-label={rotuloAcessivel ?? label}
+      description={descricao}
+      size="md"
+      label={
+        (label || textoLigado || textoDesligado) && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: tokens.spacing.xs }}>
+            {label && (
+              <span style={{ fontSize: tokens.typography.sizes.sm, color: tokens.colors.textStrong }}>
+                {label}
+              </span>
+            )}
+            {(textoLigado || textoDesligado) && (
+              <span
+                style={{
+                  fontSize: tokens.typography.sizes.sm,
+                  fontWeight: tokens.typography.weights.medium,
+                  color: ligado ? tokens.colors.successText : tokens.colors.textTertiary,
+                }}
+              >
+                {ligado ? textoLigado : textoDesligado}
+              </span>
+            )}
+          </span>
+        )
+      }
+      styles={{
+        track: {
+          background: ligado ? tokens.gradients.primary : tokens.colors.borderStrong,
+          border: 'none',
+        },
+      }}
+    />
   )
 }

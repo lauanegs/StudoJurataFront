@@ -13,7 +13,7 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { professores as servicoProfessores } from '../../../services/endpoints'
 import { formatarCpf, formatarTelefone, normalizar } from '../../../utils/format'
@@ -46,27 +46,26 @@ export default function Professores() {
 
   const paginacao = usePaginacao(filtrados)
 
-  async function excluir(professor: Professor) {
-    const confirmado = await confirmar({
+  const { executar: excluir, executando: excluindo } = useAcao(async (professor: Professor) => {
+    await confirmar({
       titulo: 'Excluir professor?',
       descricao: `${professor.pessoa?.nome} será desativado. As turmas em que ele leciona precisarão de um novo responsável.`,
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoProfessores.excluir(professor.id)
+          toast.success('Professor excluído')
+          await reload()
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoProfessores.excluir(professor.id)
-      toast.success('Professor excluído')
-      await reload()
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   const colunas: Coluna<Professor>[] = [
     {
@@ -153,12 +152,14 @@ export default function Professores() {
             <IconButton
               label={`Editar ${professor.pessoa?.nome}`}
               icon={<Pencil />}
+              disabled={excluindo}
               onClick={() => navegar(`/adm/professores/${professor.id}`)}
             />
             <IconButton
               label={`Excluir ${professor.pessoa?.nome}`}
               icon={<Trash2 />}
               variant="danger"
+              disabled={excluindo}
               onClick={() => excluir(professor)}
             />
           </>

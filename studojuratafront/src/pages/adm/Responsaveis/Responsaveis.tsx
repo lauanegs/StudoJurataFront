@@ -12,7 +12,7 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { responsaveis as servicoResponsaveis } from '../../../services/endpoints'
 import { formatarCpf, formatarTelefone, normalizar } from '../../../utils/format'
@@ -47,27 +47,26 @@ export default function Responsaveis() {
 
   const paginacao = usePaginacao(filtrados)
 
-  async function excluir(responsavel: Responsavel) {
-    const confirmado = await confirmar({
+  const { executar: excluir, executando: excluindo } = useAcao(async (responsavel: Responsavel) => {
+    await confirmar({
       titulo: 'Excluir responsável?',
       descricao: `Os vínculos de ${responsavel.pessoa?.nome} com os alunos serão removidos.`,
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoResponsaveis.excluir(responsavel.id)
+          toast.success('Responsável excluído')
+          await reload()
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoResponsaveis.excluir(responsavel.id)
-      toast.success('Responsável excluído')
-      await reload()
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   const colunas: Coluna<Responsavel>[] = [
     {
@@ -144,12 +143,14 @@ export default function Responsaveis() {
             <IconButton
               label={`Editar ${responsavel.pessoa?.nome}`}
               icon={<Pencil />}
+              disabled={excluindo}
               onClick={() => navegar(`/adm/responsaveis/${responsavel.id}`)}
             />
             <IconButton
               label={`Excluir ${responsavel.pessoa?.nome}`}
               icon={<Trash2 />}
               variant="danger"
+              disabled={excluindo}
               onClick={() => excluir(responsavel)}
             />
           </>

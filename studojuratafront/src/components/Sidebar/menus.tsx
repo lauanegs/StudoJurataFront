@@ -4,6 +4,7 @@ import {
   ClipboardList,
   GraduationCap,
   Home,
+  KeyRound,
   Layers,
   Library,
   NotebookPen,
@@ -33,6 +34,7 @@ export const MENUS: Record<TipoUsuario, ItemMenu[]> = {
     { label: 'Cursos', caminho: '/adm/cursos', icon: <Library /> },
     { label: 'Disciplinas', caminho: '/adm/disciplinas', icon: <BookOpen /> },
     { label: 'Eventos', caminho: '/adm/eventos', icon: <CalendarDays /> },
+    { label: 'Usuários', caminho: '/adm/usuarios', icon: <KeyRound /> },
   ],
 
   PROFESSOR: [

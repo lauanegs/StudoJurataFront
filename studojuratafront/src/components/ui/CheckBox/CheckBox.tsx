@@ -1,9 +1,12 @@
-import { useEffect, useRef } from 'react'
-import { Check, Minus } from 'lucide-react'
+import { Checkbox } from '@mantine/core'
 
-import * as S from './styles'
 import type { CheckBoxProps } from './types'
 
+/**
+ * O estado indeterminado (usado na seleção em massa de linhas de tabela) era
+ * um useEffect setando `inputRef.current.indeterminate` na mão — a Mantine
+ * já aceita `indeterminate` como prop.
+ */
 export function CheckBox({
   label,
   description,
@@ -11,39 +14,24 @@ export function CheckBox({
   indeterminate = false,
   checked = false,
   disabled,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  size: _size,
   ...rest
 }: CheckBoxProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (inputRef.current) inputRef.current.indeterminate = indeterminate
-  }, [indeterminate])
-
+  // `size` chega tipado como o atributo nativo de <input> (número) por herdar
+  // InputHTMLAttributes — não faz sentido pra checkbox, então é descartado
+  // aqui pra não colidir com o `size` (token de escala) da Mantine.
   return (
-    <S.Wrapper $hasError={Boolean(error)}>
-      <S.Container $disabled={disabled}>
-        <S.Input
-          ref={inputRef}
-          type="checkbox"
-          checked={checked}
-          disabled={disabled}
-          aria-invalid={error ? true : undefined}
-          {...rest}
-        />
-
-        <S.Marker $checked={checked || indeterminate} $error={Boolean(error)} aria-hidden="true">
-          {indeterminate ? <Minus /> : checked ? <Check /> : null}
-        </S.Marker>
-
-        {(label || description) && (
-          <S.Content>
-            {label && <S.Label>{label}</S.Label>}
-            {description && <S.Description>{description}</S.Description>}
-          </S.Content>
-        )}
-      </S.Container>
-
-      {error && <S.Error role="alert">{error}</S.Error>}
-    </S.Wrapper>
+    <Checkbox
+      checked={checked}
+      indeterminate={indeterminate}
+      disabled={disabled}
+      label={label}
+      description={description}
+      error={error}
+      color="brandPurple"
+      radius="sm"
+      {...rest}
+    />
   )
 }

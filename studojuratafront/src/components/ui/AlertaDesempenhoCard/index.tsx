@@ -12,7 +12,7 @@ const Container = styled.div`
 
   background: ${({ theme }) => theme.colors.warningBackground};
   border: 1px solid ${({ theme }) => theme.colors.warning};
-  border-radius: ${({ theme }) => theme.radius.lg};
+  border-radius: ${({ theme }) => theme.radius.md};
 `
 
 const Icone = styled.span`

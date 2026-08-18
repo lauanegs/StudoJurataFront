@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
+import { Group, Paper, Table } from '@mantine/core'
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 
 import { ErroCarregamento } from '../../feedback/ErroCarregamento'
 import { EstadoVazio } from '../../feedback/EstadoVazio'
 import { Skeleton } from '../../feedback/Skeleton'
 import { Paginacao } from '../Paginacao'
-import * as S from './styles'
+import { theme as tokens } from '../../../styles/theme'
 import type { Coluna, DataTableProps } from './types'
 
 type Direcao = 'asc' | 'desc'
@@ -15,7 +16,9 @@ type Direcao = 'asc' | 'desc'
  * (skeleton), erro (com "tentar novamente"), vazio (com ação) e preenchido.
  *
  * A ordenação é feita no cliente porque nenhum endpoint do back aceita
- * parâmetro de ordenação — todos devolvem a lista inteira.
+ * parâmetro de ordenação — todos devolvem a lista inteira. A Mantine só
+ * fornece a casca visual (Table/Paper/Group); ordenar, paginar e os estados
+ * continuam sendo lógica de domínio, não trocam com a biblioteca.
  */
 export function DataTable<T>({
   columns,
@@ -74,79 +77,115 @@ export function DataTable<T>({
 
   const totalColunas = columns.length + (actions ? 1 : 0)
 
+  const paddingTd = `${densidade === 'compacta' ? tokens.spacing.xs : tokens.spacing.sm} ${tokens.spacing.lg}`
+
   if (error) {
     return (
-      <S.Container>
+      <Paper radius="md" shadow="md" style={{ width: '100%', overflow: 'hidden' }}>
         <ErroCarregamento mensagem={error} onRetry={onReload} />
-      </S.Container>
+      </Paper>
     )
   }
 
   return (
-    <S.Container>
-      <S.Rolagem>
-        <S.Tabela aria-label={descricao} aria-busy={loading || undefined}>
-          <S.Cabecalho>
-            <tr>
+    <Paper radius="md" shadow="md" style={{ width: '100%', overflow: 'hidden' }}>
+      <div style={{ width: '100%', overflowX: 'auto' }}>
+        <Table
+          aria-label={descricao}
+          aria-busy={loading || undefined}
+          highlightOnHover={Boolean(onRowClick)}
+          highlightOnHoverColor={tokens.colors.background}
+          withRowBorders
+          styles={{
+            table: { width: '100%' },
+            thead: { background: 'rgba(230, 234, 242, 0.3)' },
+            th: {
+              padding: `${tokens.spacing.md} ${tokens.spacing.xl}`,
+              fontSize: tokens.typography.sizes.md,
+              fontWeight: tokens.typography.weights.semiBold,
+              letterSpacing: '-0.8px',
+              color: tokens.colors.textSecondary,
+              whiteSpace: 'nowrap',
+            },
+            tr: { borderBottom: '2px solid rgba(115, 115, 115, 0.1)' },
+            td: {
+              padding: paddingTd,
+              fontSize: tokens.typography.sizes.sm,
+              color: tokens.colors.textSecondary,
+              verticalAlign: 'middle',
+            },
+          }}
+        >
+          <Table.Thead>
+            <Table.Tr>
               {columns.map((coluna) => {
                 const ativa = ordenacao?.key === coluna.key
 
                 return (
-                  <S.Th
+                  <Table.Th
                     key={coluna.key}
                     scope="col"
-                    $largura={coluna.largura}
-                    $alinhamento={coluna.alinhamento}
-                    $ordenavel={coluna.ordenavel}
-                    $ocultarEmTelaPequena={coluna.ocultarEmTelaPequena}
+                    className={
+                      [coluna.ocultarEmTelaPequena && 'oculta-tela-pequena', coluna.ordenavel && 'coluna-ordenavel']
+                        .filter(Boolean)
+                        .join(' ') || undefined
+                    }
+                    style={{
+                      width: coluna.largura,
+                      textAlign: coluna.alinhamento ?? 'left',
+                      cursor: coluna.ordenavel ? 'pointer' : undefined,
+                      userSelect: coluna.ordenavel ? 'none' : undefined,
+                    }}
                     aria-sort={
                       ativa ? (ordenacao.direcao === 'asc' ? 'ascending' : 'descending') : undefined
                     }
                     onClick={() => alternarOrdenacao(coluna)}
                   >
-                    <S.ConteudoTh>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: tokens.spacing.xxs }}>
                       {coluna.cabecalho}
                       {coluna.ordenavel &&
                         (ativa ? (
                           ordenacao.direcao === 'asc' ? (
-                            <ArrowUp />
+                            <ArrowUp size={14} />
                           ) : (
-                            <ArrowDown />
+                            <ArrowDown size={14} />
                           )
                         ) : (
-                          <ArrowUpDown opacity={0.4} />
+                          <ArrowUpDown size={14} opacity={0.4} />
                         ))}
-                    </S.ConteudoTh>
-                  </S.Th>
+                    </span>
+                  </Table.Th>
                 )
               })}
 
               {actions && (
-                <S.Th scope="col" $alinhamento="right" $largura="120px">
+                // width:1% + nowrap é o truque clássico pra essa coluna encolher só até
+                // o necessário pros botões, em vez de herdar o espaço sobrando da tabela.
+                <Table.Th scope="col" style={{ textAlign: 'left', width: '1%', whiteSpace: 'nowrap' }}>
                   {rotuloColunaAcoes}
-                </S.Th>
+                </Table.Th>
               )}
-            </tr>
-          </S.Cabecalho>
+            </Table.Tr>
+          </Table.Thead>
 
-          <tbody>
+          <Table.Tbody>
             {loading &&
               Array.from({ length: linhasSkeleton }).map((_, linha) => (
-                <S.Tr key={`skeleton-${linha}`}>
+                <Table.Tr key={`skeleton-${linha}`}>
                   {Array.from({ length: totalColunas }).map((__, coluna) => (
-                    <S.Td key={coluna} $densidade={densidade}>
+                    <Table.Td key={coluna}>
                       <Skeleton $altura="14px" $largura={coluna === 0 ? '70%' : '45%'} />
-                    </S.Td>
+                    </Table.Td>
                   ))}
-                </S.Tr>
+                </Table.Tr>
               ))}
 
             {!loading &&
               dadosOrdenados.map((item) => (
-                <S.Tr
+                <Table.Tr
                   key={rowKey(item)}
-                  $clicavel={Boolean(onRowClick)}
                   tabIndex={onRowClick ? 0 : undefined}
+                  style={{ cursor: onRowClick ? 'pointer' : undefined }}
                   onClick={() => onRowClick?.(item)}
                   onKeyDown={(evento) => {
                     if (onRowClick && (evento.key === 'Enter' || evento.key === ' ')) {
@@ -156,30 +195,30 @@ export function DataTable<T>({
                   }}
                 >
                   {columns.map((coluna) => (
-                    <S.Td
+                    <Table.Td
                       key={coluna.key}
-                      $alinhamento={coluna.alinhamento}
-                      $densidade={densidade}
-                      $ocultarEmTelaPequena={coluna.ocultarEmTelaPequena}
+                      className={coluna.ocultarEmTelaPequena ? 'oculta-tela-pequena' : undefined}
+                      style={{ textAlign: coluna.alinhamento ?? 'left' }}
                     >
                       {coluna.render(item)}
-                    </S.Td>
+                    </Table.Td>
                   ))}
 
                   {actions && (
-                    <S.Td
-                      $alinhamento="right"
-                      $densidade={densidade}
+                    <Table.Td
+                      style={{ textAlign: 'left' }}
                       onClick={(evento) => evento.stopPropagation()}
                     >
-                      <S.CelulaAcoes>{actions(item)}</S.CelulaAcoes>
-                    </S.Td>
+                      <Group justify="flex-start" gap={tokens.spacing.xxs} wrap="nowrap">
+                        {actions(item)}
+                      </Group>
+                    </Table.Td>
                   )}
-                </S.Tr>
+                </Table.Tr>
               ))}
-          </tbody>
-        </S.Tabela>
-      </S.Rolagem>
+          </Table.Tbody>
+        </Table>
+      </div>
 
       {!loading && dadosOrdenados.length === 0 && (
         <EstadoVazio
@@ -191,6 +230,6 @@ export function DataTable<T>({
       )}
 
       {paginacao && !loading && dadosOrdenados.length > 0 && <Paginacao {...paginacao} />}
-    </S.Container>
+    </Paper>
   )
 }

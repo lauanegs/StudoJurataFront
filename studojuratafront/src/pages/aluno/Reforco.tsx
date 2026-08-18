@@ -1,34 +1,47 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
-import { CheckCircle2, Sparkles } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Sparkles } from 'lucide-react'
 
 import { Layout } from '../../components/layout'
+import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { DataTable } from '../../components/ui/DataTable'
 import { Header } from '../../components/ui/Header'
 import { Select } from '../../components/ui/Select'
 import { SimuladoIniciarCard } from '../../components/ui/SimuladoIniciarCard'
 import { Tab } from '../../components/ui/Tab'
-import { Tag } from '../../components/ui/Tag'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../components/feedback/Skeleton'
 import { useAlunoLogado } from '../../hooks/usePerfilLogado'
+import { usePaginacao } from '../../hooks/usePaginacao'
 import { useRequisicao } from '../../hooks/useRequisicao'
 import {
   disciplinas as servicoDisciplinas,
   simuladoAlunos,
   simulados as servicoSimulados,
 } from '../../services/endpoints'
-import { formatarDataHora, formatarNota, formatarTempo } from '../../utils/format'
+import { formatarDataHora, formatarTempo } from '../../utils/format'
 import type { SimuladoAlunoResponse } from '../../types'
 import type { Coluna } from '../../components/ui/DataTable/types'
 
 const Lista = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+/* Confirmado no Figma: select de disciplina + botão "Buscar" colados, na
+   mesma linha, igual ao padrão já usado nas telas do professor. */
+const CamposCabecalho = styled.div`
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: ${({ theme }) => theme.spacing.md};
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
 `
 
 type Aba = 'aFazer' | 'realizados'
@@ -38,6 +51,10 @@ export default function AlunoReforco() {
   const { alunoId, loading: carregandoAluno, error: erroAluno } = useAlunoLogado()
 
   const [aba, setAba] = useState<Aba>('aFazer')
+  // Confirmado no Figma: o filtro só se aplica ao clicar em "Buscar" — a
+  // seleção do campo (rascunho) fica separada do filtro de fato aplicado, que
+  // começa nulo (lista completa, sem filtro).
+  const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
 
   const requisicaoTentativas = useRequisicao(
@@ -100,20 +117,13 @@ export default function AlunoReforco() {
     return { indisponivel: false, motivo: undefined }
   }
 
+  // Confirmado no Figma: a tabela de "Simulados realizados" tem só 3 colunas
+  // (Título, Acertos, Tempo) — sem Disciplina nem Nota.
   const colunas: Coluna<SimuladoAlunoResponse>[] = [
     {
       key: 'titulo',
-      cabecalho: 'Simulado',
+      cabecalho: 'Título',
       render: (tentativa) => porSimulado.get(tentativa.simuladoId)?.titulo ?? '—',
-    },
-    {
-      key: 'disciplina',
-      cabecalho: 'Disciplina',
-      ocultarEmTelaPequena: true,
-      render: (tentativa) => {
-        const nome = nomeDisciplina(porSimulado.get(tentativa.simuladoId)?.disciplinaId)
-        return nome ? <Tag variant="purple">{nome}</Tag> : '—'
-      },
     },
     {
       key: 'acertos',
@@ -130,32 +140,14 @@ export default function AlunoReforco() {
       },
     },
     {
-      key: 'nota',
-      cabecalho: 'Nota',
-      alinhamento: 'center',
-      ordenavel: true,
-      valorOrdenacao: (tentativa) => tentativa.nota ?? -1,
-      render: (tentativa) => {
-        if (typeof tentativa.nota !== 'number') return '—'
-
-        const maxima = porSimulado.get(tentativa.simuladoId)?.notaMaxima ?? 10
-        const percentual = maxima ? (tentativa.nota / maxima) * 100 : 0
-
-        return (
-          <Tag variant={percentual >= 70 ? 'success' : percentual >= 50 ? 'warning' : 'error'}>
-            {formatarNota(tentativa.nota)}
-          </Tag>
-        )
-      },
-    },
-    {
       key: 'tempo',
       cabecalho: 'Tempo',
       alinhamento: 'center',
-      ocultarEmTelaPequena: true,
       render: (tentativa) => formatarTempo(tentativa.tempoGasto),
     },
   ]
+
+  const paginacaoRealizados = usePaginacao(realizados)
 
   if (erroAluno) {
     return (
@@ -170,23 +162,24 @@ export default function AlunoReforco() {
     <Layout>
       <Header
         titulo="Reforço de aprendizagem"
-        subtitulo={
-          !requisicaoTentativas.loading
-            ? `${aFazer.length} simulado(s) para fazer · ${realizados.length} concluído(s)`
-            : undefined
-        }
         filtros={
-          <Select<number>
-            label="Disciplina"
-            options={opcoesDisciplinas}
-            value={disciplinaId}
-            loading={requisicaoDisciplinas.loading}
-            clearable
-            placeholder="Todas as disciplinas"
-            maxWidth="280px"
-            emptyText="Nenhuma disciplina com simulados"
-            onChange={setDisciplinaId}
-          />
+          <CamposCabecalho>
+            <Select<number>
+              label="Disciplina"
+              options={opcoesDisciplinas}
+              value={disciplinaSelecionada}
+              loading={requisicaoDisciplinas.loading}
+              clearable
+              placeholder="Todas as disciplinas"
+              maxWidth="280px"
+              emptyText="Nenhuma disciplina com simulados"
+              onChange={setDisciplinaSelecionada}
+            />
+
+            <Button size="large" onClick={() => setDisciplinaId(disciplinaSelecionada)}>
+              Buscar
+            </Button>
+          </CamposCabecalho>
         }
       />
 
@@ -200,56 +193,80 @@ export default function AlunoReforco() {
         ]}
       />
 
-      {aba === 'aFazer' && (
-        <Card>
-          {requisicaoTentativas.loading || carregandoAluno ? (
+      {aba === 'aFazer' &&
+        (requisicaoTentativas.loading || carregandoAluno ? (
+          <Card>
             <Skeleton $altura="120px" $raio="8px" />
-          ) : requisicaoTentativas.error ? (
+          </Card>
+        ) : requisicaoTentativas.error ? (
+          <Card>
             <ErroCarregamento
               mensagem={requisicaoTentativas.error}
               onRetry={requisicaoTentativas.reload}
             />
-          ) : aFazer.length === 0 ? (
+          </Card>
+        ) : aFazer.length === 0 ? (
+          <Card>
             <EstadoVazio
               titulo="Tudo em dia!"
               descricao="Você não tem simulados pendentes no momento."
               icon={<CheckCircle2 />}
             />
-          ) : (
-            <Lista>
-              {aFazer.map((tentativa) => {
-                const simulado = porSimulado.get(tentativa.simuladoId)
-                const situacao = disponibilidade(tentativa.simuladoId)
+          </Card>
+        ) : (
+          // Confirmado no Figma: os cards de simulado ficam soltos direto no
+          // fundo da página, não dentro de um Card "container".
+          <Lista>
+            {aFazer.map((tentativa) => {
+              const simulado = porSimulado.get(tentativa.simuladoId)
+              const situacao = disponibilidade(tentativa.simuladoId)
 
-                return (
-                  <SimuladoIniciarCard
-                    key={tentativa.id}
-                    titulo={simulado?.titulo ?? `Simulado ${tentativa.simuladoId}`}
-                    disciplina={nomeDisciplina(simulado?.disciplinaId)}
-                    quantidadeQuestoes={simulado?.quantidadeQuestoes}
-                    tempoLimite={simulado?.tempoLimite}
-                    prazo={simulado?.dataFim ? formatarDataHora(simulado.dataFim) : undefined}
-                    indisponivel={situacao.indisponivel}
-                    motivoIndisponivel={situacao.motivo}
-                    onStart={() => navegar(`/aluno/simulado/${tentativa.id}`)}
-                  />
-                )
-              })}
-            </Lista>
-          )}
-        </Card>
-      )}
+              return (
+                <SimuladoIniciarCard
+                  key={tentativa.id}
+                  disciplina={
+                    nomeDisciplina(simulado?.disciplinaId) ??
+                    simulado?.titulo ??
+                    `Simulado ${tentativa.simuladoId}`
+                  }
+                  quantidadeQuestoes={simulado?.quantidadeQuestoes}
+                  indisponivel={situacao.indisponivel}
+                  motivoIndisponivel={situacao.motivo}
+                  onStart={() => navegar(`/aluno/simulado/${tentativa.id}`)}
+                />
+              )
+            })}
+          </Lista>
+        ))}
 
       {aba === 'realizados' && (
         <DataTable
           descricao="Simulados realizados"
           columns={colunas}
-          data={realizados}
+          data={paginacaoRealizados.itensDaPagina}
           rowKey={(tentativa) => tentativa.id}
           loading={requisicaoTentativas.loading}
           error={requisicaoTentativas.error}
           onReload={requisicaoTentativas.reload}
-          onRowClick={(tentativa) => navegar(`/aluno/simulado/${tentativa.id}`)}
+          actions={(tentativa) => (
+            <Button
+              variant="subtle"
+              size="small"
+              icon={<ClipboardList />}
+              onClick={() => navegar(`/aluno/simulado/${tentativa.id}`)}
+            >
+              Detalhar
+            </Button>
+          )}
+          paginacao={{
+            pagina: paginacaoRealizados.pagina,
+            totalPaginas: paginacaoRealizados.totalPaginas,
+            label: paginacaoRealizados.label,
+            temAnterior: paginacaoRealizados.temAnterior,
+            temProxima: paginacaoRealizados.temProxima,
+            onPrevious: paginacaoRealizados.anterior,
+            onNext: paginacaoRealizados.proxima,
+          }}
           empty={{
             titulo: 'Nenhum simulado concluído ainda',
             descricao: 'Comece pelo primeiro simulado da aba "Para fazer".',

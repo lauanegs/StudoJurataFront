@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
+import { animacaoFlutuar } from '../../../styles/animations'
+
 const Container = styled.section`
   position: relative;
   display: flex;
@@ -9,25 +11,12 @@ const Container = styled.section`
   gap: ${({ theme }) => theme.spacing.lg};
 
   width: 100%;
-  padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.xxl};
+  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xxl};
 
   background: ${({ theme }) => theme.gradients.banner};
   border-radius: ${({ theme }) => theme.radius.md};
   box-shadow: ${({ theme }) => theme.shadow.floating};
   overflow: hidden;
-
-  /* Brilho decorativo — apenas visual, não interativo. */
-  &::after {
-    content: '';
-    position: absolute;
-    top: -60%;
-    right: -10%;
-    width: 320px;
-    height: 320px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.12);
-    pointer-events: none;
-  }
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
     flex-direction: column;
@@ -49,13 +38,15 @@ const Conteudo = styled.div`
 `
 
 const Mascote = styled.img`
-  width: 120px;
-  height: auto;
+  width: 170px;
+  height: 170px;
   flex-shrink: 0;
   object-fit: contain;
+  ${animacaoFlutuar}
 
   @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
-    width: 88px;
+    width: 128px;
+    height: 128px;
   }
 `
 

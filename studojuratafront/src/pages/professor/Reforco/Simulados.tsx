@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, FileText, Pencil, Plus, Rocket, Square, Trash2 } from 'lucide-react'
+import { BarChart3, FileText, Pencil, Plus, Rocket, Square } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
-import { IconButton } from '../../../components/ui/IconButton'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -24,6 +23,7 @@ import {
 } from '../../../services/endpoints'
 import { formatarDataHora, normalizar } from '../../../utils/format'
 import { ROTULO_DESTINACAO, ROTULO_STATUS_SIMULADO, STATUS_SIMULADO_VARIANT } from '../../../utils/labels'
+import { theme as tokens } from '../../../styles/theme'
 import type { SimuladoResponse, StatusSimulado } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
@@ -93,79 +93,55 @@ export default function Simulados() {
   const paginacao = usePaginacao(filtrados)
 
   async function lancar(simulado: SimuladoResponse) {
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Lançar simulado?',
       descricao:
         simulado.tipoDestinacao === 'TODOS'
           ? 'Todos os alunos com matrícula ativa na turma receberão o simulado.'
           : 'Os alunos selecionados receberão o simulado. Depois de lançado, o conteúdo não deve mais ser alterado.',
       rotuloConfirmar: 'Lançar',
+      aoConfirmar: async () => {
+        setProcessando(simulado.id)
+
+        try {
+          await servicoSimulados.lancar(simulado.id)
+          toast.success('Simulado lançado', 'Os alunos já podem iniciar as tentativas.')
+          await Promise.all([reload(), requisicaoTentativas.reload()])
+        } catch (erroLancar) {
+          toast.error(
+            'Não foi possível lançar',
+            erroLancar instanceof ApiError ? erroLancar.message : undefined,
+          )
+        } finally {
+          setProcessando(null)
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    setProcessando(simulado.id)
-
-    try {
-      await servicoSimulados.lancar(simulado.id)
-      toast.success('Simulado lançado', 'Os alunos já podem iniciar as tentativas.')
-      await Promise.all([reload(), requisicaoTentativas.reload()])
-    } catch (erroLancar) {
-      toast.error(
-        'Não foi possível lançar',
-        erroLancar instanceof ApiError ? erroLancar.message : undefined,
-      )
-    } finally {
-      setProcessando(null)
-    }
   }
 
   async function encerrar(simulado: SimuladoResponse) {
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Encerrar simulado?',
       descricao: 'Nenhuma nova tentativa poderá ser iniciada. As tentativas em andamento são preservadas.',
       rotuloConfirmar: 'Encerrar',
       tone: 'danger',
+      aoConfirmar: async () => {
+        setProcessando(simulado.id)
+
+        try {
+          await servicoSimulados.encerrar(simulado.id)
+          toast.success('Simulado encerrado')
+          await reload()
+        } catch (erroEncerrar) {
+          toast.error(
+            'Não foi possível encerrar',
+            erroEncerrar instanceof ApiError ? erroEncerrar.message : undefined,
+          )
+        } finally {
+          setProcessando(null)
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    setProcessando(simulado.id)
-
-    try {
-      await servicoSimulados.encerrar(simulado.id)
-      toast.success('Simulado encerrado')
-      await reload()
-    } catch (erroEncerrar) {
-      toast.error(
-        'Não foi possível encerrar',
-        erroEncerrar instanceof ApiError ? erroEncerrar.message : undefined,
-      )
-    } finally {
-      setProcessando(null)
-    }
-  }
-
-  async function excluir(simulado: SimuladoResponse) {
-    const confirmado = await confirmar({
-      titulo: 'Excluir simulado?',
-      descricao: `"${simulado.titulo}" e as tentativas associadas serão removidos. Esta ação é restrita ao administrador.`,
-      rotuloConfirmar: 'Excluir',
-      tone: 'danger',
-    })
-
-    if (!confirmado) return
-
-    try {
-      await servicoSimulados.excluir(simulado.id)
-      toast.success('Simulado excluído')
-      await reload()
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
   }
 
   const colunas: Coluna<SimuladoResponse>[] = [
@@ -189,7 +165,7 @@ export default function Simulados() {
         simulado.turmaId ? (
           nomeTurma(simulado.turmaId)
         ) : (
-          <span style={{ color: '#A3A3A3' }}>Sem turma</span>
+          <span style={{ color: tokens.colors.textDisabled }}>Sem turma</span>
         ),
     },
     {
@@ -204,7 +180,7 @@ export default function Simulados() {
       alinhamento: 'center',
       render: (simulado) => {
         const valores = participacao.get(simulado.id)
-        if (!valores || valores.total === 0) return <span style={{ color: '#A3A3A3' }}>—</span>
+        if (!valores || valores.total === 0) return <span style={{ color: tokens.colors.textDisabled }}>—</span>
 
         const completo = valores.concluidas === valores.total
 
@@ -244,7 +220,7 @@ export default function Simulados() {
         voltarPara="/professor/reforco"
         rotuloVoltar="Voltar para o módulo de reforço"
         actions={
-          <Button icon={<Plus />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
+          <Button size="large" icon={<Plus />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
             Novo simulado
           </Button>
         }
@@ -271,9 +247,6 @@ export default function Simulados() {
         loading={loading}
         error={error}
         onReload={reload}
-        onRowClick={(simulado) =>
-          navegar(`/professor/reforco/simulados/${simulado.id}/resultados`)
-        }
         paginacao={{
           pagina: paginacao.pagina,
           totalPaginas: paginacao.totalPaginas,
@@ -298,44 +271,48 @@ export default function Simulados() {
         }}
         actions={(simulado) => (
           <>
-            <IconButton
-              label="Ver resultados"
+            <Button
+              variant="subtle"
+              size="small"
               icon={<BarChart3 />}
               onClick={() => navegar(`/professor/reforco/simulados/${simulado.id}/resultados`)}
-            />
+            >
+              Resultados
+            </Button>
 
             {simulado.status === 'RASCUNHO' && (
               <>
-                <IconButton
-                  label="Editar simulado"
+                <Button
+                  variant="subtle"
+                  size="small"
                   icon={<Pencil />}
                   onClick={() => navegar(`/professor/reforco/simulados/${simulado.id}`)}
-                />
-                <IconButton
-                  label="Lançar simulado"
+                >
+                  Editar
+                </Button>
+                <Button
+                  variant="subtle"
+                  size="small"
                   icon={<Rocket />}
-                  variant="success"
                   disabled={processando === simulado.id}
                   onClick={() => lancar(simulado)}
-                />
+                >
+                  Lançar
+                </Button>
               </>
             )}
 
             {simulado.status === 'PUBLICADO' && (
-              <IconButton
-                label="Encerrar simulado"
+              <Button
+                variant="subtle"
+                size="small"
                 icon={<Square />}
                 disabled={processando === simulado.id}
                 onClick={() => encerrar(simulado)}
-              />
+              >
+                Encerrar
+              </Button>
             )}
-
-            <IconButton
-              label="Excluir simulado"
-              icon={<Trash2 />}
-              variant="danger"
-              onClick={() => excluir(simulado)}
-            />
           </>
         )}
       />

@@ -1,110 +1,77 @@
-import { useRef, type ReactNode } from 'react'
+import { Children, useState, type ReactNode } from 'react'
 import styled from 'styled-components'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
+import { Card } from '../Card'
 import { IconButton } from '../IconButton'
-
-const Container = styled.section`
-  width: 100%;
-  background: ${({ theme }) => theme.colors.white};
-  border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: ${({ theme }) => theme.shadow.base};
-  overflow: hidden;
-`
-
-const Cabecalho = styled.header`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-`
-
-const TituloBloco = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-`
-
-const Icone = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 28px;
-  height: 28px;
-
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.gradients.primary};
-  color: ${({ theme }) => theme.colors.white};
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-`
-
-const Titulo = styled.h2`
-  font-size: ${({ theme }) => theme.typography.sizes.md};
-  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  color: ${({ theme }) => theme.colors.textStrong};
-`
 
 const Setas = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.xxs};
+  flex-shrink: 0;
 `
 
-const Trilha = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
+/** Grade que preenche a largura em `colunas` cartões de tamanho igual, com espaçamento uniforme. */
+const Trilha = styled.div<{ $colunas: number }>`
+  display: grid;
+  grid-template-columns: repeat(${({ $colunas }) => $colunas}, 1fr);
+  gap: ${({ theme }) => theme.spacing.lg};
 
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  scroll-snap-type: x proximity;
-
-  > * {
-    scroll-snap-align: start;
-    flex-shrink: 0;
-  }
-
-  &::-webkit-scrollbar {
-    height: 6px;
-  }
+  padding: ${({ theme }) => theme.spacing.xl};
 `
 
 interface SeparadorCardProps {
   titulo: string
   icon?: ReactNode
   children: ReactNode
-  passo?: number
+  /** Quantos cartões cabem lado a lado, preenchendo a largura. O excedente vira uma próxima página. */
+  colunas: number
 }
 
-export function SeparadorCard({ titulo, icon, children, passo = 260 }: SeparadorCardProps) {
-  const trilhaRef = useRef<HTMLDivElement>(null)
+/**
+ * Mesmo Card do design system, só com paginação client-side de uma grade de
+ * itens no lugar do corpo — mantém cabeçalho (ícone/título) e o corpo com
+ * fundo tingido (`corpoComFundo`, mesmo tom usado em "Desempenho" na home do
+ * aluno) idênticos aos demais cards em vez de reimplementar o próprio.
+ */
+export function SeparadorCard({ titulo, icon, children, colunas }: SeparadorCardProps) {
+  const [pagina, setPagina] = useState(0)
 
-  function rolar(direcao: -1 | 1) {
-    trilhaRef.current?.scrollBy({ left: passo * direcao, behavior: 'smooth' })
-  }
+  const itens = Children.toArray(children)
+  const totalPaginas = Math.max(1, Math.ceil(itens.length / colunas))
+  const paginaAtual = Math.min(pagina, totalPaginas - 1)
+  const visiveis = itens.slice(paginaAtual * colunas, paginaAtual * colunas + colunas)
 
   return (
-    <Container>
-      <Cabecalho>
-        <TituloBloco>
-          {icon && <Icone aria-hidden="true">{icon}</Icone>}
-          <Titulo>{titulo}</Titulo>
-        </TituloBloco>
-
-        <Setas>
-          <IconButton label="Rolar para a esquerda" icon={<ChevronLeft />} size="small" onClick={() => rolar(-1)} />
-          <IconButton label="Rolar para a direita" icon={<ChevronRight />} size="small" onClick={() => rolar(1)} />
-        </Setas>
-      </Cabecalho>
-
-      <Trilha ref={trilhaRef}>{children}</Trilha>
-    </Container>
+    <Card
+      titulo={titulo}
+      icon={icon}
+      semPadding
+      corpoComFundo
+      actions={
+        totalPaginas > 1 && (
+          <Setas>
+            <IconButton
+              label="Página anterior"
+              icon={<ChevronLeft />}
+              variant="neutral"
+              size="small"
+              disabled={paginaAtual === 0}
+              onClick={() => setPagina((p) => p - 1)}
+            />
+            <IconButton
+              label="Próxima página"
+              icon={<ChevronRight />}
+              variant="neutral"
+              size="small"
+              disabled={paginaAtual === totalPaginas - 1}
+              onClick={() => setPagina((p) => p + 1)}
+            />
+          </Setas>
+        )
+      }
+    >
+      <Trilha $colunas={colunas}>{visiveis}</Trilha>
+    </Card>
   )
 }

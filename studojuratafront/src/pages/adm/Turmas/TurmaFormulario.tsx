@@ -279,24 +279,23 @@ export default function TurmaFormulario() {
   }
 
   async function removerHorario(horarioId: number) {
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Remover horário?',
       rotuloConfirmar: 'Remover',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await horariosTurma.remover(horarioId)
+          toast.success('Horário removido')
+          await requisicaoHorarios.reload()
+        } catch (erroRemover) {
+          toast.error(
+            'Não foi possível remover',
+            erroRemover instanceof ApiError ? erroRemover.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await horariosTurma.remover(horarioId)
-      toast.success('Horário removido')
-      await requisicaoHorarios.reload()
-    } catch (erroRemover) {
-      toast.error(
-        'Não foi possível remover',
-        erroRemover instanceof ApiError ? erroRemover.message : undefined,
-      )
-    }
   }
 
   async function adicionarVinculo() {
@@ -340,29 +339,28 @@ export default function TurmaFormulario() {
   }
 
   async function removerVinculo(vinculo: TurmaDisciplina) {
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Remover disciplina da turma?',
       descricao: 'Planos de aula já criados para esta disciplina continuam existindo.',
       rotuloConfirmar: 'Remover',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await turmaDisciplinas.excluir(vinculo.id)
+          toast.success('Disciplina removida da turma')
+          await requisicaoVinculos.reload()
+        } catch (erroRemover) {
+          toast.error(
+            'Não foi possível remover',
+            erroRemover instanceof ApiError ? erroRemover.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await turmaDisciplinas.excluir(vinculo.id)
-      toast.success('Disciplina removida da turma')
-      await requisicaoVinculos.reload()
-    } catch (erroRemover) {
-      toast.error(
-        'Não foi possível remover',
-        erroRemover instanceof ApiError ? erroRemover.message : undefined,
-      )
-    }
   }
 
   async function encerrarMatricula(matricula: AlunoTurma, tipo: 'cancelar' | 'concluir') {
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: tipo === 'cancelar' ? 'Cancelar matrícula?' : 'Concluir matrícula?',
       descricao:
         tipo === 'cancelar'
@@ -370,46 +368,44 @@ export default function TurmaFormulario() {
           : `A matrícula de ${matricula.aluno?.pessoa?.nome} será marcada como concluída.`,
       rotuloConfirmar: tipo === 'cancelar' ? 'Cancelar matrícula' : 'Concluir',
       tone: tipo === 'cancelar' ? 'danger' : 'default',
+      aoConfirmar: async () => {
+        try {
+          if (tipo === 'cancelar') await matriculas.cancelar(matricula.id)
+          else await matriculas.concluir(matricula.id)
+
+          toast.success(tipo === 'cancelar' ? 'Matrícula cancelada' : 'Matrícula concluída')
+          await Promise.all([requisicaoAtivos.reload(), requisicaoHistorico.reload()])
+        } catch (erroEncerrar) {
+          toast.error(
+            'Não foi possível atualizar a matrícula',
+            erroEncerrar instanceof ApiError ? erroEncerrar.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      if (tipo === 'cancelar') await matriculas.cancelar(matricula.id)
-      else await matriculas.concluir(matricula.id)
-
-      toast.success(tipo === 'cancelar' ? 'Matrícula cancelada' : 'Matrícula concluída')
-      await Promise.all([requisicaoAtivos.reload(), requisicaoHistorico.reload()])
-    } catch (erroEncerrar) {
-      toast.error(
-        'Não foi possível atualizar a matrícula',
-        erroEncerrar instanceof ApiError ? erroEncerrar.message : undefined,
-      )
-    }
   }
 
   async function excluirTurma() {
     if (!turmaId) return
 
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Excluir turma?',
       descricao: 'O histórico de matrículas é preservado.',
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoTurmas.excluir(turmaId)
+          toast.success('Turma excluída')
+          navegar('/adm/turmas')
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoTurmas.excluir(turmaId)
-      toast.success('Turma excluída')
-      navegar('/adm/turmas')
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
   }
 
   if (edicao && requisicaoTurma.error) {

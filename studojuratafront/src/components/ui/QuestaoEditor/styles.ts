@@ -93,7 +93,7 @@ export const BotaoCorreta = styled.button<{ $correta: boolean }>`
   flex-shrink: 0;
 
   width: 40px;
-  height: 40px;
+  height: 56px;
 
   border-radius: ${({ theme }) => theme.radius.sm};
   border: 2px solid ${({ theme }) => theme.colors.buttonPurple};
@@ -123,6 +123,13 @@ export const BotaoCorreta = styled.button<{ $correta: boolean }>`
 export const CampoAlternativa = styled.div`
   flex: 1;
   min-width: 0;
+`
+
+/** Par V/F por linha — reaproveita o visual do BotaoCorreta, só emparelhado. */
+export const GrupoVF = styled.div`
+  display: inline-flex;
+  gap: ${({ theme }) => theme.spacing.xxs};
+  flex-shrink: 0;
 `
 
 export const MensagemErro = styled.p`

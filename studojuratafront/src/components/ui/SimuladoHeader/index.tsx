@@ -30,8 +30,8 @@ const Esquerda = styled.div`
 `
 
 const Logo = styled.img`
-  width: 60px;
-  height: 60px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
 `
 
@@ -54,9 +54,13 @@ const Direita = styled.div`
 const Cronometro = styled.div<{ $alerta: boolean }>`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: ${({ theme }) => theme.spacing.xxs};
 
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
+  /* Altura de 56px pra bater exatamente com o botão "Sair" (size="large")
+     ao lado — mesmo padrão de altura já usado nos campos/botões do header. */
+  height: 56px;
+  padding: 0 ${({ theme }) => theme.spacing.xl};
   border-radius: ${({ theme }) => theme.radius.md};
   border: 1px solid ${({ theme, $alerta }) => ($alerta ? theme.colors.error : 'rgba(115, 115, 115, 0.15)')};
 
@@ -118,7 +122,7 @@ export function SimuladoHeader({
         </Cronometro>
 
         {onExit && (
-          <Button variant="secondary" size="small" icon={<LogOut />} onClick={onExit}>
+          <Button variant="info" size="large" icon={<LogOut />} onClick={onExit}>
             {rotuloSair}
           </Button>
         )}

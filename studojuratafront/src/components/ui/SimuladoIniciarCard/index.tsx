@@ -54,11 +54,9 @@ const Meta = styled.div`
 `
 
 interface SimuladoIniciarCardProps {
-  titulo: string
-  disciplina?: string
+  /** Confirmado no Figma: o destaque do card é a disciplina, não o título interno do simulado. */
+  disciplina: string
   quantidadeQuestoes?: number | null
-  tempoLimite?: number | null
-  prazo?: string
   /** Bloqueia o início (fora da janela de data, por exemplo). */
   indisponivel?: boolean
   motivoIndisponivel?: string
@@ -67,11 +65,8 @@ interface SimuladoIniciarCardProps {
 }
 
 export function SimuladoIniciarCard({
-  titulo,
   disciplina,
   quantidadeQuestoes,
-  tempoLimite,
-  prazo,
   indisponivel = false,
   motivoIndisponivel,
   loading = false,
@@ -80,13 +75,10 @@ export function SimuladoIniciarCard({
   return (
     <Container>
       <Conteudo>
-        <Titulo>{titulo}</Titulo>
+        <Titulo>{disciplina}</Titulo>
 
         <Meta>
-          {disciplina && <Tag variant="purple" size="small">{disciplina}</Tag>}
-          {quantidadeQuestoes ? <span>{quantidadeQuestoes} questões</span> : null}
-          {tempoLimite ? <span>· {tempoLimite} min</span> : null}
-          {prazo && <span>· até {prazo}</span>}
+          <span>Studo Jurata{quantidadeQuestoes ? ` | ${quantidadeQuestoes} questões` : ''}</span>
           {indisponivel && motivoIndisponivel && (
             <Tag variant="warning" size="small">
               {motivoIndisponivel}

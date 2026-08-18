@@ -18,7 +18,7 @@ import * as S from './styles'
 import {
   MAXIMO_ALTERNATIVAS,
   MINIMO_ALTERNATIVAS,
-  alternativasVerdadeiroFalso,
+  afirmacoesVerdadeiroFalso,
   type AlternativaEditavel,
   type QuestaoEditorProps,
 } from './types'
@@ -27,6 +27,13 @@ import {
  * Editor de uma questão de simulado. É o mesmo componente usado na criação
  * (professor monta o simulado) e na revisão (professor aprova/edita questões
  * geradas pela IA) — muda apenas `somenteLeitura` e o slot `actions`.
+ *
+ * Confirmado no Figma ("novo simulado — tipo questão v/f"): uma questão V/F
+ * tem a MESMA estrutura de Alternativas (um enunciado + uma lista de
+ * afirmações) — só que cada afirmação é julgada Verdadeira/Falsa de forma
+ * independente, em vez de "só uma é a correta". Por isso as duas variantes
+ * dividem quase todo o layout aqui; o que muda é só o controle de
+ * correção de cada linha (um botão de letra vs. um par V/F) e os textos.
  */
 export function QuestaoEditor({
   questao,
@@ -50,13 +57,11 @@ export function QuestaoEditor({
   function trocarTipo(tipo: typeof questao.tipo) {
     if (tipo === questao.tipo) return
 
-    // Verdadeiro/Falso tem alternativas fixas; ao voltar para múltipla escolha
-    // recomeçamos com três campos vazios.
     atualizar({
       tipo,
       alternativas:
         tipo === 'VERDADEIRO_FALSO'
-          ? alternativasVerdadeiroFalso()
+          ? afirmacoesVerdadeiroFalso()
           : [
               { texto: '', correta: true },
               { texto: '', correta: false },
@@ -73,6 +78,7 @@ export function QuestaoEditor({
     })
   }
 
+  /** Alternativas: só uma pode ser a correta — marcar uma desmarca as outras. */
   function marcarCorreta(posicao: number) {
     atualizar({
       alternativas: questao.alternativas.map((alternativa, i) => ({
@@ -80,6 +86,11 @@ export function QuestaoEditor({
         correta: i === posicao,
       })),
     })
+  }
+
+  /** V/F: cada afirmação julgada à parte — não mexe nas outras linhas. */
+  function julgarAfirmacao(posicao: number, valor: boolean) {
+    atualizarAlternativa(posicao, { correta: valor })
   }
 
   function adicionarAlternativa() {
@@ -92,13 +103,21 @@ export function QuestaoEditor({
 
     const restantes = questao.alternativas.filter((_, i) => i !== posicao)
 
-    // Se removemos a correta, a primeira restante assume.
-    if (!restantes.some((alternativa) => alternativa.correta)) {
+    // Alternativas precisa de uma correta sobrando; V/F não (cada uma julga
+    // sua própria afirmação, "nenhuma verdadeira" é um estado válido).
+    if (!verdadeiroFalso && !restantes.some((alternativa) => alternativa.correta)) {
       restantes[0].correta = true
     }
 
     atualizar({ alternativas: restantes })
   }
+
+  const rotuloLista = verdadeiroFalso ? 'Afirmações' : 'Alternativas'
+  const rotuloBotaoAdicionar = verdadeiroFalso ? 'Adicionar afirmação' : 'Adicionar alternativa'
+  const rotuloPlaceholder = (posicao: number) =>
+    verdadeiroFalso
+      ? `Digite a afirmação ${letraAlternativa(posicao)}...`
+      : `Digite a alternativa ${letraAlternativa(posicao)}...`
 
   return (
     <Card>
@@ -202,7 +221,7 @@ export function QuestaoEditor({
       <TextArea
         label="Enunciado"
         required
-        placeholder="Digite a pergunta..."
+        placeholder="Digite o enunciado..."
         value={questao.enunciado}
         disabled={somenteLeitura}
         error={erros.enunciado}
@@ -221,41 +240,67 @@ export function QuestaoEditor({
             marginBottom: '8px',
           }}
         >
-          Alternativas <span style={{ color: '#FF383C' }}>*</span>
+          {rotuloLista} <span style={{ color: '#FF383C' }}>*</span>
         </div>
 
         <S.ListaAlternativas>
           {questao.alternativas.map((alternativa, posicao) => (
-            <S.LinhaAlternativa key={posicao} $correta={alternativa.correta}>
-              <S.BotaoCorreta
-                type="button"
-                $correta={alternativa.correta}
-                disabled={somenteLeitura}
-                aria-pressed={alternativa.correta}
-                title={
-                  alternativa.correta
-                    ? 'Esta é a alternativa correta'
-                    : 'Marcar como alternativa correta'
-                }
-                onClick={() => marcarCorreta(posicao)}
-              >
-                {letraAlternativa(posicao)}
-              </S.BotaoCorreta>
+            <S.LinhaAlternativa key={posicao} $correta={!verdadeiroFalso && alternativa.correta}>
+              {verdadeiroFalso ? (
+                <S.GrupoVF role="group" aria-label={`Afirmação ${letraAlternativa(posicao)}`}>
+                  <S.BotaoCorreta
+                    type="button"
+                    $correta={alternativa.correta}
+                    disabled={somenteLeitura}
+                    aria-pressed={alternativa.correta}
+                    title="Marcar esta afirmação como Verdadeira"
+                    onClick={() => julgarAfirmacao(posicao, true)}
+                  >
+                    V
+                  </S.BotaoCorreta>
+                  <S.BotaoCorreta
+                    type="button"
+                    $correta={!alternativa.correta}
+                    disabled={somenteLeitura}
+                    aria-pressed={!alternativa.correta}
+                    title="Marcar esta afirmação como Falsa"
+                    onClick={() => julgarAfirmacao(posicao, false)}
+                  >
+                    F
+                  </S.BotaoCorreta>
+                </S.GrupoVF>
+              ) : (
+                <S.BotaoCorreta
+                  type="button"
+                  $correta={alternativa.correta}
+                  disabled={somenteLeitura}
+                  aria-pressed={alternativa.correta}
+                  title={
+                    alternativa.correta
+                      ? 'Esta é a alternativa correta'
+                      : 'Marcar como alternativa correta'
+                  }
+                  onClick={() => marcarCorreta(posicao)}
+                >
+                  {letraAlternativa(posicao)}
+                </S.BotaoCorreta>
+              )}
 
               <S.CampoAlternativa>
                 <Input
-                  placeholder={
-                    verdadeiroFalso ? alternativa.texto : `Digite a alternativa ${letraAlternativa(posicao)}...`
-                  }
+                  placeholder={rotuloPlaceholder(posicao)}
                   value={alternativa.texto}
-                  disabled={somenteLeitura || verdadeiroFalso}
+                  disabled={somenteLeitura}
                   maxLength={500}
+                  mostrarContador={false}
                   aria-label={`Texto da alternativa ${letraAlternativa(posicao)}`}
-                  onChange={(evento) => atualizarAlternativa(posicao, { texto: evento.target.value })}
+                  onChange={(evento) =>
+                    atualizarAlternativa(posicao, { texto: evento.target.value })
+                  }
                 />
               </S.CampoAlternativa>
 
-              {!somenteLeitura && !verdadeiroFalso && questao.alternativas.length > MINIMO_ALTERNATIVAS && (
+              {!somenteLeitura && questao.alternativas.length > MINIMO_ALTERNATIVAS && (
                 <IconButton
                   label={`Remover alternativa ${letraAlternativa(posicao)}`}
                   icon={<Trash2 />}
@@ -273,11 +318,12 @@ export function QuestaoEditor({
 
       <S.Rodape>
         <S.Dica>
-          Clique na letra para definir a alternativa correta.
-          {verdadeiroFalso && ' Em Verdadeiro/Falso os textos são fixos.'}
+          {verdadeiroFalso
+            ? 'Clique em V ou F em cada linha para julgar a afirmação.'
+            : 'Clique na letra para definir a alternativa correta.'}
         </S.Dica>
 
-        {!somenteLeitura && !verdadeiroFalso && (
+        {!somenteLeitura && (
           <Button
             variant="subtle"
             size="small"
@@ -285,7 +331,7 @@ export function QuestaoEditor({
             disabled={questao.alternativas.length >= MAXIMO_ALTERNATIVAS}
             onClick={adicionarAlternativa}
           >
-            Adicionar alternativa
+            {rotuloBotaoAdicionar}
           </Button>
         )}
       </S.Rodape>

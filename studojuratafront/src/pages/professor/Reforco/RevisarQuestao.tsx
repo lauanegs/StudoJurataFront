@@ -140,29 +140,28 @@ export default function RevisarQuestao() {
   }
 
   async function rejeitar() {
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Rejeitar questão?',
       descricao: 'A questão fica marcada como rejeitada e não entra em nenhum simulado.',
       rotuloConfirmar: 'Rejeitar',
       tone: 'danger',
+      aoConfirmar: async () => {
+        setProcessando(true)
+
+        try {
+          await servicoQuestoes.rejeitar(idQuestao)
+          toast.success('Questão rejeitada')
+          navegar('/professor/reforco/questoes')
+        } catch (erroRejeitar) {
+          toast.error(
+            'Não foi possível rejeitar',
+            erroRejeitar instanceof ApiError ? erroRejeitar.message : undefined,
+          )
+        } finally {
+          setProcessando(false)
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    setProcessando(true)
-
-    try {
-      await servicoQuestoes.rejeitar(idQuestao)
-      toast.success('Questão rejeitada')
-      navegar('/professor/reforco/questoes')
-    } catch (erroRejeitar) {
-      toast.error(
-        'Não foi possível rejeitar',
-        erroRejeitar instanceof ApiError ? erroRejeitar.message : undefined,
-      )
-    } finally {
-      setProcessando(false)
-    }
   }
 
   if (requisicaoQuestao.error) {
@@ -194,6 +193,7 @@ export default function RevisarQuestao() {
           editando ? (
             <>
               <Button
+                size="large"
                 variant="danger"
                 onClick={() => {
                   setEditando(false)
@@ -203,13 +203,20 @@ export default function RevisarQuestao() {
               >
                 Cancelar edição
               </Button>
-              <Button variant="success" icon={<Save />} loading={processando} onClick={salvarEdicao}>
+              <Button
+                size="large"
+                variant="success"
+                icon={<Save />}
+                loading={processando}
+                onClick={salvarEdicao}
+              >
                 Salvar alterações
               </Button>
             </>
           ) : (
             <>
               <Button
+                size="large"
                 variant="secondary"
                 icon={<Pencil />}
                 onClick={() => setEditando(true)}
@@ -217,20 +224,10 @@ export default function RevisarQuestao() {
               >
                 Editar
               </Button>
-              <Button
-                variant="danger"
-                icon={<X />}
-                onClick={rejeitar}
-                disabled={processando}
-              >
+              <Button size="large" variant="danger" icon={<X />} onClick={rejeitar} disabled={processando}>
                 Rejeitar
               </Button>
-              <Button
-                variant="success"
-                icon={<Check />}
-                loading={processando}
-                onClick={aprovar}
-              >
+              <Button size="large" variant="success" icon={<Check />} loading={processando} onClick={aprovar}>
                 Aprovar
               </Button>
             </>

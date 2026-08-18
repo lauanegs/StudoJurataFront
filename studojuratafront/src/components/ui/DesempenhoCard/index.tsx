@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
 const Container = styled.article`
@@ -10,6 +11,7 @@ const Container = styled.article`
   padding: ${({ theme }) => theme.spacing.md};
 
   background: ${({ theme }) => theme.colors.white};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radius.md};
 `
 
@@ -26,7 +28,7 @@ const Titulo = styled.strong`
   color: ${({ theme }) => theme.colors.textSecondary};
 `
 
-const Descricao = styled.span`
+const Descricao = styled.div`
   font-size: ${({ theme }) => theme.typography.sizes.md};
   color: ${({ theme }) => theme.colors.textSecondary};
 `
@@ -55,7 +57,7 @@ const Valor = styled.span`
 
 interface DesempenhoCardProps {
   titulo: string
-  descricao?: string
+  descricao?: ReactNode
   /** 0 a 100. */
   porcentagem: number
 }

@@ -12,7 +12,7 @@ import { Select } from '../../../components/ui/Select'
 import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { useToast } from '../../../contexts/toastContexto'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { alunos as servicoAlunos, matriculas, turmas as servicoTurmas } from '../../../services/endpoints'
 import { formatarCpf } from '../../../utils/format'
@@ -50,7 +50,6 @@ export default function MatricularAluno() {
   const [dataInicio, setDataInicio] = useState(() => new Date().toISOString().slice(0, 10))
   const [dataFim, setDataFim] = useState('')
   const [erros, setErros] = useState<Record<string, string | undefined>>({})
-  const [salvando, setSalvando] = useState(false)
 
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(idTurma), [idTurma])
   const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [])
@@ -87,13 +86,11 @@ export default function MatricularAluno() {
     return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
   }
 
-  async function salvar() {
+  const { executar: salvar, executando: salvando } = useAcao(async () => {
     if (!validar() || !turma) return
 
     const aluno = (requisicaoAlunos.data ?? []).find((item) => item.id === alunoId)
     if (!aluno) return
-
-    setSalvando(true)
 
     try {
       await matriculas.matricular({
@@ -111,10 +108,8 @@ export default function MatricularAluno() {
         'Não foi possível matricular',
         erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
       )
-    } finally {
-      setSalvando(false)
     }
-  }
+  })
 
   if (requisicaoTurma.error) {
     return (

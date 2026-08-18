@@ -17,9 +17,11 @@ export const Svg = styled.svg`
   transform: rotate(-90deg);
 `
 
-export const Centro = styled.div<{ $cor: string; $size: number }>`
+export const Centro = styled.div<{ $cor: string; $size: number; $espessura: number }>`
   position: absolute;
-  inset: 0;
+  inset: ${({ $espessura }) => $espessura}px;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.colors.white};
 
   display: flex;
   align-items: center;

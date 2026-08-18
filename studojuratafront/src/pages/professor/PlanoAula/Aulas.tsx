@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { BarChart3, CalendarCheck, ClipboardList, Pencil, Plus, Trash2 } from 'lucide-react'
+import { BarChart3, ClipboardList, Pencil, Plus, Trash2 } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -9,33 +9,104 @@ import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
-import { IconButton } from '../../../components/ui/IconButton'
-import { InfoCard } from '../../../components/ui/InfoCard'
 import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { aulas as servicoAulas, planosAula } from '../../../services/endpoints'
 import { formatarCargaHoraria, formatarData, normalizar } from '../../../utils/format'
-import type { Aula } from '../../../types'
+import type { Aula, AulaConteudo } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
-const Indicadores = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+/* Confirmado no Figma: "Adicionar aula" (150px) + busca (250px) coladas. */
+const CamposCabecalho = styled.div`
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
 `
 
-/** Formata os valores devolvidos por GET /plano-aula/{id}/estatisticas. */
-function valorEstatistica(valor: unknown): string {
-  if (valor === null || valor === undefined) return '—'
-  if (typeof valor === 'number') return String(valor)
-  return String(valor)
-}
+const LarguraBusca = styled.div`
+  width: 250px;
+`
+
+/* Confirmado no Figma (node 1:1953): as duas estatísticas ficam lado a lado
+   dentro do corpo tintado do Card (corpoComFundo). */
+const CorpoEstatisticas = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.md};
+  align-items: center;
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing.xl};
+`
+
+/* Cartão de estatística sem ícone (diferente do InfoCard genérico): rótulo em
+   cima, valor grande centralizado embaixo — confirmado no Figma (nós 1:1954
+   e 1:1959), específico desta tela. */
+const Estatistica = styled.article`
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme }) => theme.colors.white};
+  border-radius: ${({ theme }) => theme.radius.md};
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.08);
+`
+
+const EstatisticaConteudo = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.xs};
+  width: 100%;
+`
+
+const EstatisticaLabel = styled.span`
+  font-size: ${({ theme }) => theme.typography.sizes.md};
+  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  letter-spacing: -0.8px;
+`
+
+const EstatisticaValorBox = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
+  border-radius: ${({ theme }) => theme.radius.sm};
+`
+
+const EstatisticaValor = styled.span`
+  font-size: ${({ theme }) => theme.typography.sizes.title};
+  font-weight: ${({ theme }) => theme.typography.weights.bold};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  letter-spacing: -1.6px;
+  white-space: nowrap;
+`
+
+const EstatisticaValorSufixo = styled.span`
+  font-size: ${({ theme }) => theme.typography.sizes.xl};
+  font-weight: ${({ theme }) => theme.typography.weights.medium};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  white-space: nowrap;
+`
+
+const ListaConteudos = styled.ul`
+  margin: 0;
+  padding-left: ${({ theme }) => theme.spacing.md};
+`
 
 export default function Aulas() {
   const { planoAulaId } = useParams()
@@ -52,61 +123,60 @@ export default function Aulas() {
   const requisicaoAulas = useRequisicao(() => servicoAulas.listarPorPlanoAula(idPlano), [idPlano])
   const requisicaoEstatisticas = useRequisicao(() => planosAula.estatisticas(idPlano), [idPlano])
 
-  const filtradas = useMemo(() => {
-    const lista = (requisicaoAulas.data ?? [])
-      .filter((aula) => aula.status !== 'INATIVO')
-      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+  const aulasAtivas = useMemo(
+    () =>
+      (requisicaoAulas.data ?? [])
+        .filter((aula) => aula.status !== 'INATIVO')
+        .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)),
+    [requisicaoAulas.data],
+  )
 
-    if (!buscaAtrasada.trim()) return lista
+  // Conteúdos vinculados de cada aula — pra montar a coluna "Conteúdo" da
+  // tabela (bullet list), uma busca por aula ativa.
+  const requisicaoConteudosPorAula = useRequisicao(
+    async () => {
+      const listas = await Promise.all(aulasAtivas.map((aula) => servicoAulas.listarConteudos(aula.id)))
+      return new Map<number, AulaConteudo[]>(aulasAtivas.map((aula, indice) => [aula.id, listas[indice]]))
+    },
+    [aulasAtivas],
+    { ativo: aulasAtivas.length > 0 },
+  )
+
+  const filtradas = useMemo(() => {
+    if (!buscaAtrasada.trim()) return aulasAtivas
 
     const termo = normalizar(buscaAtrasada)
-    return lista.filter(
+    return aulasAtivas.filter(
       (aula) => normalizar(aula.titulo).includes(termo) || String(aula.ordem ?? '').includes(termo),
     )
-  }, [requisicaoAulas.data, buscaAtrasada])
+  }, [aulasAtivas, buscaAtrasada])
 
-  const estatisticas = requisicaoEstatisticas.data ?? {}
+  const totalAulas = aulasAtivas.length
+  const ministradas = aulasAtivas.filter((aula) => aula.dataPublicacao).length
+  const cargaHorariaRealizada = requisicaoEstatisticas.data?.cargaHorariaRealizada
 
-  const totalAulas = filtradas.length
-  const ministradas = filtradas.filter((aula) => aula.dataPublicacao).length
-
-  async function excluir(aula: Aula) {
-    const confirmado = await confirmar({
+  const { executar: excluir, executando: excluindo } = useAcao(async (aula: Aula) => {
+    await confirmar({
       titulo: 'Excluir aula?',
       descricao: 'A aula será desativada. Frequências e conteúdos já registrados são preservados.',
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoAulas.excluir(aula.id)
+          toast.success('Aula excluída')
+          await requisicaoAulas.reload()
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoAulas.excluir(aula.id)
-      toast.success('Aula excluída')
-      await requisicaoAulas.reload()
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   const colunas: Coluna<Aula>[] = [
-    {
-      key: 'ordem',
-      cabecalho: '#',
-      largura: '64px',
-      alinhamento: 'center',
-      ordenavel: true,
-      valorOrdenacao: (aula) => aula.ordem ?? 0,
-      render: (aula) => <Tag variant="purple">{aula.ordem ?? '—'}</Tag>,
-    },
-    {
-      key: 'titulo',
-      cabecalho: 'Título',
-      render: (aula) => aula.titulo ?? `Aula ${aula.ordem ?? aula.id}`,
-    },
     {
       key: 'dataPrevista',
       cabecalho: 'Data prevista',
@@ -116,18 +186,40 @@ export default function Aulas() {
     },
     {
       key: 'carga',
-      cabecalho: 'Carga',
-      ocultarEmTelaPequena: true,
+      cabecalho: 'Qt. horários',
+      alinhamento: 'center',
       render: (aula) => formatarCargaHoraria(aula.cargaHoraria),
     },
     {
-      key: 'situacao',
-      cabecalho: 'Situação',
+      key: 'conteudo',
+      cabecalho: 'Conteúdo',
+      ocultarEmTelaPequena: true,
+      render: (aula) => {
+        const vinculos = requisicaoConteudosPorAula.data?.get(aula.id) ?? []
+        if (vinculos.length === 0) return '—'
+
+        return (
+          <ListaConteudos>
+            {vinculos.map((vinculo) => (
+              <li key={vinculo.id}>{vinculo.conteudoPlano?.titulo ?? 'Conteúdo'}</li>
+            ))}
+          </ListaConteudos>
+        )
+      },
+    },
+    {
+      key: 'titulo',
+      cabecalho: 'Título',
+      render: (aula) => aula.titulo ?? `Aula ${aula.ordem ?? aula.id}`,
+    },
+    {
+      key: 'dataRealizacao',
+      cabecalho: 'Data realização',
+      ordenavel: true,
+      valorOrdenacao: (aula) => aula.dataPublicacao ?? '',
       render: (aula) =>
         aula.dataPublicacao ? (
-          <Tag variant="success" ponto>
-            Ministrada em {formatarData(aula.dataPublicacao)}
-          </Tag>
+          formatarData(aula.dataPublicacao)
         ) : (
           <Tag variant="neutral" ponto>
             Planejada
@@ -153,7 +245,7 @@ export default function Aulas() {
   return (
     <Layout>
       <Header
-        titulo="Aulas do plano"
+        titulo="Aulas"
         subtitulo={
           plano && (
             <>
@@ -167,54 +259,54 @@ export default function Aulas() {
         }
         voltarPara="/professor/plano-aula"
         rotuloVoltar="Voltar para planos de aula"
-        actions={
-          <>
-            <Button
-              variant="secondary"
-              icon={<Pencil />}
-              onClick={() => navegar(`/professor/plano-aula/${idPlano}`)}
-            >
-              Editar plano
-            </Button>
-            <Button
-              icon={<Plus />}
-              onClick={() => navegar(`/professor/plano-aula/${idPlano}/aulas/nova`)}
-            >
+        filtros={
+          <CamposCabecalho>
+            <Button icon={<Plus />} size="large" onClick={() => navegar(`/professor/plano-aula/${idPlano}/aulas/nova`)}>
               Adicionar aula
             </Button>
-          </>
+
+            <LarguraBusca>
+              <BuscaInput value={busca} onChange={setBusca} placeholder="Buscar aula..." />
+            </LarguraBusca>
+          </CamposCabecalho>
         }
-        filtros={<BuscaInput value={busca} onChange={setBusca} placeholder="Buscar aula..." />}
       />
 
-      {requisicaoEstatisticas.loading ? (
-        <Indicadores>
-          <Skeleton $altura="80px" $raio="16px" />
-          <Skeleton $altura="80px" $raio="16px" />
-        </Indicadores>
-      ) : (
-        <Indicadores>
-          <InfoCard
-            value={`${ministradas}/${totalAulas}`}
-            label="aulas ministradas"
-            icon={<CalendarCheck />}
-            tone="success"
-          />
+      <Card titulo="Estatísticas" icon={<BarChart3 />} semPadding corpoComFundo>
+        <CorpoEstatisticas>
+          {requisicaoEstatisticas.loading ? (
+            <>
+              <Skeleton $altura="132px" $raio="8px" />
+              <Skeleton $altura="132px" $raio="8px" />
+            </>
+          ) : (
+            <>
+              <Estatistica>
+                <EstatisticaConteudo>
+                  <EstatisticaLabel>Aulas realizadas</EstatisticaLabel>
+                  <EstatisticaValorBox>
+                    <EstatisticaValor>{ministradas}</EstatisticaValor>
+                    <EstatisticaValorSufixo>/{totalAulas}</EstatisticaValorSufixo>
+                  </EstatisticaValorBox>
+                </EstatisticaConteudo>
+              </Estatistica>
 
-          {Object.entries(estatisticas)
-            .filter(([chave]) => chave !== 'aulasRealizadas' && chave !== 'totalAulas')
-            .slice(0, 3)
-            .map(([chave, valor]) => (
-              <InfoCard
-                key={chave}
-                value={valorEstatistica(valor)}
-                label={rotuloEstatistica(chave)}
-                icon={<BarChart3 />}
-                tone="blue"
-              />
-            ))}
-        </Indicadores>
-      )}
+              <Estatistica>
+                <EstatisticaConteudo>
+                  <EstatisticaLabel>Carga horária realizada</EstatisticaLabel>
+                  <EstatisticaValorBox>
+                    <EstatisticaValor>
+                      {typeof cargaHorariaRealizada === 'number'
+                        ? formatarCargaHoraria(cargaHorariaRealizada)
+                        : '—'}
+                    </EstatisticaValor>
+                  </EstatisticaValorBox>
+                </EstatisticaConteudo>
+              </Estatistica>
+            </>
+          )}
+        </CorpoEstatisticas>
+      </Card>
 
       <Card semPadding>
         <DataTable
@@ -225,7 +317,6 @@ export default function Aulas() {
           loading={requisicaoAulas.loading}
           error={requisicaoAulas.error}
           onReload={requisicaoAulas.reload}
-          onRowClick={(aula) => navegar(`/professor/aulas/${aula.id}/registrar`)}
           empty={{
             titulo: busca ? 'Nenhuma aula encontrada' : 'Nenhuma aula cadastrada',
             descricao: busca
@@ -250,33 +341,28 @@ export default function Aulas() {
               >
                 Registrar
               </Button>
-              <IconButton
-                label="Editar aula"
+              <Button
+                variant="subtle"
+                size="small"
                 icon={<Pencil />}
+                disabled={excluindo}
                 onClick={() => navegar(`/professor/plano-aula/${idPlano}/aulas/${aula.id}`)}
-              />
-              <IconButton
-                label="Excluir aula"
+              >
+                Editar
+              </Button>
+              <Button
+                variant="subtle"
+                size="small"
                 icon={<Trash2 />}
-                variant="danger"
+                disabled={excluindo}
                 onClick={() => excluir(aula)}
-              />
+              >
+                Excluir
+              </Button>
             </>
           )}
         />
       </Card>
     </Layout>
   )
-}
-
-/** Converte a chave crua do Map do back em um rótulo legível. */
-function rotuloEstatistica(chave: string): string {
-  const mapa: Record<string, string> = {
-    cargaHorariaRealizada: 'carga horária realizada',
-    cargaHorariaPrevista: 'carga horária prevista',
-    aulasPrevistas: 'aulas previstas',
-    percentualConcluido: '% concluído',
-  }
-
-  return mapa[chave] ?? chave.replace(/([A-Z])/g, ' $1').toLowerCase()
 }

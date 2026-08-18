@@ -18,7 +18,7 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useHidratar } from '../../../hooks/useHidratar'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
   cursos as servicoCursos,
@@ -33,6 +33,11 @@ const Coluna = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
+/* Confirmado no Figma: 1ª linha com 3 campos (Turma, Curso, Carga horária),
+   2ª linha com 2 campos (Disciplina, Período letivo) — não uma grade
+   uniforme só. auto-fit com o mesmo minmax reflui nessas duas fileiras
+   naturalmente na largura do Card, mas a ORDEM dos campos abaixo segue
+   essa sequência pra bater visualmente. */
 const Grade = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -51,7 +56,8 @@ export default function PlanoEnsinoFormulario() {
 
   const [titulo, setTitulo] = useState('')
   const [cursoId, setCursoId] = useState<number | null>(null)
-  const [turmaDisciplinaId, setTurmaDisciplinaId] = useState<number | null>(null)
+  const [turmaId, setTurmaId] = useState<number | null>(null)
+  const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
   const [periodo, setPeriodo] = useState('')
   const [cargaHoraria, setCargaHoraria] = useState('')
   const [dataInicio, setDataInicio] = useState('')
@@ -61,7 +67,6 @@ export default function PlanoEnsinoFormulario() {
   const [metodologia, setMetodologia] = useState('')
   const [ativo, setAtivo] = useState(true)
   const [erros, setErros] = useState<Record<string, string | undefined>>({})
-  const [salvando, setSalvando] = useState(false)
 
   const requisicaoPlano = useRequisicao(() => servicoPlanos.buscar(planoId as number), [planoId], {
     ativo: Boolean(planoId),
@@ -76,7 +81,8 @@ export default function PlanoEnsinoFormulario() {
   useHidratar(requisicaoPlano.data, (plano) => {
     setTitulo(plano.titulo ?? '')
     setCursoId(plano.curso?.id ?? null)
-    setTurmaDisciplinaId(plano.turmaDisciplina?.id ?? null)
+    setTurmaId(plano.turmaDisciplina?.turma?.id ?? null)
+    setDisciplinaId(plano.turmaDisciplina?.disciplina?.id ?? null)
     setPeriodo(plano.periodoLetivo ?? '')
     setCargaHoraria(plano.cargaHoraria?.toString() ?? '')
     setDataInicio(plano.dataInicio?.slice(0, 10) ?? '')
@@ -92,13 +98,31 @@ export default function PlanoEnsinoFormulario() {
     [requisicaoCursos.data],
   )
 
-  const opcoesVinculos = useMemo(
+  // Turma e disciplina — dois selects (Figma), não um combinado: escolhe a
+  // turma primeiro, a disciplina é filtrada pelas que o professor leciona
+  // nela (mesmo padrão já usado em Notas).
+  const opcoesTurmas = useMemo(() => {
+    const unicas = new Map<number, string>()
+    for (const vinculo of requisicaoVinculos.data ?? []) {
+      if (vinculo.turma) unicas.set(vinculo.turma.id, vinculo.turma.titulo)
+    }
+    return [...unicas.entries()].map(([value, label]) => ({ value, label }))
+  }, [requisicaoVinculos.data])
+
+  const opcoesDisciplinas = useMemo(
     () =>
-      (requisicaoVinculos.data ?? []).map((vinculo) => ({
-        value: vinculo.id,
-        label: `${vinculo.turma?.titulo ?? 'Turma'} · ${vinculo.disciplina?.titulo ?? 'Disciplina'}`,
-      })),
-    [requisicaoVinculos.data],
+      (requisicaoVinculos.data ?? [])
+        .filter((vinculo) => vinculo.turma?.id === turmaId && vinculo.disciplina)
+        .map((vinculo) => ({ value: vinculo.disciplina!.id, label: vinculo.disciplina?.titulo ?? '—' })),
+    [requisicaoVinculos.data, turmaId],
+  )
+
+  const vinculoSelecionado = useMemo(
+    () =>
+      (requisicaoVinculos.data ?? []).find(
+        (item) => item.turma?.id === turmaId && item.disciplina?.id === disciplinaId,
+      ) ?? null,
+    [requisicaoVinculos.data, turmaId, disciplinaId],
   )
 
   function validar() {
@@ -125,20 +149,16 @@ export default function PlanoEnsinoFormulario() {
     return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
   }
 
-  async function salvar() {
+  const { executar: salvar, executando: salvando } = useAcao(async () => {
     if (!validar()) return
 
     const curso = (requisicaoCursos.data ?? []).find((item) => item.id === cursoId)
     if (!curso) return
 
-    setSalvando(true)
-
     try {
       const corpo = {
         curso,
-        turmaDisciplina: (requisicaoVinculos.data ?? []).find(
-          (item) => item.id === turmaDisciplinaId,
-        ),
+        turmaDisciplina: vinculoSelecionado ?? undefined,
         titulo: titulo.trim() || undefined,
         periodoLetivo: periodo.trim(),
         cargaHoraria: cargaHoraria ? Number(cargaHoraria) : undefined,
@@ -164,34 +184,31 @@ export default function PlanoEnsinoFormulario() {
         'Não foi possível salvar',
         erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
       )
-    } finally {
-      setSalvando(false)
     }
-  }
+  })
 
-  async function excluir() {
+  const { executar: excluir, executando: excluindo } = useAcao(async () => {
     if (!planoId) return
 
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Excluir plano de ensino?',
       descricao: 'Os conteúdos e planos de aula vinculados permanecem.',
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoPlanos.excluir(planoId)
+          toast.success('Plano excluído')
+          navegar('/professor/plano-ensino')
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoPlanos.excluir(planoId)
-      toast.success('Plano excluído')
-      navegar('/professor/plano-ensino')
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   if (edicao && requisicaoPlano.error) {
     return (
@@ -216,25 +233,41 @@ export default function PlanoEnsinoFormulario() {
             {edicao && (
               <>
                 <Button
+                  size="large"
                   variant="secondary"
                   icon={<ListTree />}
                   onClick={() => navegar(`/professor/plano-ensino/${planoId}/conteudos`)}
                 >
                   Conteúdos
                 </Button>
-                <Button variant="danger" icon={<Trash2 />} onClick={excluir} disabled={salvando}>
+                <Button
+                  size="large"
+                  variant="danger"
+                  icon={<Trash2 />}
+                  loading={excluindo}
+                  onClick={excluir}
+                  disabled={salvando}
+                >
                   Excluir
                 </Button>
               </>
             )}
             <Button
+              size="large"
               variant="danger"
               onClick={() => navegar('/professor/plano-ensino')}
-              disabled={salvando}
+              disabled={salvando || excluindo}
             >
               Cancelar
             </Button>
-            <Button variant="success" icon={<Save />} loading={salvando} onClick={salvar}>
+            <Button
+              size="large"
+              variant="success"
+              icon={<Save />}
+              loading={salvando}
+              disabled={excluindo}
+              onClick={salvar}
+            >
               Salvar
             </Button>
           </>
@@ -247,14 +280,30 @@ export default function PlanoEnsinoFormulario() {
         <>
           <Card titulo="Identificação">
             <Coluna>
+              <Input
+                label="Título do plano"
+                placeholder="Ex.: Robótica — 1º semestre"
+                value={titulo}
+                disabled={salvando}
+                maxLength={120}
+                onChange={(evento) => setTitulo(evento.target.value)}
+              />
+
               <Grade>
-                <Input
-                  label="Título do plano"
-                  placeholder="Ex.: Robótica — 1º semestre"
-                  value={titulo}
-                  disabled={salvando}
-                  maxLength={120}
-                  onChange={(evento) => setTitulo(evento.target.value)}
+                <Select<number>
+                  label="Turma"
+                  options={opcoesTurmas}
+                  value={turmaId}
+                  loading={requisicaoVinculos.loading}
+                  searchable
+                  clearable
+                  placeholder="Selecionar turma..."
+                  hint="Opcional: vincule para que o plano apareça na turma."
+                  emptyText="Você ainda não leciona em nenhuma turma"
+                  onChange={(valor) => {
+                    setTurmaId(valor)
+                    setDisciplinaId(null)
+                  }}
                 />
 
                 <Select<number>
@@ -269,17 +318,30 @@ export default function PlanoEnsinoFormulario() {
                   onChange={setCursoId}
                 />
 
+                <Input
+                  label="Carga horária"
+                  type="number"
+                  min={1}
+                  placeholder="Ex.: 40"
+                  value={cargaHoraria}
+                  error={erros.cargaHoraria}
+                  disabled={salvando}
+                  hint="Em horas."
+                  onChange={(evento) => setCargaHoraria(evento.target.value)}
+                />
+              </Grade>
+
+              <Grade>
                 <Select<number>
-                  label="Turma e disciplina"
-                  options={opcoesVinculos}
-                  value={turmaDisciplinaId}
-                  loading={requisicaoVinculos.loading}
+                  label="Disciplina"
+                  options={opcoesDisciplinas}
+                  value={disciplinaId}
+                  disabled={!turmaId}
                   searchable
                   clearable
-                  placeholder="Selecionar turma/disciplina..."
-                  hint="Opcional: vincule para que o plano apareça na turma."
-                  emptyText="Você ainda não leciona em nenhuma turma"
-                  onChange={setTurmaDisciplinaId}
+                  placeholder="Selecionar disciplina..."
+                  emptyText={turmaId ? 'Sem disciplinas nessa turma' : 'Selecione a turma primeiro'}
+                  onChange={setDisciplinaId}
                 />
 
                 <Input
@@ -292,19 +354,9 @@ export default function PlanoEnsinoFormulario() {
                   maxLength={10}
                   onChange={(evento) => setPeriodo(evento.target.value)}
                 />
+              </Grade>
 
-                <Input
-                  label="Carga horária"
-                  type="number"
-                  min={1}
-                  placeholder="Ex.: 40"
-                  value={cargaHoraria}
-                  error={erros.cargaHoraria}
-                  disabled={salvando}
-                  hint="Em horas."
-                  onChange={(evento) => setCargaHoraria(evento.target.value)}
-                />
-
+              <Grade>
                 <DatePicker
                   label="Início"
                   value={dataInicio}

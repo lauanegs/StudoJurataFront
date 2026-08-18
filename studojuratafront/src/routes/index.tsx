@@ -37,6 +37,8 @@ const AdmDisciplinaFormulario = lazy(
   () => import('../pages/adm/Disciplinas/DisciplinaFormulario'),
 )
 const AdmEventos = lazy(() => import('../pages/adm/Eventos/Eventos'))
+const AdmUsuarios = lazy(() => import('../pages/adm/Usuarios/Usuarios'))
+const AdmUsuarioFormulario = lazy(() => import('../pages/adm/Usuarios/UsuarioFormulario'))
 
 // --- Professor -------------------------------------------------------------
 const ProfessorHome = lazy(() => import('../pages/professor/Home'))
@@ -47,6 +49,9 @@ const ProfessorPlanoEnsinoFormulario = lazy(
   () => import('../pages/professor/PlanoEnsino/PlanoEnsinoFormulario'),
 )
 const ProfessorConteudosPlano = lazy(() => import('../pages/professor/PlanoEnsino/ConteudosPlano'))
+const ProfessorConteudoFormulario = lazy(
+  () => import('../pages/professor/PlanoEnsino/ConteudoFormulario'),
+)
 const ProfessorPlanosAula = lazy(() => import('../pages/professor/PlanoAula/PlanosAula'))
 const ProfessorPlanoAulaFormulario = lazy(
   () => import('../pages/professor/PlanoAula/PlanoAulaFormulario'),
@@ -54,6 +59,7 @@ const ProfessorPlanoAulaFormulario = lazy(
 const ProfessorAulas = lazy(() => import('../pages/professor/PlanoAula/Aulas'))
 const ProfessorAulaFormulario = lazy(() => import('../pages/professor/PlanoAula/AulaFormulario'))
 const ProfessorRegistrarAula = lazy(() => import('../pages/professor/PlanoAula/RegistrarAula'))
+const ProfessorRegistrarAulaTurma = lazy(() => import('../pages/professor/Turmas/RegistrarAulaTurma'))
 const ProfessorNotas = lazy(() => import('../pages/professor/Notas/Notas'))
 const ProfessorReforco = lazy(() => import('../pages/professor/Reforco/Dashboard'))
 const ProfessorSimulados = lazy(() => import('../pages/professor/Reforco/Simulados'))
@@ -64,6 +70,15 @@ const ProfessorResultadosSimulado = lazy(
   () => import('../pages/professor/Reforco/ResultadosSimulado'),
 )
 const ProfessorResultadoAluno = lazy(() => import('../pages/professor/Reforco/ResultadoAluno'))
+const ProfessorSimuladosRealizados = lazy(
+  () => import('../pages/professor/Reforco/SimuladosRealizados'),
+)
+const ProfessorSimuladosAprovacao = lazy(
+  () => import('../pages/professor/Reforco/SimuladosAprovacao'),
+)
+const ProfessorAprovarSimulado = lazy(
+  () => import('../pages/professor/Reforco/AprovarSimulado'),
+)
 const ProfessorQuestoesPendentes = lazy(
   () => import('../pages/professor/Reforco/QuestoesPendentes'),
 )
@@ -265,7 +280,30 @@ export function AppRoutes() {
             </RotaProtegida>
           }
         />
-
+        <Route
+          path="/adm/usuarios"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmUsuarios />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/usuarios/novo"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmUsuarioFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/adm/usuarios/:id"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmUsuarioFormulario />
+            </RotaProtegida>
+          }
+        />
         {/* Professor */}
         <Route
           path="/professor"
@@ -284,10 +322,18 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="/professor/turmas/:turmaDisciplinaId"
+          path="/professor/turmas/:turmaId"
           element={
             <RotaProtegida perfis={['PROFESSOR']}>
               <ProfessorTurmaDetalhada />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/turmas/:turmaId/registrar-aula"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorRegistrarAulaTurma />
             </RotaProtegida>
           }
         />
@@ -320,6 +366,22 @@ export function AppRoutes() {
           element={
             <RotaProtegida perfis={['PROFESSOR']}>
               <ProfessorConteudosPlano />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-ensino/:planoId/conteudos/novo"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorConteudoFormulario />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/plano-ensino/:planoId/conteudos/:conteudoId"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorConteudoFormulario />
             </RotaProtegida>
           }
         />
@@ -432,6 +494,30 @@ export function AppRoutes() {
           element={
             <RotaProtegida perfis={['PROFESSOR']}>
               <ProfessorResultadoAluno />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/realizados"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorSimuladosRealizados />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/aprovacao"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorSimuladosAprovacao />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/aprovacao/:simuladoId"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorAprovarSimulado />
             </RotaProtegida>
           }
         />

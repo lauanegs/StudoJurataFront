@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Coins, Flag, Target } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Flag } from 'lucide-react'
 
 import { AlternativaButton } from '../../components/ui/AlternativaButton'
 import { AlternativaCard } from '../../components/ui/AlternativaCard'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { EnunciadoSimuladoCard } from '../../components/ui/EnunciadoSimuladoCard'
+import { MoedaIcone } from '../../components/ui/MoedaIcone'
 import {
   ProgressoSimuladoCard,
   type QuestionProgressStatus,
@@ -30,25 +31,38 @@ import {
   simuladoQuestoes,
   simulados as servicoSimulados,
 } from '../../services/endpoints'
-import { formatarNota, formatarTempo, letraAlternativa, nomeCurto } from '../../utils/format'
+import { formatarMoedas, formatarTempo, letraAlternativa, nomeCurto } from '../../utils/format'
+import { resolverImagemSkin } from '../../utils/skins'
+import { animacaoFlutuar } from '../../styles/animations'
 import type { AlternativaResponse } from '../../types'
 
+/* Confirmado no Figma: o cabeçalho (SimuladoHeader) cobre a largura inteira
+   da tela — só o conteúdo abaixo dele (progresso, enunciado, alternativas)
+   fica centralizado num miolo de largura limitada. */
 const Tela = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
 
   width: 100%;
-  max-width: 820px;
   min-height: 100vh;
+  padding: ${({ theme }) => theme.spacing.md};
+`
+
+const Conteudo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  width: 100%;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing.lg};
 `
 
 const Alternativas = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${({ theme }) => theme.spacing.xxs};
 `
 
 const Rodape = styled.div`
@@ -59,23 +73,103 @@ const Rodape = styled.div`
   flex-wrap: wrap;
 `
 
-const Parabens = styled.div`
+/* Confirmado no Figma: o mascote fica FORA do card, ao lado — não mais
+   dentro dele — e o card se estica (self-stretch) pra acompanhar a altura
+   da imagem. */
+/* Confirmado no Figma (nó 220:3228): moldura com o mesmo degradê azul
+   horizontal do EnunciadoSimuladoCard, envolvendo o mascote + os dois
+   cartões brancos — não mais soltos direto no fundo cinza da página. */
+const FrameResultado = styled.div`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.lg};
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.xl};
   flex-wrap: wrap;
+
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing.xl};
+
+  background: linear-gradient(90deg, #049dbf 0%, rgba(4, 157, 191, 0.5) 100%), #e6eaf2;
+  border-radius: ${({ theme }) => theme.radius.lg};
+  box-shadow: ${({ theme }) => theme.shadow.floating};
 `
 
 const Mascote = styled.img`
-  width: 96px;
+  width: 120px;
+  height: 180px;
+  flex-shrink: 0;
   object-fit: contain;
+  ${animacaoFlutuar}
 `
 
+const CardResultado = styled.div<{ $altura?: string }>`
+  display: flex;
+  flex: 1;
+  align-self: ${({ $altura }) => ($altura ? 'auto' : 'stretch')};
+  height: ${({ $altura }) => $altura ?? 'auto'};
+  min-width: 280px;
+
+  padding: ${({ theme }) => theme.spacing.xl};
+  background: ${({ theme }) => theme.colors.white};
+  border: 1px solid rgba(115, 115, 115, 0.15);
+  border-radius: ${({ theme }) => theme.radius.md};
+`
+
+const ColunaResultado = styled.div<{ $centralizado?: boolean }>`
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: ${({ $centralizado }) => ($centralizado ? 'center' : 'flex-start')};
+  gap: ${({ theme }) => theme.spacing.md};
+  min-width: 0;
+`
+
+const TextoSecundario = styled.p`
+  font-size: ${({ theme }) => theme.typography.sizes.sm};
+  color: ${({ theme }) => theme.colors.textTertiary};
+`
+
+/* Confirmado no Figma: as 3 etiquetas (acertos/erros/tempo) ficam empilhadas
+   na vertical, cada uma ocupando a largura toda — não mais lado a lado. */
 const Etiquetas = styled.div`
   display: flex;
+  flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xs};
-  flex-wrap: wrap;
-  margin-top: ${({ theme }) => theme.spacing.xs};
+  width: 100%;
+`
+
+const Etiqueta = styled.span<{ $fundo: string; $claro?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.xxs};
+
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ $fundo }) => $fundo};
+
+  font-size: ${({ theme }) => theme.typography.sizes.md};
+  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+  color: ${({ $claro, theme }) => ($claro ? theme.colors.textSecondary : theme.colors.white)};
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`
+
+const ValorMoedas = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.xxs};
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing.xs} 0;
+
+  font-size: ${({ theme }) => theme.typography.sizes.xl};
+  font-weight: ${({ theme }) => theme.typography.weights.bold};
+  color: ${({ theme }) => theme.colors.textStrong};
 `
 
 const RevisaoLista = styled.div`
@@ -83,6 +177,37 @@ const RevisaoLista = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
 `
+
+const NomeParabens = styled.strong`
+  display: block;
+  margin-bottom: ${({ theme }) => theme.spacing.xxs};
+  font-size: ${({ theme }) => theme.typography.sizes.xl};
+  color: ${({ theme }) => theme.colors.textStrong};
+`
+
+const DescricaoParabens = styled.span`
+  font-size: ${({ theme }) => theme.typography.sizes.sm};
+  color: ${({ theme }) => theme.colors.textSecondary};
+`
+
+const QuestaoCabecalho = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
+`
+
+const QuestaoEnunciado = styled.p`
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  font-size: ${({ theme }) => theme.typography.sizes.sm};
+  color: ${({ theme }) => theme.colors.textSecondary};
+`
+
+/** Mesma quantidade pra qualquer simulado, independente da nota — regra do
+ * back (PontuacaoAlunoService.MOEDAS_POR_SIMULADO_CONCLUIDO). */
+const MOEDAS_POR_SIMULADO = 10
 
 interface QuestaoDaProva {
   questaoId: number
@@ -107,12 +232,16 @@ export default function Simulado() {
   const confirmar = useConfirm()
   const { usuario } = useAuth()
   const { alunoId } = useAlunoLogado()
-  const { imagemSkin } = useSkinEquipadaDoAluno(alunoId)
+  const { skinEquipada, imagemSkin } = useSkinEquipadaDoAluno(alunoId)
 
   const idTentativa = Number(simuladoAlunoId)
 
   const [indiceAtual, setIndiceAtual] = useState(0)
   const [respostas, setRespostas] = useState<Record<number, number | null>>({})
+  // Marca em quais questões o aluno já clicou em "Confirmar resposta" — até lá,
+  // a seleção pode ser trocada livremente e nada é revelado (evita que um
+  // toque sem querer numa alternativa já feche a questão como respondida).
+  const [confirmadas, setConfirmadas] = useState<Record<number, boolean>>({})
   const [temposPorQuestao, setTemposPorQuestao] = useState<Record<number, number>>({})
   const [segundos, setSegundos] = useState(0)
   const [finalizando, setFinalizando] = useState(false)
@@ -221,7 +350,6 @@ export default function Simulado() {
 
     // A prova precisa ser encerrada mesmo sem ação do aluno — este é o único
     // caminho possível para isso.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void finalizar(true)
   }, [restante, concluido, finalizando, finalizar])
 
@@ -238,6 +366,36 @@ export default function Simulado() {
   }, [concluido])
 
   const questaoAtual = questoes[indiceAtual]
+
+  const respostaAtualId = questaoAtual ? respostas[questaoAtual.questaoId] : undefined
+  const temSelecao = typeof respostaAtualId === 'number'
+  const revelada = questaoAtual ? Boolean(confirmadas[questaoAtual.questaoId]) : false
+  // V/F pode ter mais de uma alternativa `correta` (cada afirmação julgada à
+  // parte) — "acertou" não é "escolheu a mesma id que uma correta fixa", é
+  // "a alternativa que o aluno escolheu é, ela mesma, uma correta".
+  const alternativaEscolhidaAtual = questaoAtual?.alternativas.find(
+    (item) => item.id === respostaAtualId,
+  )
+  const acertouAtual = revelada && Boolean(alternativaEscolhidaAtual?.correta)
+
+  // Já dá pra saber se acertou assim que o aluno responde: as alternativas
+  // (com `correta`) já estão todas carregadas no cliente antes mesmo da
+  // primeira resposta — o back só calcula é a NOTA final, em /finalizar.
+  // Por isso o balão do mascote pode trocar de frase na hora, sem precisar
+  // de nenhum card novo. Só troca depois de "Confirmar resposta" — clicar
+  // numa alternativa sozinho ainda não revela nada, pra dar chance de trocar
+  // se foi sem querer.
+  const textoBalao = !revelada
+    ? questaoAtual?.enunciado
+    : acertouAtual
+      ? 'Você acertou, parabéns! 🎉'
+      : 'Não foi dessa vez... 😕'
+
+  // Mesma revelação que troca a frase do balão troca a imagem do mascote:
+  // feliz quando acerta, triste quando erra — volta ao normal na próxima questão.
+  const mascoteReacao = !revelada
+    ? imagemSkin
+    : resolverImagemSkin(skinEquipada?.urlAsset, acertouAtual ? 'feliz' : 'triste')
 
   function registrarTempoDaQuestao() {
     if (!questaoAtual) return
@@ -259,31 +417,46 @@ export default function Simulado() {
     setIndiceAtual(indice)
   }
 
+  function confirmarResposta() {
+    if (!questaoAtual || !temSelecao) return
+
+    setConfirmadas((atuais) => ({ ...atuais, [questaoAtual.questaoId]: true }))
+  }
+
   async function confirmarFinalizacao() {
     registrarTempoDaQuestao()
 
     const semResposta = questoes.filter((questao) => !respostas[questao.questaoId]).length
 
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Finalizar o simulado?',
       descricao:
         semResposta > 0
-          ? `Você deixou ${semResposta} questão(ões) em branco — elas contam como error. Deseja finalizar mesmo assim?`
+          ? `Você deixou ${semResposta} questão(ões) em branco — elas contam como erro. Deseja finalizar mesmo assim?`
           : 'Depois de finalizar não é possível alterar as respostas.',
       rotuloConfirmar: 'Finalizar',
       tone: semResposta > 0 ? 'danger' : 'default',
+      aoConfirmar: () => finalizar(false),
     })
-
-    if (confirmado) await finalizar(false)
   }
 
+  // Confirmado no Figma: os marcadores de progresso ficam verde/vermelho nas
+  // questões já confirmadas (não só um "respondida" genérico).
   const statusProgresso = useMemo<QuestionProgressStatus[]>(
     () =>
       questoes.map((questao, indice) => {
         if (indice === indiceAtual) return 'current'
+
+        if (confirmadas[questao.questaoId]) {
+          const escolhida = questao.alternativas.find(
+            (alternativa) => alternativa.id === respostas[questao.questaoId],
+          )
+          return escolhida?.correta ? 'correct' : 'incorrect'
+        }
+
         return respostas[questao.questaoId] ? 'answered' : 'pending'
       }),
-    [questoes, indiceAtual, respostas],
+    [questoes, indiceAtual, respostas, confirmadas],
   )
 
   const loading =
@@ -318,7 +491,6 @@ export default function Simulado() {
 
   if (concluido) {
     const tentativa = requisicaoTentativa.data
-    const maxima = simulado?.notaMaxima ?? 10
     const acertos = tentativa?.quantidadeAcertos ?? 0
     const erradas = questoes.length - acertos
 
@@ -335,44 +507,56 @@ export default function Simulado() {
           rotuloSair="Voltar"
         />
 
-        <Card>
-          <Parabens>
-            <Mascote src={imagemSkin} alt="" aria-hidden="true" />
+        <Conteudo>
+        <FrameResultado>
+          <Mascote src={imagemSkin} alt="" aria-hidden="true" />
 
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <strong style={{ fontSize: '20px', display: 'block', marginBottom: '4px' }}>
-                Parabéns, {nomeCurto(usuario?.nomePessoa)}!
-              </strong>
-              <span style={{ fontSize: '14px', color: '#656565' }}>
-                Continue assim para desenvolver seus conhecimentos, você vai longe!
-              </span>
+          <CardResultado>
+            <ColunaResultado>
+              <div>
+                <NomeParabens>Parabéns, {nomeCurto(usuario?.nomePessoa)}!</NomeParabens>
+                <DescricaoParabens>
+                  Continue assim para desenvolver seus conhecimentos, você vai longe!
+                </DescricaoParabens>
+              </div>
 
               <Etiquetas>
-                <Tag variant="success" icon={<CheckCircle2 />}>
+                <Etiqueta $fundo="linear-gradient(90deg, #0CCA4A 0%, #46A665 100%)">
                   {acertos} acerto(s)
-                </Tag>
-                <Tag variant={erradas > 0 ? 'error' : 'neutral'}>{erradas} error(s)</Tag>
-                <Tag variant="neutral" icon={<Clock />}>
+                </Etiqueta>
+                <Etiqueta $fundo="linear-gradient(90deg, #F95738 0%, #F86624 100%)">
+                  {erradas} erro(s)
+                </Etiqueta>
+                <Etiqueta $fundo="rgba(115, 115, 115, 0.15)" $claro>
+                  <Clock aria-hidden="true" />
                   {formatarTempo(tentativa?.tempoGasto)}
-                </Tag>
-                {typeof tentativa?.nota === 'number' && (
-                  <Tag variant="purple" icon={<Target />}>
-                    Nota {formatarNota(tentativa.nota)} de {formatarNota(maxima)}
-                  </Tag>
-                )}
-                {tentativa?.finalizadoPorTempo && (
-                  <Tag variant="warning">Finalizado por tempo</Tag>
-                )}
+                </Etiqueta>
               </Etiquetas>
-            </div>
+            </ColunaResultado>
+          </CardResultado>
 
-            <Tag variant="warning" icon={<Coins />}>
-              Moedas creditadas no seu perfil
-            </Tag>
-          </Parabens>
-        </Card>
+          <CardResultado $altura="322px">
+            <ColunaResultado $centralizado>
+              <TextoSecundario>Para comemorar, aqui estão algumas moedas!</TextoSecundario>
 
-        <strong style={{ color: '#202020' }}>Revise as questões</strong>
+              <ValorMoedas>
+                <MoedaIcone size={32} aria-hidden="true" />+ {formatarMoedas(MOEDAS_POR_SIMULADO)}
+              </ValorMoedas>
+
+              <TextoSecundario>
+                Este conteúdo voltará em 2 dias para sua revisão, então até logo!
+              </TextoSecundario>
+
+              <TextoSecundario>
+                Até lá, continue no ritmo e faça os simulados que já estão prontos!
+              </TextoSecundario>
+
+              <Button variant="info" fullWidth onClick={() => navegar('/aluno/reforco')}>
+                Ver simulados para realizar
+              </Button>
+            </ColunaResultado>
+          </CardResultado>
+        </FrameResultado>
 
         <RevisaoLista>
           {questoes.map((questao, indice) => {
@@ -380,16 +564,7 @@ export default function Simulado() {
 
             return (
               <Card key={questao.questaoId}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    marginBottom: '8px',
-                    flexWrap: 'wrap',
-                  }}
-                >
+                <QuestaoCabecalho>
                   <strong>Questão {indice + 1}</strong>
 
                   {!resposta || resposta.alternativaId === null ? (
@@ -403,11 +578,9 @@ export default function Simulado() {
                       Você errou
                     </Tag>
                   )}
-                </div>
+                </QuestaoCabecalho>
 
-                <p style={{ fontSize: '14px', color: '#656565', marginBottom: '12px' }}>
-                  {questao.enunciado}
-                </p>
+                <QuestaoEnunciado>{questao.enunciado}</QuestaoEnunciado>
 
                 <Alternativas>
                   {questao.alternativas.map((alternativa, posicao) => {
@@ -438,6 +611,7 @@ export default function Simulado() {
         <Button fullWidth size="large" onClick={() => navegar('/aluno/reforco')}>
           Voltar para o reforço
         </Button>
+        </Conteudo>
       </Tela>
     )
   }
@@ -450,15 +624,15 @@ export default function Simulado() {
           segundos={segundos}
           onExit={() => navegar('/aluno/reforco')}
         />
-        <ErroCarregamento
-          titulo="Simulado sem questões"
-          mensagem="Este simulado ainda não tem questões ativas. Avise seu professor."
-        />
+        <Conteudo>
+          <ErroCarregamento
+            titulo="Simulado sem questões"
+            mensagem="Este simulado ainda não tem questões ativas. Avise seu professor."
+          />
+        </Conteudo>
       </Tela>
     )
   }
-
-  const respondidas = questoes.filter((questao) => respostas[questao.questaoId]).length
 
   return (
     <Tela>
@@ -466,26 +640,27 @@ export default function Simulado() {
         titulo={simulado?.titulo ?? 'Simulado'}
         segundos={restante ?? segundos}
         regressivo={restante !== null}
-        onExit={async () => {
-          const confirmado = await confirmar({
+        onExit={() =>
+          confirmar({
             titulo: 'Sair do simulado?',
             descricao: 'Suas respostas não serão salvas e a tentativa continuará pendente.',
             rotuloConfirmar: 'Sair',
             tone: 'danger',
+            aoConfirmar: async () => navegar('/aluno/reforco'),
           })
-
-          if (confirmado) navegar('/aluno/reforco')
-        }}
+        }
       />
 
+      <Conteudo>
       <ProgressoSimuladoCard
         current={indiceAtual + 1}
         total={questoes.length}
         status={statusProgresso}
         onGoTo={irPara}
+        showLegend={false}
       />
 
-      <EnunciadoSimuladoCard enunciado={questaoAtual.enunciado} mascoteSrc={imagemSkin} />
+      <EnunciadoSimuladoCard enunciado={textoBalao ?? questaoAtual.enunciado} mascoteSrc={mascoteReacao} />
 
       <Alternativas>
         {questaoAtual.alternativas.map((alternativa, posicao) => (
@@ -493,14 +668,25 @@ export default function Simulado() {
             key={alternativa.id}
             letra={letraAlternativa(posicao)}
             texto={alternativa.texto}
-            state={respostas[questaoAtual.questaoId] === alternativa.id ? 'selected' : 'default'}
-            onSelect={() =>
-              setRespostas((atuais) => ({
-                ...atuais,
-                [questaoAtual.questaoId]:
-                  atuais[questaoAtual.questaoId] === alternativa.id ? null : alternativa.id,
-              }))
+            disabled={revelada}
+            state={
+              revelada
+                ? alternativa.correta
+                  ? 'correct'
+                  : alternativa.id === respostaAtualId
+                    ? 'incorrect'
+                    : 'default'
+                : alternativa.id === respostaAtualId
+                  ? 'selected'
+                  : 'default'
             }
+            onSelect={() => {
+              if (revelada) return
+
+              // Pode trocar livremente antes de confirmar — só trava depois
+              // de clicar em "Confirmar resposta".
+              setRespostas((atuais) => ({ ...atuais, [questaoAtual.questaoId]: alternativa.id }))
+            }}
           />
         ))}
       </Alternativas>
@@ -508,6 +694,7 @@ export default function Simulado() {
       <Rodape>
         <Button
           variant="secondary"
+          size="large"
           icon={<ArrowLeft />}
           disabled={indiceAtual === 0}
           onClick={() => irPara(indiceAtual - 1)}
@@ -515,17 +702,25 @@ export default function Simulado() {
           Anterior
         </Button>
 
-        <span style={{ fontSize: '13px', color: '#656565' }}>
-          {respondidas} de {questoes.length} respondidas
-        </span>
-
-        {indiceAtual < questoes.length - 1 ? (
-          <Button iconRight={<ArrowRight />} onClick={() => irPara(indiceAtual + 1)}>
+        {temSelecao && !revelada ? (
+          // Só revela acerto/erro depois desse clique — dá a chance de
+          // trocar a resposta se o toque na alternativa foi sem querer.
+          <Button variant="info" size="large" icon={<CheckCircle2 />} onClick={confirmarResposta}>
+            Confirmar resposta
+          </Button>
+        ) : indiceAtual < questoes.length - 1 ? (
+          <Button
+            variant="info"
+            size="large"
+            iconRight={<ArrowRight />}
+            onClick={() => irPara(indiceAtual + 1)}
+          >
             Próxima
           </Button>
         ) : (
           <Button
             variant="success"
+            size="large"
             icon={<Flag />}
             loading={finalizando}
             onClick={confirmarFinalizacao}
@@ -534,17 +729,7 @@ export default function Simulado() {
           </Button>
         )}
       </Rodape>
-
-      {indiceAtual < questoes.length - 1 && (
-        <Button
-          variant="subtle"
-          icon={<Flag />}
-          loading={finalizando}
-          onClick={confirmarFinalizacao}
-        >
-          Finalizar agora
-        </Button>
-      )}
+      </Conteudo>
     </Tela>
   )
 }

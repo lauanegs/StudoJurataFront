@@ -2,7 +2,7 @@ export { QuestaoEditor } from './QuestaoEditor'
 export {
   MAXIMO_ALTERNATIVAS,
   MINIMO_ALTERNATIVAS,
-  alternativasVerdadeiroFalso,
+  afirmacoesVerdadeiroFalso,
   questaoVazia,
   validarQuestao,
 } from './types'

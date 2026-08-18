@@ -1,9 +1,9 @@
 import * as S from './styles'
 import type { LetterBadgeProps } from './types'
 
-export function LetterBadge({ letra, state = 'default', size = 'medium' }: LetterBadgeProps) {
+export function LetterBadge({ letra, state = 'default' }: LetterBadgeProps) {
   return (
-    <S.Container $state={state} $size={size} aria-hidden="true">
+    <S.Container $state={state} aria-hidden="true">
       {letra}
     </S.Container>
   )

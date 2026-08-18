@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Plus, Rocket, Save, Sparkles } from 'lucide-react'
+import { ClipboardCheck, FolderInput, Plus, Rocket, Save, Sparkles } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
-import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { CheckBox } from '../../../components/ui/CheckBox'
+import { DataTable } from '../../../components/ui/DataTable'
 import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
@@ -27,7 +27,6 @@ import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
-import { useDebounce } from '../../../hooks/useDebounce'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
@@ -41,9 +40,11 @@ import {
   simulados as servicoSimulados,
   turmas as servicoTurmas,
 } from '../../../services/endpoints'
-import { deInputDataHora, normalizar, paraInputDataHora } from '../../../utils/format'
+import { deInputDataHora, paraInputDataHora } from '../../../utils/format'
 import { OPCOES_DESTINACAO, ROTULO_TIPO_QUESTAO } from '../../../utils/labels'
-import type { QuestaoResponse, TipoDestinacaoSimulado } from '../../../types'
+import { periodoLetivo as validarPeriodo } from '../../../utils/validacao'
+import type { QuestaoResponse, SimuladoResponse, TipoDestinacaoSimulado } from '../../../types'
+import type { Coluna } from '../../../components/ui/DataTable/types'
 
 const Coluna = styled.div`
   display: flex;
@@ -66,7 +67,7 @@ const Navegador = styled.div`
 
   padding: ${({ theme }) => theme.spacing.md};
   background: ${({ theme }) => theme.colors.white};
-  border-radius: ${({ theme }) => theme.radius.lg};
+  border-radius: ${({ theme }) => theme.radius.md};
   box-shadow: ${({ theme }) => theme.shadow.base};
 `
 
@@ -79,32 +80,6 @@ const ListaAlunos = styled.div`
   padding-bottom: ${({ theme }) => theme.spacing.xs};
 `
 
-const OpcaoQuestaoBanco = styled.button`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: ${({ theme }) => theme.spacing.xs};
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.sm};
-  text-align: left;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.borderStrong};
-  border-radius: ${({ theme }) => theme.radius.md};
-  cursor: pointer;
-
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.purple};
-  }
-`
-
-const ListaQuestoesScroll = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  max-height: 400px;
-  overflow-y: auto;
-  padding-bottom: ${({ theme }) => theme.spacing.xs};
-`
 
 /**
  * Criação e edição de simulado.
@@ -130,6 +105,7 @@ export default function SimuladoFormulario() {
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
   const [turmaId, setTurmaId] = useState<number | null>(null)
   const [planoEnsinoId, setPlanoEnsinoId] = useState<number | null>(null)
+  const [periodoLetivo, setPeriodoLetivo] = useState('')
   const [tipoDestinacao, setTipoDestinacao] = useState<TipoDestinacaoSimulado>('TODOS')
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
@@ -144,9 +120,23 @@ export default function SimuladoFormulario() {
   const [modalAlunos, setModalAlunos] = useState(false)
   const [alunosSelecionados, setAlunosSelecionados] = useState<number[]>([])
 
+  // Confirmado no Figma: filtra por Disciplina + Buscar (não busca livre por
+  // texto) e permite marcar mais de uma questão — cada uma marcada vira uma
+  // questão nova no simulado (não substitui o slot ativo).
   const [modalImportar, setModalImportar] = useState(false)
-  const [buscaBanco, setBuscaBanco] = useState('')
-  const buscaBancoAtrasada = useDebounce(buscaBanco)
+  const [disciplinaBancoId, setDisciplinaBancoId] = useState<number | null>(null)
+  const [filtroBancoAplicado, setFiltroBancoAplicado] = useState(false)
+  const [questoesBancoSelecionadas, setQuestoesBancoSelecionadas] = useState<Set<number>>(new Set())
+
+  // Modal "Importar simulado": pega todas as questões de um simulado
+  // existente de uma vez (diferente do modal acima, que importa 1 questão
+  // por vez pro slot ativo).
+  const [modalImportarSimulado, setModalImportarSimulado] = useState(false)
+  const [turmaImportarId, setTurmaImportarId] = useState<number | null>(null)
+  const [disciplinaImportarId, setDisciplinaImportarId] = useState<number | null>(null)
+  const [filtroImportarAplicado, setFiltroImportarAplicado] = useState(false)
+  const [simuladoOrigemId, setSimuladoOrigemId] = useState<number | null>(null)
+  const [importandoSimulado, setImportandoSimulado] = useState(false)
 
   const [salvando, setSalvando] = useState(false)
   const [lancando, setLancando] = useState(false)
@@ -166,11 +156,82 @@ export default function SimuladoFormulario() {
   )
 
   const requisicaoBancoQuestoes = useRequisicao(() => servicoQuestoes.listar(), [], {
-    ativo: modalImportar,
+    ativo: modalImportar || modalImportarSimulado,
   })
   const requisicaoBancoAlternativas = useRequisicao(() => servicoAlternativas.listar(), [], {
-    ativo: modalImportar,
+    ativo: modalImportar || modalImportarSimulado,
   })
+  const requisicaoSimuladosOrigem = useRequisicao(() => servicoSimulados.listar(), [], {
+    ativo: modalImportarSimulado,
+  })
+  const requisicaoSimuladoQuestoesOrigem = useRequisicao(() => simuladoQuestoes.listar(), [], {
+    ativo: modalImportarSimulado,
+  })
+
+  const opcoesTurmasImportar = useMemo(
+    () =>
+      (requisicaoTurmas.data ?? [])
+        .filter((turma) => turma.status !== 'INATIVA')
+        .map((turma) => ({ value: turma.id, label: turma.titulo ?? `Turma ${turma.id}` })),
+    [requisicaoTurmas.data],
+  )
+
+  const simuladosParaImportar = useMemo(() => {
+    if (!filtroImportarAplicado) return []
+
+    return (requisicaoSimuladosOrigem.data ?? []).filter(
+      (item) =>
+        item.id !== simuladoId &&
+        (!turmaImportarId || item.turmaId === turmaImportarId) &&
+        (!disciplinaImportarId || item.disciplinaId === disciplinaImportarId),
+    )
+  }, [requisicaoSimuladosOrigem.data, filtroImportarAplicado, turmaImportarId, disciplinaImportarId, simuladoId])
+
+  async function importarSimulado() {
+    if (!simuladoOrigemId) return
+
+    setImportandoSimulado(true)
+
+    try {
+      const vinculos = (requisicaoSimuladoQuestoesOrigem.data ?? []).filter(
+        (vinculo) => vinculo.simuladoId === simuladoOrigemId,
+      )
+      const bancoQuestoes = requisicaoBancoQuestoes.data ?? []
+      const bancoAlternativas = requisicaoBancoAlternativas.data ?? []
+
+      const importadas: QuestaoEditavel[] = vinculos
+        .map((vinculo) => bancoQuestoes.find((item) => item.id === vinculo.questaoId))
+        .filter((item): item is QuestaoResponse => Boolean(item))
+        .map((original) => {
+          const alternativasDaQuestao = bancoAlternativas
+            .filter((alternativa) => alternativa.questaoId === original.id)
+            .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+            .map((alternativa) => ({ texto: alternativa.texto, correta: Boolean(alternativa.correta) }))
+
+          return {
+            enunciado: original.enunciado,
+            tipo: original.tipo,
+            disciplinaId: original.disciplinaId ?? disciplinaId,
+            nivelDificuldade: original.nivelDificuldade ?? 'MEDIA',
+            alternativas: alternativasDaQuestao.length >= 2 ? alternativasDaQuestao : questaoVazia().alternativas,
+          }
+        })
+
+      if (importadas.length === 0) {
+        toast.warning('Nenhuma questão encontrada', 'Esse simulado não tem questões para importar.')
+        return
+      }
+
+      setQuestoes(importadas)
+      setQuestaoAtiva(0)
+      setErrosQuestoes({})
+      setModalImportarSimulado(false)
+      setSimuladoOrigemId(null)
+      toast.success('Simulado importado', `${importadas.length} questão(ões) copiada(s). Revise antes de salvar.`)
+    } finally {
+      setImportandoSimulado(false)
+    }
+  }
 
   const idsJaNoSimulado = useMemo(
     () => new Set(questoes.map((item) => item.id).filter((id): id is number => Boolean(id))),
@@ -178,21 +239,61 @@ export default function SimuladoFormulario() {
   )
 
   const opcoesBancoQuestoes = useMemo(() => {
-    const disponiveis = (requisicaoBancoQuestoes.data ?? []).filter(
-      (item) => item.status !== 'REJEITADA' && !idsJaNoSimulado.has(item.id),
+    if (!filtroBancoAplicado) return []
+
+    return (requisicaoBancoQuestoes.data ?? []).filter(
+      (item) =>
+        item.status !== 'REJEITADA' &&
+        !idsJaNoSimulado.has(item.id) &&
+        (!disciplinaBancoId || item.disciplinaId === disciplinaBancoId),
     )
+  }, [requisicaoBancoQuestoes.data, idsJaNoSimulado, filtroBancoAplicado, disciplinaBancoId])
 
-    if (!buscaBancoAtrasada.trim()) return disponiveis
+  const colunasBancoQuestoes: Coluna<QuestaoResponse>[] = [
+    {
+      key: 'selecionar',
+      cabecalho: 'Selecionar',
+      largura: '96px',
+      render: (item) => (
+        <CheckBox
+          checked={questoesBancoSelecionadas.has(item.id)}
+          onChange={() => alternarQuestaoBancoSelecionada(item.id)}
+          aria-label={`Selecionar questão: ${item.enunciado}`}
+        />
+      ),
+    },
+    { key: 'enunciado', cabecalho: 'Enunciado', render: (item) => item.enunciado },
+    { key: 'tipo', cabecalho: 'Tipo', render: (item) => ROTULO_TIPO_QUESTAO[item.tipo] },
+  ]
 
-    const termo = normalizar(buscaBancoAtrasada)
-    return disponiveis.filter((item) => normalizar(item.enunciado).includes(termo))
-  }, [requisicaoBancoQuestoes.data, idsJaNoSimulado, buscaBancoAtrasada])
+  const colunasSimuladosImportar: Coluna<SimuladoResponse>[] = [
+    {
+      key: 'selecionar',
+      cabecalho: 'Selecionar',
+      largura: '96px',
+      render: (item) => (
+        <CheckBox
+          checked={simuladoOrigemId === item.id}
+          onChange={() => setSimuladoOrigemId((atual) => (atual === item.id ? null : item.id))}
+          aria-label={`Selecionar simulado: ${item.titulo}`}
+        />
+      ),
+    },
+    { key: 'titulo', cabecalho: 'Título', render: (item) => item.titulo },
+    {
+      key: 'disciplina',
+      cabecalho: 'Disciplina',
+      render: (item) =>
+        (requisicaoDisciplinas.data ?? []).find((d) => d.id === item.disciplinaId)?.titulo ?? 'Sem disciplina',
+    },
+  ]
 
   useHidratar(requisicaoSimulado.data, (simulado) => {
     setTitulo(simulado.titulo)
     setDisciplinaId(simulado.disciplinaId ?? null)
     setTurmaId(simulado.turmaId ?? null)
     setPlanoEnsinoId(simulado.planoEnsinoId ?? null)
+    setPeriodoLetivo(simulado.periodoLetivo ?? '')
     setTipoDestinacao(simulado.tipoDestinacao)
     setDataInicio(paraInputDataHora(simulado.dataInicio))
     setDataFim(paraInputDataHora(simulado.dataFim))
@@ -232,8 +333,15 @@ export default function SimuladoFormulario() {
   function validarCabecalho() {
     const encontrados: Record<string, string | undefined> = {}
 
-    // SimuladoRequestDTO: titulo @NotBlank, tipoDestinacao @NotNull.
+    // SimuladoRequestDTO: titulo @NotBlank, tipoDestinacao @NotNull, periodoLetivo @NotBlank.
     if (!titulo.trim()) encontrados.titulo = 'Informe o título do simulado'
+
+    if (!periodoLetivo.trim()) {
+      encontrados.periodoLetivo = 'Informe o período letivo'
+    } else {
+      const erroPeriodo = validarPeriodo(periodoLetivo)
+      if (erroPeriodo) encontrados.periodoLetivo = erroPeriodo
+    }
 
     if (tipoDestinacao === 'ESPECIFICO' && !turmaId) {
       encontrados.turmaId = 'Selecione a turma para escolher os alunos'
@@ -288,6 +396,7 @@ export default function SimuladoFormulario() {
         disciplinaId,
         planoEnsinoId,
         turmaId,
+        periodoLetivo: periodoLetivo.trim(),
         tipoDestinacao,
         dataInicio: deInputDataHora(dataInicio),
         dataFim: deInputDataHora(dataFim),
@@ -371,40 +480,46 @@ export default function SimuladoFormulario() {
       return
     }
 
+    // Mesmo com destinação "Todos", os elegíveis são "os ativos da turma" —
+    // sem turma definida não há como o back saber quem recebe o simulado.
+    if (!turmaId) {
+      toast.warning('Selecione a turma', 'É preciso informar a turma para saber quem vai receber o simulado.')
+      return
+    }
+
     if (tipoDestinacao === 'ESPECIFICO' && alunosSelecionados.length === 0) {
       toast.warning('Selecione os alunos', 'A destinação específica exige ao menos um aluno.')
       setModalAlunos(true)
       return
     }
 
-    const confirmado = await confirmar({
+    await confirmar({
       titulo: 'Lançar simulado?',
       descricao:
         tipoDestinacao === 'TODOS'
           ? 'Todos os alunos com matrícula ativa na turma receberão o simulado.'
           : `${alunosSelecionados.length} aluno(s) receberão o simulado.`,
       rotuloConfirmar: 'Lançar',
+      aoConfirmar: async () => {
+        setLancando(true)
+
+        try {
+          await servicoSimulados.lancar(simuladoId, {
+            alunoIds: tipoDestinacao === 'ESPECIFICO' ? alunosSelecionados : undefined,
+          })
+
+          toast.success('Simulado lançado', 'Os alunos já podem iniciar as tentativas.')
+          navegar('/professor/reforco/simulados')
+        } catch (erroLancar) {
+          toast.error(
+            'Não foi possível lançar',
+            erroLancar instanceof ApiError ? erroLancar.message : undefined,
+          )
+        } finally {
+          setLancando(false)
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    setLancando(true)
-
-    try {
-      await servicoSimulados.lancar(simuladoId, {
-        alunoIds: tipoDestinacao === 'ESPECIFICO' ? alunosSelecionados : undefined,
-      })
-
-      toast.success('Simulado lançado', 'Os alunos já podem iniciar as tentativas.')
-      navegar('/professor/reforco/simulados')
-    } catch (erroLancar) {
-      toast.error(
-        'Não foi possível lançar',
-        erroLancar instanceof ApiError ? erroLancar.message : undefined,
-      )
-    } finally {
-      setLancando(false)
-    }
   }
 
   function adicionarQuestao() {
@@ -420,37 +535,57 @@ export default function SimuladoFormulario() {
   }
 
   /**
-   * Importa o conteúdo de uma questão já existente no banco para o slot ativo.
-   *
-   * Copia como questão nova (sem `id`) em vez de reaproveitar o registro
-   * original: se reutilizássemos o id, `salvar()` pularia a criação do
-   * SimuladoQuestao (assume que quem já tem id já está vinculado a este
-   * simulado), e a questão importada nunca ficaria de fato ligada a ele.
+   * Importa o conteúdo de uma ou mais questões já existentes no banco —
+   * confirmado no Figma: seleção múltipla via checkbox. Cada marcada vira
+   * uma questão NOVA no simulado (sem `id`, pra `salvar()` criar o vínculo
+   * SimuladoQuestao — se reaproveitássemos o id, ele pularia essa criação
+   * assumindo que quem já tem id já está vinculado a este simulado).
    */
-  function importarQuestao(escolhida: QuestaoResponse) {
-    const alternativasDaQuestao = (requisicaoBancoAlternativas.data ?? [])
-      .filter((alternativa) => alternativa.questaoId === escolhida.id)
-      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-      .map((alternativa) => ({ texto: alternativa.texto, correta: Boolean(alternativa.correta) }))
-
-    const importada: QuestaoEditavel = {
-      enunciado: escolhida.enunciado,
-      tipo: escolhida.tipo,
-      disciplinaId: escolhida.disciplinaId ?? disciplinaId,
-      nivelDificuldade: escolhida.nivelDificuldade ?? 'MEDIA',
-      alternativas:
-        alternativasDaQuestao.length >= 2 ? alternativasDaQuestao : questaoVazia().alternativas,
-    }
-
-    setQuestoes((atuais) => atuais.map((item, i) => (i === questaoAtiva ? importada : item)))
-    setErrosQuestoes((atuais) => {
-      const resto = { ...atuais }
-      delete resto[questaoAtiva]
-      return resto
+  function alternarQuestaoBancoSelecionada(id: number) {
+    setQuestoesBancoSelecionadas((atuais) => {
+      const novas = new Set(atuais)
+      if (novas.has(id)) novas.delete(id)
+      else novas.add(id)
+      return novas
     })
+  }
+
+  function importarQuestoesSelecionadas() {
+    const escolhidas = opcoesBancoQuestoes.filter((item) => questoesBancoSelecionadas.has(item.id))
+    if (escolhidas.length === 0) return
+
+    const importadas: QuestaoEditavel[] = escolhidas.map((escolhida) => {
+      const alternativasDaQuestao = (requisicaoBancoAlternativas.data ?? [])
+        .filter((alternativa) => alternativa.questaoId === escolhida.id)
+        .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+        .map((alternativa) => ({ texto: alternativa.texto, correta: Boolean(alternativa.correta) }))
+
+      return {
+        enunciado: escolhida.enunciado,
+        tipo: escolhida.tipo,
+        disciplinaId: escolhida.disciplinaId ?? disciplinaId,
+        nivelDificuldade: escolhida.nivelDificuldade ?? 'MEDIA',
+        alternativas:
+          alternativasDaQuestao.length >= 2 ? alternativasDaQuestao : questaoVazia().alternativas,
+      }
+    })
+
+    // A primeira questão (se ainda vazia) é substituída; as demais são adicionadas.
+    setQuestoes((atuais) => {
+      const primeiraVazia =
+        atuais.length === 1 && !atuais[0].enunciado.trim() && !atuais[0].id ? atuais.slice(1) : atuais
+      return [...primeiraVazia, ...importadas]
+    })
+    setQuestaoAtiva(Math.max(0, questoes.length + importadas.length - 1))
+    setErrosQuestoes({})
     setModalImportar(false)
-    setBuscaBanco('')
-    toast.success('Questão importada', 'Revise o conteúdo antes de salvar.')
+    setQuestoesBancoSelecionadas(new Set())
+    setDisciplinaBancoId(null)
+    setFiltroBancoAplicado(false)
+    toast.success(
+      `${importadas.length} questão(ões) importada(s)`,
+      'Revise o conteúdo antes de salvar.',
+    )
   }
 
   if (edicao && requisicaoSimulado.error) {
@@ -484,17 +619,27 @@ export default function SimuladoFormulario() {
         rotuloVoltar="Voltar para simulados"
         actions={
           <>
-            {edicao && !somenteLeitura && (
+            {!somenteLeitura && (
               <Button
-                variant="primary"
-                icon={<Rocket />}
-                loading={lancando}
-                onClick={lancar}
+                size="large"
+                variant="secondary"
+                icon={<FolderInput />}
+                onClick={() => {
+                  setFiltroImportarAplicado(false)
+                  setSimuladoOrigemId(null)
+                  setModalImportarSimulado(true)
+                }}
               >
+                Importar simulado
+              </Button>
+            )}
+            {edicao && !somenteLeitura && (
+              <Button size="large" variant="primary" icon={<Rocket />} loading={lancando} onClick={lancar}>
                 Lançar
               </Button>
             )}
             <Button
+              size="large"
               variant="danger"
               onClick={() => navegar('/professor/reforco/simulados')}
               disabled={salvando}
@@ -502,6 +647,7 @@ export default function SimuladoFormulario() {
               Cancelar
             </Button>
             <Button
+              size="large"
               variant="success"
               icon={<Save />}
               loading={salvando}
@@ -569,8 +715,19 @@ export default function SimuladoFormulario() {
                   searchable
                   clearable
                   placeholder="Selecionar plano..."
-                  hint="Opcional: vincula o simulado ao conteúdo trabalhado."
+                  hint="Opcional."
                   onChange={setPlanoEnsinoId}
+                />
+
+                <Input
+                  label="Período letivo"
+                  required
+                  placeholder="Ex.: 2026 ou 2026/1"
+                  value={periodoLetivo}
+                  error={erros.periodoLetivo}
+                  disabled={somenteLeitura}
+                  maxLength={10}
+                  onChange={(evento) => setPeriodoLetivo(evento.target.value)}
                 />
 
                 <Select<TipoDestinacaoSimulado>
@@ -610,7 +767,7 @@ export default function SimuladoFormulario() {
                   value={tempoLimite}
                   error={erros.tempoLimite}
                   disabled={somenteLeitura}
-                  hint="Em minutos. Deixe isEmpty para sem limite."
+                  hint="Em minutos. Deixe vazio para sem limite."
                   onChange={(evento) => setTempoLimite(evento.target.value)}
                 />
 
@@ -746,44 +903,107 @@ export default function SimuladoFormulario() {
         aberto={modalImportar}
         onClose={() => setModalImportar(false)}
         titulo="Importar questão"
-        descricao="Reaproveite uma questão já cadastrada no banco. O conteúdo é copiado para a questão atual."
-        largura="640px"
+        largura="720px"
         rodape={
-          <Button variant="secondary" onClick={() => setModalImportar(false)}>
-            Fechar
-          </Button>
+          <>
+            <Button variant="danger" onClick={() => setModalImportar(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="success"
+              disabled={questoesBancoSelecionadas.size === 0}
+              onClick={importarQuestoesSelecionadas}
+            >
+              Salvar
+            </Button>
+          </>
         }
       >
         <Coluna>
-          <BuscaInput
-            value={buscaBanco}
-            onChange={setBuscaBanco}
-            placeholder="Buscar por enunciado..."
+          <Select<number>
+            label="Disciplina"
+            options={opcoesDisciplinas}
+            value={disciplinaBancoId}
+            clearable
+            placeholder="Todas"
+            onChange={setDisciplinaBancoId}
           />
 
-          <ListaQuestoesScroll>
-            {requisicaoBancoQuestoes.loading && <span>Carregando questões...</span>}
+          <Button variant="secondary" onClick={() => setFiltroBancoAplicado(true)}>
+            Buscar
+          </Button>
 
-            {!requisicaoBancoQuestoes.loading && opcoesBancoQuestoes.length === 0 && (
-              <EstadoVazio
-                titulo={buscaBanco ? 'Nenhuma questão encontrada' : 'Nenhuma questão disponível'}
-                descricao={
-                  buscaBanco
-                    ? 'Revise o termo buscado ou limpe o filtro.'
-                    : 'Todas as questões do banco já estão neste simulado ou o banco está vazio.'
-                }
-              />
-            )}
+          <DataTable
+            descricao="Questões do banco"
+            columns={colunasBancoQuestoes}
+            data={opcoesBancoQuestoes}
+            rowKey={(item) => item.id}
+            loading={requisicaoBancoQuestoes.loading}
+            empty={{
+              titulo: filtroBancoAplicado ? 'Nenhuma questão encontrada' : 'Filtre e busque',
+              descricao: filtroBancoAplicado
+                ? 'Todas as questões do banco já estão neste simulado ou não há questões para essa disciplina.'
+                : 'Escolha a disciplina e clique em Buscar.',
+              icon: <ClipboardCheck />,
+            }}
+          />
+        </Coluna>
+      </Modal>
 
-            {opcoesBancoQuestoes.map((item) => (
-              <OpcaoQuestaoBanco key={item.id} type="button" onClick={() => importarQuestao(item)}>
-                <Tag variant="purple" size="small">
-                  {ROTULO_TIPO_QUESTAO[item.tipo]}
-                </Tag>
-                <span>{item.enunciado}</span>
-              </OpcaoQuestaoBanco>
-            ))}
-          </ListaQuestoesScroll>
+      <Modal
+        aberto={modalImportarSimulado}
+        onClose={() => setModalImportarSimulado(false)}
+        titulo="Importar simulado"
+        largura="720px"
+        rodape={
+          <>
+            <Button variant="danger" onClick={() => setModalImportarSimulado(false)}>
+              Cancelar
+            </Button>
+            <Button variant="success" disabled={!simuladoOrigemId} loading={importandoSimulado} onClick={importarSimulado}>
+              Salvar
+            </Button>
+          </>
+        }
+      >
+        <Coluna>
+          <Grade>
+            <Select<number>
+              label="Turma"
+              options={opcoesTurmasImportar}
+              value={turmaImportarId}
+              clearable
+              placeholder="Todas"
+              onChange={setTurmaImportarId}
+            />
+            <Select<number>
+              label="Disciplina"
+              options={opcoesDisciplinas}
+              value={disciplinaImportarId}
+              clearable
+              placeholder="Todas"
+              onChange={setDisciplinaImportarId}
+            />
+          </Grade>
+
+          <Button variant="secondary" onClick={() => setFiltroImportarAplicado(true)}>
+            Buscar
+          </Button>
+
+          <DataTable
+            descricao="Simulados disponíveis para importar"
+            columns={colunasSimuladosImportar}
+            data={simuladosParaImportar}
+            rowKey={(item) => item.id}
+            loading={requisicaoSimuladosOrigem.loading}
+            empty={{
+              titulo: filtroImportarAplicado ? 'Nenhum simulado encontrado' : 'Filtre e busque',
+              descricao: filtroImportarAplicado
+                ? 'Ajuste os filtros e busque novamente.'
+                : 'Escolha a turma e/ou disciplina e clique em Buscar.',
+              icon: <FolderInput />,
+            }}
+          />
         </Coluna>
       </Modal>
     </Layout>

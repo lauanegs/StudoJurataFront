@@ -1,11 +1,17 @@
-import { useEffect, useId, useRef } from 'react'
-import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { Group, Modal as MantineModal, Text } from '@mantine/core'
 
-import { IconButton } from '../IconButton'
-import * as S from './styles'
+import { theme as tokens } from '../../../styles/theme'
 import type { ModalProps } from './types'
 
+/**
+ * Trap de foco, fechar no Esc, restaurar foco anterior e travar o scroll do
+ * body eram ~45 linhas de useEffect na mão — a Mantine já cobre tudo isso
+ * por padrão (trapFocus/closeOnEscape/returnFocus/lockScroll).
+ *
+ * Usa os componentes compostos (Modal.Root/Content/Header/Body) em vez do
+ * atalho <Modal> pra manter o rodapé fixo fora da área que rola, igual era
+ * antes com <S.Rodape> fora de <S.Corpo>.
+ */
 export function Modal({
   aberto,
   onClose,
@@ -16,83 +22,49 @@ export function Modal({
   largura,
   bloqueado = false,
 }: ModalProps) {
-  const idTitulo = useId()
-  const containerRef = useRef<HTMLDivElement>(null)
-  const focoAnterior = useRef<HTMLElement | null>(null)
+  return (
+    <MantineModal.Root
+      opened={aberto}
+      onClose={onClose}
+      size={largura ?? '440px'}
+      closeOnEscape={!bloqueado}
+      closeOnClickOutside={!bloqueado}
+      radius="md"
+    >
+      <MantineModal.Overlay backgroundOpacity={0.35} blur={4} />
+      <MantineModal.Content>
+        <MantineModal.Header>
+          <div>
+            <MantineModal.Title
+              style={{
+                fontSize: tokens.typography.sizes.md,
+                fontWeight: tokens.typography.weights.semiBold,
+                color: tokens.colors.textSecondary,
+              }}
+            >
+              {titulo}
+            </MantineModal.Title>
+            {descricao && (
+              <Text size="xs" c={tokens.colors.textSecondary}>
+                {descricao}
+              </Text>
+            )}
+          </div>
+          <MantineModal.CloseButton aria-label="Fechar" disabled={bloqueado} />
+        </MantineModal.Header>
 
-  useEffect(() => {
-    if (!aberto) return
+        <MantineModal.Body>{children}</MantineModal.Body>
 
-    focoAnterior.current = document.activeElement as HTMLElement
-    const overflowOriginal = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    requestAnimationFrame(() => {
-      const focavel = containerRef.current?.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      )
-      focavel?.focus()
-    })
-
-    function aoTeclar(evento: KeyboardEvent) {
-      if (evento.key === 'Escape' && !bloqueado) {
-        onClose()
-        return
-      }
-
-      if (evento.key !== 'Tab') return
-
-      const focaveis = containerRef.current?.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      )
-      if (!focaveis || focaveis.length === 0) return
-
-      const primeiro = focaveis[0]
-      const ultimo = focaveis[focaveis.length - 1]
-
-      if (evento.shiftKey && document.activeElement === primeiro) {
-        evento.preventDefault()
-        ultimo.focus()
-      } else if (!evento.shiftKey && document.activeElement === ultimo) {
-        evento.preventDefault()
-        primeiro.focus()
-      }
-    }
-
-    document.addEventListener('keydown', aoTeclar)
-
-    return () => {
-      document.removeEventListener('keydown', aoTeclar)
-      document.body.style.overflow = overflowOriginal
-      focoAnterior.current?.focus()
-    }
-  }, [aberto, onClose, bloqueado])
-
-  if (!aberto) return null
-
-  return createPortal(
-    <S.Overlay onMouseDown={(evento) => evento.target === evento.currentTarget && !bloqueado && onClose()}>
-      <S.Container
-        ref={containerRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={idTitulo}
-        $largura={largura}
-      >
-        <S.Cabecalho>
-          <S.Titulos>
-            <S.Titulo id={idTitulo}>{titulo}</S.Titulo>
-            {descricao && <S.Descricao>{descricao}</S.Descricao>}
-          </S.Titulos>
-
-          <IconButton label="Fechar" icon={<X />} onClick={onClose} disabled={bloqueado} />
-        </S.Cabecalho>
-
-        <S.Corpo>{children}</S.Corpo>
-
-        {rodape && <S.Rodape>{rodape}</S.Rodape>}
-      </S.Container>
-    </S.Overlay>,
-    document.body,
+        {rodape && (
+          <Group
+            justify="flex-end"
+            gap="md"
+            style={{ padding: `0 ${tokens.spacing.xl} ${tokens.spacing.xl}` }}
+          >
+            {rodape}
+          </Group>
+        )}
+      </MantineModal.Content>
+    </MantineModal.Root>
   )
 }

@@ -26,4 +26,7 @@ export default defineConfig({
   plugins: [react()],
   server: { port: 5173, proxy },
   preview: { port: 4173, proxy },
+  optimizeDeps: {
+    include: ['@mantine/core', '@mantine/hooks', '@mantine/dates', 'dayjs'],
+  },
 })

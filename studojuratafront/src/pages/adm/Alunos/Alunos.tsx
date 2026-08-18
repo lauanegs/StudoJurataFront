@@ -13,7 +13,7 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { alunos as servicoAlunos } from '../../../services/endpoints'
 import { formatarCpf, formatarIdade, normalizar } from '../../../utils/format'
@@ -46,27 +46,26 @@ export default function Alunos() {
 
   const paginacao = usePaginacao(filtrados)
 
-  async function excluir(aluno: Aluno) {
-    const confirmado = await confirmar({
+  const { executar: excluir, executando: excluindo } = useAcao(async (aluno: Aluno) => {
+    await confirmar({
       titulo: 'Excluir aluno?',
       descricao: `${aluno.pessoa?.nome} será desativado. As matrículas e o histórico de simulados continuam preservados.`,
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoAlunos.excluir(aluno.id)
+          toast.success('Aluno excluído', `${aluno.pessoa?.nome} foi removido da listagem.`)
+          await reload()
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoAlunos.excluir(aluno.id)
-      toast.success('Aluno excluído', `${aluno.pessoa?.nome} foi removido da listagem.`)
-      await reload()
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   const colunas: Coluna<Aluno>[] = [
     {
@@ -150,12 +149,14 @@ export default function Alunos() {
             <IconButton
               label={`Editar ${aluno.pessoa?.nome}`}
               icon={<Pencil />}
+              disabled={excluindo}
               onClick={() => navegar(`/adm/alunos/${aluno.id}`)}
             />
             <IconButton
               label={`Excluir ${aluno.pessoa?.nome}`}
               icon={<Trash2 />}
               variant="danger"
+              disabled={excluindo}
               onClick={() => excluir(aluno)}
             />
           </>

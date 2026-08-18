@@ -5,36 +5,46 @@ import { LetterBadge } from '../LetterBadge'
 export type AlternativeStatus = 'neutral' | 'correct' | 'incorrect'
 
 /**
- * Confirmado no Figma: card sempre branco com borda neutra fina — sem tingir
- * o fundo/borda de verde ou vermelho (isso fica só no badge e na legenda).
+ * Confirmado no Figma (nós 1:996-1005): a letra é um bloco fundido à borda
+ * esquerda (mesmo padrão do AlternativaButton) — o card em si permanece
+ * branco com borda neutra fina, sem tingir o fundo de verde/vermelho.
  */
-const Container = styled.div<{ $status: AlternativeStatus }>`
+const Container = styled.div`
   display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  align-items: stretch;
 
   width: 100%;
   min-height: 60px;
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
 
   border: 2px solid rgba(115, 115, 115, 0.15);
   border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ theme }) => theme.colors.white};
+  overflow: hidden;
 `
 
 const Texto = styled.span`
+  display: flex;
   flex: 1;
+  align-items: center;
   min-width: 0;
+  padding: 0 ${({ theme }) => theme.spacing.md};
+
   font-size: ${({ theme }) => theme.typography.sizes.md};
   color: ${({ theme }) => theme.colors.textSecondary};
   overflow-wrap: anywhere;
 `
 
 const Legenda = styled.span<{ $status: AlternativeStatus }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  width: 200px;
+  padding: 0 ${({ theme }) => theme.spacing.md};
 
   font-size: ${({ theme }) => theme.typography.sizes.md};
   font-weight: ${({ theme }) => theme.typography.weights.regular};
+  text-align: center;
   color: ${({ theme, $status }) =>
     $status === 'correct' ? theme.colors.success : theme.colors.error};
 `
@@ -55,11 +65,10 @@ export function AlternativaCard({ letra, texto, status = 'neutral', legenda }: A
   const textoLegenda = legenda ?? legendaPadrao
 
   return (
-    <Container $status={status}>
+    <Container>
       <LetterBadge
         letra={letra}
         state={status === 'correct' ? 'correct' : status === 'incorrect' ? 'incorrect' : 'default'}
-        size="small"
       />
 
       <Texto>{texto}</Texto>

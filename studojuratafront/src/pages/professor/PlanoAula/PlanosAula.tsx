@@ -1,30 +1,40 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Layers, Pencil, Plus, Trash2 } from 'lucide-react'
+import styled from 'styled-components'
+import { CalendarDays, ClipboardList, Layers, Plus } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
-import { IconButton } from '../../../components/ui/IconButton'
-import { Tag } from '../../../components/ui/Tag'
-import { useConfirm } from '../../../contexts/confirmContexto'
-import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
+import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import { ApiError } from '../../../services/api'
 import { planosAula as servicoPlanos, professores } from '../../../services/endpoints'
 import { normalizar } from '../../../utils/format'
-import { ROTULO_ATIVO_INATIVO, ATIVO_INATIVO_VARIANT } from '../../../utils/labels'
 import type { PlanoAula } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
+/* Confirmado no Figma: botão "Adicionar plano" (150px) + busca (250px) na
+   mesma linha, coladas — mesmo padrão de Planos de Ensino. */
+const CamposCabecalho = styled.div`
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+`
+
+const LarguraBusca = styled.div`
+  width: 250px;
+`
+
 export default function PlanosAula() {
   const navegar = useNavigate()
-  const toast = useToast()
-  const confirmar = useConfirm()
   const { professorId } = useProfessorLogado()
 
   const [busca, setBusca] = useState('')
@@ -52,32 +62,12 @@ export default function PlanosAula() {
     return meusPlanos.filter(
       (plano) =>
         normalizar(plano.turmaDisciplina?.turma?.titulo).includes(termo) ||
-        normalizar(plano.turmaDisciplina?.disciplina?.titulo).includes(termo) ||
-        normalizar(plano.planoEnsino?.titulo).includes(termo),
+        normalizar(plano.turmaDisciplina?.turma?.curso?.nome).includes(termo) ||
+        normalizar(plano.turmaDisciplina?.disciplina?.titulo).includes(termo),
     )
   }, [meusPlanos, buscaAtrasada])
 
-  async function excluir(plano: PlanoAula) {
-    const confirmado = await confirmar({
-      titulo: 'Excluir plano de aula?',
-      descricao: 'O plano será desativado. As aulas, frequências e conteúdos já registrados permanecem.',
-      rotuloConfirmar: 'Excluir',
-      tone: 'danger',
-    })
-
-    if (!confirmado) return
-
-    try {
-      await servicoPlanos.excluir(plano.id)
-      toast.success('Plano de aula excluído')
-      await reload()
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  const paginacao = usePaginacao(filtrados)
 
   const colunas: Coluna<PlanoAula>[] = [
     {
@@ -88,58 +78,52 @@ export default function PlanosAula() {
       render: (plano) => plano.turmaDisciplina?.turma?.titulo ?? '—',
     },
     {
+      key: 'curso',
+      cabecalho: 'Curso',
+      render: (plano) => plano.turmaDisciplina?.turma?.curso?.nome ?? '—',
+    },
+    {
       key: 'disciplina',
       cabecalho: 'Disciplina',
-      render: (plano) => <Tag variant="purple">{plano.turmaDisciplina?.disciplina?.titulo ?? '—'}</Tag>,
-    },
-    {
-      key: 'planoEnsino',
-      cabecalho: 'Plano de ensino',
       ocultarEmTelaPequena: true,
-      render: (plano) => plano.planoEnsino?.titulo ?? `Plano #${plano.planoEnsino?.id ?? '—'}`,
-    },
-    {
-      key: 'periodo',
-      cabecalho: 'Período',
-      ocultarEmTelaPequena: true,
-      render: (plano) => plano.planoEnsino?.periodoLetivo ?? '—',
-    },
-    {
-      key: 'status',
-      cabecalho: 'Status',
-      render: (plano) =>
-        plano.status ? (
-          <Tag variant={ATIVO_INATIVO_VARIANT[plano.status]} ponto>
-            {ROTULO_ATIVO_INATIVO[plano.status]}
-          </Tag>
-        ) : (
-          '—'
-        ),
+      render: (plano) => plano.turmaDisciplina?.disciplina?.titulo ?? '—',
     },
   ]
 
   return (
     <Layout>
       <Header
-        titulo="Planos de aula"
-        subtitulo={!loading && !error ? `${filtrados.length} plano(s)` : undefined}
-        actions={
-          <Button icon={<Plus />} onClick={() => navegar('/professor/plano-aula/novo')}>
-            Novo plano de aula
-          </Button>
+        titulo="Planos de Aula"
+        filtros={
+          <CamposCabecalho>
+            <Button icon={<Plus />} size="large" onClick={() => navegar('/professor/plano-aula/novo')}>
+              Adicionar plano
+            </Button>
+
+            <LarguraBusca>
+              <BuscaInput value={busca} onChange={setBusca} placeholder="Buscar plano..." />
+            </LarguraBusca>
+          </CamposCabecalho>
         }
-        filtros={<BuscaInput value={busca} onChange={setBusca} placeholder="Buscar por turma ou disciplina..." />}
       />
 
       <DataTable
         descricao="Planos de aula"
         columns={colunas}
-        data={filtrados}
+        data={paginacao.itensDaPagina}
         rowKey={(plano) => plano.id}
         loading={loading || requisicaoVinculos.loading}
         error={error}
         onReload={reload}
-        onRowClick={(plano) => navegar(`/professor/plano-aula/${plano.id}/aulas`)}
+        paginacao={{
+          pagina: paginacao.pagina,
+          totalPaginas: paginacao.totalPaginas,
+          label: paginacao.label,
+          temAnterior: paginacao.temAnterior,
+          temProxima: paginacao.temProxima,
+          onPrevious: paginacao.anterior,
+          onNext: paginacao.proxima,
+        }}
         empty={{
           titulo: busca ? 'Nenhum plano encontrado' : 'Nenhum plano de aula',
           descricao: busca
@@ -154,17 +138,22 @@ export default function PlanosAula() {
         }}
         actions={(plano) => (
           <>
-            <IconButton
-              label="Editar plano de aula"
-              icon={<Pencil />}
+            <Button
+              variant="subtle"
+              size="small"
+              icon={<ClipboardList />}
               onClick={() => navegar(`/professor/plano-aula/${plano.id}`)}
-            />
-            <IconButton
-              label="Excluir plano de aula"
-              icon={<Trash2 />}
-              variant="danger"
-              onClick={() => excluir(plano)}
-            />
+            >
+              Detalhar
+            </Button>
+            <Button
+              variant="subtle"
+              size="small"
+              icon={<CalendarDays />}
+              onClick={() => navegar(`/professor/plano-aula/${plano.id}/aulas`)}
+            >
+              Aulas
+            </Button>
           </>
         )}
       />

@@ -88,6 +88,34 @@ export const GlobalStyle = createGlobalStyle`
     background: transparent;
   }
 
+  /* Usado pelo DataTable pra esconder colunas secundárias em telas pequenas
+     e destacar cabeçalhos ordenáveis — mais simples que estilo por instância
+     pra uma classe utilitária reaproveitada em toda tabela. */
+  .oculta-tela-pequena {
+    @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+      display: none;
+    }
+  }
+
+  .coluna-ordenavel:hover {
+    color: ${({ theme }) => theme.colors.purple};
+  }
+
+  /* Selo de ícone do cabeçalho do Card — o ícone (lucide) vem com 24px por
+     padrão; sem isso ele estoura o círculo de 28px. */
+  .icone-card svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* O Edge (e o Chrome, quando o gerenciador de senha do sistema operacional
+     está ativo) desenha o próprio olho de "mostrar senha" em cima do campo —
+     duplicando o nosso. Como já temos o nosso, o nativo fica escondido. */
+  input[type='password']::-ms-reveal,
+  input[type='password']::-ms-clear {
+    display: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

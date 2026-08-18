@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
 import styled from 'styled-components'
-import { Award, Coins, Shirt } from 'lucide-react'
+import { Award, Shirt } from 'lucide-react'
 
 import { Layout } from '../../components/layout'
+import { Banner } from '../../components/ui/Banner'
 import { Card } from '../../components/ui/Card'
 import { ConquistaCard } from '../../components/ui/ConquistaCard'
 import { Header } from '../../components/ui/Header'
+import { SaldoMoedas } from '../../components/ui/SaldoMoedas'
 import { SkinCard, type SkinState } from '../../components/ui/SkinCard'
-import { XPBar } from '../../components/ui/XPBar'
-import { calcularNivel } from '../../components/ui/XPBar/calcularNivel'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../components/feedback/Skeleton'
@@ -18,63 +18,7 @@ import { useAlunoLogado } from '../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../hooks/useRequisicao'
 import { ApiError } from '../../services/api'
 import { gamificacao, simuladoAlunos } from '../../services/endpoints'
-import { formatarMoedas } from '../../utils/format'
 import { resolverImagemSkin } from '../../utils/skins'
-
-const Cabecalho = styled.section`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.lg};
-  flex-wrap: wrap;
-
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.xl};
-
-  background: ${({ theme }) => theme.gradients.banner};
-  border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: ${({ theme }) => theme.shadow.card};
-  color: ${({ theme }) => theme.colors.white};
-`
-
-const Identidade = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.lg};
-  min-width: 0;
-`
-
-const Personagem = styled.img`
-  width: 110px;
-  height: 110px;
-  object-fit: contain;
-`
-
-const Nome = styled.h2`
-  font-size: ${({ theme }) => theme.typography.sizes.xxl};
-  font-weight: ${({ theme }) => theme.typography.weights.bold};
-`
-
-const Progresso = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  min-width: 220px;
-`
-
-const Saldo = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: ${({ theme }) => theme.radius.pill};
-
-  font-size: ${({ theme }) => theme.typography.sizes.md};
-  font-weight: ${({ theme }) => theme.typography.weights.bold};
-`
 
 const Grade = styled.div`
   display: grid;
@@ -230,46 +174,17 @@ export default function Perfil() {
   }
 
   const pontuacao = requisicaoPontuacao.data
-  const nivel = pontuacao ? calcularNivel(pontuacao.xpTotal).nivel : null
 
   return (
     <Layout>
-      <Cabecalho>
-        <Identidade>
-          <Personagem
-            src={resolverImagemSkin(skinEquipada?.urlAsset)}
-            alt={skinEquipada?.nome ?? 'Personagem padrão'}
-          />
+      <Banner
+        titulo={usuario?.nomePessoa ?? 'Meu perfil'}
+        subtitulo={skinEquipada?.nome ?? 'Continue evoluindo e desbloqueando conquistas!'}
+        mascoteSrc={resolverImagemSkin(skinEquipada?.urlAsset)}
+        extra={pontuacao && <SaldoMoedas moedas={pontuacao.moedas} />}
+      />
 
-          <div>
-            <Nome>{usuario?.nomePessoa ?? 'Meu perfil'}</Nome>
-            <span style={{ opacity: 0.9 }}>
-              {nivel ? `Nível ${nivel}` : 'Carregando progresso...'}
-              {skinEquipada ? ` · ${skinEquipada.nome}` : ''}
-            </span>
-          </div>
-        </Identidade>
-
-        {pontuacao && (
-          <Progresso>
-            <Saldo>
-              <Coins size={20} aria-hidden="true" />
-              {formatarMoedas(pontuacao.moedas)} moedas
-            </Saldo>
-            <XPBar xpTotal={pontuacao.xpTotal} />
-          </Progresso>
-        )}
-      </Cabecalho>
-
-      <Card
-        titulo="Conquistas"
-        icon={<Award />}
-        actions={
-          <span style={{ fontSize: '12px', color: '#737373' }}>
-            {conquistas.filter((item) => item.conquistada).length} de {conquistas.length} desbloqueadas
-          </span>
-        }
-      >
+      <Card titulo="Conquistas" icon={<Award />} corpoComFundo>
         {requisicaoTentativas.loading || carregandoAluno ? (
           <Skeleton $altura="140px" $raio="8px" />
         ) : (
@@ -287,7 +202,7 @@ export default function Perfil() {
         )}
       </Card>
 
-      <Card titulo="Skins" icon={<Shirt />}>
+      <Card titulo="Skins" icon={<Shirt />} corpoComFundo>
         {requisicaoSkins.loading ? (
           <Skeleton $altura="180px" $raio="8px" />
         ) : requisicaoSkins.error ? (

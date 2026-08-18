@@ -13,7 +13,7 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { cursos as servicoCursos } from '../../../services/endpoints'
 import { formatarCargaHoraria, normalizar } from '../../../utils/format'
@@ -41,27 +41,26 @@ export default function Cursos() {
 
   const paginacao = usePaginacao(filtrados)
 
-  async function excluir(curso: Curso) {
-    const confirmado = await confirmar({
+  const { executar: excluir, executando: excluindo } = useAcao(async (curso: Curso) => {
+    await confirmar({
       titulo: 'Excluir curso?',
       descricao: `"${curso.nome}" será desativado. Turmas e planos de ensino já vinculados são preservados.`,
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoCursos.excluir(curso.id)
+          toast.success('Curso excluído')
+          await reload()
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoCursos.excluir(curso.id)
-      toast.success('Curso excluído')
-      await reload()
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   const colunas: Coluna<Curso>[] = [
     {
@@ -146,12 +145,14 @@ export default function Cursos() {
             <IconButton
               label={`Editar ${curso.nome}`}
               icon={<Pencil />}
+              disabled={excluindo}
               onClick={() => navegar(`/adm/cursos/${curso.id}`)}
             />
             <IconButton
               label={`Excluir ${curso.nome}`}
               icon={<Trash2 />}
               variant="danger"
+              disabled={excluindo}
               onClick={() => excluir(curso)}
             />
           </>

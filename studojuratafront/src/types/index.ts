@@ -58,6 +58,17 @@ export interface Escola extends EntidadeBase {
   status?: StatusAtivoInativo
 }
 
+export interface Endereco {
+  cep?: string
+  logradouro?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  /** UF, 2 letras. */
+  estado?: string
+}
+
 export interface Pessoa extends EntidadeBase {
   nome: string
   cpf: string
@@ -66,6 +77,7 @@ export interface Pessoa extends EntidadeBase {
   email?: string
   sexo?: Sexo
   status?: StatusAtivoInativo
+  endereco?: Endereco | null
 }
 
 export interface Aluno extends EntidadeBase {
@@ -118,7 +130,6 @@ export interface Curso extends EntidadeBase {
 export interface Disciplina extends EntidadeBase {
   escola: Escola
   titulo: string
-  cargaHoraria?: number
   status?: StatusAtivoInativo
 }
 
@@ -293,11 +304,14 @@ export interface SimuladoRequest {
   tempoLimite?: number | null
   notaMaxima?: number | null
   quantidadeQuestoes?: number | null
+  /** Correção do bug "nota não recalcula sem Plano de Ensino": obrigatório, próprio do Simulado. */
+  periodoLetivo: string
 }
 
 export interface SimuladoResponse extends SimuladoRequest {
   id: number
   status?: StatusSimulado
+  createdAt?: string
 }
 
 export interface SimuladoQuestaoRequest {
@@ -375,7 +389,6 @@ export interface FinalizarSimuladoRequest {
 export interface PontuacaoAluno extends EntidadeBase {
   aluno: Aluno
   moedas: number
-  xpTotal: number
 }
 
 export interface Skin extends EntidadeBase {

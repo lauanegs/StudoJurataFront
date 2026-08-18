@@ -75,6 +75,14 @@ export function formatarTelefone(telefone?: string | null): string {
   return digitos.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2')
 }
 
+export function formatarCep(cep?: string | null): string {
+  if (!cep) return INVALIDO
+
+  const digitos = cep.replace(/\D/g, '').slice(0, 8)
+
+  return digitos.replace(/(\d{5})(\d)/, '$1-$2')
+}
+
 export function formatarCnpj(cnpj?: string | null): string {
   if (!cnpj) return INVALIDO
 

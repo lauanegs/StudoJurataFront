@@ -11,8 +11,10 @@ const Container = styled.article<{ $concluido: boolean }>`
   gap: ${({ theme }) => theme.spacing.xs};
 
   width: 100%;
-  min-width: 240px;
+  height: 100%;
+  min-width: 0;
   padding: ${({ theme }) => theme.spacing.md};
+  overflow: hidden;
 
   background: ${({ theme }) => theme.colors.white};
   border-radius: ${({ theme }) => theme.radius.md};

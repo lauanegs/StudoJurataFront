@@ -13,7 +13,7 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { matriculas, turmas as servicoTurmas } from '../../../services/endpoints'
 import { formatarData, normalizar } from '../../../utils/format'
@@ -63,27 +63,26 @@ export default function Turmas() {
 
   const paginacao = usePaginacao(filtradas)
 
-  async function excluir(turma: Turma) {
-    const confirmado = await confirmar({
+  const { executar: excluir, executando: excluindo } = useAcao(async (turma: Turma) => {
+    await confirmar({
       titulo: 'Excluir turma?',
       descricao: `"${turma.titulo}" será desativada. O histórico de matrículas é preservado.`,
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoTurmas.excluir(turma.id)
+          toast.success('Turma excluída')
+          await reload()
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoTurmas.excluir(turma.id)
-      toast.success('Turma excluída')
-      await reload()
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   const colunas: Coluna<Turma>[] = [
     {
@@ -187,12 +186,14 @@ export default function Turmas() {
             <IconButton
               label={`Editar ${turma.titulo}`}
               icon={<Pencil />}
+              disabled={excluindo}
               onClick={() => navegar(`/adm/turmas/${turma.id}`)}
             />
             <IconButton
               label={`Excluir ${turma.titulo}`}
               icon={<Trash2 />}
               variant="danger"
+              disabled={excluindo}
               onClick={() => excluir(turma)}
             />
           </>

@@ -207,3 +207,42 @@ export const OPCOES_DESTINACAO = opcoes(ROTULO_DESTINACAO)
 export const OPCOES_DIA_SEMANA = opcoes(ROTULO_DIA_SEMANA)
 export const OPCOES_NIVEL_DOMINIO = opcoes(ROTULO_NIVEL_DOMINIO)
 export const OPCOES_TIPO_USUARIO = opcoes(ROTULO_TIPO_USUARIO)
+
+// --- Endereço ----------------------------------------------------------------
+
+/** As 27 UFs do Brasil, para o Select do bloco de Endereço (item 9.8). */
+export const OPCOES_UF = [
+  { value: 'AC', label: 'AC' },
+  { value: 'AL', label: 'AL' },
+  { value: 'AP', label: 'AP' },
+  { value: 'AM', label: 'AM' },
+  { value: 'BA', label: 'BA' },
+  { value: 'CE', label: 'CE' },
+  { value: 'DF', label: 'DF' },
+  { value: 'ES', label: 'ES' },
+  { value: 'GO', label: 'GO' },
+  { value: 'MA', label: 'MA' },
+  { value: 'MT', label: 'MT' },
+  { value: 'MS', label: 'MS' },
+  { value: 'MG', label: 'MG' },
+  { value: 'PA', label: 'PA' },
+  { value: 'PB', label: 'PB' },
+  { value: 'PR', label: 'PR' },
+  { value: 'PE', label: 'PE' },
+  { value: 'PI', label: 'PI' },
+  { value: 'RJ', label: 'RJ' },
+  { value: 'RN', label: 'RN' },
+  { value: 'RS', label: 'RS' },
+  { value: 'RO', label: 'RO' },
+  { value: 'RR', label: 'RR' },
+  { value: 'SC', label: 'SC' },
+  { value: 'SP', label: 'SP' },
+  { value: 'SE', label: 'SE' },
+  { value: 'TO', label: 'TO' },
+]
+
+// --- LGPD / consentimento -----------------------------------------------------
+
+/** Texto curto exibido junto ao checkbox de aceite (item 10.3 — sem versionamento formal). */
+export const TEXTO_VERSAO_LGPD =
+  'Autorizo o uso dos dados do aluno na plataforma StudoJurata, conforme a Lei Geral de Proteção de Dados (LGPD).'

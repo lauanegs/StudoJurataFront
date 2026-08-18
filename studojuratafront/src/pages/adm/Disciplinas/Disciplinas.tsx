@@ -13,10 +13,10 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { disciplinas as servicoDisciplinas } from '../../../services/endpoints'
-import { formatarCargaHoraria, normalizar } from '../../../utils/format'
+import { normalizar } from '../../../utils/format'
 import { ROTULO_ATIVO_INATIVO, ATIVO_INATIVO_VARIANT } from '../../../utils/labels'
 import type { Disciplina } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
@@ -44,27 +44,26 @@ export default function Disciplinas() {
 
   const paginacao = usePaginacao(filtradas)
 
-  async function excluir(disciplina: Disciplina) {
-    const confirmado = await confirmar({
+  const { executar: excluir, executando: excluindo } = useAcao(async (disciplina: Disciplina) => {
+    await confirmar({
       titulo: 'Excluir disciplina?',
       descricao: `"${disciplina.titulo}" será desativada. Notas e simulados já lançados são preservados.`,
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoDisciplinas.excluir(disciplina.id)
+          toast.success('Disciplina excluída')
+          await reload()
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoDisciplinas.excluir(disciplina.id)
-      toast.success('Disciplina excluída')
-      await reload()
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   const colunas: Coluna<Disciplina>[] = [
     {
@@ -73,13 +72,6 @@ export default function Disciplinas() {
       ordenavel: true,
       valorOrdenacao: (disciplina) => disciplina.titulo ?? '',
       render: (disciplina) => disciplina.titulo ?? '—',
-    },
-    {
-      key: 'carga',
-      cabecalho: 'Carga horária',
-      ordenavel: true,
-      valorOrdenacao: (disciplina) => disciplina.cargaHoraria ?? 0,
-      render: (disciplina) => formatarCargaHoraria(disciplina.cargaHoraria),
     },
     {
       key: 'status',
@@ -143,12 +135,14 @@ export default function Disciplinas() {
             <IconButton
               label={`Editar ${disciplina.titulo}`}
               icon={<Pencil />}
+              disabled={excluindo}
               onClick={() => navegar(`/adm/disciplinas/${disciplina.id}`)}
             />
             <IconButton
               label={`Excluir ${disciplina.titulo}`}
               icon={<Trash2 />}
               variant="danger"
+              disabled={excluindo}
               onClick={() => excluir(disciplina)}
             />
           </>

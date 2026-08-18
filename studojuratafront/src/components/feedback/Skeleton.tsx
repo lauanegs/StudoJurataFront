@@ -32,5 +32,5 @@ export const SkeletonTexto = styled(Skeleton)`
 
 export const SkeletonCartao = styled(Skeleton)`
   height: 120px;
-  border-radius: ${({ theme }) => theme.radius.lg};
+  border-radius: ${({ theme }) => theme.radius.md};
 `

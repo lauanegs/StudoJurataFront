@@ -43,10 +43,21 @@ export function validarPessoa(valores: DadosPessoa): Partial<Record<keyof DadosP
     erros.sexo = 'Selecione o sexo'
   }
 
+  // Endereço é todo opcional (item 9.8) — só valida formato do que foi preenchido.
+  if (valores.cep && apenasDigitos(valores.cep).length !== 8) {
+    erros.cep = 'CEP incompleto'
+  }
+
   return erros
 }
 
 export function paraPayloadPessoa(valores: DadosPessoa): Partial<Pessoa> {
+  // Bloco de endereço é todo opcional (item 9.8): só manda o objeto se algum
+  // campo foi preenchido, pra não gravar um Endereco vazio sem necessidade.
+  const enderecoPreenchido =
+    valores.cep || valores.logradouro || valores.numero || valores.complemento ||
+    valores.bairro || valores.cidade || valores.estado
+
   return {
     nome: valores.nome.trim(),
     cpf: formatarCpfParaEnvio(valores.cpf),
@@ -55,6 +66,17 @@ export function paraPayloadPessoa(valores: DadosPessoa): Partial<Pessoa> {
     email: valores.email.trim() || undefined,
     sexo: valores.sexo ?? undefined,
     status: 'ATIVO',
+    endereco: enderecoPreenchido
+      ? {
+          cep: valores.cep ? apenasDigitos(valores.cep) : undefined,
+          logradouro: valores.logradouro.trim() || undefined,
+          numero: valores.numero.trim() || undefined,
+          complemento: valores.complemento.trim() || undefined,
+          bairro: valores.bairro.trim() || undefined,
+          cidade: valores.cidade.trim() || undefined,
+          estado: valores.estado || undefined,
+        }
+      : undefined,
   }
 }
 
@@ -76,5 +98,12 @@ export function dePessoa(pessoa: Pessoa): DadosPessoa {
     telefone: pessoa.telefone ?? '',
     email: pessoa.email ?? '',
     sexo: pessoa.sexo ?? null,
+    cep: pessoa.endereco?.cep ?? '',
+    logradouro: pessoa.endereco?.logradouro ?? '',
+    numero: pessoa.endereco?.numero ?? '',
+    complemento: pessoa.endereco?.complemento ?? '',
+    bairro: pessoa.endereco?.bairro ?? '',
+    cidade: pessoa.endereco?.cidade ?? '',
+    estado: pessoa.endereco?.estado ?? '',
   }
 }

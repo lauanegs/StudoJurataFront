@@ -9,7 +9,8 @@ const Container = styled.article`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
 
-  width: 180px;
+  width: 100%;
+  min-width: 0;
   padding: ${({ theme }) => theme.spacing.md};
 
   background: ${({ theme }) => theme.colors.white};
@@ -50,10 +51,18 @@ const Complemento = styled.span`
   color: ${({ theme }) => theme.colors.textTertiary};
 `
 
+/** Confirmado no Figma: contorno cinza ao redor da foto/avatar circular. */
+const Moldura = styled.div`
+  display: inline-flex;
+  border-radius: ${({ theme }) => theme.radius.circle};
+  border: 1px solid ${({ theme }) => theme.colors.borderStrong};
+  padding: 2px;
+`
+
 interface AniversarianteCardProps {
   nome: string
   data: string
-  /** Ex.: "faz 9 anos" — derivado de Pessoa.dataNascimento. */
+  /** Ex.: "faz 9 anos" — derivado de Pessoa.dataNascimento. Opcional: nem toda tela exibe a idade. */
   complemento?: string
   hoje?: boolean
   foto?: string | null
@@ -62,7 +71,9 @@ interface AniversarianteCardProps {
 export function AniversarianteCard({ nome, data, complemento, hoje, foto }: AniversarianteCardProps) {
   return (
     <Container>
-      <Avatar nome={nome} src={foto} size="large" destaque={hoje} />
+      <Moldura>
+        <Avatar nome={nome} src={foto} size="large" destaque={hoje} />
+      </Moldura>
       <Nome>{nome}</Nome>
       <Data>
         <Cake aria-hidden="true" />

@@ -1,7 +1,8 @@
-import { useId } from 'react'
+import { Group, Radio, Stack } from '@mantine/core'
 
 import { Field } from '../Field'
-import * as S from './styles'
+import { theme as tokens } from '../../../styles/theme'
+import { corComOpacidade } from '../../../utils/corComOpacidade'
 import type { RadioGroupProps } from './types'
 
 /**
@@ -20,33 +21,43 @@ export function RadioGroup<V extends string = string>({
   direction = 'horizontal',
   name,
 }: RadioGroupProps<V>) {
-  const generatedId = useId()
-  const groupName = name ?? generatedId
+  const Layout = direction === 'horizontal' ? Group : Stack
 
   return (
     <Field label={label} required={required} hint={hint} error={error}>
-      <S.Lista role="radiogroup" aria-label={label} $direction={direction}>
-        {options.map((option) => (
-          <S.Opcao key={option.value} $disabled={option.disabled}>
-            <S.Entrada
-              type="radio"
-              name={groupName}
+      <Radio.Group name={name} value={value ?? null} onChange={(novoValor) => onChange(novoValor as V)}>
+        <Layout gap={direction === 'horizontal' ? tokens.spacing.lg : tokens.spacing.xs} wrap="wrap">
+          {options.map((option) => (
+            <Radio
+              key={option.value}
               value={option.value}
-              checked={value === option.value}
               disabled={option.disabled}
+              color="brandPurple"
               aria-invalid={error ? true : undefined}
-              onChange={() => onChange(option.value)}
+              styles={{
+                radio: {
+                  borderWidth: '2px',
+                  borderColor: error
+                    ? corComOpacidade(tokens.colors.error, 0.5)
+                    : corComOpacidade(tokens.colors.buttonPurple, 0.35),
+                },
+              }}
+              label={
+                option.description ? (
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span>{option.label}</span>
+                    <span style={{ fontSize: tokens.typography.sizes.xs, color: tokens.colors.textTertiary }}>
+                      {option.description}
+                    </span>
+                  </span>
+                ) : (
+                  option.label
+                )
+              }
             />
-
-            <S.Marcador $marked={value === option.value} $error={Boolean(error)} aria-hidden="true" />
-
-            <S.Conteudo>
-              <S.Texto>{option.label}</S.Texto>
-              {option.description && <S.Descricao>{option.description}</S.Descricao>}
-            </S.Conteudo>
-          </S.Opcao>
-        ))}
-      </S.Lista>
+          ))}
+        </Layout>
+      </Radio.Group>
     </Field>
   )
 }

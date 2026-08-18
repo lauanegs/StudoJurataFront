@@ -19,7 +19,7 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { eventos as servicoEventos } from '../../../services/endpoints'
 import { deInputDataHora, formatarDataHora, normalizar, paraInputDataHora } from '../../../utils/format'
@@ -49,7 +49,6 @@ export default function Eventos() {
   const [emEdicao, setEmEdicao] = useState<Evento | null>(null)
   const [formulario, setFormulario] = useState(FORMULARIO_VAZIO)
   const [erros, setErros] = useState<{ titulo?: string; dataHorario?: string }>({})
-  const [salvando, setSalvando] = useState(false)
 
   const { data, loading, error, reload } = useRequisicao(() => servicoEventos.listar(), [])
 
@@ -119,10 +118,8 @@ export default function Eventos() {
     return Object.keys(encontrados).length === 0
   }
 
-  async function salvar() {
+  const { executar: salvar, executando: salvando } = useAcao(async () => {
     if (!validar()) return
-
-    setSalvando(true)
 
     try {
       const corpo = {
@@ -146,12 +143,10 @@ export default function Eventos() {
         'Não foi possível salvar',
         erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
       )
-    } finally {
-      setSalvando(false)
     }
-  }
+  })
 
-  async function alternarConclusao(evento: Evento) {
+  const { executar: alternarConclusao, executando: alternando } = useAcao(async (evento: Evento) => {
     try {
       await servicoEventos.atualizar(evento.id, { ...evento, concluido: !evento.concluido })
       toast.success(evento.concluido ? 'Evento reaberto' : 'Evento concluído', evento.titulo)
@@ -162,29 +157,28 @@ export default function Eventos() {
         erroAtualizar instanceof ApiError ? erroAtualizar.message : undefined,
       )
     }
-  }
+  })
 
-  async function excluir(evento: Evento) {
-    const confirmado = await confirmar({
+  const { executar: excluir, executando: excluindo } = useAcao(async (evento: Evento) => {
+    await confirmar({
       titulo: 'Excluir evento?',
       descricao: `"${evento.titulo}" será removido da agenda.`,
       rotuloConfirmar: 'Excluir',
       tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await servicoEventos.excluir(evento.id)
+          toast.success('Evento excluído')
+          await reload()
+        } catch (erroExclusao) {
+          toast.error(
+            'Não foi possível excluir',
+            erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
     })
-
-    if (!confirmado) return
-
-    try {
-      await servicoEventos.excluir(evento.id)
-      toast.success('Evento excluído')
-      await reload()
-    } catch (erroExclusao) {
-      toast.error(
-        'Não foi possível excluir',
-        erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
-      )
-    }
-  }
+  })
 
   const colunas: Coluna<Evento>[] = [
     {
@@ -284,13 +278,20 @@ export default function Eventos() {
               label={evento.concluido ? 'Reabrir evento' : 'Marcar como concluído'}
               icon={<Check />}
               variant={evento.concluido ? 'neutral' : 'success'}
+              disabled={alternando || excluindo}
               onClick={() => alternarConclusao(evento)}
             />
-            <IconButton label="Editar evento" icon={<Pencil />} onClick={() => abrirEdicao(evento)} />
+            <IconButton
+              label="Editar evento"
+              icon={<Pencil />}
+              disabled={excluindo}
+              onClick={() => abrirEdicao(evento)}
+            />
             <IconButton
               label="Excluir evento"
               icon={<Trash2 />}
               variant="danger"
+              disabled={excluindo}
               onClick={() => excluir(evento)}
             />
           </>

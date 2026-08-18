@@ -2,17 +2,19 @@ import { useCallback, useState } from 'react'
 import styled from 'styled-components'
 import { Volume2, VolumeX } from 'lucide-react'
 
+import { animacaoFlutuar } from '../../../styles/animations'
+
 const Container = styled.div`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
 
   width: 100%;
   padding: ${({ theme }) => theme.spacing.lg};
 
   /* Confirmado no Figma: degradê azul horizontal sobre base cinza, não o roxo do banner. */
   background: linear-gradient(90deg, #049dbf 0%, rgba(4, 157, 191, 0.5) 100%), #e6eaf2;
-  border-radius: ${({ theme }) => theme.radius.lg};
+  border-radius: ${({ theme }) => theme.radius.md};
   box-shadow: ${({ theme }) => theme.shadow.floating};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
@@ -21,9 +23,11 @@ const Container = styled.div`
 `
 
 const Mascote = styled.img`
-  width: 120px;
+  width: 136px;
+  height: 136px;
   flex-shrink: 0;
   object-fit: contain;
+  ${animacaoFlutuar}
 `
 
 const Balao = styled.div`
@@ -35,7 +39,7 @@ const Balao = styled.div`
 
   flex: 1;
   min-width: 0;
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.lg} ${({ theme }) => theme.spacing.xl};
 
   background: ${({ theme }) => theme.colors.white};
   border-radius: 50px;

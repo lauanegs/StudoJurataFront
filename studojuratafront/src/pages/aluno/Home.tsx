@@ -1,15 +1,14 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
-import { Coins, Play, Sparkles, Target, Trophy } from 'lucide-react'
+import { Sparkles, Target, Trophy } from 'lucide-react'
 
 import { Layout } from '../../components/layout'
 import { Banner } from '../../components/ui/Banner'
-import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { CircularProgress } from '../../components/ui/CircularProgress'
+import { SaldoMoedas } from '../../components/ui/SaldoMoedas'
 import { SimuladoIniciarCard } from '../../components/ui/SimuladoIniciarCard'
-import { XPBar } from '../../components/ui/XPBar'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../components/feedback/Skeleton'
@@ -22,30 +21,7 @@ import {
   simuladoAlunos,
   simulados as servicoSimulados,
 } from '../../services/endpoints'
-import { formatarMoedas, nomeCurto } from '../../utils/format'
-
-const Moedas = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  min-width: 200px;
-`
-
-const Saldo = styled.div`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: ${({ theme }) => theme.radius.pill};
-
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.typography.sizes.md};
-  font-weight: ${({ theme }) => theme.typography.weights.bold};
-`
+import { nomeCurto } from '../../utils/format'
 
 const Medidores = styled.div`
   display: flex;
@@ -57,7 +33,7 @@ const Medidores = styled.div`
 const Lista = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${({ theme }) => theme.spacing.md};
 `
 
 export default function AlunoHome() {
@@ -141,28 +117,10 @@ export default function AlunoHome() {
         titulo={`Bem-vindo, ${nomeCurto(usuario?.nomePessoa) ?? 'aluno'}!`}
         subtitulo="Vamos estudar muito juntos, aprender nunca foi tão fácil!"
         mascoteSrc={imagemSkin}
-        extra={
-          pontuacao && (
-            <Moedas>
-              <Saldo>
-                <Coins size={20} aria-hidden="true" />
-                {formatarMoedas(pontuacao.moedas)} moedas
-              </Saldo>
-              <XPBar xpTotal={pontuacao.xpTotal} />
-            </Moedas>
-          )
-        }
+        extra={pontuacao && <SaldoMoedas moedas={pontuacao.moedas} />}
       />
 
-      <Card
-        titulo="Meu desempenho"
-        icon={<Target />}
-        actions={
-          <Button variant="subtle" size="small" onClick={() => navegar('/aluno/notas')}>
-            Ver notas
-          </Button>
-        }
-      >
+      <Card titulo="Desempenho" icon={<Target />} corpoComFundo>
         {requisicaoTentativas.loading || carregandoAluno ? (
           <Skeleton $altura="120px" $raio="8px" />
         ) : desempenhos.length === 0 ? (
@@ -184,15 +142,7 @@ export default function AlunoHome() {
         )}
       </Card>
 
-      <Card
-        titulo="Simulados para fazer"
-        icon={<Sparkles />}
-        actions={
-          <Button variant="subtle" size="small" onClick={() => navegar('/aluno/reforco')}>
-            Ver todos
-          </Button>
-        }
-      >
+      <Card titulo="Simulados" icon={<Sparkles />} corpoComFundo>
         {requisicaoTentativas.loading ? (
           <Skeleton $altura="120px" $raio="8px" />
         ) : requisicaoTentativas.error ? (
@@ -214,14 +164,12 @@ export default function AlunoHome() {
               return (
                 <SimuladoIniciarCard
                   key={tentativa.id}
-                  titulo={simulado?.titulo ?? `Simulado ${tentativa.simuladoId}`}
                   disciplina={
                     (requisicaoDisciplinas.data ?? []).find(
                       (disciplina) => disciplina.id === simulado?.disciplinaId,
-                    )?.titulo
+                    )?.titulo ?? simulado?.titulo ?? `Simulado ${tentativa.simuladoId}`
                   }
                   quantidadeQuestoes={simulado?.quantidadeQuestoes}
-                  tempoLimite={simulado?.tempoLimite}
                   onStart={() => navegar(`/aluno/simulado/${tentativa.id}`)}
                 />
               )
@@ -229,16 +177,6 @@ export default function AlunoHome() {
           </Lista>
         )}
       </Card>
-
-      {pendentes.length > 0 && (
-        <Button
-          size="large"
-          icon={<Play />}
-          onClick={() => navegar(`/aluno/simulado/${pendentes[0].id}`)}
-        >
-          Começar o próximo simulado
-        </Button>
-      )}
     </Layout>
   )
 }

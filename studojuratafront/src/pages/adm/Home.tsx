@@ -81,10 +81,10 @@ export default function AdmHome() {
 
       {carregandoIndicadores ? (
         <Indicadores>
-          <Skeleton $altura="80px" $raio="16px" />
-          <Skeleton $altura="80px" $raio="16px" />
-          <Skeleton $altura="80px" $raio="16px" />
-          <Skeleton $altura="80px" $raio="16px" />
+          <Skeleton $altura="80px" $raio="8px" />
+          <Skeleton $altura="80px" $raio="8px" />
+          <Skeleton $altura="80px" $raio="8px" />
+          <Skeleton $altura="80px" $raio="8px" />
         </Indicadores>
       ) : (
         <Indicadores>
@@ -120,7 +120,7 @@ export default function AdmHome() {
           />
         </Card>
       ) : aniversariantes.length > 0 ? (
-        <SeparadorCard titulo="Aniversariantes da semana" icon={<Cake />}>
+        <SeparadorCard titulo="Aniversariantes da semana" icon={<Cake />} colunas={5}>
           {aniversariantes.map((aniversariante) => (
             <AniversarianteCard
               key={aniversariante.id}

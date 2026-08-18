@@ -44,10 +44,19 @@ export interface QuestaoEditorProps {
 export const MAXIMO_ALTERNATIVAS = 5
 export const MINIMO_ALTERNATIVAS = 2
 
-export function alternativasVerdadeiroFalso(corretaIndice = 0): AlternativaEditavel[] {
+/**
+ * Confirmado no Figma ("novo simulado — tipo questão v/f"): uma questão V/F
+ * é uma lista de afirmações — cada uma julgada Verdadeira ou Falsa de forma
+ * independente (não é "só uma está certa" como em Alternativas). O back
+ * relaxa a regra de "no máximo uma correta" especificamente pra esse tipo
+ * (AlternativaService.validarCorretaUnica), então várias `correta: true` na
+ * mesma questão são esperadas aqui.
+ */
+export function afirmacoesVerdadeiroFalso(): AlternativaEditavel[] {
   return [
-    { texto: 'Verdadeiro', correta: corretaIndice === 0 },
-    { texto: 'Falso', correta: corretaIndice === 1 },
+    { texto: '', correta: false },
+    { texto: '', correta: false },
+    { texto: '', correta: false },
   ]
 }
 
@@ -75,9 +84,15 @@ export function validarQuestao(questao: QuestaoEditavel): ErrosQuestao {
   const preenchidas = questao.alternativas.filter((alternativa) => alternativa.texto.trim())
 
   if (preenchidas.length < MINIMO_ALTERNATIVAS) {
-    erros.alternativas = `Informe ao menos ${MINIMO_ALTERNATIVAS} alternativas`
+    erros.alternativas =
+      questao.tipo === 'VERDADEIRO_FALSO'
+        ? `Informe ao menos ${MINIMO_ALTERNATIVAS} afirmações`
+        : `Informe ao menos ${MINIMO_ALTERNATIVAS} alternativas`
   } else if (!questao.alternativas.some((alternativa) => alternativa.correta && alternativa.texto.trim())) {
-    erros.alternativas = 'Marque qual alternativa é a correta'
+    erros.alternativas =
+      questao.tipo === 'VERDADEIRO_FALSO'
+        ? 'Marque ao menos uma afirmação como Verdadeira'
+        : 'Marque qual alternativa é a correta'
   }
 
   return erros

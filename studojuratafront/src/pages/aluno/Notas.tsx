@@ -1,25 +1,41 @@
 import { useMemo, useState } from 'react'
 import styled from 'styled-components'
-import { NotebookPen } from 'lucide-react'
 
 import { Layout } from '../../components/layout'
+import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { DropDown } from '../../components/ui/DropDown'
 import { Header } from '../../components/ui/Header'
 import { Select } from '../../components/ui/Select'
-import { Tag } from '../../components/ui/Tag'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../components/feedback/Skeleton'
 import { useAlunoLogado } from '../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../hooks/useRequisicao'
-import { notas as servicoNotas, simuladoAlunos, simulados as servicoSimulados } from '../../services/endpoints'
+import {
+  disciplinas as servicoDisciplinas,
+  notas as servicoNotas,
+  simuladoAlunos,
+  simulados as servicoSimulados,
+} from '../../services/endpoints'
 import { formatarNota } from '../../utils/format'
 
 const Lista = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xs};
+`
+
+/* Confirmado no Figma: select de disciplina + botão "Buscar" colados, na
+   mesma linha. */
+const CamposCabecalho = styled.div`
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  gap: ${({ theme }) => theme.spacing.md};
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
 `
 
 /**
@@ -31,7 +47,10 @@ const Lista = styled.div`
 export default function AlunoNotas() {
   const { alunoId, loading: carregandoAluno, error: erroAluno } = useAlunoLogado()
 
-  const [periodo, setPeriodo] = useState<string | null>(null)
+  // Confirmado no Figma: o filtro é por disciplina e só se aplica ao clicar
+  // em "Buscar" — a lista começa completa, sem filtro.
+  const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null)
+  const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
 
   const requisicaoNotas = useRequisicao(
     () => servicoNotas.historicoPorAluno(alunoId as number),
@@ -44,49 +63,45 @@ export default function AlunoNotas() {
     { ativo: Boolean(alunoId) },
   )
   const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
+  const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
 
   const porSimulado = useMemo(
     () => new Map((requisicaoSimulados.data ?? []).map((simulado) => [simulado.id, simulado])),
     [requisicaoSimulados.data],
   )
 
-  const periodos = useMemo(() => {
-    const unicos = new Set((requisicaoNotas.data ?? []).map((nota) => nota.periodoLetivo))
-    return [...unicos].sort().reverse().map((item) => ({ value: item, label: item }))
-  }, [requisicaoNotas.data])
+  const opcoesDisciplinas = useMemo(() => {
+    const ids = new Set((requisicaoNotas.data ?? []).map((nota) => nota.disciplina?.id).filter(Boolean))
+    return (requisicaoDisciplinas.data ?? [])
+      .filter((disciplina) => ids.has(disciplina.id))
+      .map((disciplina) => ({ value: disciplina.id, label: disciplina.titulo ?? '—' }))
+  }, [requisicaoNotas.data, requisicaoDisciplinas.data])
 
   const notas = useMemo(() => {
     const lista = requisicaoNotas.data ?? []
-    return periodo ? lista.filter((nota) => nota.periodoLetivo === periodo) : lista
-  }, [requisicaoNotas.data, periodo])
+    return disciplinaId ? lista.filter((nota) => nota.disciplina?.id === disciplinaId) : lista
+  }, [requisicaoNotas.data, disciplinaId])
 
-  function simuladosDaDisciplina(disciplinaId?: number) {
+  function simuladosDaDisciplina(disciplinaFiltroId?: number) {
     return (requisicaoTentativas.data ?? [])
       .filter((tentativa) => {
         if (tentativa.status !== 'CONCLUIDO') return false
-        return porSimulado.get(tentativa.simuladoId)?.disciplinaId === disciplinaId
+        return porSimulado.get(tentativa.simuladoId)?.disciplinaId === disciplinaFiltroId
       })
       .map((tentativa) => {
         const simulado = porSimulado.get(tentativa.simuladoId)
 
         return {
           label: simulado?.titulo ?? `Simulado ${tentativa.simuladoId}`,
-          value: `${formatarNota(tentativa.nota)} / ${formatarNota(simulado?.notaMaxima ?? 10)}`,
+          value: `Nota: ${formatarNota(tentativa.nota)}/${formatarNota(simulado?.notaMaxima ?? 10)}`,
         }
       })
   }
 
-  const media = useMemo(() => {
-    const comTotal = notas.filter((nota) => typeof nota.total === 'number')
-    if (comTotal.length === 0) return null
-
-    return comTotal.reduce((soma, nota) => soma + (nota.total ?? 0), 0) / comTotal.length
-  }, [notas])
-
   if (erroAluno) {
     return (
       <Layout>
-        <Header titulo="Minhas notas" />
+        <Header titulo="Notas" />
         <ErroCarregamento titulo="Cadastro do aluno não encontrado" mensagem={erroAluno} />
       </Layout>
     )
@@ -95,32 +110,29 @@ export default function AlunoNotas() {
   return (
     <Layout>
       <Header
-        titulo="Minhas notas"
-        subtitulo={
-          media !== null ? (
-            <>
-              <span>Média geral</span>
-              <Tag variant={media >= 7 ? 'success' : media >= 5 ? 'warning' : 'error'}>
-                {formatarNota(media)}
-              </Tag>
-            </>
-          ) : undefined
-        }
+        titulo="Notas"
         filtros={
-          <Select<string>
-            label="Período letivo"
-            options={periodos}
-            value={periodo}
-            clearable
-            placeholder="Todos os períodos"
-            maxWidth="280px"
-            emptyText="Nenhum período com notas"
-            onChange={setPeriodo}
-          />
+          <CamposCabecalho>
+            <Select<number>
+              label="Disciplina"
+              options={opcoesDisciplinas}
+              value={disciplinaSelecionada}
+              loading={requisicaoDisciplinas.loading}
+              clearable
+              placeholder="Todas as disciplinas"
+              maxWidth="280px"
+              emptyText="Nenhuma disciplina com notas"
+              onChange={setDisciplinaSelecionada}
+            />
+
+            <Button size="large" onClick={() => setDisciplinaId(disciplinaSelecionada)}>
+              Buscar
+            </Button>
+          </CamposCabecalho>
         }
       />
 
-      <Card titulo="Notas por disciplina" icon={<NotebookPen />}>
+      <Card>
         {requisicaoNotas.loading || carregandoAluno ? (
           <Skeleton $altura="160px" $raio="8px" />
         ) : requisicaoNotas.error ? (
@@ -132,7 +144,6 @@ export default function AlunoNotas() {
           <EstadoVazio
             titulo="Você ainda não tem notas"
             descricao="As notas são calculadas automaticamente a partir dos simulados concluídos."
-            icon={<NotebookPen />}
           />
         ) : (
           <Lista>
@@ -140,7 +151,7 @@ export default function AlunoNotas() {
               <DropDown
                 key={nota.id}
                 titulo={nota.disciplina?.titulo ?? `Disciplina ${nota.disciplina?.id}`}
-                resumo={`${formatarNota(nota.total)} · ${nota.periodoLetivo}`}
+                resumo={`Nota: ${formatarNota(nota.total)}/10`}
                 abertoInicialmente={indice === 0}
                 itens={simuladosDaDisciplina(nota.disciplina?.id)}
                 emptyText="Nenhum simulado concluído nesta disciplina ainda."

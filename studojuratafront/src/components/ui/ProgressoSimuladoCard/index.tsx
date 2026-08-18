@@ -2,21 +2,25 @@ import styled from 'styled-components'
 
 export type QuestionProgressStatus = 'correct' | 'incorrect' | 'current' | 'answered' | 'pending'
 
+/* Confirmado no Figma (nós 1:887-926): acerto/erro usam degradês próprios,
+   diferentes dos tokens genéricos success/danger do tema. */
 const COLORS: Record<QuestionProgressStatus, string> = {
-  correct: '#34C759',
-  incorrect: '#FF383C',
+  correct: 'linear-gradient(90deg, #0CCA4A 0%, #46A665 100%)',
+  incorrect: 'linear-gradient(90deg, #F95738 0%, #F86624 100%)',
   current: 'linear-gradient(180deg, #049DBF 0%, rgba(4, 157, 191, 0.8) 100%), #662E9B',
   answered: '#049DBF',
   pending: 'rgba(115, 115, 115, 0.15)',
 }
 
+/* Mais compacto que o espaçamento do Figma (32px) — o card de progresso
+   estava ocupando altura demais na tela de execução do simulado. */
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.sm};
 
   width: 100%;
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
 
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid rgba(115, 115, 115, 0.15);
@@ -72,12 +76,12 @@ const Number = styled.span<{ $current: boolean }>`
 
   min-width: 24px;
   padding: 4px 8px;
-  border-radius: ${({ theme }) => theme.radius.sm};
+  border-radius: ${({ $current, theme }) => ($current ? theme.radius.sm : theme.radius.md)};
 
   font-size: 12px;
   font-weight: ${({ theme }) => theme.typography.weights.bold};
-  color: ${({ theme, $current }) => ($current ? theme.colors.white : theme.colors.textStrong)};
-  background: ${({ $current }) => ($current ? COLORS.current : 'transparent')};
+  color: ${({ theme, $current }) => ($current ? theme.colors.white : theme.colors.textSecondary)};
+  background: ${({ $current, theme }) => ($current ? COLORS.current : theme.colors.white)};
 `
 
 const Legend = styled.div`

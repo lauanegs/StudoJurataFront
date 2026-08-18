@@ -10,7 +10,7 @@ const Container = styled.article`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
 
   background: ${({ theme }) => theme.colors.white};
-  border-radius: ${({ theme }) => theme.radius.lg};
+  border-radius: ${({ theme }) => theme.radius.md};
   box-shadow: ${({ theme }) => theme.shadow.base};
 `
 

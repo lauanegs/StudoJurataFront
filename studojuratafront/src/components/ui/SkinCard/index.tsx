@@ -1,7 +1,9 @@
 import styled, { css } from 'styled-components'
-import { Check, Coins, Lock } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 import { Button } from '../Button'
+import { MoedaIcone } from '../MoedaIcone'
+import { animacaoFlutuar } from '../../../styles/animations'
 
 const Container = styled.article<{ $ativa: boolean }>`
   display: flex;
@@ -16,7 +18,7 @@ const Container = styled.article<{ $ativa: boolean }>`
   background: ${({ theme }) => theme.colors.white};
   border: 2px solid
     ${({ theme, $ativa }) => ($ativa ? theme.colors.success : theme.colors.border)};
-  border-radius: ${({ theme }) => theme.radius.lg};
+  border-radius: ${({ theme }) => theme.radius.md};
 
   transition: border-color ${({ theme }) => theme.transition.base};
 `
@@ -29,7 +31,7 @@ const Moldura = styled.div<{ $bloqueada: boolean }>`
   width: 120px;
   height: 120px;
 
-  border-radius: ${({ theme }) => theme.radius.lg};
+  border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ theme }) => theme.colors.background};
   position: relative;
   overflow: hidden;
@@ -38,6 +40,7 @@ const Moldura = styled.div<{ $bloqueada: boolean }>`
     width: 100%;
     height: 100%;
     object-fit: contain;
+    ${animacaoFlutuar}
 
     ${({ $bloqueada }) =>
       $bloqueada &&
@@ -45,22 +48,6 @@ const Moldura = styled.div<{ $bloqueada: boolean }>`
         filter: grayscale(1) brightness(0.9);
         opacity: 0.65;
       `}
-  }
-`
-
-const Cadeado = styled.span`
-  position: absolute;
-  inset: 0;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  color: ${({ theme }) => theme.colors.textTertiary};
-
-  svg {
-    width: 26px;
-    height: 26px;
   }
 `
 
@@ -80,11 +67,6 @@ const Preco = styled.span<{ $insuficiente: boolean }>`
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};
   color: ${({ theme, $insuficiente }) =>
     $insuficiente ? theme.colors.errorText : theme.colors.warningText};
-
-  svg {
-    width: 14px;
-    height: 14px;
-  }
 `
 
 export type SkinState = 'equipped' | 'owned' | 'locked'
@@ -125,18 +107,13 @@ export function SkinCard({
     <Container $ativa={state === 'equipped'}>
       <Moldura $bloqueada={locked}>
         <img src={imagem ?? '/images/skin1.png'} alt={nome} />
-        {locked && (
-          <Cadeado aria-hidden="true">
-            <Lock />
-          </Cadeado>
-        )}
       </Moldura>
 
       <Nome>{nome}</Nome>
 
       {locked && (
         <Preco $insuficiente={semSaldo}>
-          <Coins aria-hidden="true" />
+          <MoedaIcone size={14} aria-hidden="true" />
           {custoMoedas}
           {semSaldo && ' · saldo insuficiente'}
         </Preco>
@@ -164,7 +141,7 @@ export function SkinCard({
         <Button
           size="small"
           fullWidth
-          icon={<Coins />}
+          icon={<MoedaIcone />}
           disabled={semSaldo}
           loading={processando}
           onClick={onBuy}

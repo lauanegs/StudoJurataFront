@@ -3,17 +3,23 @@ import styled, { css } from 'styled-components'
 import { LetterBadge } from '../LetterBadge'
 import type { LetterState } from '../LetterBadge/types'
 
+/**
+ * Confirmado no Figma (nós 1:939, 1:943, 1:947): a letra fica fundida na
+ * borda esquerda da linha (sem padding/gap do container — quem tem padding
+ * é o texto), por isso overflow:hidden aqui pra clipar o canto arredondado
+ * do LetterBadge junto com o do container.
+ */
 const Container = styled.button<{ $state: LetterState; $blocked: boolean }>`
   display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  align-items: stretch;
 
   width: 100%;
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  min-height: 60px;
 
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid rgba(115, 115, 115, 0.15);
   border-radius: ${({ theme }) => theme.radius.md};
+  overflow: hidden;
 
   text-align: left;
   transition:
@@ -37,20 +43,6 @@ const Container = styled.button<{ $state: LetterState; $blocked: boolean }>`
       border: 3px solid ${theme.colors.blue};
     `}
 
-  ${({ $state, theme }) =>
-    $state === 'correct' &&
-    css`
-      border-color: ${theme.colors.success};
-      background: ${theme.colors.successBackground};
-    `}
-
-  ${({ $state, theme }) =>
-    $state === 'incorrect' &&
-    css`
-      border-color: ${theme.colors.error};
-      background: ${theme.colors.errorBackground};
-    `}
-
   ${({ $blocked }) =>
     $blocked &&
     css`
@@ -63,12 +55,17 @@ const Container = styled.button<{ $state: LetterState; $blocked: boolean }>`
 `
 
 const Texto = styled.span`
+  display: flex;
   flex: 1;
+  align-items: center;
+  justify-content: center;
   min-width: 0;
+  padding: 0 ${({ theme }) => theme.spacing.lg};
 
   font-size: ${({ theme }) => theme.typography.sizes.lg};
   font-weight: ${({ theme }) => theme.typography.weights.bold};
   color: ${({ theme }) => theme.colors.blue};
+  text-align: center;
   overflow-wrap: anywhere;
 `
 
@@ -96,7 +93,7 @@ export function AlternativaButton({
       aria-pressed={state === 'selected'}
       onClick={onSelect}
     >
-      <LetterBadge letra={letra} state={state} size="large" />
+      <LetterBadge letra={letra} state={state} />
       <Texto>{texto}</Texto>
     </Container>
   )

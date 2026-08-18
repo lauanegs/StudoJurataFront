@@ -13,7 +13,7 @@ const Container = styled.article<{ $conquistada: boolean }>`
 
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radius.lg};
+  border-radius: ${({ theme }) => theme.radius.md};
   text-align: center;
 
   ${({ $conquistada }) =>
