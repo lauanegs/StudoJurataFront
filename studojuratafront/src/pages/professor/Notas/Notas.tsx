@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import styled from 'styled-components'
 import { NotebookPen, Search } from 'lucide-react'
 
@@ -8,10 +8,11 @@ import { Card } from '../../../components/ui/Card'
 import { DropDown } from '../../../components/ui/DropDown'
 import { Header } from '../../../components/ui/Header'
 import { Select } from '../../../components/ui/Select'
+import { Tab } from '../../../components/ui/Tab'
+import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../../components/feedback/Skeleton'
-import { usePeriodoLetivo } from '../../../contexts/periodoLetivoContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
@@ -23,21 +24,20 @@ import {
   simulados as servicoSimulados,
 } from '../../../services/endpoints'
 import { formatarNota } from '../../../utils/format'
-import type { SimuladoAlunoResponse } from '../../../types'
+import { ROTULO_STATUS_MATRICULA } from '../../../utils/labels'
+import type { AlunoTurma, SimuladoAlunoResponse } from '../../../types'
 
 type TipoFiltro = 'disciplina' | 'aluno'
+type Visao = 'ativos' | 'historico'
 
 /* Confirmado no Figma: os 3 selects + botão Buscar dividem uma linha só,
    sem rótulo separado acima de cada campo (o texto do campo é o rótulo,
    mostrado como placeholder dentro da própria caixa). */
 const CamposCabecalho = styled.div`
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-  width: fit-content;
-  max-width: 100%;
-  overflow-x: auto;
 `
 
 /* Largura fixa (não flex: 1): o slot de filtros do Header (S.Filtros) é
@@ -80,6 +80,7 @@ interface LinhaAcordeao {
   titulo: string
   alunoId: number
   disciplinaId: number
+  turmaId: number
 }
 
 /**
@@ -89,16 +90,22 @@ interface LinhaAcordeao {
  * disciplina, uma linha por aluno matriculado. Cada linha expande pra
  * mostrar os simulados individuais que compõem a nota.
  *
- * Nota é sempre derivada dos simulados concluídos — não há lançamento
- * manual. O recálculo deixou de ser uma ação desta tela: acontece sozinho,
- * pra todas as turmas do professor, quando o período letivo muda na sidebar
- * (ver PeriodoLetivoContext) — esta tela só lê o período atual.
+ * Nota é sempre derivada dos simulados concluídos — não há lançamento nem
+ * recálculo manual nesta tela. O escopo da nota é a turma (matrícula
+ * cíclica não tem período letivo fixo — ver types/index.ts Nota), então
+ * cada linha do acordeão já carrega sua própria turma para casar com a nota
+ * certa, sem depender de nenhum filtro global de período.
+ *
+ * Ativos e Histórico são visões separadas (aba), não misturadas na mesma
+ * lista — a tela abre em "Ativos" (o caso comum: aluno cursando agora) e o
+ * professor troca pra "Histórico" só quando precisa consultar a nota de
+ * quem já encerrou a matrícula (concluída/cancelada/transferida) na turma.
  */
 export default function Notas() {
   const toast = useToast()
   const { professorId } = useProfessorLogado()
-  const { periodoLetivo } = usePeriodoLetivo()
 
+  const [visao, setVisao] = useState<Visao>('ativos')
   const [turmaId, setTurmaId] = useState<number | null>(null)
   const [tipo, setTipo] = useState<TipoFiltro | null>(null)
   const [especificoId, setEspecificoId] = useState<number | null>(null)
@@ -133,9 +140,18 @@ export default function Notas() {
     [requisicaoVinculos.data, turmaId],
   )
 
+  // Histórico só traz quem já encerrou a matrícula (concluída/cancelada/
+  // transferida) — quem está ATIVA pertence à outra aba, não aparece nas duas.
+  async function matriculasDaVisao(idTurma: number, visaoAtual: Visao): Promise<AlunoTurma[]> {
+    if (visaoAtual === 'ativos') return matriculas.ativosPorTurma(idTurma)
+
+    const todas = await matriculas.historicoPorTurma(idTurma)
+    return todas.filter((matricula) => matricula.status !== 'ATIVA')
+  }
+
   const requisicaoMatriculasTurma = useRequisicao(
-    () => matriculas.ativosPorTurma(turmaId as number),
-    [turmaId],
+    () => matriculasDaVisao(turmaId as number, visao),
+    [turmaId, visao],
     { ativo: Boolean(turmaId) && tipo === 'aluno' },
   )
 
@@ -152,6 +168,14 @@ export default function Notas() {
     return []
   }, [tipo, disciplinasDaTurma, requisicaoMatriculasTurma.data])
 
+  // Trocar de aba invalida a busca aplicada — evita continuar mostrando um
+  // resultado de "Ativos" com a aba "Histórico" selecionada (ou vice-versa).
+  function trocarVisao(nova: Visao) {
+    setVisao(nova)
+    setFiltro(null)
+    setEspecificoId(null)
+  }
+
   function buscar() {
     if (!turmaId || !tipo || !especificoId) {
       toast.warning('Selecione turma, tipo de filtro e o item específico antes de buscar.')
@@ -161,11 +185,11 @@ export default function Notas() {
     setFiltro({ turmaId, tipo, especificoId })
   }
 
-  // Dados pra montar os acordeões — sempre ativos: a tela abre com a lista
-  // completa (todas as turmas/disciplinas do professor), sem exigir Buscar.
+  // Dados pra montar os acordeões — a tela abre com a lista completa (todas
+  // as turmas/disciplinas do professor) na visão atual, sem exigir Buscar.
   const requisicaoMatriculasResultado = useRequisicao(
-    () => matriculas.ativosPorTurma(filtro?.turmaId as number),
-    [filtro?.turmaId],
+    () => matriculasDaVisao(filtro?.turmaId as number, visao),
+    [filtro?.turmaId, visao],
     { ativo: filtro?.tipo === 'disciplina' },
   )
   const requisicaoNotas = useRequisicao(() => servicoNotas.listar(), [])
@@ -183,11 +207,19 @@ export default function Notas() {
   )
   const requisicaoMatriculasTodas = useRequisicao(
     async () => {
-      const listas = await Promise.all(turmasUnicas.map((id) => matriculas.ativosPorTurma(id)))
+      const listas = await Promise.all(turmasUnicas.map((id) => matriculasDaVisao(id, visao)))
       return new Map(turmasUnicas.map((id, indice) => [id, listas[indice]]))
     },
-    [turmasUnicas],
+    [turmasUnicas, visao],
     { ativo: !filtro && turmasUnicas.length > 0 },
+  )
+
+  // Situação da matrícula no título — só aparece no Histórico (na aba
+  // Ativos já é redundante, todo mundo ali está com a mesma situação).
+  const sufixoSituacao = useCallback(
+    (matricula: AlunoTurma) =>
+      visao === 'historico' && matricula.status ? ` (${ROTULO_STATUS_MATRICULA[matricula.status]})` : '',
+    [visao],
   )
 
   const linhasAcordeao = useMemo<LinhaAcordeao[]>(() => {
@@ -197,9 +229,10 @@ export default function Notas() {
 
         return alunosDaTurma.map((matricula) => ({
           chave: `${vinculo.id}-${matricula.aluno.id}`,
-          titulo: `${matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`} · ${vinculo.turma!.titulo} · ${vinculo.disciplina!.titulo}`,
+          titulo: `${matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`} · ${vinculo.turma!.titulo} · ${vinculo.disciplina!.titulo}${sufixoSituacao(matricula)}`,
           alunoId: matricula.aluno.id,
           disciplinaId: vinculo.disciplina!.id,
+          turmaId: vinculo.turma!.id,
         }))
       })
     }
@@ -210,16 +243,25 @@ export default function Notas() {
         titulo: disciplina.label,
         alunoId: filtro.especificoId,
         disciplinaId: disciplina.value,
+        turmaId: filtro.turmaId,
       }))
     }
 
     return (requisicaoMatriculasResultado.data ?? []).map((matricula) => ({
       chave: `aluno-${matricula.aluno.id}`,
-      titulo: matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`,
+      titulo: `${matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`}${sufixoSituacao(matricula)}`,
       alunoId: matricula.aluno.id,
       disciplinaId: filtro.especificoId,
+      turmaId: filtro.turmaId,
     }))
-  }, [filtro, disciplinasDaTurma, requisicaoMatriculasResultado.data, vinculosAtivos, requisicaoMatriculasTodas.data])
+  }, [
+    filtro,
+    disciplinasDaTurma,
+    requisicaoMatriculasResultado.data,
+    vinculosAtivos,
+    requisicaoMatriculasTodas.data,
+    sufixoSituacao,
+  ])
 
   // Tentativas de simulado de cada aluno envolvido, buscadas uma vez por aluno distinto.
   const alunosEnvolvidos = useMemo(
@@ -241,24 +283,25 @@ export default function Notas() {
     [requisicaoSimulados.data],
   )
 
-  function notaDaLinha(alunoId: number, disciplinaId: number) {
+  function notaDaLinha(alunoId: number, disciplinaId: number, turmaId: number) {
     return (
       (requisicaoNotas.data ?? []).find(
         (nota) =>
           nota.aluno?.id === alunoId &&
           nota.disciplina?.id === disciplinaId &&
-          nota.periodoLetivo === periodoLetivo,
+          nota.turma?.id === turmaId,
       ) ?? null
     )
   }
 
-  function simuladosDaLinha(alunoId: number, disciplinaId: number) {
+  function simuladosDaLinha(alunoId: number, disciplinaId: number, turmaId: number) {
     const tentativas = requisicaoTentativas.data?.get(alunoId) ?? []
 
     return tentativas
       .filter((tentativa) => {
         if (tentativa.status !== 'CONCLUIDO') return false
-        return porSimulado.get(tentativa.simuladoId)?.disciplinaId === disciplinaId
+        const simulado = porSimulado.get(tentativa.simuladoId)
+        return simulado?.disciplinaId === disciplinaId && simulado?.turmaId === turmaId
       })
       .map((tentativa) => {
         const simulado = porSimulado.get(tentativa.simuladoId)
@@ -339,13 +382,29 @@ export default function Notas() {
         }
       />
 
+      <Tab<Visao>
+        rotuloAcessivel="Situação da matrícula"
+        value={visao}
+        onChange={trocarVisao}
+        options={[
+          { value: 'ativos', label: 'Ativos' },
+          { value: 'historico', label: 'Histórico' },
+        ]}
+      />
+
       {carregandoResultado ? (
         <Skeleton $altura="240px" $raio="8px" />
       ) : linhasAcordeao.length === 0 ? (
         <Card>
           <EstadoVazio
             titulo="Nada encontrado"
-            descricao={filtro ? 'Não há dados para esse filtro.' : 'Você ainda não leciona em nenhuma turma.'}
+            descricao={
+              filtro
+                ? 'Não há dados para esse filtro.'
+                : visao === 'historico'
+                  ? 'Nenhum aluno encerrou a matrícula nas suas turmas ainda.'
+                  : 'Você ainda não leciona em nenhuma turma.'
+            }
             icon={<NotebookPen />}
           />
         </Card>
@@ -353,15 +412,21 @@ export default function Notas() {
         <Card semPadding>
           <Lista>
             {linhasAcordeao.map((linha, indice) => {
-              const nota = notaDaLinha(linha.alunoId, linha.disciplinaId)
+              const nota = notaDaLinha(linha.alunoId, linha.disciplinaId, linha.turmaId)
 
               return (
                 <DropDown
                   key={linha.chave}
                   titulo={linha.titulo}
-                  resumo={typeof nota?.total === 'number' ? `Nota: ${formatarNota(nota.total)}` : 'Sem nota'}
+                  resumo={
+                    typeof nota?.total === 'number' ? (
+                      <Tag variant="neutral">Nota: {formatarNota(nota.total)}</Tag>
+                    ) : (
+                      <Tag variant="neutral">Sem nota</Tag>
+                    )
+                  }
                   abertoInicialmente={indice === 0}
-                  itens={simuladosDaLinha(linha.alunoId, linha.disciplinaId)}
+                  itens={simuladosDaLinha(linha.alunoId, linha.disciplinaId, linha.turmaId)}
                   emptyText="Nenhum simulado concluído considerado nesta nota."
                 />
               )

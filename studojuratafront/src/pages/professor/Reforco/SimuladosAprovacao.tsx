@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
-import { ClipboardCheck, Search } from 'lucide-react'
+import { ClipboardCheck, ClipboardList, Search } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -30,12 +30,9 @@ type TipoFiltro = 'disciplina' | 'aluno'
    separado — mesmo padrão do header de Notas / Simulados realizados. */
 const CamposCabecalho = styled.div`
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-  width: fit-content;
-  max-width: 100%;
-  overflow-x: auto;
 `
 
 const CampoLargura = styled.div`
@@ -254,7 +251,7 @@ export default function SimuladosAprovacao() {
 
             <CampoLargura>
               <Select
-                placeholder="Disciplina / Aluno (Específico)"
+                placeholder="Disc/Aluno (Específico)"
                 options={opcoesEspecifico}
                 value={especificoId}
                 disabled={!tipo || !turmaId}
@@ -293,6 +290,7 @@ export default function SimuladosAprovacao() {
               <Button
                 variant="subtle"
                 size="small"
+                icon={<ClipboardList />}
                 onClick={() => navegar(`/professor/reforco/aprovacao/${linha.simuladoId}`)}
               >
                 Detalhar

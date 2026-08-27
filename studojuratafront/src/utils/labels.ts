@@ -13,6 +13,7 @@ import type {
   Sexo,
   StatusAtivoInativo,
   StatusMatricula,
+  StatusPlano,
   StatusQuestao,
   StatusSimulado,
   StatusSimuladoAluno,
@@ -59,6 +60,23 @@ export const ROTULO_PARENTESCO: Record<Parentesco, string> = {
 export const ROTULO_ATIVO_INATIVO: Record<StatusAtivoInativo, string> = {
   ATIVO: 'Ativo',
   INATIVO: 'Inativo',
+}
+
+/** Variante feminina (Turma, Disciplina) — mesmo enum, concordância de gênero diferente. */
+export const ROTULO_ATIVA_INATIVA: Record<StatusAtivoInativo, string> = {
+  ATIVO: 'Ativa',
+  INATIVO: 'Inativa',
+}
+
+/** Plano de Ensino/Plano de Aula: não "inativa", conclui o ciclo (matrícula cíclica). */
+export const ROTULO_STATUS_PLANO: Record<StatusPlano, string> = {
+  ATIVO: 'Ativo',
+  CONCLUIDO: 'Concluído',
+}
+
+export const STATUS_PLANO_VARIANT: Record<StatusPlano, TagVariant> = {
+  ATIVO: 'success',
+  CONCLUIDO: 'neutral',
 }
 
 export const ROTULO_STATUS_TURMA: Record<StatusTurma, string> = {
@@ -199,6 +217,8 @@ export const NIVEL_DOMINIO_VARIANT: Record<NivelDominio, TagVariant> = {
 export const OPCOES_SEXO = opcoes(ROTULO_SEXO)
 export const OPCOES_PARENTESCO = opcoes(ROTULO_PARENTESCO)
 export const OPCOES_ATIVO_INATIVO = opcoes(ROTULO_ATIVO_INATIVO)
+export const OPCOES_ATIVA_INATIVA = opcoes(ROTULO_ATIVA_INATIVA)
+export const OPCOES_STATUS_PLANO = opcoes(ROTULO_STATUS_PLANO)
 export const OPCOES_STATUS_TURMA = opcoes(ROTULO_STATUS_TURMA)
 export const OPCOES_STATUS_MATRICULA = opcoes(ROTULO_STATUS_MATRICULA)
 export const OPCOES_TIPO_QUESTAO = opcoes(ROTULO_TIPO_QUESTAO)

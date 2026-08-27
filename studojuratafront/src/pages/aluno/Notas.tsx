@@ -7,6 +7,7 @@ import { Card } from '../../components/ui/Card'
 import { DropDown } from '../../components/ui/DropDown'
 import { Header } from '../../components/ui/Header'
 import { Select } from '../../components/ui/Select'
+import { Tag } from '../../components/ui/Tag'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../components/feedback/Skeleton'
@@ -27,15 +28,21 @@ const Lista = styled.div`
 `
 
 /* Confirmado no Figma: select de disciplina + botão "Buscar" colados, na
-   mesma linha. */
+   mesma linha, igual ao padrão já usado nas telas do professor (sem label
+   flutuante acima do campo). */
 const CamposCabecalho = styled.div`
   display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-  width: fit-content;
-  max-width: 100%;
-  overflow-x: auto;
+`
+
+/* O <Field> por baixo do Select pede width:100% do pai — dentro de um flex
+   item sem largura própria isso força o cálculo de shrink-to-fit e o campo
+   acaba quebrando de linha mesmo sobrando espaço. Uma largura fixa aqui
+   (mesmo padrão já usado nos headers do professor) resolve. */
+const CampoLargura = styled.div`
+  width: 280px;
 `
 
 /**
@@ -82,11 +89,15 @@ export default function AlunoNotas() {
     return disciplinaId ? lista.filter((nota) => nota.disciplina?.id === disciplinaId) : lista
   }, [requisicaoNotas.data, disciplinaId])
 
-  function simuladosDaDisciplina(disciplinaFiltroId?: number) {
+  // Filtra também por turma: com matrícula cíclica o aluno pode ter mais de
+  // uma Nota da mesma disciplina (repetência em outra turma) — sem a turma,
+  // os dois acordeões mostrariam os mesmos simulados duplicados.
+  function simuladosDaDisciplina(disciplinaFiltroId?: number, turmaFiltroId?: number) {
     return (requisicaoTentativas.data ?? [])
       .filter((tentativa) => {
         if (tentativa.status !== 'CONCLUIDO') return false
-        return porSimulado.get(tentativa.simuladoId)?.disciplinaId === disciplinaFiltroId
+        const simulado = porSimulado.get(tentativa.simuladoId)
+        return simulado?.disciplinaId === disciplinaFiltroId && simulado?.turmaId === turmaFiltroId
       })
       .map((tentativa) => {
         const simulado = porSimulado.get(tentativa.simuladoId)
@@ -113,17 +124,17 @@ export default function AlunoNotas() {
         titulo="Notas"
         filtros={
           <CamposCabecalho>
-            <Select<number>
-              label="Disciplina"
-              options={opcoesDisciplinas}
-              value={disciplinaSelecionada}
-              loading={requisicaoDisciplinas.loading}
-              clearable
-              placeholder="Todas as disciplinas"
-              maxWidth="280px"
-              emptyText="Nenhuma disciplina com notas"
-              onChange={setDisciplinaSelecionada}
-            />
+            <CampoLargura>
+              <Select<number>
+                options={opcoesDisciplinas}
+                value={disciplinaSelecionada}
+                loading={requisicaoDisciplinas.loading}
+                clearable
+                placeholder="Todas as disciplinas"
+                emptyText="Nenhuma disciplina com notas"
+                onChange={setDisciplinaSelecionada}
+              />
+            </CampoLargura>
 
             <Button size="large" onClick={() => setDisciplinaId(disciplinaSelecionada)}>
               Buscar
@@ -150,10 +161,14 @@ export default function AlunoNotas() {
             {notas.map((nota, indice) => (
               <DropDown
                 key={nota.id}
-                titulo={nota.disciplina?.titulo ?? `Disciplina ${nota.disciplina?.id}`}
-                resumo={`Nota: ${formatarNota(nota.total)}/10`}
+                titulo={
+                  nota.disciplina?.titulo
+                    ? `${nota.disciplina.titulo} · ${nota.turma?.titulo ?? '—'}`
+                    : `Disciplina ${nota.disciplina?.id}`
+                }
+                resumo={<Tag variant="neutral">Nota: {formatarNota(nota.total)}/100</Tag>}
                 abertoInicialmente={indice === 0}
-                itens={simuladosDaDisciplina(nota.disciplina?.id)}
+                itens={simuladosDaDisciplina(nota.disciplina?.id, nota.turma?.id)}
                 emptyText="Nenhum simulado concluído nesta disciplina ainda."
               />
             ))}

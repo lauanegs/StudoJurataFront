@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Users } from 'lucide-react'
+import { ClipboardList, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -138,6 +138,7 @@ export default function ResultadosSimulado() {
             <Button
               variant="subtle"
               size="small"
+              icon={<ClipboardList />}
               onClick={() => navegar(`/professor/reforco/simulados/${idSimulado}/resultados/${tentativa.id}`)}
             >
               Detalhar

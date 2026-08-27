@@ -91,6 +91,11 @@ export function Select<V extends string | number = string | number>({
         onDropdownClose={() => setEmFoco(false)}
         styles={{
           input: {
+            // height (não só minHeight): a Mantine fixa a altura interna do
+            // texto pelo tamanho padrão do input — só esticar a caixa com
+            // minHeight deixava o texto cortado (metade escondida atrás do
+            // overflow do input real, menor por dentro).
+            height: '56px',
             minHeight: '56px',
             borderWidth: '2px',
             borderColor: error

@@ -105,7 +105,7 @@ export default function Alunos() {
           !loading && !error ? `${filtrados.length} aluno(s) cadastrado(s)` : undefined
         }
         actions={
-          <Button icon={<Plus />} onClick={() => navegar('/adm/alunos/novo')}>
+          <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/alunos/novo')}>
             Adicionar aluno
           </Button>
         }
@@ -122,7 +122,6 @@ export default function Alunos() {
         loading={loading}
         error={error}
         onReload={reload}
-        onRowClick={(aluno) => navegar(`/adm/alunos/${aluno.id}`)}
         paginacao={{
           pagina: paginacao.pagina,
           totalPaginas: paginacao.totalPaginas,

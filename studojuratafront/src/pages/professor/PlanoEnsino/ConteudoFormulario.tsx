@@ -24,9 +24,6 @@ const Coluna = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-/* Confirmado no Figma: Ordem e Título dividem a primeira linha. Carga
-   horária não aparece no mockup, mas o campo existe no back — mantido como
-   3ª coluna, sem quebrar a leitura visual das outras duas. */
 const Grade = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -56,7 +53,6 @@ export default function ConteudoFormulario() {
 
   const [ordem, setOrdem] = useState('')
   const [titulo, setTitulo] = useState('')
-  const [cargaHoraria, setCargaHoraria] = useState('')
   const [descricao, setDescricao] = useState('')
   const [erros, setErros] = useState<Record<string, string | undefined>>({})
 
@@ -80,7 +76,6 @@ export default function ConteudoFormulario() {
   useHidratar(requisicaoConteudo.data, (conteudo) => {
     setOrdem(conteudo.ordem?.toString() ?? '')
     setTitulo(conteudo.titulo ?? '')
-    setCargaHoraria(conteudo.cargaHoraria?.toString() ?? '')
     setDescricao(conteudo.descricao ?? '')
   })
 
@@ -106,10 +101,6 @@ export default function ConteudoFormulario() {
       encontrados.ordem = 'A ordem deve ser um número inteiro positivo'
     }
 
-    if (cargaHoraria && (!Number.isFinite(Number(cargaHoraria)) || Number(cargaHoraria) <= 0)) {
-      encontrados.cargaHoraria = 'Informe um número de horas maior que zero'
-    }
-
     setErros(encontrados)
     return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
   }
@@ -123,7 +114,6 @@ export default function ConteudoFormulario() {
         titulo: titulo.trim(),
         descricao: descricao.trim(),
         ordem: ordem ? Number(ordem) : undefined,
-        cargaHoraria: cargaHoraria ? Number(cargaHoraria) : undefined,
         status: 'ATIVO' as const,
       }
 
@@ -208,18 +198,6 @@ export default function ConteudoFormulario() {
                 disabled={salvando}
                 maxLength={150}
                 onChange={(evento) => setTitulo(evento.target.value)}
-              />
-
-              <Input
-                label="Carga horária"
-                type="number"
-                min={1}
-                placeholder="Ex.: 8"
-                value={cargaHoraria}
-                error={erros.cargaHoraria}
-                disabled={salvando}
-                hint="Em horas."
-                onChange={(evento) => setCargaHoraria(evento.target.value)}
               />
             </Grade>
 

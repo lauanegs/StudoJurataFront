@@ -34,11 +34,13 @@ import {
 import { formatarMoedas, formatarTempo, letraAlternativa, nomeCurto } from '../../utils/format'
 import { resolverImagemSkin } from '../../utils/skins'
 import { animacaoFlutuar } from '../../styles/animations'
+import { theme } from '../../styles/theme'
 import type { AlternativaResponse } from '../../types'
 
 /* Confirmado no Figma: o cabeçalho (SimuladoHeader) cobre a largura inteira
-   da tela — só o conteúdo abaixo dele (progresso, enunciado, alternativas)
-   fica centralizado num miolo de largura limitada. */
+   da tela, encostado nas bordas — só o conteúdo abaixo dele (progresso,
+   enunciado, alternativas) fica com padding, centralizado num miolo de
+   largura limitada. */
 const Tela = styled.div`
   display: flex;
   flex-direction: column;
@@ -46,7 +48,6 @@ const Tela = styled.div`
 
   width: 100%;
   min-height: 100vh;
-  padding: ${({ theme }) => theme.spacing.md};
 `
 
 const Conteudo = styled.div`
@@ -57,6 +58,7 @@ const Conteudo = styled.div`
   width: 100%;
   max-width: 1100px;
   margin: 0 auto;
+  padding: ${({ theme }) => theme.spacing.md};
 `
 
 const Alternativas = styled.div`
@@ -169,7 +171,7 @@ const ValorMoedas = styled.div`
 
   font-size: ${({ theme }) => theme.typography.sizes.xl};
   font-weight: ${({ theme }) => theme.typography.weights.bold};
-  color: ${({ theme }) => theme.colors.textStrong};
+  color: ${({ theme }) => theme.colors.textSecondary};
 `
 
 const RevisaoLista = styled.div`
@@ -182,7 +184,7 @@ const NomeParabens = styled.strong`
   display: block;
   margin-bottom: ${({ theme }) => theme.spacing.xxs};
   font-size: ${({ theme }) => theme.typography.sizes.xl};
-  color: ${({ theme }) => theme.colors.textStrong};
+  color: ${({ theme }) => theme.colors.textSecondary};
 `
 
 const DescricaoParabens = styled.span`
@@ -202,6 +204,12 @@ const QuestaoCabecalho = styled.div`
 const QuestaoEnunciado = styled.p`
   margin-bottom: ${({ theme }) => theme.spacing.sm};
   font-size: ${({ theme }) => theme.typography.sizes.sm};
+  color: ${({ theme }) => theme.colors.textSecondary};
+`
+
+/* Sem herdar o preto padrão do texto do card (#202020) — cinza, como o
+   resto dos textos desta tela. */
+const QuestaoTitulo = styled.strong`
   color: ${({ theme }) => theme.colors.textSecondary};
 `
 
@@ -469,13 +477,15 @@ export default function Simulado() {
   if (requisicaoTentativa.error) {
     return (
       <Tela>
-        <ErroCarregamento
-          mensagem={requisicaoTentativa.error}
-          onRetry={requisicaoTentativa.reload}
-        />
-        <Button variant="secondary" onClick={() => navegar('/aluno/reforco')}>
-          Voltar para o reforço
-        </Button>
+        <Conteudo>
+          <ErroCarregamento
+            mensagem={requisicaoTentativa.error}
+            onRetry={requisicaoTentativa.reload}
+          />
+          <Button variant="secondary" onClick={() => navegar('/aluno/reforco')}>
+            Voltar para o reforço
+          </Button>
+        </Conteudo>
       </Tela>
     )
   }
@@ -483,8 +493,10 @@ export default function Simulado() {
   if (loading) {
     return (
       <Tela>
-        <SkeletonCartao />
-        <SkeletonCartao />
+        <Conteudo>
+          <SkeletonCartao />
+          <SkeletonCartao />
+        </Conteudo>
       </Tela>
     )
   }
@@ -521,12 +533,10 @@ export default function Simulado() {
               </div>
 
               <Etiquetas>
-                <Etiqueta $fundo="linear-gradient(90deg, #0CCA4A 0%, #46A665 100%)">
-                  {acertos} acerto(s)
-                </Etiqueta>
-                <Etiqueta $fundo="linear-gradient(90deg, #F95738 0%, #F86624 100%)">
-                  {erradas} erro(s)
-                </Etiqueta>
+                {/* Mesmo verde/vermelho das alternativas (LetterBadge correct/incorrect) —
+                    tokens.gradients.success/danger, não um verde/vermelho à parte. */}
+                <Etiqueta $fundo={theme.gradients.success}>{acertos} acerto(s)</Etiqueta>
+                <Etiqueta $fundo={theme.gradients.danger}>{erradas} erro(s)</Etiqueta>
                 <Etiqueta $fundo="rgba(115, 115, 115, 0.15)" $claro>
                   <Clock aria-hidden="true" />
                   {formatarTempo(tentativa?.tempoGasto)}
@@ -540,7 +550,8 @@ export default function Simulado() {
               <TextoSecundario>Para comemorar, aqui estão algumas moedas!</TextoSecundario>
 
               <ValorMoedas>
-                <MoedaIcone size={32} aria-hidden="true" />+ {formatarMoedas(MOEDAS_POR_SIMULADO)}
+                + {formatarMoedas(MOEDAS_POR_SIMULADO)}
+                <MoedaIcone size={32} aria-hidden="true" />
               </ValorMoedas>
 
               <TextoSecundario>
@@ -551,7 +562,7 @@ export default function Simulado() {
                 Até lá, continue no ritmo e faça os simulados que já estão prontos!
               </TextoSecundario>
 
-              <Button variant="info" fullWidth onClick={() => navegar('/aluno/reforco')}>
+              <Button variant="info" noBorder fullWidth onClick={() => navegar('/aluno/reforco')}>
                 Ver simulados para realizar
               </Button>
             </ColunaResultado>
@@ -565,7 +576,7 @@ export default function Simulado() {
             return (
               <Card key={questao.questaoId}>
                 <QuestaoCabecalho>
-                  <strong>Questão {indice + 1}</strong>
+                  <QuestaoTitulo>Questão {indice + 1}</QuestaoTitulo>
 
                   {!resposta || resposta.alternativaId === null ? (
                     <Tag variant="neutral">Em branco</Tag>
@@ -592,13 +603,7 @@ export default function Simulado() {
                         letra={letraAlternativa(posicao)}
                         texto={alternativa.texto}
                         status={alternativa.correta ? 'correct' : marcada ? 'incorrect' : 'neutral'}
-                        legenda={
-                          alternativa.correta && marcada
-                            ? 'Resposta correta (você marcou)'
-                            : alternativa.correta
-                              ? 'Resposta correta'
-                              : 'Sua resposta'
-                        }
+                        legenda=""
                       />
                     )
                   })}
@@ -607,10 +612,6 @@ export default function Simulado() {
             )
           })}
         </RevisaoLista>
-
-        <Button fullWidth size="large" onClick={() => navegar('/aluno/reforco')}>
-          Voltar para o reforço
-        </Button>
         </Conteudo>
       </Tela>
     )
@@ -693,8 +694,9 @@ export default function Simulado() {
 
       <Rodape>
         <Button
-          variant="secondary"
+          variant="info"
           size="large"
+          noBorder
           icon={<ArrowLeft />}
           disabled={indiceAtual === 0}
           onClick={() => irPara(indiceAtual - 1)}
@@ -705,13 +707,20 @@ export default function Simulado() {
         {temSelecao && !revelada ? (
           // Só revela acerto/erro depois desse clique — dá a chance de
           // trocar a resposta se o toque na alternativa foi sem querer.
-          <Button variant="info" size="large" icon={<CheckCircle2 />} onClick={confirmarResposta}>
+          <Button
+            variant="info"
+            size="large"
+            noBorder
+            icon={<CheckCircle2 />}
+            onClick={confirmarResposta}
+          >
             Confirmar resposta
           </Button>
         ) : indiceAtual < questoes.length - 1 ? (
           <Button
             variant="info"
             size="large"
+            noBorder
             iconRight={<ArrowRight />}
             onClick={() => irPara(indiceAtual + 1)}
           >
@@ -721,6 +730,7 @@ export default function Simulado() {
           <Button
             variant="success"
             size="large"
+            noBorder
             icon={<Flag />}
             loading={finalizando}
             onClick={confirmarFinalizacao}

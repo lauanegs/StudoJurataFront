@@ -55,6 +55,11 @@ export default function AulaFormulario() {
   const [ordem, setOrdem] = useState('')
   const [titulo, setTitulo] = useState('')
   const [dataPrevista, setDataPrevista] = useState('')
+  // Sem campo na tela (esta tela só planeja a aula, não registra chamada —
+  // ver RegistrarAulaTurma.tsx) — mas precisa continuar guardado e voltando
+  // no corpo do PUT: AulaService.atualizar faz save() completo, não merge,
+  // então não reenviar apagaria silenciosamente a data de uma aula já
+  // ministrada só por ter sido editada aqui (título, observações...).
   const [dataPublicacao, setDataPublicacao] = useState('')
   const [cargaHoraria, setCargaHoraria] = useState('')
   const [observacoes, setObservacoes] = useState('')
@@ -356,14 +361,6 @@ export default function AulaFormulario() {
                 ))}
               </Chips>
             )}
-
-            <DatePicker
-              label="Data publicação"
-              value={dataPublicacao}
-              disabled={salvando}
-              hint="Quando a aula foi (ou será) efetivamente ministrada."
-              onChange={(evento) => setDataPublicacao(evento.target.value)}
-            />
 
             <TextArea
               label="Observações"

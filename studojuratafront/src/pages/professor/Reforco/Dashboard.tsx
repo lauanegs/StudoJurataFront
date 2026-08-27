@@ -125,11 +125,11 @@ export default function ReforcoDashboard() {
               size="large"
               variant="secondary"
               icon={<FileText />}
-              onClick={() => navegar('/professor/reforco/realizados')}
+              onClick={() => navegar('/professor/reforco/simulados')}
             >
-              Ver simulados realizados
+              Ver simulados
             </Button>
-            <Button size="large" icon={<Rocket />} onClick={() => navegar('/professor/reforco/simulados')}>
+            <Button size="large" icon={<Rocket />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
               Lançar simulado
             </Button>
           </>

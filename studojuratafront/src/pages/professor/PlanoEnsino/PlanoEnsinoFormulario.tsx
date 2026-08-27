@@ -11,7 +11,6 @@ import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
 import { TextArea } from '../../../components/ui/TextArea'
-import { Toggle } from '../../../components/ui/Toggle'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -25,7 +24,9 @@ import {
   planosEnsino as servicoPlanos,
   professores as servicoProfessores,
 } from '../../../services/endpoints'
-import { intervaloDeDatas, periodoLetivo as validarPeriodo } from '../../../utils/validacao'
+import { OPCOES_STATUS_PLANO } from '../../../utils/labels'
+import { intervaloDeDatas } from '../../../utils/validacao'
+import type { StatusPlano } from '../../../types'
 
 const Coluna = styled.div`
   display: flex;
@@ -33,14 +34,11 @@ const Coluna = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-/* Confirmado no Figma: 1ª linha com 3 campos (Turma, Curso, Carga horária),
-   2ª linha com 2 campos (Disciplina, Período letivo) — não uma grade
-   uniforme só. auto-fit com o mesmo minmax reflui nessas duas fileiras
-   naturalmente na largura do Card, mas a ORDEM dos campos abaixo segue
-   essa sequência pra bater visualmente. */
+/* 2 campos por linha (pedido explícito) — auto-fit com minmax largo o
+   suficiente pra nunca refluir 3 numa linha só. */
 const Grade = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
 `
 
@@ -58,14 +56,13 @@ export default function PlanoEnsinoFormulario() {
   const [cursoId, setCursoId] = useState<number | null>(null)
   const [turmaId, setTurmaId] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
-  const [periodo, setPeriodo] = useState('')
   const [cargaHoraria, setCargaHoraria] = useState('')
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
   const [ementa, setEmenta] = useState('')
   const [objetivoGeral, setObjetivoGeral] = useState('')
   const [metodologia, setMetodologia] = useState('')
-  const [ativo, setAtivo] = useState(true)
+  const [status, setStatus] = useState<StatusPlano>('ATIVO')
   const [erros, setErros] = useState<Record<string, string | undefined>>({})
 
   const requisicaoPlano = useRequisicao(() => servicoPlanos.buscar(planoId as number), [planoId], {
@@ -83,14 +80,13 @@ export default function PlanoEnsinoFormulario() {
     setCursoId(plano.curso?.id ?? null)
     setTurmaId(plano.turmaDisciplina?.turma?.id ?? null)
     setDisciplinaId(plano.turmaDisciplina?.disciplina?.id ?? null)
-    setPeriodo(plano.periodoLetivo ?? '')
     setCargaHoraria(plano.cargaHoraria?.toString() ?? '')
     setDataInicio(plano.dataInicio?.slice(0, 10) ?? '')
     setDataFim(plano.dataFim?.slice(0, 10) ?? '')
     setEmenta(plano.ementa ?? '')
     setObjetivoGeral(plano.objetivoGeral ?? '')
     setMetodologia(plano.metodologia ?? '')
-    setAtivo(plano.status !== 'INATIVO')
+    setStatus(plano.status ?? 'ATIVO')
   })
 
   const opcoesCursos = useMemo(
@@ -128,15 +124,8 @@ export default function PlanoEnsinoFormulario() {
   function validar() {
     const encontrados: Record<string, string | undefined> = {}
 
-    // PlanoEnsino.curso é obrigatório e periodoLetivo é @Column(nullable = false).
+    // PlanoEnsino.curso é @ManyToOne(optional = false).
     if (!cursoId) encontrados.cursoId = 'Selecione o curso'
-
-    if (!periodo.trim()) {
-      encontrados.periodo = 'Informe o período letivo'
-    } else {
-      const erroPeriodo = validarPeriodo(periodo)
-      if (erroPeriodo) encontrados.periodo = erroPeriodo
-    }
 
     if (cargaHoraria && (!Number.isFinite(Number(cargaHoraria)) || Number(cargaHoraria) <= 0)) {
       encontrados.cargaHoraria = 'Informe um número de horas maior que zero'
@@ -160,14 +149,13 @@ export default function PlanoEnsinoFormulario() {
         curso,
         turmaDisciplina: vinculoSelecionado ?? undefined,
         titulo: titulo.trim() || undefined,
-        periodoLetivo: periodo.trim(),
         cargaHoraria: cargaHoraria ? Number(cargaHoraria) : undefined,
         dataInicio: dataInicio || undefined,
         dataFim: dataFim || undefined,
         ementa: ementa.trim() || undefined,
         objetivoGeral: objetivoGeral.trim() || undefined,
         metodologia: metodologia.trim() || undefined,
-        status: ativo ? ('ATIVO' as const) : ('INATIVO' as const),
+        status,
       }
 
       if (edicao) {
@@ -231,35 +219,38 @@ export default function PlanoEnsinoFormulario() {
         actions={
           <>
             {edicao && (
-              <>
-                <Button
-                  size="large"
-                  variant="secondary"
-                  icon={<ListTree />}
-                  onClick={() => navegar(`/professor/plano-ensino/${planoId}/conteudos`)}
-                >
-                  Conteúdos
-                </Button>
-                <Button
-                  size="large"
-                  variant="danger"
-                  icon={<Trash2 />}
-                  loading={excluindo}
-                  onClick={excluir}
-                  disabled={salvando}
-                >
-                  Excluir
-                </Button>
-              </>
+              <Button
+                size="large"
+                variant="secondary"
+                icon={<ListTree />}
+                onClick={() => navegar(`/professor/plano-ensino/${planoId}/conteudos`)}
+              >
+                Conteúdos
+              </Button>
             )}
-            <Button
-              size="large"
-              variant="danger"
-              onClick={() => navegar('/professor/plano-ensino')}
-              disabled={salvando || excluindo}
-            >
-              Cancelar
-            </Button>
+            {/* Cancelar só existe enquanto o plano ainda não foi salvo — depois
+                de salvo, desfazer é Excluir (soft-delete), não Cancelar. */}
+            {edicao ? (
+              <Button
+                size="large"
+                variant="danger"
+                icon={<Trash2 />}
+                loading={excluindo}
+                onClick={excluir}
+                disabled={salvando}
+              >
+                Excluir
+              </Button>
+            ) : (
+              <Button
+                size="large"
+                variant="danger"
+                onClick={() => navegar('/professor/plano-ensino')}
+                disabled={salvando}
+              >
+                Cancelar
+              </Button>
+            )}
             <Button
               size="large"
               variant="success"
@@ -280,14 +271,28 @@ export default function PlanoEnsinoFormulario() {
         <>
           <Card titulo="Identificação">
             <Coluna>
-              <Input
-                label="Título do plano"
-                placeholder="Ex.: Robótica — 1º semestre"
-                value={titulo}
-                disabled={salvando}
-                maxLength={120}
-                onChange={(evento) => setTitulo(evento.target.value)}
-              />
+              <Grade>
+                <Input
+                  label="Título do plano"
+                  placeholder="Ex.: Robótica — 1º semestre"
+                  value={titulo}
+                  disabled={salvando}
+                  maxLength={120}
+                  onChange={(evento) => setTitulo(evento.target.value)}
+                />
+
+                <Select<number>
+                  label="Curso"
+                  required
+                  options={opcoesCursos}
+                  value={cursoId}
+                  loading={requisicaoCursos.loading}
+                  error={erros.cursoId}
+                  searchable
+                  placeholder="Selecionar curso..."
+                  onChange={setCursoId}
+                />
+              </Grade>
 
               <Grade>
                 <Select<number>
@@ -307,17 +312,19 @@ export default function PlanoEnsinoFormulario() {
                 />
 
                 <Select<number>
-                  label="Curso"
-                  required
-                  options={opcoesCursos}
-                  value={cursoId}
-                  loading={requisicaoCursos.loading}
-                  error={erros.cursoId}
+                  label="Disciplina"
+                  options={opcoesDisciplinas}
+                  value={disciplinaId}
+                  disabled={!turmaId}
                   searchable
-                  placeholder="Selecionar curso..."
-                  onChange={setCursoId}
+                  clearable
+                  placeholder="Selecionar disciplina..."
+                  emptyText={turmaId ? 'Sem disciplinas nessa turma' : 'Selecione a turma primeiro'}
+                  onChange={setDisciplinaId}
                 />
+              </Grade>
 
+              <Grade>
                 <Input
                   label="Carga horária"
                   type="number"
@@ -329,30 +336,13 @@ export default function PlanoEnsinoFormulario() {
                   hint="Em horas."
                   onChange={(evento) => setCargaHoraria(evento.target.value)}
                 />
-              </Grade>
 
-              <Grade>
-                <Select<number>
-                  label="Disciplina"
-                  options={opcoesDisciplinas}
-                  value={disciplinaId}
-                  disabled={!turmaId}
-                  searchable
-                  clearable
-                  placeholder="Selecionar disciplina..."
-                  emptyText={turmaId ? 'Sem disciplinas nessa turma' : 'Selecione a turma primeiro'}
-                  onChange={setDisciplinaId}
-                />
-
-                <Input
-                  label="Período letivo"
-                  required
-                  placeholder="Ex.: 2026 ou 2026/1"
-                  value={periodo}
-                  error={erros.periodo}
+                <Select<StatusPlano>
+                  label="Situação"
+                  options={OPCOES_STATUS_PLANO}
+                  value={status}
                   disabled={salvando}
-                  maxLength={10}
-                  onChange={(evento) => setPeriodo(evento.target.value)}
+                  onChange={(valor) => setStatus(valor ?? 'ATIVO')}
                 />
               </Grade>
 
@@ -372,15 +362,6 @@ export default function PlanoEnsinoFormulario() {
                   onChange={(evento) => setDataFim(evento.target.value)}
                 />
               </Grade>
-
-              <Toggle
-                ligado={ativo}
-                onChange={setAtivo}
-                label="Situação"
-                textoLigado="Ativo"
-                textoDesligado="Inativo"
-                disabled={salvando}
-              />
             </Coluna>
           </Card>
 

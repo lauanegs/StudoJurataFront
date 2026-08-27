@@ -8,12 +8,14 @@ import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
+import { Tag } from '../../../components/ui/Tag'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { planosAula as servicoPlanos, professores } from '../../../services/endpoints'
 import { normalizar } from '../../../utils/format'
+import { ROTULO_STATUS_PLANO, STATUS_PLANO_VARIANT } from '../../../utils/labels'
 import type { PlanoAula } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
@@ -21,12 +23,9 @@ import type { Coluna } from '../../../components/ui/DataTable/types'
    mesma linha, coladas — mesmo padrão de Planos de Ensino. */
 const CamposCabecalho = styled.div`
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-  width: fit-content;
-  max-width: 100%;
-  overflow-x: auto;
 `
 
 const LarguraBusca = styled.div`
@@ -87,6 +86,16 @@ export default function PlanosAula() {
       cabecalho: 'Disciplina',
       ocultarEmTelaPequena: true,
       render: (plano) => plano.turmaDisciplina?.disciplina?.titulo ?? '—',
+    },
+    {
+      key: 'situacao',
+      cabecalho: 'Situação',
+      render: (plano) =>
+        plano.status && (
+          <Tag variant={STATUS_PLANO_VARIANT[plano.status]} ponto>
+            {ROTULO_STATUS_PLANO[plano.status]}
+          </Tag>
+        ),
     },
   ]
 

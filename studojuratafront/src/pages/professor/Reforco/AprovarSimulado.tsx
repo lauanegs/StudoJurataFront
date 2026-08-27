@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { Check, ClipboardCheck, Pencil, Save, X } from 'lucide-react'
@@ -19,7 +19,6 @@ import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
   alternativas as servicoAlternativas,
-  disciplinas as servicoDisciplinas,
   questoes as servicoQuestoes,
   simuladoQuestoes,
   simulados as servicoSimulados,
@@ -63,7 +62,6 @@ export default function AprovarSimulado() {
   const requisicaoVinculos = useRequisicao(() => simuladoQuestoes.listar(), [])
   const requisicaoTodasQuestoes = useRequisicao(() => servicoQuestoes.listar(), [])
   const requisicaoAlternativas = useRequisicao(() => servicoAlternativas.listar(), [])
-  const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
 
   const prontoParaHidratar =
     requisicaoVinculos.data && requisicaoTodasQuestoes.data && requisicaoAlternativas.data ? idSimulado : null
@@ -97,15 +95,6 @@ export default function AprovarSimulado() {
 
     setQuestoes(pendentes)
   })
-
-  const opcoesDisciplinas = useMemo(
-    () =>
-      (requisicaoDisciplinas.data ?? []).map((disciplina) => ({
-        value: disciplina.id,
-        label: disciplina.titulo ?? `Disciplina ${disciplina.id}`,
-      })),
-    [requisicaoDisciplinas.data],
-  )
 
   const questaoAtual = questoes[questaoAtiva] ?? null
 
@@ -304,8 +293,6 @@ export default function AprovarSimulado() {
               questao={questaoAtual}
               indice={questaoAtiva}
               total={questoes.length}
-              disciplinas={opcoesDisciplinas}
-              carregandoDisciplinas={requisicaoDisciplinas.loading}
               somenteLeitura={!editando}
               erros={erros}
               onChange={(atualizada) =>

@@ -27,30 +27,39 @@ const Container = styled.div`
   border-radius: ${({ theme }) => theme.radius.md};
 `
 
+/* O texto não deve esticar pra ocupar a largura toda do card (ficava enorme
+   em telas largas) — fica com largura fixa, centralizado, sem nenhum
+   sombreado atrás (só o texto mesmo). */
 const Title = styled.p`
+  align-self: center;
+  width: fit-content;
+
   font-size: ${({ theme }) => theme.typography.sizes.sm};
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};
   color: ${({ theme }) => theme.colors.textStrong};
   text-align: center;
+  white-space: nowrap;
 `
 
+/* Centralizado (não mais esticado de ponta a ponta) — com poucas questões
+   cada segmento ocupava uma fração enorme da largura do card. */
 const Track = styled.div`
   display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.md};
 `
 
 const SegmentColumn = styled.div`
   display: flex;
-  flex: 1;
   flex-direction: column;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xxs};
-  min-width: 0;
 `
 
 const Segment = styled.button<{ $color: string; $navigable: boolean; $pending: boolean }>`
-  width: 100%;
-  height: 10px;
+  width: 40px;
+  height: 8px;
 
   border-radius: ${({ theme }) => theme.radius.sm};
   background: ${({ $color }) => $color};

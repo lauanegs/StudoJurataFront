@@ -40,8 +40,6 @@ export function QuestaoEditor({
   onChange,
   indice,
   total,
-  disciplinas,
-  carregandoDisciplinas,
   somenteLeitura = false,
   erros = {},
   onRemove,
@@ -190,19 +188,6 @@ export function QuestaoEditor({
             </S.OpcaoTipo>
           </S.SeletorTipo>
         </div>
-
-        <Select<number>
-          label="Disciplina"
-          options={disciplinas}
-          value={questao.disciplinaId ?? null}
-          onChange={(value) => atualizar({ disciplinaId: value })}
-          loading={carregandoDisciplinas}
-          disabled={somenteLeitura}
-          error={erros.disciplinaId}
-          placeholder="Selecionar disciplina..."
-          clearable
-          searchable
-        />
 
         <Select<NivelDificuldade>
           label="Nível de dificuldade"

@@ -48,7 +48,9 @@ export const theme = {
     sidebar: 'linear-gradient(180deg, #049DBF 0%, rgba(4, 157, 191, 0.8) 100%), #662E9B',
     banner: 'linear-gradient(180deg, #8148B7 0%, #9256CC 100%)',
     danger: 'linear-gradient(180deg, #DB5461 0%, #CF505C 100%)',
-    success: 'linear-gradient(180deg, #0CCA4A 0%, #18CB53 100%)',
+    // Mesmo verde dos DesempenhoCard (colors.success, #34C759) — antes era
+    // um verde diferente (#0CCA4A/#18CB53), gerando dois "verdes" na UI.
+    success: 'linear-gradient(180deg, #3DCB63 0%, #34C759 100%)',
     border: 'linear-gradient(135deg, #662E9B 0%, #049DBF 100%)',
   },
 

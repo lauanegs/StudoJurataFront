@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { BarChart3, ClipboardList, Pencil, Plus, Trash2 } from 'lucide-react'
+import { BarChart3, CalendarPlus, ClipboardList, Pencil, Plus, Trash2 } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -25,12 +25,9 @@ import type { Coluna } from '../../../components/ui/DataTable/types'
 /* Confirmado no Figma: "Adicionar aula" (150px) + busca (250px) coladas. */
 const CamposCabecalho = styled.div`
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-  width: fit-content;
-  max-width: 100%;
-  overflow-x: auto;
 `
 
 const LarguraBusca = styled.div`
@@ -251,9 +248,6 @@ export default function Aulas() {
             <>
               <strong>{plano.turmaDisciplina?.turma?.titulo}</strong>
               <Tag variant="purple">{plano.turmaDisciplina?.disciplina?.titulo}</Tag>
-              {plano.planoEnsino?.periodoLetivo && (
-                <Tag variant="neutral">{plano.planoEnsino.periodoLetivo}</Tag>
-              )}
             </>
           )
         }
@@ -337,7 +331,14 @@ export default function Aulas() {
               <Button
                 variant="subtle"
                 size="small"
-                onClick={() => navegar(`/professor/aulas/${aula.id}/registrar`)}
+                icon={<CalendarPlus />}
+                disabled={!plano?.turmaDisciplina?.turma?.id}
+                onClick={() =>
+                  navegar(
+                    `/professor/turmas/${plano?.turmaDisciplina?.turma?.id}/registrar-aula` +
+                      `?aulaId=${aula.id}&vinculoId=${plano?.turmaDisciplina?.id}`,
+                  )
+                }
               >
                 Registrar
               </Button>

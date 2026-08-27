@@ -33,6 +33,10 @@ export function Card({
         overflow: 'hidden',
         boxShadow: el.shadow,
         border: el.border,
+        // Confirmado no Figma (frame "home - professor", nó 1:3377): o card
+        // com corpo tingido não é opaco — é o próprio Paper translúcido
+        // (rgba(255,255,255,0.2)) por trás de um cabeçalho branco sólido.
+        background: corpoComFundo ? 'rgba(255, 255, 255, 0.2)' : undefined,
         ...style,
       }}
       {...rest}
@@ -47,6 +51,7 @@ export function Card({
             flexWrap: 'wrap',
             padding: `${tokens.spacing.md} ${tokens.spacing.lg}`,
             borderBottom: `1px solid ${tokens.colors.border}`,
+            background: corpoComFundo ? tokens.colors.white : undefined,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.xs, minWidth: 0 }}>
@@ -95,7 +100,6 @@ export function Card({
           flex: 1,
           minWidth: 0,
           padding: semPadding ? 0 : tokens.spacing.lg,
-          background: corpoComFundo ? tokens.colors.background : undefined,
         }}
       >
         {children}

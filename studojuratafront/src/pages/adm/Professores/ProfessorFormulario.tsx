@@ -6,7 +6,8 @@ import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
-import { Toggle } from '../../../components/ui/Toggle'
+import { Select } from '../../../components/ui/Select'
+import { Tab } from '../../../components/ui/Tab'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -15,6 +16,8 @@ import { useFormulario } from '../../../hooks/useFormulario'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
+import { OPCOES_ATIVO_INATIVO } from '../../../utils/labels'
+import type { StatusAtivoInativo } from '../../../types'
 import {
   pessoas as servicoPessoas,
   professores as servicoProfessores,
@@ -31,6 +34,8 @@ export default function ProfessorFormulario() {
 
   const edicao = Boolean(id)
   const professorId = id ? Number(id) : null
+
+  const [aba, setAba] = useState<'dados' | 'endereco'>('dados')
 
   const formulario = useFormulario<DadosPessoa>({
     valoresIniciais: PESSOA_VAZIA,
@@ -134,9 +139,10 @@ export default function ProfessorFormulario() {
         rotuloVoltar="Voltar para professores"
         actions={
           <>
-            {edicao && (
+            {edicao ? (
               <Button
                 variant="danger"
+                size="large"
                 icon={<Trash2 />}
                 loading={excluindo}
                 onClick={excluir}
@@ -144,27 +150,47 @@ export default function ProfessorFormulario() {
               >
                 Excluir
               </Button>
+            ) : (
+              <Button
+                variant="danger"
+                size="large"
+                onClick={() => navegar('/adm/professores')}
+                disabled={salvando}
+              >
+                Cancelar
+              </Button>
             )}
             <Button
-              variant="danger"
-              onClick={() => navegar('/adm/professores')}
-              disabled={salvando || excluindo}
+              variant="success"
+              size="large"
+              icon={<Save />}
+              loading={salvando}
+              disabled={excluindo}
+              onClick={salvar}
             >
-              Cancelar
-            </Button>
-            <Button variant="success" icon={<Save />} loading={salvando} disabled={excluindo} onClick={salvar}>
               Salvar
             </Button>
           </>
         }
       />
 
+      <Tab<'dados' | 'endereco'>
+        rotuloAcessivel="Seções do professor"
+        value={aba}
+        onChange={setAba}
+        options={[
+          { value: 'dados', label: 'Dados do professor' },
+          { value: 'endereco', label: 'Endereço' },
+        ]}
+      />
+
       {edicao && requisicao.loading ? (
         <SkeletonCartao />
       ) : (
-        <Card titulo="Dados do professor">
+        <Card titulo={aba === 'dados' ? 'Dados do professor' : 'Endereço'}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <PessoaCampos
+              secao={aba}
               valores={formulario.valores}
               erros={errosVisiveis}
               onChange={(campo, valor) => formulario.definirCampo(campo, valor)}
@@ -173,15 +199,16 @@ export default function ProfessorFormulario() {
               rotuloNome="Nome do professor"
             />
 
-            <Toggle
-              ligado={ativo}
-              onChange={setAtivo}
-              label="Situação"
-              textoLigado="Ativo"
-              textoDesligado="Inativo"
-              descricao="Professores inativos não podem ser vinculados a novas turmas."
-              disabled={salvando}
-            />
+            {aba === 'dados' && (
+              <Select<StatusAtivoInativo>
+                label="Situação"
+                options={OPCOES_ATIVO_INATIVO}
+                value={ativo ? 'ATIVO' : 'INATIVO'}
+                hint="Professores inativos não podem ser vinculados a novas turmas."
+                disabled={salvando}
+                onChange={(valor) => setAtivo(valor !== 'INATIVO')}
+              />
+            )}
           </div>
         </Card>
       )}

@@ -9,6 +9,9 @@ const pulsar = keyframes`
   50%      { opacity: 0.55; }
 `
 
+/* Confirmado no Figma: este header cobre a largura inteira da tela — sem
+   cantos arredondados, encostado nas bordas (só o conteúdo abaixo dele fica
+   dentro de um miolo com padding). */
 const Container = styled.header`
   display: flex;
   align-items: center;
@@ -19,7 +22,6 @@ const Container = styled.header`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
 
   background: ${({ theme }) => theme.colors.white};
-  border-radius: ${({ theme }) => theme.radius.md};
 `
 
 const Esquerda = styled.div`
@@ -36,8 +38,8 @@ const Logo = styled.img`
 `
 
 const Titulo = styled.strong`
-  font-size: 28px;
-  letter-spacing: -1.4px;
+  font-size: 24px;
+  letter-spacing: -1.2px;
   font-weight: ${({ theme }) => theme.typography.weights.medium};
   color: ${({ theme }) => theme.colors.textSecondary};
   overflow: hidden;

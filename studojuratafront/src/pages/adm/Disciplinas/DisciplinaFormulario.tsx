@@ -8,7 +8,7 @@ import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
-import { Toggle } from '../../../components/ui/Toggle'
+import { Select } from '../../../components/ui/Select'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -18,11 +18,23 @@ import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { disciplinas as servicoDisciplinas } from '../../../services/endpoints'
+import { OPCOES_ATIVA_INATIVA } from '../../../utils/labels'
+import type { StatusAtivoInativo } from '../../../types'
 
 const Coluna = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
+`
+
+const Grade = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    grid-template-columns: 1fr;
+  }
 `
 
 export default function DisciplinaFormulario() {
@@ -130,9 +142,10 @@ export default function DisciplinaFormulario() {
         rotuloVoltar="Voltar para disciplinas"
         actions={
           <>
-            {edicao && (
+            {edicao ? (
               <Button
                 variant="danger"
+                size="large"
                 icon={<Trash2 />}
                 loading={excluindo}
                 onClick={excluir}
@@ -140,16 +153,19 @@ export default function DisciplinaFormulario() {
               >
                 Excluir
               </Button>
+            ) : (
+              <Button
+                variant="danger"
+                size="large"
+                onClick={() => navegar('/adm/disciplinas')}
+                disabled={salvando}
+              >
+                Cancelar
+              </Button>
             )}
             <Button
-              variant="danger"
-              onClick={() => navegar('/adm/disciplinas')}
-              disabled={salvando || excluindo}
-            >
-              Cancelar
-            </Button>
-            <Button
               variant="success"
+              size="large"
               icon={<Save />}
               loading={salvando}
               disabled={carregandoEscola || excluindo}
@@ -166,25 +182,26 @@ export default function DisciplinaFormulario() {
       ) : (
         <Card titulo="Dados da disciplina">
           <Coluna>
-            <Input
-              label="Nome da disciplina"
-              required
-              placeholder="Ex.: Robótica"
-              value={titulo}
-              error={erros.titulo}
-              disabled={salvando}
-              maxLength={120}
-              onChange={(evento) => setTitulo(evento.target.value)}
-            />
+            <Grade>
+              <Input
+                label="Nome da disciplina"
+                required
+                placeholder="Ex.: Robótica"
+                value={titulo}
+                error={erros.titulo}
+                disabled={salvando}
+                maxLength={120}
+                onChange={(evento) => setTitulo(evento.target.value)}
+              />
 
-            <Toggle
-              ligado={ativa}
-              onChange={setAtiva}
-              label="Situação"
-              textoLigado="Ativa"
-              textoDesligado="Inativa"
-              disabled={salvando}
-            />
+              <Select<StatusAtivoInativo>
+                label="Situação"
+                options={OPCOES_ATIVA_INATIVA}
+                value={ativa ? 'ATIVO' : 'INATIVO'}
+                disabled={salvando}
+                onChange={(valor) => setAtiva(valor !== 'INATIVO')}
+              />
+            </Grade>
           </Coluna>
         </Card>
       )}

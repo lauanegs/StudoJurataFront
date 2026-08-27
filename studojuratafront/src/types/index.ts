@@ -13,6 +13,8 @@
 
 export type TipoUsuario = 'ADMINISTRADOR' | 'PROFESSOR' | 'ALUNO'
 export type StatusAtivoInativo = 'ATIVO' | 'INATIVO'
+/** Próprio de PlanoEnsino/PlanoAula — matrícula cíclica não tem "inativo", só "concluído" (ciclo fechado). */
+export type StatusPlano = 'ATIVO' | 'CONCLUIDO'
 export type StatusTurma = 'ATIVA' | 'INATIVA'
 export type StatusMatricula = 'ATIVA' | 'CONCLUIDA' | 'CANCELADA' | 'TRANSFERIDA'
 export type StatusQuestao = 'PENDENTE' | 'APROVADA' | 'REJEITADA'
@@ -158,6 +160,18 @@ export interface TurmaDisciplina extends EntidadeBase {
   status?: StatusAtivoInativo
 }
 
+/**
+ * Professor(es) que também podem ministrar/registrar aula nesta
+ * turma+disciplina, além do titular (TurmaDisciplina.professor) — cobre
+ * substituição/co-lecionamento sem duplicar Plano de Ensino/Plano de Aula,
+ * que continuam únicos por TurmaDisciplina.
+ */
+export interface TurmaDisciplinaSubstituto extends EntidadeBase {
+  turmaDisciplina?: TurmaDisciplina
+  professor?: Professor
+  status?: StatusAtivoInativo
+}
+
 export interface AlunoTurma extends EntidadeBase {
   aluno: Aluno
   turma: Turma
@@ -172,13 +186,13 @@ export interface PlanoEnsino extends EntidadeBase {
   titulo?: string
   curso: Curso
   cargaHoraria?: number
-  periodoLetivo: string
   ementa?: string
   objetivoGeral?: string
   metodologia?: string
   dataInicio?: string
   dataFim?: string
-  status?: StatusAtivoInativo
+  /** Matrícula cíclica: um plano não é "inativado", ele conclui o ciclo (a turma pode receber um novo plano). */
+  status?: StatusPlano
 }
 
 export interface ConteudoPlano extends EntidadeBase {
@@ -186,14 +200,13 @@ export interface ConteudoPlano extends EntidadeBase {
   titulo?: string
   descricao?: string
   ordem?: number
-  cargaHoraria?: number
   status?: StatusAtivoInativo
 }
 
 export interface PlanoAula extends EntidadeBase {
   turmaDisciplina: TurmaDisciplina
   planoEnsino: PlanoEnsino
-  status?: StatusAtivoInativo
+  status?: StatusPlano
 }
 
 export interface Aula extends EntidadeBase {
@@ -237,10 +250,17 @@ export interface EstatisticasPlanoAula {
 // Avaliação
 // ---------------------------------------------------------------------------
 
+/**
+ * Escopo mudou de periodoLetivo (calendário fixo) para turma — matrícula
+ * cíclica não tem "período letivo" fixo; a turma já carrega o ciclo do
+ * aluno (AlunoTurma.dataInicio). total é sempre 0-100: soma das notaMaxima
+ * dos simulados com notaMaxima > 0 daquela disciplina (notaMaxima = 0 é só
+ * reforço/repetição espaçada, não conta).
+ */
 export interface Nota extends EntidadeBase {
   aluno: Aluno
   disciplina: Disciplina
-  periodoLetivo: string
+  turma: Turma
   total?: number
   quantidadeSimuladosConsiderados?: number
 }
@@ -304,8 +324,6 @@ export interface SimuladoRequest {
   tempoLimite?: number | null
   notaMaxima?: number | null
   quantidadeQuestoes?: number | null
-  /** Correção do bug "nota não recalcula sem Plano de Ensino": obrigatório, próprio do Simulado. */
-  periodoLetivo: string
 }
 
 export interface SimuladoResponse extends SimuladoRequest {

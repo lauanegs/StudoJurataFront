@@ -103,7 +103,7 @@ export default function Cursos() {
         titulo="Cursos"
         subtitulo={!loading && !error ? `${filtrados.length} curso(s)` : undefined}
         actions={
-          <Button icon={<Plus />} onClick={() => navegar('/adm/cursos/novo')}>
+          <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/cursos/novo')}>
             Adicionar curso
           </Button>
         }
@@ -118,7 +118,6 @@ export default function Cursos() {
         loading={loading}
         error={error}
         onReload={reload}
-        onRowClick={(curso) => navegar(`/adm/cursos/${curso.id}`)}
         paginacao={{
           pagina: paginacao.pagina,
           totalPaginas: paginacao.totalPaginas,

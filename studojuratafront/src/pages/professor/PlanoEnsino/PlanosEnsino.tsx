@@ -8,11 +8,13 @@ import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
+import { Tag } from '../../../components/ui/Tag'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { planosEnsino as servicoPlanos } from '../../../services/endpoints'
 import { formatarCargaHoraria, normalizar } from '../../../utils/format'
+import { ROTULO_STATUS_PLANO, STATUS_PLANO_VARIANT } from '../../../utils/labels'
 import type { PlanoEnsino } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
@@ -21,12 +23,9 @@ import type { Coluna } from '../../../components/ui/DataTable/types'
    Aula/Notas (o slot de filtros do Header encolhe pro conteúdo real). */
 const CamposCabecalho = styled.div`
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-  width: fit-content;
-  max-width: 100%;
-  overflow-x: auto;
 `
 
 const LarguraBusca = styled.div`
@@ -51,8 +50,7 @@ export default function PlanosEnsino() {
       (plano) =>
         normalizar(plano.turmaDisciplina?.turma?.titulo).includes(termo) ||
         normalizar(plano.curso?.nome).includes(termo) ||
-        normalizar(plano.turmaDisciplina?.disciplina?.titulo).includes(termo) ||
-        normalizar(plano.periodoLetivo).includes(termo),
+        normalizar(plano.turmaDisciplina?.disciplina?.titulo).includes(termo),
     )
   }, [data, buscaAtrasada])
 
@@ -78,17 +76,20 @@ export default function PlanosEnsino() {
       render: (plano) => plano.turmaDisciplina?.disciplina?.titulo ?? '—',
     },
     {
-      key: 'periodo',
-      cabecalho: 'Período',
-      ordenavel: true,
-      valorOrdenacao: (plano) => plano.periodoLetivo,
-      render: (plano) => plano.periodoLetivo,
-    },
-    {
       key: 'carga',
       cabecalho: 'Carga horária',
       ocultarEmTelaPequena: true,
       render: (plano) => formatarCargaHoraria(plano.cargaHoraria),
+    },
+    {
+      key: 'situacao',
+      cabecalho: 'Situação',
+      render: (plano) =>
+        plano.status && (
+          <Tag variant={STATUS_PLANO_VARIANT[plano.status]} ponto>
+            {ROTULO_STATUS_PLANO[plano.status]}
+          </Tag>
+        ),
     },
   ]
 

@@ -1,21 +1,22 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { CalendarClock, Plus, Save, Trash2, UserPlus, Users } from 'lucide-react'
+import { CalendarClock, Pencil, Plus, Save, Trash2, UserCog, UserPlus, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
+import { Chip } from '../../../components/ui/Chip'
 import { DataTable } from '../../../components/ui/DataTable'
 import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header } from '../../../components/ui/Header'
 import { IconButton } from '../../../components/ui/IconButton'
 import { Input } from '../../../components/ui/Input'
+import { Modal } from '../../../components/ui/Modal'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
 import { TimePicker } from '../../../components/ui/TimePicker'
-import { Toggle } from '../../../components/ui/Toggle'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -23,7 +24,7 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useEscola } from '../../../hooks/useEscola'
 import { useHidratar } from '../../../hooks/useHidratar'
-import { useRequisicao } from '../../../hooks/useRequisicao'
+import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
   cursos as servicoCursos,
@@ -31,18 +32,26 @@ import {
   horariosTurma,
   matriculas,
   professores as servicoProfessores,
+  turmaDisciplinaSubstitutos,
   turmaDisciplinas,
   turmas as servicoTurmas,
 } from '../../../services/endpoints'
 import { formatarData, formatarHora, formatarIdade } from '../../../utils/format'
 import {
+  OPCOES_ATIVA_INATIVA,
   OPCOES_DIA_SEMANA,
   ROTULO_DIA_SEMANA,
   ROTULO_STATUS_MATRICULA,
   STATUS_MATRICULA_VARIANT,
 } from '../../../utils/labels'
 import { intervaloDeDatas } from '../../../utils/validacao'
-import type { AlunoTurma, DiaSemana, TurmaDisciplina } from '../../../types'
+import type {
+  AlunoTurma,
+  DiaSemana,
+  HorarioTurma,
+  StatusAtivoInativo,
+  TurmaDisciplina,
+} from '../../../types'
 
 const Coluna = styled.div`
   display: flex;
@@ -50,10 +59,23 @@ const Coluna = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
+/* Três campos por linha (confirmado pelo usuário) — não auto-fit, senão o
+   número de colunas varia com a largura da tela. */
 const Grade = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    grid-template-columns: 1fr;
+  }
+`
+
+/* Ações que dividem linha com Select/Input (56px) usam o mesmo size="large"
+   pra não ficarem mais baixas que o campo ao lado. */
+const LinhaAcaoFlutuante = styled.div`
+  display: flex;
+  justify-content: flex-end;
 `
 
 const LinhaHorario = styled.div`
@@ -111,6 +133,9 @@ export default function TurmaFormulario() {
     disciplinaId: number | null
     professorId: number | null
   }>({ disciplinaId: null, professorId: null })
+
+  const [vinculoSubstitutos, setVinculoSubstitutos] = useState<TurmaDisciplina | null>(null)
+  const [professorSubstitutoId, setProfessorSubstitutoId] = useState<number | null>(null)
 
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(turmaId as number), [turmaId], {
     ativo: Boolean(turmaId),
@@ -338,6 +363,61 @@ export default function TurmaFormulario() {
     }
   }
 
+  const requisicaoSubstitutos = useRequisicao(
+    () => turmaDisciplinaSubstitutos.listarPorTurmaDisciplina(vinculoSubstitutos!.id),
+    [vinculoSubstitutos?.id],
+    { ativo: Boolean(vinculoSubstitutos) },
+  )
+
+  const substitutosAtivos = useMemo(
+    () => (requisicaoSubstitutos.data ?? []).filter((substituto) => substituto.status !== 'INATIVO'),
+    [requisicaoSubstitutos.data],
+  )
+
+  // Titular e quem já é substituto não aparecem de novo na lista de opções.
+  const opcoesProfessoresSubstitutos = useMemo(() => {
+    if (!vinculoSubstitutos) return []
+
+    const jaVinculados = new Set([
+      vinculoSubstitutos.professor?.id,
+      ...substitutosAtivos.map((substituto) => substituto.professor?.id),
+    ])
+
+    return opcoesProfessores.filter((opcao) => !jaVinculados.has(opcao.value))
+  }, [vinculoSubstitutos, substitutosAtivos, opcoesProfessores])
+
+  const { executar: adicionarSubstituto, executando: adicionandoSubstituto } = useAcao(async () => {
+    if (!vinculoSubstitutos || !professorSubstitutoId) {
+      toast.warning('Selecione o professor substituto')
+      return
+    }
+
+    try {
+      await turmaDisciplinaSubstitutos.adicionar(vinculoSubstitutos.id, professorSubstitutoId)
+      toast.success('Substituto vinculado')
+      setProfessorSubstitutoId(null)
+      await requisicaoSubstitutos.reload()
+    } catch (erroVincular) {
+      toast.error(
+        'Não foi possível vincular o substituto',
+        erroVincular instanceof ApiError ? erroVincular.message : undefined,
+      )
+    }
+  })
+
+  async function removerSubstituto(id: number) {
+    try {
+      await turmaDisciplinaSubstitutos.remover(id)
+      toast.success('Substituto removido')
+      await requisicaoSubstitutos.reload()
+    } catch (erroRemover) {
+      toast.error(
+        'Não foi possível remover',
+        erroRemover instanceof ApiError ? erroRemover.message : undefined,
+      )
+    }
+  }
+
   async function removerVinculo(vinculo: TurmaDisciplina) {
     await confirmar({
       titulo: 'Remover disciplina da turma?',
@@ -353,32 +433,6 @@ export default function TurmaFormulario() {
           toast.error(
             'Não foi possível remover',
             erroRemover instanceof ApiError ? erroRemover.message : undefined,
-          )
-        }
-      },
-    })
-  }
-
-  async function encerrarMatricula(matricula: AlunoTurma, tipo: 'cancelar' | 'concluir') {
-    await confirmar({
-      titulo: tipo === 'cancelar' ? 'Cancelar matrícula?' : 'Concluir matrícula?',
-      descricao:
-        tipo === 'cancelar'
-          ? `A matrícula de ${matricula.aluno?.pessoa?.nome} será cancelada. O histórico permanece.`
-          : `A matrícula de ${matricula.aluno?.pessoa?.nome} será marcada como concluída.`,
-      rotuloConfirmar: tipo === 'cancelar' ? 'Cancelar matrícula' : 'Concluir',
-      tone: tipo === 'cancelar' ? 'danger' : 'default',
-      aoConfirmar: async () => {
-        try {
-          if (tipo === 'cancelar') await matriculas.cancelar(matricula.id)
-          else await matriculas.concluir(matricula.id)
-
-          toast.success(tipo === 'cancelar' ? 'Matrícula cancelada' : 'Matrícula concluída')
-          await Promise.all([requisicaoAtivos.reload(), requisicaoHistorico.reload()])
-        } catch (erroEncerrar) {
-          toast.error(
-            'Não foi possível atualizar a matrícula',
-            erroEncerrar instanceof ApiError ? erroEncerrar.message : undefined,
           )
         }
       },
@@ -436,15 +490,34 @@ export default function TurmaFormulario() {
         rotuloVoltar="Voltar para turmas"
         actions={
           <>
-            {edicao && (
-              <Button variant="danger" icon={<Trash2 />} onClick={excluirTurma} disabled={salvando}>
+            {edicao ? (
+              <Button
+                variant="danger"
+                size="large"
+                icon={<Trash2 />}
+                onClick={excluirTurma}
+                disabled={salvando}
+              >
                 Excluir
               </Button>
+            ) : (
+              <Button
+                variant="danger"
+                size="large"
+                onClick={() => navegar('/adm/turmas')}
+                disabled={salvando}
+              >
+                Cancelar
+              </Button>
             )}
-            <Button variant="danger" onClick={() => navegar('/adm/turmas')} disabled={salvando}>
-              Cancelar
-            </Button>
-            <Button variant="success" icon={<Save />} loading={salvando} disabled={carregandoEscola} onClick={salvar}>
+            <Button
+              variant="success"
+              size="large"
+              icon={<Save />}
+              loading={salvando}
+              disabled={carregandoEscola}
+              onClick={salvar}
+            >
               Salvar
             </Button>
           </>
@@ -524,24 +597,23 @@ export default function TurmaFormulario() {
                     disabled={salvando}
                     onChange={(evento) => setDataFim(evento.target.value)}
                   />
-                </Grade>
 
-                <Toggle
-                  ligado={ativa}
-                  onChange={setAtiva}
-                  label="Situação"
-                  textoLigado="Ativa"
-                  textoDesligado="Inativa"
-                  descricao="Turmas inativas não recebem novas matrículas."
-                  disabled={salvando}
-                />
+                  <Select<StatusAtivoInativo>
+                    label="Situação"
+                    options={OPCOES_ATIVA_INATIVA}
+                    value={ativa ? 'ATIVO' : 'INATIVO'}
+                    hint="Turmas inativas não recebem novas matrículas."
+                    disabled={salvando}
+                    onChange={(valor) => setAtiva(valor !== 'INATIVO')}
+                  />
+                </Grade>
               </Coluna>
             </Card>
           )}
 
           {edicao && aba === 'horarios' && (
-            <Card titulo="Horários semanais">
-              <Coluna>
+            <>
+              <Card titulo="Horários semanais">
                 <LinhaHorario>
                   <Select<DiaSemana>
                     label="Dia da semana"
@@ -570,41 +642,57 @@ export default function TurmaFormulario() {
                     }
                   />
 
-                  <Button icon={<Plus />} onClick={adicionarHorario}>
+                  <Button size="large" icon={<Plus />} onClick={adicionarHorario}>
                     Adicionar
                   </Button>
                 </LinhaHorario>
+              </Card>
 
-                {requisicaoHorarios.isEmpty ? (
-                  <EstadoVazio
-                    titulo="Nenhum horário definido"
-                    descricao="Os horários semanais orientam o planejamento das aulas."
-                    icon={<CalendarClock />}
+              <DataTable<HorarioTurma>
+                descricao="Horários semanais da turma"
+                columns={[
+                  {
+                    key: 'dia',
+                    cabecalho: 'Dia da semana',
+                    render: (horario) => ROTULO_DIA_SEMANA[horario.diaSemana],
+                  },
+                  {
+                    key: 'inicio',
+                    cabecalho: 'Início',
+                    render: (horario) => formatarHora(horario.horaInicio),
+                  },
+                  {
+                    key: 'fim',
+                    cabecalho: 'Término',
+                    render: (horario) => formatarHora(horario.horaFim),
+                  },
+                ]}
+                data={requisicaoHorarios.data ?? []}
+                rowKey={(horario) => horario.id}
+                loading={requisicaoHorarios.loading}
+                error={requisicaoHorarios.error}
+                onReload={requisicaoHorarios.reload}
+                densidade="compacta"
+                empty={{
+                  titulo: 'Nenhum horário definido',
+                  descricao: 'Os horários semanais orientam o planejamento das aulas.',
+                  icon: <CalendarClock />,
+                }}
+                actions={(horario) => (
+                  <IconButton
+                    label="Remover horário"
+                    icon={<Trash2 />}
+                    variant="danger"
+                    onClick={() => removerHorario(horario.id)}
                   />
-                ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {(requisicaoHorarios.data ?? []).map((horario) => (
-                      <Tag key={horario.id} variant="purple">
-                        {ROTULO_DIA_SEMANA[horario.diaSemana]} · {formatarHora(horario.horaInicio)} às{' '}
-                        {formatarHora(horario.horaFim)}
-                        <IconButton
-                          label="Remover horário"
-                          icon={<Trash2 />}
-                          size="small"
-                          variant="danger"
-                          onClick={() => removerHorario(horario.id)}
-                        />
-                      </Tag>
-                    ))}
-                  </div>
                 )}
-              </Coluna>
-            </Card>
+              />
+            </>
           )}
 
           {edicao && aba === 'disciplinas' && (
-            <Card titulo="Disciplinas e professores">
-              <Coluna>
+            <>
+              <Card titulo="Disciplinas e professores">
                 <LinhaVinculo>
                   <Select<number>
                     label="Disciplina"
@@ -627,65 +715,128 @@ export default function TurmaFormulario() {
                     onChange={(value) => setNovoVinculo((atual) => ({ ...atual, professorId: value }))}
                   />
 
-                  <Button icon={<Plus />} onClick={adicionarVinculo}>
+                  <Button size="large" icon={<Plus />} onClick={adicionarVinculo}>
                     Vincular
                   </Button>
                 </LinhaVinculo>
+              </Card>
 
-                <DataTable<TurmaDisciplina>
-                  descricao="Disciplinas da turma"
-                  columns={[
-                    {
-                      key: 'disciplina',
-                      cabecalho: 'Disciplina',
-                      render: (vinculo) => vinculo.disciplina?.titulo ?? '—',
-                    },
-                    {
-                      key: 'professor',
-                      cabecalho: 'Professor',
-                      render: (vinculo) =>
-                        vinculo.professor?.pessoa?.nome ?? (
-                          <Tag variant="warning">Sem professor</Tag>
-                        ),
-                    },
-                  ]}
-                  data={vinculosDaTurma}
-                  rowKey={(vinculo) => vinculo.id}
-                  loading={requisicaoVinculos.loading}
-                  error={requisicaoVinculos.error}
-                  onReload={requisicaoVinculos.reload}
-                  densidade="compacta"
-                  empty={{
-                    titulo: 'Nenhuma disciplina vinculada',
-                    descricao: 'Vincule as disciplinas para que os professores possam criar planos de aula.',
-                  }}
-                  actions={(vinculo) => (
+              <DataTable<TurmaDisciplina>
+                descricao="Disciplinas da turma"
+                columns={[
+                  {
+                    key: 'disciplina',
+                    cabecalho: 'Disciplina',
+                    render: (vinculo) => vinculo.disciplina?.titulo ?? '—',
+                  },
+                  {
+                    key: 'professor',
+                    cabecalho: 'Professor',
+                    render: (vinculo) =>
+                      vinculo.professor?.pessoa?.nome ?? (
+                        <Tag variant="warning">Sem professor</Tag>
+                      ),
+                  },
+                ]}
+                data={vinculosDaTurma}
+                rowKey={(vinculo) => vinculo.id}
+                loading={requisicaoVinculos.loading}
+                error={requisicaoVinculos.error}
+                onReload={requisicaoVinculos.reload}
+                densidade="compacta"
+                empty={{
+                  titulo: 'Nenhuma disciplina vinculada',
+                  descricao: 'Vincule as disciplinas para que os professores possam criar planos de aula.',
+                }}
+                actions={(vinculo) => (
+                  <>
+                    <IconButton
+                      label="Gerenciar substitutos"
+                      icon={<UserCog />}
+                      onClick={() => setVinculoSubstitutos(vinculo)}
+                    />
                     <IconButton
                       label="Remover disciplina"
                       icon={<Trash2 />}
                       variant="danger"
                       onClick={() => removerVinculo(vinculo)}
                     />
-                  )}
-                />
-              </Coluna>
-            </Card>
+                  </>
+                )}
+              />
+            </>
           )}
 
-          {edicao && aba === 'alunos' && (
-            <Card
-              titulo="Alunos ativos"
-              semPadding
-              actions={
+          <Modal
+            aberto={Boolean(vinculoSubstitutos)}
+            onClose={() => {
+              setVinculoSubstitutos(null)
+              setProfessorSubstitutoId(null)
+            }}
+            titulo="Professores substitutos"
+            descricao={
+              vinculoSubstitutos
+                ? `Além de ${vinculoSubstitutos.professor?.pessoa?.nome ?? 'sem professor titular'} (titular), quem mais pode registrar aula de ${vinculoSubstitutos.disciplina?.titulo} nesta turma. O plano de ensino e o plano de aula continuam os mesmos para todos.`
+                : undefined
+            }
+            largura="520px"
+          >
+            <Coluna>
+              <LinhaVinculo>
+                <Select<number>
+                  label="Professor substituto"
+                  options={opcoesProfessoresSubstitutos}
+                  value={professorSubstitutoId}
+                  loading={requisicaoProfessores.loading}
+                  searchable
+                  placeholder="Selecionar professor..."
+                  emptyText="Todos os professores já estão vinculados"
+                  onChange={setProfessorSubstitutoId}
+                />
+
                 <Button
+                  size="large"
+                  icon={<Plus />}
+                  loading={adicionandoSubstituto}
+                  onClick={adicionarSubstituto}
+                >
+                  Vincular
+                </Button>
+              </LinhaVinculo>
+
+              {requisicaoSubstitutos.isEmpty ? (
+                <EstadoVazio
+                  titulo="Nenhum substituto vinculado"
+                  descricao="Sem substitutos, só o professor titular pode registrar aula desta disciplina na turma."
+                />
+              ) : (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {substitutosAtivos.map((substituto) => (
+                    <Chip
+                      key={substituto.id}
+                      onRemove={() => removerSubstituto(substituto.id)}
+                      rotuloRemover={`Remover ${substituto.professor?.pessoa?.nome}`}
+                    >
+                      {substituto.professor?.pessoa?.nome ?? `Professor ${substituto.professor?.id}`}
+                    </Chip>
+                  ))}
+                </div>
+              )}
+            </Coluna>
+          </Modal>
+
+          {edicao && aba === 'alunos' && (
+            <>
+              <LinhaAcaoFlutuante>
+                <Button
+                  size="large"
                   icon={<UserPlus />}
-                  size="small"
                   onClick={() => navegar(`/adm/turmas/${turmaId}/matricular`)}
                 >
                   Matricular aluno
                 </Button>
-              }
-            >
+              </LinhaAcaoFlutuante>
+
               <DataTable<AlunoTurma>
                 descricao="Alunos com matrícula ativa"
                 columns={[
@@ -705,6 +856,18 @@ export default function TurmaFormulario() {
                     key: 'inicio',
                     cabecalho: 'Data da matrícula',
                     render: (matricula) => formatarData(matricula.dataInicio),
+                  },
+                  {
+                    key: 'status',
+                    cabecalho: 'Situação',
+                    render: (matricula) =>
+                      matricula.status ? (
+                        <Tag variant={STATUS_MATRICULA_VARIANT[matricula.status]} ponto>
+                          {ROTULO_STATUS_MATRICULA[matricula.status]}
+                        </Tag>
+                      ) : (
+                        '—'
+                      ),
                   },
                 ]}
                 data={ativos}
@@ -726,71 +889,66 @@ export default function TurmaFormulario() {
                   ),
                 }}
                 actions={(matricula) => (
-                  <>
-                    <Button
-                      variant="subtle"
-                      size="small"
-                      onClick={() => encerrarMatricula(matricula, 'concluir')}
-                    >
-                      Concluir
-                    </Button>
-                    <Button
-                      variant="subtle"
-                      size="small"
-                      onClick={() => encerrarMatricula(matricula, 'cancelar')}
-                    >
-                      Cancelar
-                    </Button>
-                  </>
+                  <IconButton
+                    label="Editar matrícula"
+                    icon={<Pencil />}
+                    onClick={() => navegar(`/adm/turmas/${turmaId}/matricular/${matricula.id}`)}
+                  />
                 )}
                 rotuloColunaAcoes="Matrícula"
               />
-            </Card>
+            </>
           )}
 
           {edicao && aba === 'historico' && (
-            <Card titulo="Histórico de matrículas" semPadding>
-              <DataTable<AlunoTurma>
-                descricao="Histórico completo de matrículas da turma"
-                columns={[
-                  {
-                    key: 'aluno',
-                    cabecalho: 'Aluno',
-                    render: (matricula) => matricula.aluno?.pessoa?.nome ?? '—',
-                  },
-                  {
-                    key: 'status',
-                    cabecalho: 'Situação',
-                    render: (matricula) =>
-                      matricula.status ? (
-                        <Tag variant={STATUS_MATRICULA_VARIANT[matricula.status]} ponto>
-                          {ROTULO_STATUS_MATRICULA[matricula.status]}
-                        </Tag>
-                      ) : (
-                        '—'
-                      ),
-                  },
-                  {
-                    key: 'inicio',
-                    cabecalho: 'Início',
-                    render: (matricula) => formatarData(matricula.dataInicio),
-                  },
-                  {
-                    key: 'fim',
-                    cabecalho: 'Término',
-                    render: (matricula) =>
-                      matricula.dataFim ? formatarData(matricula.dataFim) : 'em aberto',
-                  },
-                ]}
-                data={historico}
-                rowKey={(matricula) => matricula.id}
-                loading={requisicaoHistorico.loading}
-                error={requisicaoHistorico.error}
-                onReload={requisicaoHistorico.reload}
-                densidade="compacta"
-                empty={{ titulo: 'Sem histórico', descricao: 'Nenhuma matrícula foi registrada nesta turma.' }}
-              />
-            </Card>
+            <DataTable<AlunoTurma>
+              descricao="Histórico completo de matrículas da turma"
+              columns={[
+                {
+                  key: 'aluno',
+                  cabecalho: 'Aluno',
+                  render: (matricula) => matricula.aluno?.pessoa?.nome ?? '—',
+                },
+                {
+                  key: 'status',
+                  cabecalho: 'Situação',
+                  render: (matricula) =>
+                    matricula.status ? (
+                      <Tag variant={STATUS_MATRICULA_VARIANT[matricula.status]} ponto>
+                        {ROTULO_STATUS_MATRICULA[matricula.status]}
+                      </Tag>
+                    ) : (
+                      '—'
+                    ),
+                },
+                {
+                  key: 'inicio',
+                  cabecalho: 'Início',
+                  render: (matricula) => formatarData(matricula.dataInicio),
+                },
+                {
+                  key: 'fim',
+                  cabecalho: 'Término',
+                  render: (matricula) =>
+                    matricula.dataFim ? formatarData(matricula.dataFim) : 'em aberto',
+                },
+              ]}
+              data={historico}
+              rowKey={(matricula) => matricula.id}
+              loading={requisicaoHistorico.loading}
+              error={requisicaoHistorico.error}
+              onReload={requisicaoHistorico.reload}
+              densidade="compacta"
+              empty={{ titulo: 'Sem histórico', descricao: 'Nenhuma matrícula foi registrada nesta turma.' }}
+              actions={(matricula) => (
+                <IconButton
+                  label="Editar matrícula"
+                  icon={<Pencil />}
+                  onClick={() => navegar(`/adm/turmas/${turmaId}/matricular/${matricula.id}`)}
+                />
+              )}
+              rotuloColunaAcoes="Matrícula"
+            />
           )}
         </>
       )}

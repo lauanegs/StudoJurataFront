@@ -101,7 +101,7 @@ export default function Responsaveis() {
         titulo="Responsáveis"
         subtitulo={!loading && !error ? `${filtrados.length} responsável(is)` : undefined}
         actions={
-          <Button icon={<Plus />} onClick={() => navegar('/adm/responsaveis/novo')}>
+          <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/responsaveis/novo')}>
             Adicionar responsável
           </Button>
         }
@@ -116,7 +116,6 @@ export default function Responsaveis() {
         loading={loading}
         error={error}
         onReload={reload}
-        onRowClick={(responsavel) => navegar(`/adm/responsaveis/${responsavel.id}`)}
         paginacao={{
           pagina: paginacao.pagina,
           totalPaginas: paginacao.totalPaginas,

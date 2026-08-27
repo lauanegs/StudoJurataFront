@@ -44,10 +44,14 @@ const Direita = styled.span`
   gap: ${({ theme }) => theme.spacing.sm};
 `
 
+/* Cinza, não roxo: roxo é a cor de link/ação da marca — um resumo em roxo
+   parecia clicável por si só, sem ser (o clique é no cabeçalho inteiro). */
 const Resumo = styled.span`
+  display: inline-flex;
+  align-items: center;
   font-size: ${({ theme }) => theme.typography.sizes.sm};
   font-weight: ${({ theme }) => theme.typography.weights.medium};
-  color: ${({ theme }) => theme.colors.purple};
+  color: ${({ theme }) => theme.colors.textSecondary};
   font-variant-numeric: tabular-nums;
 `
 
@@ -98,7 +102,7 @@ export interface ItemDropDown {
 
 interface DropDownProps {
   titulo: string
-  resumo?: string
+  resumo?: ReactNode
   itens?: ItemDropDown[]
   children?: ReactNode
   abertoInicialmente?: boolean

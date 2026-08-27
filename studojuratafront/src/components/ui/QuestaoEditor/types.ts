@@ -1,5 +1,4 @@
 import type { NivelDificuldade, StatusQuestao, TipoQuestao } from '../../../types'
-import type { SelectOption } from '../Select/types'
 
 export interface AlternativaEditavel {
   /** Presente quando a alternativa já existe no back. */
@@ -22,7 +21,6 @@ export interface QuestaoEditavel {
 export interface ErrosQuestao {
   enunciado?: string
   alternativas?: string
-  disciplinaId?: string
 }
 
 export interface QuestaoEditorProps {
@@ -30,8 +28,6 @@ export interface QuestaoEditorProps {
   onChange: (questao: QuestaoEditavel) => void
   indice: number
   total: number
-  disciplinas: SelectOption<number>[]
-  carregandoDisciplinas?: boolean
   /** Modo leitura: usado na revisão até o professor clicar em "Editar". */
   somenteLeitura?: boolean
   erros?: ErrosQuestao

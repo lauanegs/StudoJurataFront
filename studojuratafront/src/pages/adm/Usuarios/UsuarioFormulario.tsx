@@ -9,7 +9,6 @@ import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
-import { Toggle } from '../../../components/ui/Toggle'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -24,8 +23,8 @@ import {
   professores as servicoProfessores,
   usuarios as servicoUsuarios,
 } from '../../../services/endpoints'
-import { OPCOES_TIPO_USUARIO } from '../../../utils/labels'
-import type { TipoUsuario } from '../../../types'
+import { OPCOES_ATIVO_INATIVO, OPCOES_TIPO_USUARIO } from '../../../utils/labels'
+import type { StatusAtivoInativo, TipoUsuario } from '../../../types'
 
 const Coluna = styled.div`
   display: flex;
@@ -35,8 +34,12 @@ const Coluna = styled.div`
 
 const Grade = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    grid-template-columns: 1fr;
+  }
 `
 
 /**
@@ -197,9 +200,10 @@ export default function UsuarioFormulario() {
         rotuloVoltar="Voltar para usuários"
         actions={
           <>
-            {edicao && (
+            {edicao ? (
               <Button
                 variant="danger"
+                size="large"
                 icon={<Trash2 />}
                 loading={excluindo}
                 onClick={excluir}
@@ -207,16 +211,19 @@ export default function UsuarioFormulario() {
               >
                 Excluir
               </Button>
+            ) : (
+              <Button
+                variant="danger"
+                size="large"
+                onClick={() => navegar('/adm/usuarios')}
+                disabled={salvando}
+              >
+                Cancelar
+              </Button>
             )}
             <Button
-              variant="danger"
-              onClick={() => navegar('/adm/usuarios')}
-              disabled={salvando || excluindo}
-            >
-              Cancelar
-            </Button>
-            <Button
               variant="success"
+              size="large"
               icon={<Save />}
               loading={salvando}
               disabled={carregandoEscola || excluindo}
@@ -284,13 +291,12 @@ export default function UsuarioFormulario() {
               />
             </Grade>
 
-            <Toggle
-              ligado={ativo}
-              onChange={setAtivo}
+            <Select<StatusAtivoInativo>
               label="Situação"
-              textoLigado="Ativo"
-              textoDesligado="Inativo"
+              options={OPCOES_ATIVO_INATIVO}
+              value={ativo ? 'ATIVO' : 'INATIVO'}
               disabled={salvando}
+              onChange={(valor) => setAtivo(valor !== 'INATIVO')}
             />
           </Coluna>
         </Card>

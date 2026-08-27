@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { ClipboardCheck, FolderInput, Plus, Rocket, Save, Sparkles } from 'lucide-react'
+import { ClipboardCheck, FolderInput, Plus, Rocket, Save, Sparkles, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { CheckBox } from '../../../components/ui/CheckBox'
+import { Chip } from '../../../components/ui/Chip'
 import { DataTable } from '../../../components/ui/DataTable'
 import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header } from '../../../components/ui/Header'
@@ -21,6 +22,7 @@ import {
 } from '../../../components/ui/QuestaoEditor/types'
 import { Select } from '../../../components/ui/Select'
 import { StatusBadge } from '../../../components/ui/StatusBadge'
+import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
@@ -42,7 +44,6 @@ import {
 } from '../../../services/endpoints'
 import { deInputDataHora, paraInputDataHora } from '../../../utils/format'
 import { OPCOES_DESTINACAO, ROTULO_TIPO_QUESTAO } from '../../../utils/labels'
-import { periodoLetivo as validarPeriodo } from '../../../utils/validacao'
 import type { QuestaoResponse, SimuladoResponse, TipoDestinacaoSimulado } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
@@ -56,6 +57,12 @@ const Grade = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
+`
+
+const Chips = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.xs};
 `
 
 const Navegador = styled.div`
@@ -92,11 +99,15 @@ const ListaAlunos = styled.div`
  * Edição só é permitida enquanto o simulado está em RASCUNHO — depois de
  * lançado existem tentativas de alunos apontando para as questões.
  */
+type Aba = 'configuracao' | 'questoes'
+
 export default function SimuladoFormulario() {
   const { id } = useParams()
   const navegar = useNavigate()
   const toast = useToast()
   const confirmar = useConfirm()
+
+  const [aba, setAba] = useState<Aba>('configuracao')
 
   const edicao = Boolean(id)
   const simuladoId = id ? Number(id) : null
@@ -105,7 +116,6 @@ export default function SimuladoFormulario() {
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
   const [turmaId, setTurmaId] = useState<number | null>(null)
   const [planoEnsinoId, setPlanoEnsinoId] = useState<number | null>(null)
-  const [periodoLetivo, setPeriodoLetivo] = useState('')
   const [tipoDestinacao, setTipoDestinacao] = useState<TipoDestinacaoSimulado>('TODOS')
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
@@ -293,7 +303,6 @@ export default function SimuladoFormulario() {
     setDisciplinaId(simulado.disciplinaId ?? null)
     setTurmaId(simulado.turmaId ?? null)
     setPlanoEnsinoId(simulado.planoEnsinoId ?? null)
-    setPeriodoLetivo(simulado.periodoLetivo ?? '')
     setTipoDestinacao(simulado.tipoDestinacao)
     setDataInicio(paraInputDataHora(simulado.dataInicio))
     setDataFim(paraInputDataHora(simulado.dataFim))
@@ -323,7 +332,7 @@ export default function SimuladoFormulario() {
       (requisicaoPlanos.data ?? []).map((plano) => ({
         value: plano.id,
         label: plano.titulo ?? `Plano #${plano.id}`,
-        descricao: plano.periodoLetivo,
+        descricao: plano.curso?.nome,
       })),
     [requisicaoPlanos.data],
   )
@@ -333,15 +342,8 @@ export default function SimuladoFormulario() {
   function validarCabecalho() {
     const encontrados: Record<string, string | undefined> = {}
 
-    // SimuladoRequestDTO: titulo @NotBlank, tipoDestinacao @NotNull, periodoLetivo @NotBlank.
+    // SimuladoRequestDTO: titulo @NotBlank, tipoDestinacao @NotNull.
     if (!titulo.trim()) encontrados.titulo = 'Informe o título do simulado'
-
-    if (!periodoLetivo.trim()) {
-      encontrados.periodoLetivo = 'Informe o período letivo'
-    } else {
-      const erroPeriodo = validarPeriodo(periodoLetivo)
-      if (erroPeriodo) encontrados.periodoLetivo = erroPeriodo
-    }
 
     if (tipoDestinacao === 'ESPECIFICO' && !turmaId) {
       encontrados.turmaId = 'Selecione a turma para escolher os alunos'
@@ -384,6 +386,9 @@ export default function SimuladoFormulario() {
     const questoesOk = validarQuestoes()
 
     if (!cabecalhoOk || !questoesOk) {
+      // Troca pra aba onde está o problema — sem isso, o erro fica escondido
+      // numa aba que o professor nem está vendo.
+      setAba(!cabecalhoOk ? 'configuracao' : 'questoes')
       toast.warning('Revise o simulado', 'Há campos obrigatórios pendentes.')
       return
     }
@@ -396,7 +401,6 @@ export default function SimuladoFormulario() {
         disciplinaId,
         planoEnsinoId,
         turmaId,
-        periodoLetivo: periodoLetivo.trim(),
         tipoDestinacao,
         dataInicio: deInputDataHora(dataInicio),
         dataFim: deInputDataHora(dataFim),
@@ -660,9 +664,19 @@ export default function SimuladoFormulario() {
         }
       />
 
+      <Tab<Aba>
+        rotuloAcessivel="Seções do simulado"
+        value={aba}
+        onChange={setAba}
+        options={[
+          { value: 'configuracao', label: 'Configuração do simulado' },
+          { value: 'questoes', label: 'Questões', contador: questoes.length },
+        ]}
+      />
+
       {edicao && requisicaoSimulado.loading ? (
         <SkeletonCartao />
-      ) : (
+      ) : aba === 'configuracao' ? (
         <>
           <Card titulo="Configuração do simulado">
             <Coluna>
@@ -717,17 +731,6 @@ export default function SimuladoFormulario() {
                   placeholder="Selecionar plano..."
                   hint="Opcional."
                   onChange={setPlanoEnsinoId}
-                />
-
-                <Input
-                  label="Período letivo"
-                  required
-                  placeholder="Ex.: 2026 ou 2026/1"
-                  value={periodoLetivo}
-                  error={erros.periodoLetivo}
-                  disabled={somenteLeitura}
-                  maxLength={10}
-                  onChange={(evento) => setPeriodoLetivo(evento.target.value)}
                 />
 
                 <Select<TipoDestinacaoSimulado>
@@ -785,32 +788,58 @@ export default function SimuladoFormulario() {
               </Grade>
 
               {tipoDestinacao === 'ESPECIFICO' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    icon={<Plus />}
-                    disabled={!turmaId || somenteLeitura}
-                    onClick={() => setModalAlunos(true)}
-                  >
-                    Selecionar alunos
-                  </Button>
+                <Coluna>
+                  <div>
+                    <Button
+                      icon={<Users />}
+                      disabled={!turmaId || somenteLeitura}
+                      onClick={() => setModalAlunos(true)}
+                    >
+                      Selecionar alunos
+                    </Button>
+                  </div>
 
-                  <Tag variant={alunosSelecionados.length > 0 ? 'success' : 'warning'}>
-                    {alunosSelecionados.length} aluno(s) selecionado(s)
-                  </Tag>
-                </div>
+                  {alunosSelecionados.length === 0 ? (
+                    <Tag variant="warning">Nenhum aluno selecionado</Tag>
+                  ) : (
+                    <Chips>
+                      {alunosSelecionados.map((alunoId) => {
+                        const aluno = (requisicaoAlunos.data ?? []).find(
+                          (matricula) => matricula.aluno.id === alunoId,
+                        )
+                        const nome = aluno?.aluno?.pessoa?.nome ?? `Aluno ${alunoId}`
+
+                        return (
+                          <Chip
+                            key={alunoId}
+                            variant="purple"
+                            disabled={somenteLeitura}
+                            onRemove={
+                              somenteLeitura
+                                ? undefined
+                                : () =>
+                                    setAlunosSelecionados((atuais) => atuais.filter((id) => id !== alunoId))
+                            }
+                            rotuloRemover={`Remover ${nome}`}
+                          >
+                            {nome}
+                          </Chip>
+                        )
+                      })}
+                    </Chips>
+                  )}
+                </Coluna>
               )}
             </Coluna>
           </Card>
-
+        </>
+      ) : (
+        <>
           {questao && (
             <QuestaoEditor
               questao={questao}
               indice={questaoAtiva}
               total={questoes.length}
-              disciplinas={opcoesDisciplinas}
-              carregandoDisciplinas={requisicaoDisciplinas.loading}
               somenteLeitura={somenteLeitura}
               erros={errosQuestoes[questaoAtiva]}
               onChange={(atualizada) =>

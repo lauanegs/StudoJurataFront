@@ -22,7 +22,8 @@ const GRADIENTS: Partial<Record<ButtonVariant, { from: string; to: string; borde
     border: tokens.colors.buttonPurple,
   },
   danger: { from: '#DB5461', to: '#CF505C', border: '#DB5461' },
-  success: { from: '#0CCA4A', to: '#18CB53', border: '#0CCA4A' },
+  // Mesmo verde dos cards de desempenho do módulo de Reforço (theme.colors.success).
+  success: { from: '#3DCB63', to: '#34C759', border: '#34C759' },
   // Confirmado no Figma (Sair/Confirmar resposta/Próxima do simulado):
   // degradê azul — mesma família de cor que theme.colors.blue/blueDark.
   info: { from: '#049DBF', to: '#037E99', border: '#049DBF' },
@@ -44,6 +45,7 @@ export function Button({
   fullWidth = false,
   disabled,
   type = 'button',
+  noBorder = false,
   ...rest
 }: ButtonProps) {
   const content = children ?? label
@@ -68,7 +70,10 @@ export function Button({
         root: {
           ...SIZE_STYLES[size],
           fontWeight: tokens.typography.weights.medium,
-          border: gradient ? `2px solid ${gradient.border}` : undefined,
+          // Desabilitado nunca tem borda: com a borda de 2px, um botão gradient
+          // desligado ficava parecendo campo de formulário (input/select), em
+          // vez de um botão que simplesmente não pode ser clicado agora.
+          border: gradient && !disabled && !noBorder ? `2px solid ${gradient.border}` : undefined,
         },
       }}
       {...rest}

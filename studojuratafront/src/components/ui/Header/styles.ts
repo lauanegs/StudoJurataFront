@@ -77,43 +77,47 @@ export const Subtitulo = styled.div`
    "Novo conteúdo" — mesmo padrão nos três): o título nunca divide linha com
    ações. Ações e busca ficam juntas, numa segunda linha, alinhadas à direita
    do cartão — nunca uma ação "grudada" ao lado do título.
-   Sem quebra de linha entre si (nowrap): botões e campos de filtro/busca
-   ficam sempre numa linha só, nunca um empilhado acima do outro — se não
-   couber, rola horizontal em vez de quebrar. */
+   flex-wrap (não nowrap + overflow-x: auto): quando o conjunto de
+   botões/campos não cabe numa linha só, ele quebra pra uma linha extra
+   abaixo — nunca vira uma faixa com scroll horizontal escondendo conteúdo. */
 export const LinhaAcoes = styled.div`
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   gap: ${({ theme }) => theme.spacing.sm};
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 
   width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
 `
 
 export const Acoes = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
-  flex-wrap: nowrap;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 `
 
 /* O <Field> de cada campo (Input/Select) pede width:100% do pai — pensado
    pra preencher uma célula de grid de formulário — e este era, até então,
    um container sem largura própria, então o campo esticava a linha toda do
    cartão (bug real: busca devia ficar compacta, alinhada à direita).
-   O max-width dá um teto concreto pra essa cadeia de 100% resolver contra,
-   sem depender de nenhum filho específico (funciona tanto pra uma busca
-   sozinha quanto para grids de filtro com mais de um campo, como em Notas).
-   display:flex + justify-content:flex-end garante que, quando o conteúdo é
-   mais estreito que o teto (ex.: um grupo de campos com width:fit-content),
-   ele continua encostado na borda direita, em vez de sobrar espaço depois
-   dele — sem isso, o conteúdo ficava "flutuando" à esquerda do teto. */
+   `width: fit-content` quebrava quando o conteúdo interno também tinha
+   flex-wrap (o cálculo de shrink-to-fit considerava a versão já quebrada em
+   duas linhas do filho, deixando o container mais estreito do que o
+   necessário — forçava um wrap prematuro mesmo sobrando espaço).
+   `width: 100%` corrigia esse caso, mas quebrava o outro: quando o Header
+   tem `actions` E `filtros` juntos (ex.: "Adicionar turma" + busca), o
+   Filtros a 100% da LinhaAcoes somado à largura das actions estourava a
+   linha e forçava os dois a quebrarem — mesmo cabendo os dois lado a lado.
+   `width: max-content` resolve os dois: diferente de fit-content, o
+   max-content ignora oportunidades de quebra do conteúdo interno (sempre
+   calcula a largura "linha única"), então não sofre o bug de shrink-to-fit;
+   e como não é 100%, não força a quebra com as actions ao lado. max-width
+   continua garantindo a quebra de verdade quando realmente não cabe. */
 export const Filtros = styled.div`
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  width: fit-content;
-  max-width: 600px;
+  width: max-content;
+  max-width: 100%;
 `

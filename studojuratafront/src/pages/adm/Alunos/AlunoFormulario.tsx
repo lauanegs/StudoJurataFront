@@ -10,6 +10,7 @@ import { Header } from '../../../components/ui/Header'
 import { IconButton } from '../../../components/ui/IconButton'
 import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
+import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
@@ -32,6 +33,14 @@ import type { Parentesco } from '../../../types'
 import { PessoaCampos } from '../_compartilhado/PessoaCampos'
 import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
 import { dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
+
+/* Confirmado pelo usuário: mesmo padrão da aba "Alunos ativos" de Turmas —
+   ação de destaque flutuante, alinhada à direita, acima do conteúdo (não
+   mais dentro do slot actions do Card). */
+const LinhaAcaoFlutuante = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`
 
 const LinhaResponsavel = styled.div`
   display: flex;
@@ -97,6 +106,8 @@ export default function AlunoFormulario() {
 
   const edicao = Boolean(id)
   const alunoId = id ? Number(id) : null
+
+  const [aba, setAba] = useState<'dados' | 'endereco' | 'responsaveis'>('dados')
 
   const formulario = useFormulario<DadosPessoa>({
     valoresIniciais: PESSOA_VAZIA,
@@ -324,9 +335,10 @@ export default function AlunoFormulario() {
         rotuloVoltar="Voltar para alunos"
         actions={
           <>
-            {edicao && (
+            {edicao ? (
               <Button
                 variant="danger"
+                size="large"
                 icon={<Trash2 />}
                 loading={excluindo}
                 onClick={excluirAluno}
@@ -334,16 +346,19 @@ export default function AlunoFormulario() {
               >
                 Excluir
               </Button>
+            ) : (
+              <Button
+                variant="danger"
+                size="large"
+                onClick={() => navegar('/adm/alunos')}
+                disabled={salvando}
+              >
+                Cancelar
+              </Button>
             )}
             <Button
-              variant="danger"
-              onClick={() => navegar('/adm/alunos')}
-              disabled={salvando || excluindo}
-            >
-              Cancelar
-            </Button>
-            <Button
               variant="success"
+              size="large"
               icon={<Save />}
               loading={salvando}
               disabled={excluindo}
@@ -355,131 +370,149 @@ export default function AlunoFormulario() {
         }
       />
 
+      <Tab<'dados' | 'endereco' | 'responsaveis'>
+        rotuloAcessivel="Seções do aluno"
+        value={aba}
+        onChange={setAba}
+        options={[
+          { value: 'dados', label: 'Dados do aluno' },
+          { value: 'endereco', label: 'Endereço' },
+          { value: 'responsaveis', label: 'Responsáveis', contador: vinculos.length },
+        ]}
+      />
+
       {carregandoTela ? (
         <SkeletonCartao />
       ) : (
         <>
-          <Card titulo="Dados do aluno">
-            <Lista>
-              <PessoaCampos
-                valores={formulario.valores}
-                erros={errosVisiveis}
-                onChange={(campo, value) => formulario.definirCampo(campo, value)}
-                onExit={(campo) => formulario.marcarTocado(campo)}
-                disabled={salvando}
-                rotuloNome="Nome do aluno"
-              />
-
-              <Input
-                label="Matrícula"
-                placeholder="Código interno da escola (opcional)"
-                value={matricula}
-                disabled={salvando}
-                maxLength={30}
-                hint="Deixe em branco para a secretaria preencher depois."
-                onChange={(evento) => setMatricula(evento.target.value)}
-              />
-            </Lista>
-          </Card>
-
-          <Card
-            titulo="Responsáveis"
-            actions={
-              <Button
-                variant="secondary"
-                size="small"
-                icon={<Plus />}
-                disabled={salvando}
-                onClick={() => setVinculos((atuais) => [...atuais, novoVinculo()])}
-              >
-                Vincular responsável
-              </Button>
-            }
-          >
-            {vinculos.length === 0 ? (
-              <EstadoVazio
-                titulo="Nenhum responsável vinculado"
-                descricao="Vincule ao menos um responsável legal para o acompanhamento do aluno."
-                icon={<UserRound />}
-              />
-            ) : (
+          {(aba === 'dados' || aba === 'endereco') && (
+            <Card titulo={aba === 'dados' ? 'Dados do aluno' : 'Endereço'}>
               <Lista>
-                {vinculos.map((vinculo) => (
-                  <LinhaResponsavel key={vinculo.chave}>
-                    <CamposResponsavel>
-                      <Select<number>
-                        label="Responsável"
-                        required
-                        options={opcoesResponsaveis}
-                        value={vinculo.responsavelId}
-                        loading={requisicaoResponsaveis.loading}
-                        error={vinculo.erroResponsavel}
-                        searchable
-                        placeholder="Selecione o responsável..."
-                        emptyText="Cadastre um responsável primeiro"
-                        onChange={(value) =>
-                          setVinculos((atuais) =>
-                            atuais.map((item) =>
-                              item.chave === vinculo.chave
-                                ? { ...item, responsavelId: value, erroResponsavel: undefined }
-                                : item,
-                            ),
-                          )
-                        }
-                      />
+                <PessoaCampos
+                  secao={aba}
+                  valores={formulario.valores}
+                  erros={errosVisiveis}
+                  onChange={(campo, value) => formulario.definirCampo(campo, value)}
+                  onExit={(campo) => formulario.marcarTocado(campo)}
+                  disabled={salvando}
+                  rotuloNome="Nome do aluno"
+                />
 
-                      <Select<Parentesco>
-                        label="Parentesco"
-                        required
-                        options={OPCOES_PARENTESCO.map((opcao) => ({
-                          value: opcao.value,
-                          label: opcao.label,
-                        }))}
-                        value={vinculo.parentesco}
-                        error={vinculo.erroParentesco}
-                        placeholder="Selecione..."
-                        onChange={(value) =>
-                          setVinculos((atuais) =>
-                            atuais.map((item) =>
-                              item.chave === vinculo.chave
-                                ? { ...item, parentesco: value, erroParentesco: undefined }
-                                : item,
-                            ),
-                          )
-                        }
-                      />
-
-                      <IconButton
-                        label="Remover responsável"
-                        icon={<Trash2 />}
-                        variant="danger"
-                        onClick={() =>
-                          setVinculos((atuais) => atuais.filter((item) => item.chave !== vinculo.chave))
-                        }
-                      />
-                    </CamposResponsavel>
-
-                    <LinhaTermos>
-                      <Tag variant={vinculo.aceitouTermos ? 'success' : 'warning'}>
-                        {vinculo.aceitouTermos
-                          ? `Termos aceitos em ${formatarData(vinculo.dataAceite)}`
-                          : 'Termos pendentes'}
-                      </Tag>
-
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        disabled={!vinculo.id || vinculo.aceitouTermos || salvando}
-                        onClick={() => registrarAceite(vinculo)}
-                      >
-                        Registrar aceite
-                      </Button>
-                    </LinhaTermos>
-                  </LinhaResponsavel>
-                ))}
+                {aba === 'dados' && (
+                  <Input
+                    label="Matrícula"
+                    placeholder="Código interno da escola (opcional)"
+                    value={matricula}
+                    disabled={salvando}
+                    maxLength={30}
+                    hint="Deixe em branco para a secretaria preencher depois."
+                    onChange={(evento) => setMatricula(evento.target.value)}
+                  />
+                )}
               </Lista>
-            )}
-          </Card>
+            </Card>
+          )}
+
+          {aba === 'responsaveis' && (
+            <>
+              <LinhaAcaoFlutuante>
+                <Button
+                  size="large"
+                  icon={<Plus />}
+                  disabled={salvando}
+                  onClick={() => setVinculos((atuais) => [...atuais, novoVinculo()])}
+                >
+                  Vincular responsável
+                </Button>
+              </LinhaAcaoFlutuante>
+
+              <Card titulo="Responsáveis">
+              {vinculos.length === 0 ? (
+                <EstadoVazio
+                  titulo="Nenhum responsável vinculado"
+                  descricao="Vincule ao menos um responsável legal para o acompanhamento do aluno."
+                  icon={<UserRound />}
+                />
+              ) : (
+                <Lista>
+                  {vinculos.map((vinculo) => (
+                    <LinhaResponsavel key={vinculo.chave}>
+                      <CamposResponsavel>
+                        <Select<number>
+                          label="Responsável"
+                          required
+                          options={opcoesResponsaveis}
+                          value={vinculo.responsavelId}
+                          loading={requisicaoResponsaveis.loading}
+                          error={vinculo.erroResponsavel}
+                          searchable
+                          placeholder="Selecione o responsável..."
+                          emptyText="Cadastre um responsável primeiro"
+                          onChange={(value) =>
+                            setVinculos((atuais) =>
+                              atuais.map((item) =>
+                                item.chave === vinculo.chave
+                                  ? { ...item, responsavelId: value, erroResponsavel: undefined }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+
+                        <Select<Parentesco>
+                          label="Parentesco"
+                          required
+                          options={OPCOES_PARENTESCO.map((opcao) => ({
+                            value: opcao.value,
+                            label: opcao.label,
+                          }))}
+                          value={vinculo.parentesco}
+                          error={vinculo.erroParentesco}
+                          placeholder="Selecione..."
+                          onChange={(value) =>
+                            setVinculos((atuais) =>
+                              atuais.map((item) =>
+                                item.chave === vinculo.chave
+                                  ? { ...item, parentesco: value, erroParentesco: undefined }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+
+                        <IconButton
+                          label="Remover responsável"
+                          icon={<Trash2 />}
+                          variant="danger"
+                          onClick={() =>
+                            setVinculos((atuais) => atuais.filter((item) => item.chave !== vinculo.chave))
+                          }
+                        />
+                      </CamposResponsavel>
+
+                      <LinhaTermos>
+                        <Tag variant={vinculo.aceitouTermos ? 'success' : 'warning'}>
+                          {vinculo.aceitouTermos
+                            ? `Termos aceitos em ${formatarData(vinculo.dataAceite)}`
+                            : 'Termos pendentes'}
+                        </Tag>
+
+                        <Button
+                          variant="secondary"
+                          size="small"
+                          disabled={!vinculo.id || vinculo.aceitouTermos || salvando}
+                          onClick={() => registrarAceite(vinculo)}
+                        >
+                          Registrar aceite
+                        </Button>
+                      </LinhaTermos>
+                    </LinhaResponsavel>
+                  ))}
+                </Lista>
+              )}
+              </Card>
+            </>
+          )}
         </>
       )}
     </Layout>

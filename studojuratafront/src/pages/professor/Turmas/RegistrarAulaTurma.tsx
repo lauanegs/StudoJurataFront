@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { CheckCheck, ListTree, Save, UserX, Users } from 'lucide-react'
+import { CheckCheck, ListTree, Plus, Save, UserX, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -44,19 +44,15 @@ const Coluna = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-/* Confirmado no Figma: data, disciplina e o botão salvar ficam juntos,
-   nessa ordem, dentro do próprio cartão do Header — não em um Card separado.
-   width:fit-content pra encolher em volta dos 3 campos (que não devem
-   esticar), em vez de herdar o width:100% que o slot de filtros do Header
-   normalmente estica pra grids de filtro que preenchem o espaço disponível. */
+/* Disciplina + aula do plano de aula + Salvar ficam juntos dentro do próprio
+   cartão do Header. flex-wrap (não overflow-x: auto): quando o espaço aperta
+   os campos quebram pra uma segunda linha, sempre abaixo do título — nunca
+   viram uma faixa com scroll horizontal escondendo conteúdo. */
 const CamposCabecalho = styled.div`
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: ${({ theme }) => theme.spacing.sm};
-  width: fit-content;
-  max-width: 100%;
-  overflow-x: auto;
 `
 
 /* Largura fixa e concreta pra cada campo — o <Field> por baixo do
@@ -67,12 +63,19 @@ const CamposCabecalho = styled.div`
    já definida elimina essa ambiguidade. */
 const CampoLargura = styled.div<{ $largura: string }>`
   width: ${({ $largura }) => $largura};
+  max-width: 100%;
 `
 
 const Chips = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.xs};
+`
+
+const Ajuda = styled.p`
+  margin: 0;
+  font-size: ${({ theme }) => theme.typography.sizes.xs};
+  color: ${({ theme }) => theme.colors.textTertiary};
 `
 
 /* Botões "flutuantes" acima da tabela — soltos no fundo cinza da página,
@@ -89,6 +92,12 @@ const Grade = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
+/* O Salvar não pode encolher junto com o resto da linha (Disciplina + Aula)
+   quando o espaço aperta — senão o texto do botão corta. */
+const BotaoSalvar = styled.div`
+  flex-shrink: 0;
+`
+
 interface LinhaChamada {
   alunoId: number
   nome: string
@@ -98,30 +107,34 @@ interface LinhaChamada {
 
 /**
  * Entrada rápida de "Registrar aula" a partir de Turmas: o professor escolhe
- * data + disciplina (uma turma pode ter mais de uma disciplina/professor) e
- * a tela reconcilia automaticamente com o plano de aula daquela
- * turma+disciplina — acha a aula já publicada nesta data ou a próxima
- * pendente no plano sozinha, sem exigir que o professor procure por ela.
- * O select "Selecionar aula do plano de aula" (aba Registrar conteúdo)
- * deixa o professor confirmar ou trocar essa escolha; sem nenhuma aula
- * disponível no plano, os campos abaixo dele criam uma manualmente.
+ * a disciplina (uma turma pode ter mais de uma disciplina/professor) e a
+ * aula do plano de aula correspondente — sem precisar de um campo de data
+ * solto no topo, que só duplicava a "Data publicação" já editável na aba de
+ * conteúdo. Sem escolha manual, a próxima aula pendente (sem
+ * dataPublicacao, por ordem) vem pré-selecionada sozinha.
  *
- * Distinta de `PlanoAula/RegistrarAula.tsx`, que edita uma aula já
- * conhecida (chegando pela lista de Aulas de um Plano de Aula específico).
+ * Chegando da tela "Aulas" de um Plano de Aula específico (ver
+ * PlanoAula/Aulas.tsx — mesma tela de registro, não uma duplicata), a aula
+ * exata clicada vem pré-selecionada via ?aulaId=/&vinculoId=.
  */
 export default function RegistrarAulaTurma() {
   const { turmaId } = useParams()
+  const navegar = useNavigate()
   const toast = useToast()
   const { professorId } = useProfessorLogado()
 
   const idTurma = Number(turmaId)
 
-  const [aba, setAba] = useState<Aba>('chamada')
-  const [data, setData] = useState(() => new Date().toISOString().slice(0, 10))
-  const [turmaDisciplinaId, setTurmaDisciplinaId] = useState<number | null>(null)
-  const [aulaSelecionadaManualId, setAulaSelecionadaManualId] = useState<number | null>(null)
+  const [searchParams] = useSearchParams()
+  const aulaIdDaUrl = Number(searchParams.get('aulaId')) || null
+  const vinculoIdDaUrl = Number(searchParams.get('vinculoId')) || null
+
+  const [aba, setAba] = useState<Aba>('conteudo')
+  const [turmaDisciplinaId, setTurmaDisciplinaId] = useState<number | null>(vinculoIdDaUrl)
+  const [aulaSelecionadaManualId, setAulaSelecionadaManualId] = useState<number | null>(aulaIdDaUrl)
   const [quantidadeHorarios, setQuantidadeHorarios] = useState('')
   const [dataPrevista, setDataPrevista] = useState('')
+  const [dataPublicacao, setDataPublicacao] = useState(() => new Date().toISOString().slice(0, 10))
   const [observacoes, setObservacoes] = useState('')
   const [edicoesChamada, setEdicoesChamada] = useState<Record<number, boolean>>({})
   const [modalConteudoAberto, setModalConteudoAberto] = useState(false)
@@ -163,35 +176,50 @@ export default function RegistrarAulaTurma() {
 
   const aulasDoPlano = useMemo(() => requisicaoAulasPlano.data ?? [], [requisicaoAulasPlano.data])
 
-  // Reconciliação automática com o plano de aula: acha sozinha a aula certa
-  // pra esta sessão, sem depender de o professor abrir a aba de conteúdo —
-  // a já publicada nesta data (edição) ou a próxima pendente, por ordem.
-  const aulaSugerida = useMemo(() => {
-    const aulaHoje = aulasDoPlano.find((aula) => aula.dataPublicacao?.slice(0, 10) === data)
-    if (aulaHoje) return aulaHoje
-
-    return (
+  // Sem escolha manual: a próxima aula pendente (sem dataPublicacao) do
+  // plano, por ordem — o caso comum de "a próxima aula a dar".
+  const aulaSugerida = useMemo(
+    () =>
       [...aulasDoPlano]
         .filter((aula) => !aula.dataPublicacao && aula.status !== 'INATIVO')
-        .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))[0] ?? null
-    )
-  }, [aulasDoPlano, data])
+        .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))[0] ?? null,
+    [aulasDoPlano],
+  )
 
   const aulaAlvo = aulaSelecionadaManualId
     ? (aulasDoPlano.find((aula) => aula.id === aulaSelecionadaManualId) ?? null)
     : aulaSugerida
 
-  // Trocar a data ou a disciplina invalida a escolha manual anterior — a
+  // Trocar de disciplina invalida a escolha manual anterior — a
   // reconciliação automática assume de novo a partir da nova aulaSugerida.
+  // Comparação de valor (não uma flag "já rodei uma vez"): sob StrictMode o
+  // React invoca o efeito duas vezes já na montagem, e uma flag booleana
+  // simples é zerada na primeira chamada e já não protege a segunda —
+  // descartando a pré-seleção vinda de ?aulaId= antes de qualquer render.
+  const disciplinaAnterior = useRef(disciplinaAtiva)
   useEffect(() => {
+    if (disciplinaAnterior.current === disciplinaAtiva) return
+
+    disciplinaAnterior.current = disciplinaAtiva
     setAulaSelecionadaManualId(null)
-  }, [data, disciplinaAtiva])
+  }, [disciplinaAtiva])
+
+  // A chamada depende dos horários da aula (cada aluno é avaliado contra a
+  // carga horária prevista) — só libera depois que "Quantidade de horários"
+  // estiver preenchida na aba de conteúdo.
+  const chamadaLiberada = Boolean(quantidadeHorarios)
+
+  useEffect(() => {
+    if (!chamadaLiberada && aba === 'chamada') setAba('conteudo')
+  }, [chamadaLiberada, aba])
 
   // Os campos de "criar/ajustar aula" seguem a aula-alvo atual (selecionada
-  // ou sugerida) — trocando de aula, os campos atualizam junto.
+  // ou sugerida) — trocando de aula, os campos atualizam junto. Sem aula
+  // já publicada, a data de publicação sugerida é hoje.
   useEffect(() => {
     setQuantidadeHorarios(aulaAlvo?.cargaHoraria?.toString() ?? '')
     setDataPrevista(aulaAlvo?.dataPrevista?.slice(0, 10) ?? '')
+    setDataPublicacao(aulaAlvo?.dataPublicacao?.slice(0, 10) ?? new Date().toISOString().slice(0, 10))
     setObservacoes(aulaAlvo?.observacoes ?? '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aulaAlvo?.id])
@@ -281,34 +309,27 @@ export default function RegistrarAulaTurma() {
       return
     }
 
+    // Regra pedagógica: a aula precisa já existir no plano de aula (com
+    // horários e carga horária previstos) antes de registrar chamada — evita
+    // aulas "avulsas" que não fecham a carga horária do plano. Cadastro de
+    // aula é feito só na tela do Plano de Aula (AulaFormulario).
+    if (!aulaAlvo) {
+      toast.warning(
+        'Nenhuma aula pendente no plano',
+        'Cadastre a aula no Plano de Aula desta disciplina antes de registrar a chamada.',
+      )
+      return
+    }
+
     try {
-      let idAula = aulaAlvo?.id
+      await servicoAulas.atualizar(aulaAlvo.id, {
+        dataPublicacao,
+        dataPrevista: dataPrevista || undefined,
+        cargaHoraria: quantidadeHorarios ? Number(quantidadeHorarios) : undefined,
+        observacoes: observacoes.trim() || undefined,
+      })
 
-      if (idAula) {
-        await servicoAulas.atualizar(idAula, {
-          dataPublicacao: data,
-          dataPrevista: dataPrevista || undefined,
-          cargaHoraria: quantidadeHorarios ? Number(quantidadeHorarios) : undefined,
-          observacoes: observacoes.trim() || undefined,
-        })
-      } else {
-        if (!quantidadeHorarios) {
-          toast.warning('Informe a quantidade de horários', 'Necessário para criar a aula desta data.')
-          return
-        }
-
-        const novaAula = await servicoAulas.criar({
-          planoAula: planoAtual,
-          dataPrevista: dataPrevista || data,
-          dataPublicacao: data,
-          cargaHoraria: Number(quantidadeHorarios),
-          observacoes: observacoes.trim() || undefined,
-          status: 'ATIVO',
-        })
-        idAula = novaAula.id
-      }
-
-      await servicoAulas.registrarChamada(idAula, {
+      await servicoAulas.registrarChamada(aulaAlvo.id, {
         alunos: linhasChamada.map((linha) => ({ alunoId: linha.alunoId, presente: linha.presente })),
       })
 
@@ -395,40 +416,86 @@ export default function RegistrarAulaTurma() {
         voltarPara={`/professor/turmas/${idTurma}`}
         rotuloVoltar="Voltar para a turma"
         filtros={
-          <CamposCabecalho>
-            <CampoLargura $largura="240px">
-              <DatePicker
-                label="Data de registro"
-                value={data}
-                onChange={(evento) => setData(evento.target.value)}
-              />
-            </CampoLargura>
+          <Coluna>
+            <CamposCabecalho>
+              <CampoLargura $largura="320px">
+                <Select
+                  label="Disciplina"
+                  options={disciplinasDaTurma}
+                  value={disciplinaAtiva}
+                  loading={requisicaoVinculos.loading}
+                  emptyText="Você não leciona disciplinas nesta turma"
+                  onChange={setTurmaDisciplinaId}
+                />
+              </CampoLargura>
 
-            <CampoLargura $largura="408px">
-              <Select
-                label="Disciplina"
-                options={disciplinasDaTurma}
-                value={disciplinaAtiva}
-                loading={requisicaoVinculos.loading}
-                emptyText="Você não leciona disciplinas nesta turma"
-                onChange={setTurmaDisciplinaId}
-              />
-            </CampoLargura>
+              <CampoLargura $largura="360px">
+                <Select
+                  label="Aula do plano de aula"
+                  options={opcoesAulasPlano}
+                  value={aulaAlvo?.id ?? null}
+                  clearable
+                  loading={requisicaoAulasPlano.loading}
+                  disabled={!disciplinaAtiva}
+                  emptyText="Este plano de aula ainda não tem aulas cadastradas"
+                  onChange={setAulaSelecionadaManualId}
+                />
+              </CampoLargura>
 
-            <Button size="large" icon={<Save />} loading={salvando} onClick={salvar}>
-              Salvar
-            </Button>
-          </CamposCabecalho>
+              <BotaoSalvar>
+                <Button
+                  size="large"
+                  variant="success"
+                  icon={<Save />}
+                  loading={salvando}
+                  disabled={!aulaAlvo}
+                  onClick={salvar}
+                >
+                  Salvar
+                </Button>
+              </BotaoSalvar>
+            </CamposCabecalho>
+
+            {/* Fora da linha de campos (não como hint de um select específico):
+                um texto embaixo de só um dos campos empurrava a caixa dele pra
+                baixo, desalinhando com Disciplina/Salvar na mesma linha. */}
+            <Ajuda>
+              A próxima aula pendente vem selecionada sozinha em "Aula do plano de aula" — troque se não for a
+              aula certa.
+            </Ajuda>
+          </Coluna>
         }
       />
+
+      {planoAtual && !aulaAlvo && !requisicaoAulasPlano.loading && (
+        <Card>
+          <EstadoVazio
+            titulo="Nenhuma aula pendente no plano para esta disciplina"
+            descricao="A aula precisa estar cadastrada no Plano de Aula antes de registrar chamada — isso garante que os horários e a carga horária do plano fechem corretamente."
+            icon={<ListTree />}
+            acao={
+              <Button
+                icon={<Plus />}
+                onClick={() => navegar(`/professor/plano-aula/${planoAtual.id}/aulas/nova`)}
+              >
+                Cadastrar aula no plano
+              </Button>
+            }
+          />
+        </Card>
+      )}
 
       <Tab<Aba>
         rotuloAcessivel="Seções do registro de aula"
         value={aba}
         onChange={setAba}
         options={[
-          { value: 'chamada', label: 'Realizar chamada' },
           { value: 'conteudo', label: 'Registrar conteúdo' },
+          {
+            value: 'chamada',
+            label: 'Realizar chamada',
+            disabled: !chamadaLiberada,
+          },
         ]}
       />
 
@@ -477,31 +544,28 @@ export default function RegistrarAulaTurma() {
       {aba === 'conteudo' && (
         <Card titulo="Conteúdos trabalhados nesta aula">
           <Coluna>
-            <Select
-              label="Selecionar aula do plano de aula"
-              options={opcoesAulasPlano}
-              value={aulaAlvo?.id ?? null}
-              clearable
-              loading={requisicaoAulasPlano.loading}
-              emptyText="Este plano de aula ainda não tem aulas cadastradas"
-              hint="Conciliada automaticamente com a data e a disciplina escolhidas no topo — troque se não for a aula certa."
-              onChange={(valor) => setAulaSelecionadaManualId(valor)}
-            />
-
             <Grade>
               <Input
                 label="Quantidade de horários"
                 type="number"
                 min={1}
                 value={quantidadeHorarios}
+                disabled={!aulaAlvo}
                 onChange={(evento) => setQuantidadeHorarios(evento.target.value)}
               />
               <DatePicker
                 label="Data prevista"
                 value={dataPrevista}
+                disabled={!aulaAlvo}
                 onChange={(evento) => setDataPrevista(evento.target.value)}
               />
-              <DatePicker label="Data publicação" value={data} disabled hint="Vem da data escolhida no topo." />
+              <DatePicker
+                label="Data publicação"
+                value={dataPublicacao}
+                disabled={!aulaAlvo}
+                hint="Data em que a aula foi (ou será) realizada."
+                onChange={(evento) => setDataPublicacao(evento.target.value)}
+              />
             </Grade>
 
             <div>
@@ -514,7 +578,7 @@ export default function RegistrarAulaTurma() {
               </Button>
               {!aulaAlvo && (
                 <div style={{ fontSize: '12px', color: tokens.colors.textTertiary, marginTop: '4px' }}>
-                  Salve a aula antes de vincular conteúdos.
+                  Cadastre a aula no plano de aula antes de vincular conteúdos.
                 </div>
               )}
             </div>
@@ -544,6 +608,7 @@ export default function RegistrarAulaTurma() {
               label="Observações"
               placeholder="Materiais necessários, combinados com a turma, adaptações..."
               value={observacoes}
+              disabled={!aulaAlvo}
               maxLength={2000}
               rows={4}
               autoAltura
@@ -565,6 +630,7 @@ export default function RegistrarAulaTurma() {
               Cancelar
             </Button>
             <Button
+              variant="success"
               loading={vinculando}
               disabled={conteudosSelecionados.size === 0}
               onClick={vincularConteudos}

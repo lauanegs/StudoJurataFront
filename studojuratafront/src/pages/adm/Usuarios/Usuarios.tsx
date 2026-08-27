@@ -111,7 +111,7 @@ export default function Usuarios() {
         titulo="Usuários"
         subtitulo={!loading && !error ? `${filtrados.length} usuário(s)` : undefined}
         actions={
-          <Button icon={<Plus />} onClick={() => navegar('/adm/usuarios/novo')}>
+          <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/usuarios/novo')}>
             Adicionar usuário
           </Button>
         }
@@ -126,7 +126,6 @@ export default function Usuarios() {
         loading={loading}
         error={error}
         onReload={reload}
-        onRowClick={(usuario) => navegar(`/adm/usuarios/${usuario.id}`)}
         paginacao={{
           pagina: paginacao.pagina,
           totalPaginas: paginacao.totalPaginas,

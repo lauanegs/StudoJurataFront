@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Check, Pencil, Save, X } from 'lucide-react'
 
@@ -15,11 +15,7 @@ import { useToast } from '../../../contexts/toastContexto'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import {
-  alternativas as servicoAlternativas,
-  disciplinas as servicoDisciplinas,
-  questoes as servicoQuestoes,
-} from '../../../services/endpoints'
+import { alternativas as servicoAlternativas, questoes as servicoQuestoes } from '../../../services/endpoints'
 import { ROTULO_ORIGEM_QUESTAO } from '../../../utils/labels'
 
 export default function RevisarQuestao() {
@@ -37,7 +33,6 @@ export default function RevisarQuestao() {
 
   const requisicaoQuestao = useRequisicao(() => servicoQuestoes.buscar(idQuestao), [idQuestao])
   const requisicaoAlternativas = useRequisicao(() => servicoAlternativas.listar(), [])
-  const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
 
   useHidratar(
     requisicaoQuestao.data && requisicaoAlternativas.data ? requisicaoQuestao.data : null,
@@ -59,15 +54,6 @@ export default function RevisarQuestao() {
           })),
       })
     },
-  )
-
-  const opcoesDisciplinas = useMemo(
-    () =>
-      (requisicaoDisciplinas.data ?? []).map((disciplina) => ({
-        value: disciplina.id,
-        label: disciplina.titulo ?? `Disciplina ${disciplina.id}`,
-      })),
-    [requisicaoDisciplinas.data],
   )
 
   async function salvarEdicao() {
@@ -242,8 +228,6 @@ export default function RevisarQuestao() {
           questao={questao}
           indice={0}
           total={1}
-          disciplinas={opcoesDisciplinas}
-          carregandoDisciplinas={requisicaoDisciplinas.loading}
           somenteLeitura={!editando}
           erros={erros}
           onChange={setQuestao}

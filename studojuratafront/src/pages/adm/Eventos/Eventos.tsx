@@ -223,7 +223,7 @@ export default function Eventos() {
         titulo="Eventos"
         subtitulo={!loading && !error ? `${filtrados.length} evento(s)` : undefined}
         actions={
-          <Button icon={<Plus />} onClick={abrirNovo}>
+          <Button size="large" icon={<Plus />} onClick={abrirNovo}>
             Adicionar evento
           </Button>
         }
@@ -249,7 +249,6 @@ export default function Eventos() {
         loading={loading}
         error={error}
         onReload={reload}
-        onRowClick={abrirEdicao}
         paginacao={{
           pagina: paginacao.pagina,
           totalPaginas: paginacao.totalPaginas,
@@ -320,18 +319,6 @@ export default function Eventos() {
         }
       >
         <CorpoModal>
-          <DatePicker
-            label="Data e horário"
-            required
-            modo="dataHora"
-            value={formulario.dataHorario}
-            error={erros.dataHorario}
-            disabled={salvando}
-            onChange={(evento) =>
-              setFormulario((atual) => ({ ...atual, dataHorario: evento.target.value }))
-            }
-          />
-
           <Input
             label="Título"
             required
@@ -342,6 +329,18 @@ export default function Eventos() {
             maxLength={120}
             onChange={(evento) =>
               setFormulario((atual) => ({ ...atual, titulo: evento.target.value }))
+            }
+          />
+
+          <DatePicker
+            label="Data e horário"
+            required
+            modo="dataHora"
+            value={formulario.dataHorario}
+            error={erros.dataHorario}
+            disabled={salvando}
+            onChange={(evento) =>
+              setFormulario((atual) => ({ ...atual, dataHorario: evento.target.value }))
             }
           />
 

@@ -8,8 +8,8 @@ import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
+import { Select } from '../../../components/ui/Select'
 import { TextArea } from '../../../components/ui/TextArea'
-import { Toggle } from '../../../components/ui/Toggle'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -19,6 +19,8 @@ import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { cursos as servicoCursos } from '../../../services/endpoints'
+import { OPCOES_ATIVO_INATIVO } from '../../../utils/labels'
+import type { StatusAtivoInativo } from '../../../types'
 
 const Coluna = styled.div`
   display: flex;
@@ -150,9 +152,10 @@ export default function CursoFormulario() {
         rotuloVoltar="Voltar para cursos"
         actions={
           <>
-            {edicao && (
+            {edicao ? (
               <Button
                 variant="danger"
+                size="large"
                 icon={<Trash2 />}
                 loading={excluindo}
                 onClick={excluir}
@@ -160,16 +163,19 @@ export default function CursoFormulario() {
               >
                 Excluir
               </Button>
+            ) : (
+              <Button
+                variant="danger"
+                size="large"
+                onClick={() => navegar('/adm/cursos')}
+                disabled={salvando}
+              >
+                Cancelar
+              </Button>
             )}
             <Button
-              variant="danger"
-              onClick={() => navegar('/adm/cursos')}
-              disabled={salvando || excluindo}
-            >
-              Cancelar
-            </Button>
-            <Button
               variant="success"
+              size="large"
               icon={<Save />}
               loading={salvando}
               disabled={carregandoEscola || excluindo}
@@ -221,14 +227,13 @@ export default function CursoFormulario() {
               onChange={(evento) => setDescricao(evento.target.value)}
             />
 
-            <Toggle
-              ligado={ativo}
-              onChange={setAtivo}
+            <Select<StatusAtivoInativo>
               label="Situação"
-              textoLigado="Ativo"
-              textoDesligado="Inativo"
-              descricao="Cursos inativos não aparecem na criação de novas turmas."
+              options={OPCOES_ATIVO_INATIVO}
+              value={ativo ? 'ATIVO' : 'INATIVO'}
+              hint="Cursos inativos não aparecem na criação de novas turmas."
               disabled={salvando}
+              onChange={(valor) => setAtivo(valor !== 'INATIVO')}
             />
           </Coluna>
         </Card>

@@ -18,14 +18,6 @@ const LinhaInteira = styled.div`
   grid-column: 1 / -1;
 `
 
-const TituloSecao = styled.h3`
-  grid-column: 1 / -1;
-  margin: ${({ theme }) => theme.spacing.xs} 0 0;
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
 interface PessoaCamposProps {
   valores: DadosPessoa
   erros: Partial<Record<keyof DadosPessoa, string>>
@@ -33,6 +25,10 @@ interface PessoaCamposProps {
   onExit: (campo: keyof DadosPessoa) => void
   disabled?: boolean
   rotuloNome?: string
+  /** Confirmado pelo usuário: dados pessoais e endereço viram abas separadas
+   * nas telas de Aluno/Professor/Responsável — "dados" (padrão) renderiza só
+   * os campos pessoais, "endereco" só o bloco de endereço. */
+  secao?: 'dados' | 'endereco'
 }
 
 /**
@@ -48,7 +44,91 @@ export function PessoaCampos({
   onExit,
   disabled,
   rotuloNome = 'Nome completo',
+  secao = 'dados',
 }: PessoaCamposProps) {
+  if (secao === 'endereco') {
+    return (
+      <Grade>
+        <Input
+          label="CEP"
+          placeholder="00000-000"
+          inputMode="numeric"
+          value={valores.cep}
+          error={erros.cep}
+          disabled={disabled}
+          mask={formatarCep}
+          maxLength={9}
+          onChange={(evento) => onChange('cep', evento.target.value)}
+          onBlur={() => onExit('cep')}
+        />
+
+        <Input
+          label="Logradouro"
+          placeholder="Rua, avenida..."
+          value={valores.logradouro}
+          error={erros.logradouro}
+          disabled={disabled}
+          maxLength={150}
+          onChange={(evento) => onChange('logradouro', evento.target.value)}
+          onBlur={() => onExit('logradouro')}
+        />
+
+        <Input
+          label="Número"
+          value={valores.numero}
+          error={erros.numero}
+          disabled={disabled}
+          maxLength={20}
+          onChange={(evento) => onChange('numero', evento.target.value)}
+          onBlur={() => onExit('numero')}
+        />
+
+        <Input
+          label="Complemento"
+          placeholder="Apto, bloco..."
+          value={valores.complemento}
+          error={erros.complemento}
+          disabled={disabled}
+          maxLength={100}
+          onChange={(evento) => onChange('complemento', evento.target.value)}
+          onBlur={() => onExit('complemento')}
+        />
+
+        <Input
+          label="Bairro"
+          value={valores.bairro}
+          error={erros.bairro}
+          disabled={disabled}
+          maxLength={100}
+          onChange={(evento) => onChange('bairro', evento.target.value)}
+          onBlur={() => onExit('bairro')}
+        />
+
+        <Input
+          label="Cidade"
+          value={valores.cidade}
+          error={erros.cidade}
+          disabled={disabled}
+          maxLength={100}
+          onChange={(evento) => onChange('cidade', evento.target.value)}
+          onBlur={() => onExit('cidade')}
+        />
+
+        <Select<string>
+          label="UF"
+          options={OPCOES_UF}
+          value={valores.estado || null}
+          error={erros.estado}
+          disabled={disabled}
+          searchable
+          clearable
+          placeholder="Selecionar UF..."
+          onChange={(value) => onChange('estado', value ?? '')}
+        />
+      </Grade>
+    )
+  }
+
   return (
     <Grade>
       <LinhaInteira>
@@ -124,85 +204,6 @@ export function PessoaCampos({
           error={erros.sexo}
         />
       </LinhaInteira>
-
-      <TituloSecao>Endereço (opcional)</TituloSecao>
-
-      <Input
-        label="CEP"
-        placeholder="00000-000"
-        inputMode="numeric"
-        value={valores.cep}
-        error={erros.cep}
-        disabled={disabled}
-        mask={formatarCep}
-        maxLength={9}
-        onChange={(evento) => onChange('cep', evento.target.value)}
-        onBlur={() => onExit('cep')}
-      />
-
-      <Input
-        label="Logradouro"
-        placeholder="Rua, avenida..."
-        value={valores.logradouro}
-        error={erros.logradouro}
-        disabled={disabled}
-        maxLength={150}
-        onChange={(evento) => onChange('logradouro', evento.target.value)}
-        onBlur={() => onExit('logradouro')}
-      />
-
-      <Input
-        label="Número"
-        value={valores.numero}
-        error={erros.numero}
-        disabled={disabled}
-        maxLength={20}
-        onChange={(evento) => onChange('numero', evento.target.value)}
-        onBlur={() => onExit('numero')}
-      />
-
-      <Input
-        label="Complemento"
-        placeholder="Apto, bloco..."
-        value={valores.complemento}
-        error={erros.complemento}
-        disabled={disabled}
-        maxLength={100}
-        onChange={(evento) => onChange('complemento', evento.target.value)}
-        onBlur={() => onExit('complemento')}
-      />
-
-      <Input
-        label="Bairro"
-        value={valores.bairro}
-        error={erros.bairro}
-        disabled={disabled}
-        maxLength={100}
-        onChange={(evento) => onChange('bairro', evento.target.value)}
-        onBlur={() => onExit('bairro')}
-      />
-
-      <Input
-        label="Cidade"
-        value={valores.cidade}
-        error={erros.cidade}
-        disabled={disabled}
-        maxLength={100}
-        onChange={(evento) => onChange('cidade', evento.target.value)}
-        onBlur={() => onExit('cidade')}
-      />
-
-      <Select<string>
-        label="UF"
-        options={OPCOES_UF}
-        value={valores.estado || null}
-        error={erros.estado}
-        disabled={disabled}
-        searchable
-        clearable
-        placeholder="Selecionar UF..."
-        onChange={(value) => onChange('estado', value ?? '')}
-      />
     </Grade>
   )
 }

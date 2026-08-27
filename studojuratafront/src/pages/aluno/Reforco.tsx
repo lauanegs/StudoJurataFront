@@ -33,15 +33,22 @@ const Lista = styled.div`
 `
 
 /* Confirmado no Figma: select de disciplina + botão "Buscar" colados, na
-   mesma linha, igual ao padrão já usado nas telas do professor. */
+   mesma linha, igual ao padrão já usado nas telas do professor (sem label
+   flutuante acima do campo, senão o bloco do Select fica mais alto que o
+   botão ao lado e a linha para de parecer alinhada). */
 const CamposCabecalho = styled.div`
   display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-  width: fit-content;
-  max-width: 100%;
-  overflow-x: auto;
+`
+
+/* O <Field> por baixo do Select pede width:100% do pai — dentro de um flex
+   item sem largura própria isso força o cálculo de shrink-to-fit e o campo
+   acaba quebrando de linha mesmo sobrando espaço. Uma largura fixa aqui
+   (mesmo padrão já usado nos headers do professor) resolve. */
+const CampoLargura = styled.div`
+  width: 280px;
 `
 
 type Aba = 'aFazer' | 'realizados'
@@ -164,17 +171,17 @@ export default function AlunoReforco() {
         titulo="Reforço de aprendizagem"
         filtros={
           <CamposCabecalho>
-            <Select<number>
-              label="Disciplina"
-              options={opcoesDisciplinas}
-              value={disciplinaSelecionada}
-              loading={requisicaoDisciplinas.loading}
-              clearable
-              placeholder="Todas as disciplinas"
-              maxWidth="280px"
-              emptyText="Nenhuma disciplina com simulados"
-              onChange={setDisciplinaSelecionada}
-            />
+            <CampoLargura>
+              <Select<number>
+                options={opcoesDisciplinas}
+                value={disciplinaSelecionada}
+                loading={requisicaoDisciplinas.loading}
+                clearable
+                placeholder="Todas as disciplinas"
+                emptyText="Nenhuma disciplina com simulados"
+                onChange={setDisciplinaSelecionada}
+              />
+            </CampoLargura>
 
             <Button size="large" onClick={() => setDisciplinaId(disciplinaSelecionada)}>
               Buscar

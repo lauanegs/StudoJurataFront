@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
-import { BookOpen, Cake, CalendarDays, GraduationCap, Plus, UserCog, Users } from 'lucide-react'
+import { Cake, CalendarDays, Plus } from 'lucide-react'
 
 import { Layout } from '../../components/layout'
 import { AniversarianteCard } from '../../components/ui/AniversarianteCard'
@@ -88,25 +88,10 @@ export default function AdmHome() {
         </Indicadores>
       ) : (
         <Indicadores>
-          <InfoCard
-            value={requisicaoAlunos.data?.length ?? 0}
-            label="alunos cadastrados"
-            icon={<GraduationCap />}
-            tone="purple"
-          />
-          <InfoCard
-            value={requisicaoProfessores.data?.length ?? 0}
-            label="professores"
-            icon={<UserCog />}
-            tone="blue"
-          />
-          <InfoCard value={turmasAtivas.length} label="turmas ativas" icon={<Users />} tone="success" />
-          <InfoCard
-            value={requisicaoDisciplinas.data?.length ?? 0}
-            label="disciplinas"
-            icon={<BookOpen />}
-            tone="warning"
-          />
+          <InfoCard value={requisicaoAlunos.data?.length ?? 0} label="alunos cadastrados" />
+          <InfoCard value={requisicaoProfessores.data?.length ?? 0} label="professores" />
+          <InfoCard value={turmasAtivas.length} label="turmas ativas" />
+          <InfoCard value={requisicaoDisciplinas.data?.length ?? 0} label="disciplinas" />
         </Indicadores>
       )}
 
@@ -144,6 +129,7 @@ export default function AdmHome() {
       <Card
         titulo="Próximos eventos"
         icon={<CalendarDays />}
+        corpoComFundo
         actions={
           <>
             <Button variant="subtle" size="small" onClick={() => navegar('/adm/eventos')}>

@@ -12,4 +12,8 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   iconRight?: ReactNode
   loading?: boolean
   fullWidth?: boolean
+  /** Confirmado no Figma (rodapé do simulado): botão sem a borda de destaque
+   * que os gradientes têm por padrão — usar só quando o card ao redor já
+   * fornece contraste suficiente. */
+  noBorder?: boolean
 }

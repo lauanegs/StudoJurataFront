@@ -12,7 +12,6 @@ import '@mantine/dates/styles.css'
 
 import { AuthProvider } from './contexts/AuthContext'
 import { ConfirmProvider } from './contexts/ConfirmContext'
-import { PeriodoLetivoProvider } from './contexts/PeriodoLetivoContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { AppRoutes } from './routes'
 import { GlobalStyle } from './styles/global'
@@ -32,9 +31,7 @@ createRoot(document.getElementById('root')!).render(
             <ToastProvider>
               <ConfirmProvider>
                 <AuthProvider>
-                  <PeriodoLetivoProvider>
-                    <AppRoutes />
-                  </PeriodoLetivoProvider>
+                  <AppRoutes />
                 </AuthProvider>
               </ConfirmProvider>
             </ToastProvider>

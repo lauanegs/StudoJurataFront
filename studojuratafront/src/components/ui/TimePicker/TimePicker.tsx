@@ -37,6 +37,7 @@ export function TimePicker({
         style={{ maxWidth }}
         styles={{
           input: {
+            height: '56px',
             minHeight: '56px',
             borderWidth: '2px',
             borderColor: error ? tokens.colors.error : tokens.colors.buttonPurple,

@@ -3,7 +3,6 @@ import { Check } from 'lucide-react'
 
 import { Button } from '../Button'
 import { MoedaIcone } from '../MoedaIcone'
-import { animacaoFlutuar } from '../../../styles/animations'
 
 const Container = styled.article<{ $ativa: boolean }>`
   display: flex;
@@ -23,6 +22,9 @@ const Container = styled.article<{ $ativa: boolean }>`
   transition: border-color ${({ theme }) => theme.transition.base};
 `
 
+/* Confirmado pelo usuário: só nesta tela de compra/equipação o personagem
+   fica parado (sem a animação de flutuar) e sem moldura de fundo atrás —
+   nos outros lugares do sistema ele continua flutuando normalmente. */
 const Moldura = styled.div<{ $bloqueada: boolean }>`
   display: flex;
   align-items: center;
@@ -31,8 +33,6 @@ const Moldura = styled.div<{ $bloqueada: boolean }>`
   width: 120px;
   height: 120px;
 
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.colors.background};
   position: relative;
   overflow: hidden;
 
@@ -40,7 +40,6 @@ const Moldura = styled.div<{ $bloqueada: boolean }>`
     width: 100%;
     height: 100%;
     object-fit: contain;
-    ${animacaoFlutuar}
 
     ${({ $bloqueada }) =>
       $bloqueada &&

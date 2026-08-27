@@ -144,7 +144,7 @@ export default function Turmas() {
         titulo="Turmas"
         subtitulo={!loading && !error ? `${filtradas.length} turma(s)` : undefined}
         actions={
-          <Button icon={<Plus />} onClick={() => navegar('/adm/turmas/nova')}>
+          <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/turmas/nova')}>
             Adicionar turma
           </Button>
         }
@@ -159,7 +159,6 @@ export default function Turmas() {
         loading={loading}
         error={error}
         onReload={reload}
-        onRowClick={(turma) => navegar(`/adm/turmas/${turma.id}`)}
         paginacao={{
           pagina: paginacao.pagina,
           totalPaginas: paginacao.totalPaginas,

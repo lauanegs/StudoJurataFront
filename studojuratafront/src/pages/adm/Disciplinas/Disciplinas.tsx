@@ -93,7 +93,7 @@ export default function Disciplinas() {
         titulo="Disciplinas"
         subtitulo={!loading && !error ? `${filtradas.length} disciplina(s)` : undefined}
         actions={
-          <Button icon={<Plus />} onClick={() => navegar('/adm/disciplinas/nova')}>
+          <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/disciplinas/nova')}>
             Adicionar disciplina
           </Button>
         }
@@ -108,7 +108,6 @@ export default function Disciplinas() {
         loading={loading}
         error={error}
         onReload={reload}
-        onRowClick={(disciplina) => navegar(`/adm/disciplinas/${disciplina.id}`)}
         paginacao={{
           pagina: paginacao.pagina,
           totalPaginas: paginacao.totalPaginas,

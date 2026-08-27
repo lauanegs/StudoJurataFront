@@ -1,12 +1,14 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Save, Trash2 } from 'lucide-react'
+import { Eye, Save, Trash2 } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
+import { IconButton } from '../../../components/ui/IconButton'
+import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -36,6 +38,8 @@ export default function ResponsavelFormulario() {
 
   const edicao = Boolean(id)
   const responsavelId = id ? Number(id) : null
+
+  const [aba, setAba] = useState<'dados' | 'endereco' | 'alunos'>('dados')
 
   const formulario = useFormulario<DadosPessoa>({
     valoresIniciais: PESSOA_VAZIA,
@@ -139,9 +143,10 @@ export default function ResponsavelFormulario() {
         rotuloVoltar="Voltar para responsáveis"
         actions={
           <>
-            {edicao && (
+            {edicao ? (
               <Button
                 variant="danger"
+                size="large"
                 icon={<Trash2 />}
                 loading={excluindo}
                 onClick={excluir}
@@ -149,75 +154,112 @@ export default function ResponsavelFormulario() {
               >
                 Excluir
               </Button>
+            ) : (
+              <Button
+                variant="danger"
+                size="large"
+                onClick={() => navegar('/adm/responsaveis')}
+                disabled={salvando}
+              >
+                Cancelar
+              </Button>
             )}
             <Button
-              variant="danger"
-              onClick={() => navegar('/adm/responsaveis')}
-              disabled={salvando || excluindo}
+              variant="success"
+              size="large"
+              icon={<Save />}
+              loading={salvando}
+              disabled={excluindo}
+              onClick={salvar}
             >
-              Cancelar
-            </Button>
-            <Button variant="success" icon={<Save />} loading={salvando} disabled={excluindo} onClick={salvar}>
               Salvar
             </Button>
           </>
         }
       />
 
+      <Tab<'dados' | 'endereco' | 'alunos'>
+        rotuloAcessivel="Seções do responsável"
+        value={aba}
+        onChange={setAba}
+        options={[
+          { value: 'dados', label: 'Dados do responsável' },
+          { value: 'endereco', label: 'Endereço' },
+          ...(edicao
+            ? [
+                {
+                  value: 'alunos' as const,
+                  label: 'Alunos vinculados',
+                  contador: requisicaoVinculos.data?.length,
+                },
+              ]
+            : []),
+        ]}
+      />
+
       {edicao && requisicao.loading ? (
         <SkeletonCartao />
       ) : (
-        <Card titulo="Dados do responsável">
-          <PessoaCampos
-            valores={formulario.valores}
-            erros={errosVisiveis}
-            onChange={(campo, valor) => formulario.definirCampo(campo, valor)}
-            onExit={(campo) => formulario.marcarTocado(campo)}
-            disabled={salvando}
-            rotuloNome="Nome do responsável"
-          />
-        </Card>
-      )}
+        <>
+          {(aba === 'dados' || aba === 'endereco') && (
+            <Card titulo={aba === 'dados' ? 'Dados do responsável' : 'Endereço'}>
+              <PessoaCampos
+                secao={aba}
+                valores={formulario.valores}
+                erros={errosVisiveis}
+                onChange={(campo, valor) => formulario.definirCampo(campo, valor)}
+                onExit={(campo) => formulario.marcarTocado(campo)}
+                disabled={salvando}
+                rotuloNome="Nome do responsável"
+              />
+            </Card>
+          )}
 
-      {edicao && (
-        <Card titulo="Alunos vinculados" semPadding>
-          <DataTable<ResponsavelAluno>
-            descricao="Alunos vinculados a este responsável"
-            columns={[
-              {
-                key: 'aluno',
-                cabecalho: 'Aluno',
-                render: (vinculo) => vinculo.aluno?.pessoa?.nome ?? '—',
-              },
-              {
-                key: 'parentesco',
-                cabecalho: 'Parentesco',
-                render: (vinculo) =>
-                  vinculo.parentesco ? ROTULO_PARENTESCO[vinculo.parentesco] : '—',
-              },
-              {
-                key: 'termos',
-                cabecalho: 'Aceite de termos',
-                render: (vinculo) =>
-                  vinculo.aceitouTermos ? (
-                    <Tag variant="success">Aceito em {formatarData(vinculo.dataAceite)}</Tag>
-                  ) : (
-                    <Tag variant="warning">Pendente</Tag>
-                  ),
-              },
-            ]}
-            data={requisicaoVinculos.data ?? []}
-            rowKey={(vinculo) => vinculo.id}
-            loading={requisicaoVinculos.loading}
-            error={requisicaoVinculos.error}
-            onReload={requisicaoVinculos.reload}
-            onRowClick={(vinculo) => navegar(`/adm/alunos/${vinculo.aluno?.id}`)}
-            empty={{
-              titulo: 'Nenhum aluno vinculado',
-              descricao: 'O vínculo é criado na tela de cadastro do aluno.',
-            }}
-          />
-        </Card>
+          {edicao && aba === 'alunos' && (
+            <DataTable<ResponsavelAluno>
+              descricao="Alunos vinculados a este responsável"
+              columns={[
+                {
+                  key: 'aluno',
+                  cabecalho: 'Aluno',
+                  render: (vinculo) => vinculo.aluno?.pessoa?.nome ?? '—',
+                },
+                {
+                  key: 'parentesco',
+                  cabecalho: 'Parentesco',
+                  render: (vinculo) =>
+                    vinculo.parentesco ? ROTULO_PARENTESCO[vinculo.parentesco] : '—',
+                },
+                {
+                  key: 'termos',
+                  cabecalho: 'Aceite de termos',
+                  render: (vinculo) =>
+                    vinculo.aceitouTermos ? (
+                      <Tag variant="success">Aceito em {formatarData(vinculo.dataAceite)}</Tag>
+                    ) : (
+                      <Tag variant="warning">Pendente</Tag>
+                    ),
+                },
+              ]}
+              data={requisicaoVinculos.data ?? []}
+              rowKey={(vinculo) => vinculo.id}
+              loading={requisicaoVinculos.loading}
+              error={requisicaoVinculos.error}
+              onReload={requisicaoVinculos.reload}
+              empty={{
+                titulo: 'Nenhum aluno vinculado',
+                descricao: 'O vínculo é criado na tela de cadastro do aluno.',
+              }}
+              actions={(vinculo) => (
+                <IconButton
+                  label={`Ver ${vinculo.aluno?.pessoa?.nome ?? 'aluno'}`}
+                  icon={<Eye />}
+                  onClick={() => navegar(`/adm/alunos/${vinculo.aluno?.id}`)}
+                />
+              )}
+            />
+          )}
+        </>
       )}
     </Layout>
   )

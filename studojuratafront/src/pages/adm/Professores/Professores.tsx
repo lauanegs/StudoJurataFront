@@ -110,7 +110,7 @@ export default function Professores() {
         titulo="Professores"
         subtitulo={!loading && !error ? `${filtrados.length} professor(es)` : undefined}
         actions={
-          <Button icon={<Plus />} onClick={() => navegar('/adm/professores/novo')}>
+          <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/professores/novo')}>
             Adicionar professor
           </Button>
         }
@@ -125,7 +125,6 @@ export default function Professores() {
         loading={loading}
         error={error}
         onReload={reload}
-        onRowClick={(professor) => navegar(`/adm/professores/${professor.id}`)}
         paginacao={{
           pagina: paginacao.pagina,
           totalPaginas: paginacao.totalPaginas,

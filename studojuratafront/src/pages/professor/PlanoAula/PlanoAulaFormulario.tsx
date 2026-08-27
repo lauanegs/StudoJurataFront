@@ -9,7 +9,6 @@ import { Card } from '../../../components/ui/Card'
 import { Input } from '../../../components/ui/Input'
 import { Header } from '../../../components/ui/Header'
 import { Select } from '../../../components/ui/Select'
-import { Toggle } from '../../../components/ui/Toggle'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -24,6 +23,8 @@ import {
   professores,
 } from '../../../services/endpoints'
 import { formatarCargaHoraria } from '../../../utils/format'
+import { OPCOES_STATUS_PLANO } from '../../../utils/labels'
+import type { StatusPlano } from '../../../types'
 
 const Coluna = styled.div`
   display: flex;
@@ -31,13 +32,12 @@ const Coluna = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-/* Confirmado no Figma: 1ª linha com Turma/Curso/Carga horária, 2ª com
-   Disciplina/Período letivo — Curso, Carga horária e Período letivo não são
-   campos do plano de aula (não existem no back), são informação do plano de
-   ensino vinculado, mostrada em modo leitura pra confirmar que é o plano certo. */
+/* Curso e Carga horária não são campos do plano de aula (não existem no
+   back) — vêm do plano de ensino vinculado, mostrados em modo leitura pra
+   confirmar que é o plano certo. 2 campos por linha (pedido explícito). */
 const Grade = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
 `
 
@@ -54,7 +54,7 @@ export default function PlanoAulaFormulario() {
   const [turmaId, setTurmaId] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
   const [planoEnsinoId, setPlanoEnsinoId] = useState<number | null>(null)
-  const [ativo, setAtivo] = useState(true)
+  const [status, setStatus] = useState<StatusPlano>('ATIVO')
   const [erros, setErros] = useState<Record<string, string | undefined>>({})
 
   const requisicaoPlano = useRequisicao(
@@ -73,7 +73,7 @@ export default function PlanoAulaFormulario() {
     setTurmaId(plano.turmaDisciplina?.turma?.id ?? null)
     setDisciplinaId(plano.turmaDisciplina?.disciplina?.id ?? null)
     setPlanoEnsinoId(plano.planoEnsino?.id ?? null)
-    setAtivo(plano.status !== 'INATIVO')
+    setStatus(plano.status ?? 'ATIVO')
   })
 
   const opcoesTurmas = useMemo(() => {
@@ -108,7 +108,7 @@ export default function PlanoAulaFormulario() {
     const cursoDaTurma = vinculoSelecionado?.turma?.curso?.id
 
     return (requisicaoPlanosEnsino.data ?? [])
-      .filter((plano) => plano.status !== 'INATIVO')
+      .filter((plano) => plano.status !== 'CONCLUIDO')
       .sort((a, b) => {
         const pesoA = a.curso?.id === cursoDaTurma ? 0 : 1
         const pesoB = b.curso?.id === cursoDaTurma ? 0 : 1
@@ -117,7 +117,7 @@ export default function PlanoAulaFormulario() {
       .map((plano) => ({
         value: plano.id,
         label: plano.titulo ?? `Plano #${plano.id}`,
-        descricao: `${plano.curso?.nome ?? 'Sem curso'} · ${plano.periodoLetivo}`,
+        descricao: plano.curso?.nome ?? 'Sem curso',
       }))
   }, [requisicaoPlanosEnsino.data, vinculoSelecionado])
 
@@ -146,7 +146,7 @@ export default function PlanoAulaFormulario() {
       const corpo = {
         turmaDisciplina: vinculoSelecionado,
         planoEnsino: planoEnsinoSelecionado,
-        status: ativo ? ('ATIVO' as const) : ('INATIVO' as const),
+        status,
       }
 
       if (edicao) {
@@ -209,7 +209,9 @@ export default function PlanoAulaFormulario() {
         rotuloVoltar="Voltar para planos de aula"
         actions={
           <>
-            {edicao && (
+            {/* Cancelar só existe enquanto o plano ainda não foi salvo — depois
+                de salvo, desfazer é Excluir (soft-delete), não Cancelar. */}
+            {edicao ? (
               <Button
                 size="large"
                 variant="danger"
@@ -220,15 +222,16 @@ export default function PlanoAulaFormulario() {
               >
                 Excluir
               </Button>
+            ) : (
+              <Button
+                size="large"
+                variant="danger"
+                onClick={() => navegar('/professor/plano-aula')}
+                disabled={salvando}
+              >
+                Cancelar
+              </Button>
             )}
-            <Button
-              size="large"
-              variant="danger"
-              onClick={() => navegar('/professor/plano-aula')}
-              disabled={salvando || excluindo}
-            >
-              Cancelar
-            </Button>
             <Button
               size="large"
               variant="success"
@@ -248,19 +251,23 @@ export default function PlanoAulaFormulario() {
       ) : (
         <Card titulo="Vínculo do plano">
           <Coluna>
-            <Select<number>
-              label="Plano de ensino"
-              required
-              options={opcoesPlanosEnsino}
-              value={planoEnsinoId}
-              loading={requisicaoPlanosEnsino.loading}
-              error={erros.planoEnsinoId}
-              searchable
-              placeholder="Selecionar plano de ensino..."
-              hint="Os planos do mesmo curso da turma aparecem primeiro."
-              emptyText="Cadastre um plano de ensino primeiro"
-              onChange={setPlanoEnsinoId}
-            />
+            <Grade>
+              <Select<number>
+                label="Plano de ensino"
+                required
+                options={opcoesPlanosEnsino}
+                value={planoEnsinoId}
+                loading={requisicaoPlanosEnsino.loading}
+                error={erros.planoEnsinoId}
+                searchable
+                placeholder="Selecionar plano de ensino..."
+                hint="Os planos do mesmo curso da turma aparecem primeiro."
+                emptyText="Cadastre um plano de ensino primeiro"
+                onChange={setPlanoEnsinoId}
+              />
+
+              <Input label="Curso" value={planoEnsinoSelecionado?.curso?.nome ?? '—'} disabled />
+            </Grade>
 
             <Grade>
               <Select<number>
@@ -279,16 +286,6 @@ export default function PlanoAulaFormulario() {
                 }}
               />
 
-              <Input label="Curso" value={planoEnsinoSelecionado?.curso?.nome ?? '—'} disabled />
-
-              <Input
-                label="Carga horária total"
-                value={formatarCargaHoraria(planoEnsinoSelecionado?.cargaHoraria)}
-                disabled
-              />
-            </Grade>
-
-            <Grade>
               <Select<number>
                 label="Disciplina"
                 required
@@ -300,18 +297,23 @@ export default function PlanoAulaFormulario() {
                 emptyText={turmaId ? 'Sem disciplinas nessa turma' : 'Selecione a turma primeiro'}
                 onChange={setDisciplinaId}
               />
-
-              <Input label="Período letivo" value={planoEnsinoSelecionado?.periodoLetivo ?? '—'} disabled />
             </Grade>
 
-            <Toggle
-              ligado={ativo}
-              onChange={setAtivo}
-              label="Situação"
-              textoLigado="Ativo"
-              textoDesligado="Inativo"
-              disabled={salvando}
-            />
+            <Grade>
+              <Input
+                label="Carga horária total"
+                value={formatarCargaHoraria(planoEnsinoSelecionado?.cargaHoraria)}
+                disabled
+              />
+
+              <Select<StatusPlano>
+                label="Situação"
+                options={OPCOES_STATUS_PLANO}
+                value={status}
+                disabled={salvando}
+                onChange={(valor) => setStatus(valor ?? 'ATIVO')}
+              />
+            </Grade>
           </Coluna>
         </Card>
       )}

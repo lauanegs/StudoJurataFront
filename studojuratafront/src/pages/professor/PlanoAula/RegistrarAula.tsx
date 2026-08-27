@@ -349,7 +349,7 @@ export default function RegistrarAula() {
                 Marcar como ministrada
               </Button>
             )}
-            <Button size="large" icon={<Save />} loading={salvandoChamada} onClick={salvarChamada}>
+            <Button size="large" variant="success" icon={<Save />} loading={salvandoChamada} onClick={salvarChamada}>
               Salvar chamada
             </Button>
           </>

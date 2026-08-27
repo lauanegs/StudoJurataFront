@@ -52,6 +52,7 @@ import type {
   SkinAluno,
   Turma,
   TurmaDisciplina,
+  TurmaDisciplinaSubstituto,
   Usuario,
 } from '../types'
 
@@ -183,6 +184,16 @@ export const turmaDisciplinas = {
   excluir: (id: number) => api.delete(`/turma-disciplina/${id}`),
 }
 
+export const turmaDisciplinaSubstitutos = {
+  listarPorTurmaDisciplina: (turmaDisciplinaId: number) =>
+    api.get<TurmaDisciplinaSubstituto[]>(`/turma-disciplina/${turmaDisciplinaId}/substitutos`),
+  adicionar: (turmaDisciplinaId: number, professorId: number) =>
+    api.post<TurmaDisciplinaSubstituto>(`/turma-disciplina/${turmaDisciplinaId}/substitutos`, {
+      professor: { id: professorId },
+    }),
+  remover: (id: number) => api.delete(`/turma-disciplina-substituto/${id}`),
+}
+
 export const matriculas = {
   listar: () => api.get<AlunoTurma[]>('/aluno-turma'),
   buscar: (id: number) => api.get<AlunoTurma>(`/aluno-turma/${id}`),
@@ -279,8 +290,8 @@ export const notas = {
   historicoPorAlunoEDisciplina: (alunoId: number, disciplinaId: number) =>
     api.get<Nota[]>(`/notas/aluno/${alunoId}/disciplina/${disciplinaId}/historico`),
   /** Único caminho de escrita: a nota é sempre derivada dos simulados. */
-  recalcular: (alunoId: number, disciplinaId: number, periodoLetivo: string) =>
-    api.post<Nota>('/notas/recalcular', undefined, { alunoId, disciplinaId, periodoLetivo }),
+  recalcular: (alunoId: number, disciplinaId: number, turmaId: number) =>
+    api.post<Nota>('/notas/recalcular', undefined, { alunoId, disciplinaId, turmaId }),
   excluir: (id: number) => api.delete(`/notas/${id}`),
 }
 

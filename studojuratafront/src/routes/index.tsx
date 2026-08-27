@@ -153,6 +153,14 @@ export function AppRoutes() {
           }
         />
         <Route
+          path="/adm/turmas/:turmaId/matricular/:matriculaId"
+          element={
+            <RotaProtegida perfis={['ADMINISTRADOR']}>
+              <AdmMatricularAluno />
+            </RotaProtegida>
+          }
+        />
+        <Route
           path="/adm/alunos"
           element={
             <RotaProtegida perfis={['ADMINISTRADOR']}>
