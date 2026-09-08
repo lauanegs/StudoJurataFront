@@ -32,17 +32,21 @@ export function Chip({
       // 56px de altura, ícone de remover em 24px — bem maior e mais
       // espaçoso do que o tamanho padrão de Pill da Mantine.
       //
-      // O pill encolhe pro tamanho do próprio conteúdo (inline-flex sem
-      // largura própria) — não sobra espaço nenhum pro texto "flutuar"
-      // dentro dele, então nem padding simétrico nem `flex:1` no label
-      // conseguem centralizar o texto de fato: o botão de remover ocupa
-      // espaço só do lado direito, puxando o bloco inteiro (e o texto
-      // dentro dele) pra a esquerda. A correção real é compensar isso do
-      // outro lado: padding esquerdo maior, do tamanho exato do que o
-      // botão + o gap ocupam à direita — aí sim o texto fica visualmente
-      // no meio do pill, não só o bloco texto+botão.
+      // O botão de remover fica fora do fluxo do flex (position: absolute),
+      // não conta mais como um "irmão" do texto disputando espaço. Padding
+      // simétrico dos dois lados (mesmo valor, spacing.xl) reserva à direita
+      // exatamente o espaço que o botão precisa pra caber sem sobrepor o
+      // texto, sem puxar o centro pra nenhum lado.
+      // `justifyContent: center` no root sozinho NÃO bastava: o
+      // `.mantine-Pill-label` (elemento interno da Mantine, não o nosso
+      // <span>) já vem esticado (flex:1) pelo CSS da própria lib — ele
+      // ocupava 100% da caixa de conteúdo, deixando o `justifyContent` do
+      // root sem espaço sobrando pra centralizar. É por isso que era preciso
+      // sobrescrever também `styles.label`, centralizando o conteúdo dentro
+      // dele mesmo.
       styles={{
         root: {
+          position: 'relative',
           backgroundColor: cor.bg,
           color: cor.texto,
           border: cor.borda ? `1px solid ${cor.borda}` : undefined,
@@ -51,17 +55,22 @@ export function Chip({
           opacity: disabled ? 0.55 : 1,
           display: 'inline-flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: tokens.spacing.xs,
           height: '56px',
-          // Sem botão de remover: padding simétrico. Com botão: o esquerdo
-          // absorve o espaço que o botão (24px) + o gap (8px) ocupam à
-          // direita, pra o texto ficar centralizado no pill inteiro.
-          paddingInlineStart: onRemove ? tokens.spacing.xxxl : tokens.spacing.md,
-          paddingInlineEnd: tokens.spacing.md,
+          paddingInlineStart: onRemove ? tokens.spacing.xl : tokens.spacing.md,
+          paddingInlineEnd: onRemove ? tokens.spacing.xl : tokens.spacing.md,
           maxWidth: '100%',
         },
+        label: {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+        },
         remove: {
+          position: 'absolute',
+          right: tokens.spacing.xs,
+          top: '50%',
+          transform: 'translateY(-50%)',
           width: '24px',
           height: '24px',
           minWidth: '24px',

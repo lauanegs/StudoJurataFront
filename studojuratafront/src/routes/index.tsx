@@ -62,6 +62,11 @@ const ProfessorRegistrarAula = lazy(() => import('../pages/professor/PlanoAula/R
 const ProfessorRegistrarAulaTurma = lazy(() => import('../pages/professor/Turmas/RegistrarAulaTurma'))
 const ProfessorNotas = lazy(() => import('../pages/professor/Notas/Notas'))
 const ProfessorReforco = lazy(() => import('../pages/professor/Reforco/Dashboard'))
+const ProfessorDesempenhoGeral = lazy(() => import('../pages/professor/Reforco/DesempenhoGeral'))
+const ProfessorDesempenhoEvolucao = lazy(() => import('../pages/professor/Reforco/DesempenhoEvolucao'))
+const ProfessorDesempenhoSimulados = lazy(
+  () => import('../pages/professor/Reforco/DesempenhoSimulados'),
+)
 const ProfessorSimulados = lazy(() => import('../pages/professor/Reforco/Simulados'))
 const ProfessorSimuladoFormulario = lazy(
   () => import('../pages/professor/Reforco/SimuladoFormulario'),
@@ -462,6 +467,30 @@ export function AppRoutes() {
           element={
             <RotaProtegida perfis={['PROFESSOR']}>
               <ProfessorReforco />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/desempenho/geral"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorDesempenhoGeral />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/desempenho/evolucao"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorDesempenhoEvolucao />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/reforco/desempenho/simulados"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorDesempenhoSimulados />
             </RotaProtegida>
           }
         />

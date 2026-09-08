@@ -203,7 +203,7 @@ export default function Simulados() {
       cabecalho: 'Status',
       render: (simulado) =>
         simulado.status ? (
-          <Tag variant={STATUS_SIMULADO_VARIANT[simulado.status]} ponto>
+          <Tag variant={STATUS_SIMULADO_VARIANT[simulado.status]}>
             {ROTULO_STATUS_SIMULADO[simulado.status]}
           </Tag>
         ) : (
@@ -216,9 +216,8 @@ export default function Simulados() {
     <Layout>
       <Header
         titulo="Simulados"
-        subtitulo={!loading && !error ? `${filtrados.length} simulado(s)` : undefined}
         voltarPara="/professor/reforco"
-        rotuloVoltar="Voltar para o módulo de reforço"
+        rotuloVoltar="Módulo de reforço"
         actions={
           <Button size="large" icon={<Plus />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
             Novo simulado

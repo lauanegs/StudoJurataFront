@@ -139,7 +139,7 @@ export default function DisciplinaFormulario() {
       <Header
         titulo={edicao ? 'Editar disciplina' : 'Nova disciplina'}
         voltarPara="/adm/disciplinas"
-        rotuloVoltar="Voltar para disciplinas"
+        rotuloVoltar="Disciplinas"
         actions={
           <>
             {edicao ? (

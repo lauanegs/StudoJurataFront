@@ -96,7 +96,7 @@ export default function Usuarios() {
       cabecalho: 'Status',
       render: (usuario) =>
         usuario.status ? (
-          <Tag variant={ATIVO_INATIVO_VARIANT[usuario.status]} ponto>
+          <Tag variant={ATIVO_INATIVO_VARIANT[usuario.status]}>
             {ROTULO_ATIVO_INATIVO[usuario.status]}
           </Tag>
         ) : (
@@ -109,7 +109,6 @@ export default function Usuarios() {
     <Layout>
       <Header
         titulo="Usuários"
-        subtitulo={!loading && !error ? `${filtrados.length} usuário(s)` : undefined}
         actions={
           <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/usuarios/novo')}>
             Adicionar usuário

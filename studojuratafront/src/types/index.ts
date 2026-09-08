@@ -183,6 +183,8 @@ export interface AlunoTurma extends EntidadeBase {
 
 export interface PlanoEnsino extends EntidadeBase {
   turmaDisciplina?: TurmaDisciplina | null
+  /** Professor responsável pelo plano — indireto até então (só via turmaDisciplina, que é opcional). */
+  professor?: Professor | null
   titulo?: string
   curso: Curso
   cargaHoraria?: number
@@ -368,7 +370,11 @@ export interface SimuladoAlunoResponse {
 export interface QuestaoAlunoRequest {
   simuladoAlunoId: number
   questaoId: number
+  /** Usado quando a questão é do tipo ALTERNATIVAS. */
   alternativaId?: number | null
+  /** Usado quando a questão é do tipo VERDADEIRO_FALSO: ids das afirmações marcadas Verdadeiras. */
+  alternativasVerdadeirasIds?: number[]
+  respondida?: boolean
   acertou?: boolean
   tempoResposta?: number
 }
@@ -378,6 +384,10 @@ export interface QuestaoAlunoResponse {
   simuladoAlunoId: number
   questaoId: number
   alternativaId?: number | null
+  /** Ids das afirmações que o aluno marcou como Verdadeiras (só questão VERDADEIRO_FALSO). */
+  alternativasVerdadeirasIds?: number[]
+  /** false = questão deixada em branco. Sem isso, "respondeu e errou tudo" em V/F fica indistinguível de "em branco". */
+  respondida?: boolean
   acertou?: boolean
   tempoResposta?: number
 }
@@ -391,8 +401,13 @@ export interface LancarSimuladoRequest {
 export interface FinalizarSimuladoRequest {
   respostas: {
     questaoId: number
-    /** Nulo quando a questão foi deixada em branco. */
+    /** Nulo quando a questão foi deixada em branco. Ignorado em questão VERDADEIRO_FALSO. */
     alternativaId: number | null
+    /**
+     * Só usado em questão VERDADEIRO_FALSO: ids das alternativas (afirmações)
+     * marcadas como Verdadeiras — as demais contam como marcadas Falsas.
+     */
+    alternativasVerdadeiras?: number[]
     tempoResposta?: number
   }[]
   /** Tempo total da tentativa, em segundos. */
@@ -452,6 +467,19 @@ export interface GerarSimuladoIARequest {
   conteudoPlanoId: number
   quantidadeQuestoes?: number
   nivelDificuldade?: NivelDificuldade
+  /** Motivo(s) da Recomendacao que originou esta chamada, quando houver (ver SimuladoGeradoIAResponse). */
+  motivos?: MotivoRecomendacao[]
+}
+
+/** Vínculo aluno/conteúdo/motivo de um simulado gerado pela IA — GET /ia/geracao/simulado. */
+export interface SimuladoGeradoIAResponse {
+  simuladoId: number
+  alunoId: number
+  conteudoPlanoId: number
+  conteudoTitulo: string
+  motivos: MotivoRecomendacao[]
+  /** Prazo pra revisar/lançar o simulado — passado isso sem lançar (Simulado.status ainda RASCUNHO), conta como atrasado. */
+  prazoLancamento: string
 }
 
 export interface RegistrarReforcoRequest {

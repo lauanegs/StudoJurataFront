@@ -24,9 +24,14 @@ const GRADIENTS: Partial<Record<ButtonVariant, { from: string; to: string; borde
   danger: { from: '#DB5461', to: '#CF505C', border: '#DB5461' },
   // Mesmo verde dos cards de desempenho do módulo de Reforço (theme.colors.success).
   success: { from: '#3DCB63', to: '#34C759', border: '#34C759' },
-  // Confirmado no Figma (Sair/Confirmar resposta/Próxima do simulado):
-  // degradê azul — mesma família de cor que theme.colors.blue/blueDark.
-  info: { from: '#049DBF', to: '#037E99', border: '#049DBF' },
+}
+
+// Fundos que não são um degradê linear de 2 cores só — usam a mesma
+// propriedade CSS `background` literal do token, em vez do `gradient` da
+// Mantine (que só aceita from/to). Confirmado pelo usuário: o "info" precisa
+// ser IGUAL ao fundo da Sidebar, não uma aproximação de duas cores.
+const FUNDOS: Partial<Record<ButtonVariant, { background: string; border: string }>> = {
+  info: { background: tokens.gradients.sidebar, border: tokens.colors.blue },
 }
 
 /**
@@ -50,11 +55,13 @@ export function Button({
 }: ButtonProps) {
   const content = children ?? label
   const gradient = GRADIENTS[variant]
+  const fundo = FUNDOS[variant]
+  const corDaBorda = gradient?.border ?? fundo?.border
 
   return (
     <MantineButton
       type={type}
-      variant={gradient ? 'gradient' : variant === 'secondary' ? 'outline' : 'subtle'}
+      variant={fundo ? 'filled' : gradient ? 'gradient' : variant === 'secondary' ? 'outline' : 'subtle'}
       gradient={gradient ? { from: gradient.from, to: gradient.to, deg: 180 } : undefined}
       // Confirmado no Figma: botão discreto de ação de linha (Detalhar,
       // Registrar aula na tabela...) segue o cinza/azul neutro no hover —
@@ -70,10 +77,11 @@ export function Button({
         root: {
           ...SIZE_STYLES[size],
           fontWeight: tokens.typography.weights.medium,
+          background: fundo && !disabled ? fundo.background : undefined,
           // Desabilitado nunca tem borda: com a borda de 2px, um botão gradient
           // desligado ficava parecendo campo de formulário (input/select), em
           // vez de um botão que simplesmente não pode ser clicado agora.
-          border: gradient && !disabled && !noBorder ? `2px solid ${gradient.border}` : undefined,
+          border: corDaBorda && !disabled && !noBorder ? `2px solid ${corDaBorda}` : undefined,
         },
       }}
       {...rest}

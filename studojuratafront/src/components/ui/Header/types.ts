@@ -10,3 +10,8 @@ export interface HeaderProps {
   actions?: ReactNode
   children?: ReactNode
 }
+
+export interface SubtituloItemProps {
+  icon: ReactNode
+  children: ReactNode
+}

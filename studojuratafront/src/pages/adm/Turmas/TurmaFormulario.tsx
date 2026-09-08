@@ -1,30 +1,30 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { CalendarClock, Pencil, Plus, Save, Trash2, UserCog, UserPlus, Users } from 'lucide-react'
+import { CalendarClock, Pencil, Plus, Save, Trash2, UserPlus, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
+import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
-import { Chip } from '../../../components/ui/Chip'
 import { DataTable } from '../../../components/ui/DataTable'
 import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header } from '../../../components/ui/Header'
 import { IconButton } from '../../../components/ui/IconButton'
 import { Input } from '../../../components/ui/Input'
-import { Modal } from '../../../components/ui/Modal'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
 import { TimePicker } from '../../../components/ui/TimePicker'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
-import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
+import { useDebounce } from '../../../hooks/useDebounce'
 import { useEscola } from '../../../hooks/useEscola'
 import { useHidratar } from '../../../hooks/useHidratar'
-import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
+import { usePaginacao } from '../../../hooks/usePaginacao'
+import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
   cursos as servicoCursos,
@@ -32,11 +32,10 @@ import {
   horariosTurma,
   matriculas,
   professores as servicoProfessores,
-  turmaDisciplinaSubstitutos,
   turmaDisciplinas,
   turmas as servicoTurmas,
 } from '../../../services/endpoints'
-import { formatarData, formatarHora, formatarIdade } from '../../../utils/format'
+import { formatarData, formatarHora, formatarIdade, normalizar } from '../../../utils/format'
 import {
   OPCOES_ATIVA_INATIVA,
   OPCOES_DIA_SEMANA,
@@ -72,10 +71,15 @@ const Grade = styled.div`
 `
 
 /* Ações que dividem linha com Select/Input (56px) usam o mesmo size="large"
-   pra não ficarem mais baixas que o campo ao lado. */
+   pra não ficarem mais baixas que o campo ao lado. Busca sempre por último
+   no JSX (extrema direita) — mesmo padrão do Header (actions antes, filtros
+   por último), confirmado pelo usuário. */
 const LinhaAcaoFlutuante = styled.div`
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: ${({ theme }) => theme.spacing.sm};
+  flex-wrap: wrap;
 `
 
 const LinhaHorario = styled.div`
@@ -134,9 +138,6 @@ export default function TurmaFormulario() {
     professorId: number | null
   }>({ disciplinaId: null, professorId: null })
 
-  const [vinculoSubstitutos, setVinculoSubstitutos] = useState<TurmaDisciplina | null>(null)
-  const [professorSubstitutoId, setProfessorSubstitutoId] = useState<number | null>(null)
-
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(turmaId as number), [turmaId], {
     ativo: Boolean(turmaId),
   })
@@ -162,6 +163,31 @@ export default function TurmaFormulario() {
     [turmaId],
     { ativo: Boolean(turmaId) },
   )
+
+  const [buscaAtivos, setBuscaAtivos] = useState('')
+  const buscaAtivosAtrasada = useDebounce(buscaAtivos)
+  const [buscaHistorico, setBuscaHistorico] = useState('')
+  const buscaHistoricoAtrasada = useDebounce(buscaHistorico)
+
+  const ativos = requisicaoAtivos.data ?? []
+  const historico = requisicaoHistorico.data ?? []
+
+  const ativosFiltrados = useMemo(() => {
+    const lista = requisicaoAtivos.data ?? []
+    if (!buscaAtivosAtrasada.trim()) return lista
+    const termo = normalizar(buscaAtivosAtrasada)
+    return lista.filter((matricula) => normalizar(matricula.aluno?.pessoa?.nome).includes(termo))
+  }, [requisicaoAtivos.data, buscaAtivosAtrasada])
+
+  const historicoFiltrado = useMemo(() => {
+    const lista = requisicaoHistorico.data ?? []
+    if (!buscaHistoricoAtrasada.trim()) return lista
+    const termo = normalizar(buscaHistoricoAtrasada)
+    return lista.filter((matricula) => normalizar(matricula.aluno?.pessoa?.nome).includes(termo))
+  }, [requisicaoHistorico.data, buscaHistoricoAtrasada])
+
+  const paginacaoAtivos = usePaginacao(ativosFiltrados)
+  const paginacaoHistorico = usePaginacao(historicoFiltrado)
 
   useHidratar(requisicaoTurma.data, (turma) => {
     setTitulo(turma.titulo ?? '')
@@ -363,61 +389,6 @@ export default function TurmaFormulario() {
     }
   }
 
-  const requisicaoSubstitutos = useRequisicao(
-    () => turmaDisciplinaSubstitutos.listarPorTurmaDisciplina(vinculoSubstitutos!.id),
-    [vinculoSubstitutos?.id],
-    { ativo: Boolean(vinculoSubstitutos) },
-  )
-
-  const substitutosAtivos = useMemo(
-    () => (requisicaoSubstitutos.data ?? []).filter((substituto) => substituto.status !== 'INATIVO'),
-    [requisicaoSubstitutos.data],
-  )
-
-  // Titular e quem já é substituto não aparecem de novo na lista de opções.
-  const opcoesProfessoresSubstitutos = useMemo(() => {
-    if (!vinculoSubstitutos) return []
-
-    const jaVinculados = new Set([
-      vinculoSubstitutos.professor?.id,
-      ...substitutosAtivos.map((substituto) => substituto.professor?.id),
-    ])
-
-    return opcoesProfessores.filter((opcao) => !jaVinculados.has(opcao.value))
-  }, [vinculoSubstitutos, substitutosAtivos, opcoesProfessores])
-
-  const { executar: adicionarSubstituto, executando: adicionandoSubstituto } = useAcao(async () => {
-    if (!vinculoSubstitutos || !professorSubstitutoId) {
-      toast.warning('Selecione o professor substituto')
-      return
-    }
-
-    try {
-      await turmaDisciplinaSubstitutos.adicionar(vinculoSubstitutos.id, professorSubstitutoId)
-      toast.success('Substituto vinculado')
-      setProfessorSubstitutoId(null)
-      await requisicaoSubstitutos.reload()
-    } catch (erroVincular) {
-      toast.error(
-        'Não foi possível vincular o substituto',
-        erroVincular instanceof ApiError ? erroVincular.message : undefined,
-      )
-    }
-  })
-
-  async function removerSubstituto(id: number) {
-    try {
-      await turmaDisciplinaSubstitutos.remover(id)
-      toast.success('Substituto removido')
-      await requisicaoSubstitutos.reload()
-    } catch (erroRemover) {
-      toast.error(
-        'Não foi possível remover',
-        erroRemover instanceof ApiError ? erroRemover.message : undefined,
-      )
-    }
-  }
-
   async function removerVinculo(vinculo: TurmaDisciplina) {
     await confirmar({
       titulo: 'Remover disciplina da turma?',
@@ -474,20 +445,12 @@ export default function TurmaFormulario() {
     )
   }
 
-  const ativos = requisicaoAtivos.data ?? []
-  const historico = requisicaoHistorico.data ?? []
-
   return (
     <Layout>
       <Header
         titulo={edicao ? (titulo || 'Editar turma') : 'Nova turma'}
-        subtitulo={
-          edicao && requisicaoTurma.data?.curso?.nome
-            ? requisicaoTurma.data.curso.nome
-            : undefined
-        }
         voltarPara="/adm/turmas"
-        rotuloVoltar="Voltar para turmas"
+        rotuloVoltar="Turmas"
         actions={
           <>
             {edicao ? (
@@ -749,81 +712,16 @@ export default function TurmaFormulario() {
                   descricao: 'Vincule as disciplinas para que os professores possam criar planos de aula.',
                 }}
                 actions={(vinculo) => (
-                  <>
-                    <IconButton
-                      label="Gerenciar substitutos"
-                      icon={<UserCog />}
-                      onClick={() => setVinculoSubstitutos(vinculo)}
-                    />
-                    <IconButton
-                      label="Remover disciplina"
-                      icon={<Trash2 />}
-                      variant="danger"
-                      onClick={() => removerVinculo(vinculo)}
-                    />
-                  </>
+                  <IconButton
+                    label="Remover disciplina"
+                    icon={<Trash2 />}
+                    variant="danger"
+                    onClick={() => removerVinculo(vinculo)}
+                  />
                 )}
               />
             </>
           )}
-
-          <Modal
-            aberto={Boolean(vinculoSubstitutos)}
-            onClose={() => {
-              setVinculoSubstitutos(null)
-              setProfessorSubstitutoId(null)
-            }}
-            titulo="Professores substitutos"
-            descricao={
-              vinculoSubstitutos
-                ? `Além de ${vinculoSubstitutos.professor?.pessoa?.nome ?? 'sem professor titular'} (titular), quem mais pode registrar aula de ${vinculoSubstitutos.disciplina?.titulo} nesta turma. O plano de ensino e o plano de aula continuam os mesmos para todos.`
-                : undefined
-            }
-            largura="520px"
-          >
-            <Coluna>
-              <LinhaVinculo>
-                <Select<number>
-                  label="Professor substituto"
-                  options={opcoesProfessoresSubstitutos}
-                  value={professorSubstitutoId}
-                  loading={requisicaoProfessores.loading}
-                  searchable
-                  placeholder="Selecionar professor..."
-                  emptyText="Todos os professores já estão vinculados"
-                  onChange={setProfessorSubstitutoId}
-                />
-
-                <Button
-                  size="large"
-                  icon={<Plus />}
-                  loading={adicionandoSubstituto}
-                  onClick={adicionarSubstituto}
-                >
-                  Vincular
-                </Button>
-              </LinhaVinculo>
-
-              {requisicaoSubstitutos.isEmpty ? (
-                <EstadoVazio
-                  titulo="Nenhum substituto vinculado"
-                  descricao="Sem substitutos, só o professor titular pode registrar aula desta disciplina na turma."
-                />
-              ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {substitutosAtivos.map((substituto) => (
-                    <Chip
-                      key={substituto.id}
-                      onRemove={() => removerSubstituto(substituto.id)}
-                      rotuloRemover={`Remover ${substituto.professor?.pessoa?.nome}`}
-                    >
-                      {substituto.professor?.pessoa?.nome ?? `Professor ${substituto.professor?.id}`}
-                    </Chip>
-                  ))}
-                </div>
-              )}
-            </Coluna>
-          </Modal>
 
           {edicao && aba === 'alunos' && (
             <>
@@ -835,6 +733,12 @@ export default function TurmaFormulario() {
                 >
                   Matricular aluno
                 </Button>
+
+                <BuscaInput
+                  value={buscaAtivos}
+                  onChange={setBuscaAtivos}
+                  placeholder="Buscar aluno por nome..."
+                />
               </LinhaAcaoFlutuante>
 
               <DataTable<AlunoTurma>
@@ -862,7 +766,7 @@ export default function TurmaFormulario() {
                     cabecalho: 'Situação',
                     render: (matricula) =>
                       matricula.status ? (
-                        <Tag variant={STATUS_MATRICULA_VARIANT[matricula.status]} ponto>
+                        <Tag variant={STATUS_MATRICULA_VARIANT[matricula.status]}>
                           {ROTULO_STATUS_MATRICULA[matricula.status]}
                         </Tag>
                       ) : (
@@ -870,16 +774,27 @@ export default function TurmaFormulario() {
                       ),
                   },
                 ]}
-                data={ativos}
+                data={paginacaoAtivos.itensDaPagina}
                 rowKey={(matricula) => matricula.id}
                 loading={requisicaoAtivos.loading}
                 error={requisicaoAtivos.error}
                 onReload={requisicaoAtivos.reload}
+                paginacao={{
+                  pagina: paginacaoAtivos.pagina,
+                  totalPaginas: paginacaoAtivos.totalPaginas,
+                  label: paginacaoAtivos.label,
+                  temAnterior: paginacaoAtivos.temAnterior,
+                  temProxima: paginacaoAtivos.temProxima,
+                  onPrevious: paginacaoAtivos.anterior,
+                  onNext: paginacaoAtivos.proxima,
+                }}
                 empty={{
-                  titulo: 'Nenhum aluno matriculado',
-                  descricao: 'Matricule alunos para começar a registrar aulas e frequências.',
+                  titulo: buscaAtivos ? 'Nenhum aluno encontrado' : 'Nenhum aluno matriculado',
+                  descricao: buscaAtivos
+                    ? 'Revise o termo buscado ou limpe o filtro.'
+                    : 'Matricule alunos para começar a registrar aulas e frequências.',
                   icon: <Users />,
-                  acao: (
+                  acao: !buscaAtivos && (
                     <Button
                       icon={<UserPlus />}
                       onClick={() => navegar(`/adm/turmas/${turmaId}/matricular`)}
@@ -901,54 +816,78 @@ export default function TurmaFormulario() {
           )}
 
           {edicao && aba === 'historico' && (
-            <DataTable<AlunoTurma>
-              descricao="Histórico completo de matrículas da turma"
-              columns={[
-                {
-                  key: 'aluno',
-                  cabecalho: 'Aluno',
-                  render: (matricula) => matricula.aluno?.pessoa?.nome ?? '—',
-                },
-                {
-                  key: 'status',
-                  cabecalho: 'Situação',
-                  render: (matricula) =>
-                    matricula.status ? (
-                      <Tag variant={STATUS_MATRICULA_VARIANT[matricula.status]} ponto>
-                        {ROTULO_STATUS_MATRICULA[matricula.status]}
-                      </Tag>
-                    ) : (
-                      '—'
-                    ),
-                },
-                {
-                  key: 'inicio',
-                  cabecalho: 'Início',
-                  render: (matricula) => formatarData(matricula.dataInicio),
-                },
-                {
-                  key: 'fim',
-                  cabecalho: 'Término',
-                  render: (matricula) =>
-                    matricula.dataFim ? formatarData(matricula.dataFim) : 'em aberto',
-                },
-              ]}
-              data={historico}
-              rowKey={(matricula) => matricula.id}
-              loading={requisicaoHistorico.loading}
-              error={requisicaoHistorico.error}
-              onReload={requisicaoHistorico.reload}
-              densidade="compacta"
-              empty={{ titulo: 'Sem histórico', descricao: 'Nenhuma matrícula foi registrada nesta turma.' }}
-              actions={(matricula) => (
-                <IconButton
-                  label="Editar matrícula"
-                  icon={<Pencil />}
-                  onClick={() => navegar(`/adm/turmas/${turmaId}/matricular/${matricula.id}`)}
+            <>
+              <LinhaAcaoFlutuante>
+                <BuscaInput
+                  value={buscaHistorico}
+                  onChange={setBuscaHistorico}
+                  placeholder="Buscar aluno por nome..."
                 />
-              )}
-              rotuloColunaAcoes="Matrícula"
-            />
+              </LinhaAcaoFlutuante>
+
+              <DataTable<AlunoTurma>
+                descricao="Histórico completo de matrículas da turma"
+                columns={[
+                  {
+                    key: 'aluno',
+                    cabecalho: 'Aluno',
+                    render: (matricula) => matricula.aluno?.pessoa?.nome ?? '—',
+                  },
+                  {
+                    key: 'status',
+                    cabecalho: 'Situação',
+                    render: (matricula) =>
+                      matricula.status ? (
+                        <Tag variant={STATUS_MATRICULA_VARIANT[matricula.status]}>
+                          {ROTULO_STATUS_MATRICULA[matricula.status]}
+                        </Tag>
+                      ) : (
+                        '—'
+                      ),
+                  },
+                  {
+                    key: 'inicio',
+                    cabecalho: 'Início',
+                    render: (matricula) => formatarData(matricula.dataInicio),
+                  },
+                  {
+                    key: 'fim',
+                    cabecalho: 'Término',
+                    render: (matricula) =>
+                      matricula.dataFim ? formatarData(matricula.dataFim) : 'em aberto',
+                  },
+                ]}
+                data={paginacaoHistorico.itensDaPagina}
+                rowKey={(matricula) => matricula.id}
+                loading={requisicaoHistorico.loading}
+                error={requisicaoHistorico.error}
+                onReload={requisicaoHistorico.reload}
+                densidade="compacta"
+                paginacao={{
+                  pagina: paginacaoHistorico.pagina,
+                  totalPaginas: paginacaoHistorico.totalPaginas,
+                  label: paginacaoHistorico.label,
+                  temAnterior: paginacaoHistorico.temAnterior,
+                  temProxima: paginacaoHistorico.temProxima,
+                  onPrevious: paginacaoHistorico.anterior,
+                  onNext: paginacaoHistorico.proxima,
+                }}
+                empty={{
+                  titulo: buscaHistorico ? 'Nenhum aluno encontrado' : 'Sem histórico',
+                  descricao: buscaHistorico
+                    ? 'Revise o termo buscado ou limpe o filtro.'
+                    : 'Nenhuma matrícula foi registrada nesta turma.',
+                }}
+                actions={(matricula) => (
+                  <IconButton
+                    label="Editar matrícula"
+                    icon={<Pencil />}
+                    onClick={() => navegar(`/adm/turmas/${turmaId}/matricular/${matricula.id}`)}
+                  />
+                )}
+                rotuloColunaAcoes="Matrícula"
+              />
+            </>
           )}
         </>
       )}

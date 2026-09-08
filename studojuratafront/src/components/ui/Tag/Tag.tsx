@@ -1,54 +1,61 @@
 import { Badge } from '@mantine/core'
 
 import { theme as tokens } from '../../../styles/theme'
+import { corComOpacidade } from '../../../utils/corComOpacidade'
 import { comTamanho } from '../../../utils/redimensionarIcone'
 import type { TagProps, TagVariant } from './types'
 
-/** As cores vêm de *_VARIANT em utils/labels.ts. */
-const CORES: Record<TagVariant, { bg: string; texto: string }> = {
-  success: { bg: tokens.colors.successBackground, texto: tokens.colors.successText },
-  error: { bg: tokens.colors.errorBackground, texto: tokens.colors.errorText },
-  warning: { bg: tokens.colors.warningBackground, texto: tokens.colors.warningText },
-  info: { bg: tokens.colors.infoBackground, texto: tokens.colors.infoText },
-  neutral: { bg: tokens.colors.background, texto: tokens.colors.textSecondary },
-  purple: { bg: tokens.colors.purpleSoft, texto: tokens.colors.purple },
+/**
+ * Fundo na cor base do sistema (a mesma usada no bloco dos cards de
+ * desempenho — success/error/warning) a 30% de opacidade. O texto é sempre
+ * cinza (textSecondary), não acompanha a cor do fundo.
+ */
+const CORES: Record<TagVariant, { bg: string }> = {
+  success: { bg: corComOpacidade(tokens.colors.success, 0.3) },
+  error: { bg: corComOpacidade(tokens.colors.error, 0.3) },
+  warning: { bg: corComOpacidade(tokens.colors.warning, 0.3) },
+  info: { bg: corComOpacidade(tokens.colors.info, 0.3) },
+  neutral: { bg: tokens.colors.background },
+  purple: { bg: corComOpacidade(tokens.colors.purple, 0.3) },
 }
 
-export function Tag({ children, variant = 'neutral', icon, ponto, size = 'medium' }: TagProps) {
+const TAMANHOS: Record<NonNullable<TagProps['size']>, { fontSize: string; padding: string; icone: number }> = {
+  small: { fontSize: '11px', padding: '2px 8px', icone: 12 },
+  medium: { fontSize: tokens.typography.sizes.xs, padding: '4px 12px', icone: 12 },
+  // Usado no subtítulo do header — confirmado pelo usuário: um pouco maior
+  // que o "medium" padrão do resto do sistema.
+  large: { fontSize: tokens.typography.sizes.sm, padding: '6px 14px', icone: 14 },
+}
+
+export function Tag({ children, variant = 'neutral', icon, size = 'medium' }: TagProps) {
   const cor = CORES[variant]
+  const tamanho = TAMANHOS[size]
 
   return (
     <Badge
       variant="light"
       radius="sm"
-      leftSection={
-        (ponto || icon) && (
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: tokens.spacing.xxs }}>
-            {ponto && (
-              <span
-                aria-hidden="true"
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: 'currentColor',
-                }}
-              />
-            )}
-            {comTamanho(icon, 12)}
-          </span>
-        )
-      }
+      leftSection={icon && comTamanho(icon, tamanho.icone)}
       styles={{
         root: {
           backgroundColor: cor.bg,
-          color: cor.texto,
+          color: tokens.colors.textSecondary,
           textTransform: 'none',
           fontWeight: tokens.typography.weights.semiBold,
-          fontSize: size === 'small' ? '11px' : tokens.typography.sizes.xs,
-          padding: size === 'small' ? '2px 8px' : '4px 12px',
+          fontSize: tamanho.fontSize,
+          padding: tamanho.padding,
           height: 'auto',
           lineHeight: tokens.typography.lineHeight.tight,
+        },
+        // O Badge da Mantine trunca o texto com "..." por padrão
+        // (overflow/text-overflow/white-space no label) — confirmado pelo
+        // usuário: o texto tem que quebrar linha inteiro, nunca esconder
+        // parte dele.
+        label: {
+          overflow: 'visible',
+          textOverflow: 'unset',
+          whiteSpace: 'normal',
+          wordBreak: 'break-word',
         },
       }}
     >

@@ -1,2 +1,2 @@
-export { Header } from './Header'
-export type { HeaderProps } from './types'
+export { Header, SubtituloItem } from './Header'
+export type { HeaderProps, SubtituloItemProps } from './types'

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Check, ClipboardCheck, Eye, X } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
@@ -28,27 +28,36 @@ import {
 import type { QuestaoResponse } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
-type Aba = 'pendentes' | 'todas'
+type Aba = 'pendentes' | 'aprovadas' | 'todas'
 
 /**
- * Fila de moderação de questões — e, na aba "Todas", o banco de questões
- * completo do professor (reaproveita a mesma tela em vez de uma rota nova).
+ * Fila de moderação de questões — e, nas abas "Aprovadas"/"Todas", o banco
+ * de questões do professor (reaproveita a mesma tela em vez de uma rota
+ * nova pra cada recorte de status).
  *
  * O back marca como PENDENTE tudo que a IA gera (StatusQuestao.PENDENTE); só
- * depois de aprovada a questão pode compor um simulado visível ao aluno.
+ * depois de aprovada a questão pode compor um simulado visível ao aluno —
+ * "Aprovadas" é o recorte que interessa pra reaproveitar questão em um
+ * simulado novo.
  */
 export default function QuestoesPendentes() {
   const navegar = useNavigate()
   const toast = useToast()
   const confirmar = useConfirm()
+  const [searchParams] = useSearchParams()
 
-  const [aba, setAba] = useState<Aba>('pendentes')
+  const abaDaUrl = searchParams.get('aba')
+  const abaInicial: Aba = abaDaUrl === 'aprovadas' || abaDaUrl === 'todas' ? abaDaUrl : 'pendentes'
+
+  const [aba, setAba] = useState<Aba>(abaInicial)
   const [busca, setBusca] = useState('')
   const buscaAtrasada = useDebounce(busca)
   const [processando, setProcessando] = useState<number | null>(null)
 
+  // Sem endpoint dedicado pra "só aprovadas" no back — lista tudo e filtra
+  // no cliente, igual à aba "Todas".
   const { data, loading, error, reload } = useRequisicao(
-    () => (aba === 'todas' ? servicoQuestoes.listar() : servicoQuestoes.listarPendentes()),
+    () => (aba === 'pendentes' ? servicoQuestoes.listarPendentes() : servicoQuestoes.listar()),
     [aba],
   )
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
@@ -57,12 +66,14 @@ export default function QuestoesPendentes() {
     (requisicaoDisciplinas.data ?? []).find((disciplina) => disciplina.id === id)?.titulo ?? '—'
 
   const filtradas = useMemo(() => {
-    const lista = data ?? []
+    let lista = data ?? []
+    if (aba === 'aprovadas') lista = lista.filter((questao) => questao.status === 'APROVADA')
+
     if (!buscaAtrasada.trim()) return lista
 
     const termo = normalizar(buscaAtrasada)
     return lista.filter((questao) => normalizar(questao.enunciado).includes(termo))
-  }, [data, buscaAtrasada])
+  }, [data, aba, buscaAtrasada])
 
   const paginacao = usePaginacao(filtradas)
 
@@ -161,14 +172,14 @@ export default function QuestoesPendentes() {
           '—'
         ),
     },
-    ...(aba === 'todas'
+    ...(aba !== 'pendentes'
       ? [
           {
             key: 'status',
             cabecalho: 'Status',
             render: (questao: QuestaoResponse) =>
               questao.status ? (
-                <Tag variant={STATUS_QUESTAO_VARIANT[questao.status]} ponto>
+                <Tag variant={STATUS_QUESTAO_VARIANT[questao.status]}>
                   {ROTULO_STATUS_QUESTAO[questao.status]}
                 </Tag>
               ) : (
@@ -179,17 +190,15 @@ export default function QuestoesPendentes() {
       : []),
   ]
 
+  const titulo =
+    aba === 'todas' ? 'Banco de questões' : aba === 'aprovadas' ? 'Questões aprovadas' : 'Questões aguardando aprovação'
+
   return (
     <Layout>
       <Header
-        titulo={aba === 'todas' ? 'Banco de questões' : 'Questões aguardando aprovação'}
-        subtitulo={
-          !loading && !error
-            ? `${filtradas.length} questão(ões)${aba === 'pendentes' ? ' na fila de revisão' : ''}`
-            : undefined
-        }
+        titulo={titulo}
         voltarPara="/professor/reforco"
-        rotuloVoltar="Voltar para o módulo de reforço"
+        rotuloVoltar="Módulo de reforço"
         filtros={<BuscaInput value={busca} onChange={setBusca} placeholder="Buscar no enunciado..." />}
       />
 
@@ -199,12 +208,19 @@ export default function QuestoesPendentes() {
         onChange={setAba}
         options={[
           { value: 'pendentes', label: 'Pendentes' },
+          { value: 'aprovadas', label: 'Aprovadas' },
           { value: 'todas', label: 'Todas' },
         ]}
       />
 
       <DataTable
-        descricao={aba === 'todas' ? 'Todas as questões do banco' : 'Questões pendentes de aprovação'}
+        descricao={
+          aba === 'todas'
+            ? 'Todas as questões do banco'
+            : aba === 'aprovadas'
+              ? 'Questões aprovadas, prontas para reaproveitar em um simulado'
+              : 'Questões pendentes de aprovação'
+        }
         columns={colunas}
         data={paginacao.itensDaPagina}
         rowKey={(questao) => questao.id}
@@ -221,12 +237,14 @@ export default function QuestoesPendentes() {
           onNext: paginacao.proxima,
         }}
         empty={{
-          titulo: busca ? 'Nenhuma questão encontrada' : aba === 'todas' ? 'Nenhuma questão cadastrada' : 'Nada para revisar',
+          titulo: busca ? 'Nenhuma questão encontrada' : aba === 'aprovadas' ? 'Nenhuma questão aprovada ainda' : aba === 'todas' ? 'Nenhuma questão cadastrada' : 'Nada para revisar',
           descricao: busca
             ? 'Revise o termo buscado ou limpe o filtro.'
-            : aba === 'todas'
-              ? 'As questões criadas em simulados ou geradas por IA aparecem aqui.'
-              : 'Todas as questões geradas já foram aprovadas ou rejeitadas.',
+            : aba === 'aprovadas'
+              ? 'Aprove questões na aba "Pendentes" para elas aparecerem aqui.'
+              : aba === 'todas'
+                ? 'As questões criadas em simulados ou geradas por IA aparecem aqui.'
+                : 'Todas as questões geradas já foram aprovadas ou rejeitadas.',
           icon: <ClipboardCheck />,
         }}
         actions={(questao) => (

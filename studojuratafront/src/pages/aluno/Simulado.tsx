@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Flag } from 'lucide-react'
 
 import { AlternativaButton } from '../../components/ui/AlternativaButton'
 import { AlternativaCard } from '../../components/ui/AlternativaCard'
+import { AlternativaVerdadeiroFalso } from '../../components/ui/AlternativaVerdadeiroFalso'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { EnunciadoSimuladoCard } from '../../components/ui/EnunciadoSimuladoCard'
@@ -35,7 +36,7 @@ import { formatarMoedas, formatarTempo, letraAlternativa, nomeCurto } from '../.
 import { resolverImagemSkin } from '../../utils/skins'
 import { animacaoFlutuar } from '../../styles/animations'
 import { theme } from '../../styles/theme'
-import type { AlternativaResponse } from '../../types'
+import type { AlternativaResponse, TipoQuestao } from '../../types'
 
 /* Confirmado no Figma: o cabeçalho (SimuladoHeader) cobre a largura inteira
    da tela, encostado nas bordas — só o conteúdo abaixo dele (progresso,
@@ -220,6 +221,7 @@ const MOEDAS_POR_SIMULADO = 10
 interface QuestaoDaProva {
   questaoId: number
   enunciado: string
+  tipo: TipoQuestao
   alternativas: AlternativaResponse[]
 }
 
@@ -246,6 +248,10 @@ export default function Simulado() {
 
   const [indiceAtual, setIndiceAtual] = useState(0)
   const [respostas, setRespostas] = useState<Record<number, number | null>>({})
+  // Questão VERDADEIRO_FALSO: cada afirmação (alternativaId) é julgada à parte
+  // (true = aluno marcou Verdadeiro, false = Falso) — por isso não cabe no
+  // mesmo formato de `respostas` (uma única alternativa escolhida por questão).
+  const [respostasVF, setRespostasVF] = useState<Record<number, Record<number, boolean>>>({})
   // Marca em quais questões o aluno já clicou em "Confirmar resposta" — até lá,
   // a seleção pode ser trocada livremente e nada é revelado (evita que um
   // toque sem querer numa alternativa já feche a questão como respondida).
@@ -297,6 +303,7 @@ export default function Simulado() {
         {
           questaoId: questao.id,
           enunciado: questao.enunciado,
+          tipo: questao.tipo,
           alternativas: todasAlternativas
             .filter((alternativa) => alternativa.questaoId === questao.id)
             .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)),
@@ -308,8 +315,36 @@ export default function Simulado() {
   const tempoLimiteSegundos = simulado?.tempoLimite ? simulado.tempoLimite * 60 : null
   const restante = tempoLimiteSegundos !== null ? Math.max(0, tempoLimiteSegundos - segundos) : null
 
+  // Uma questão VERDADEIRO_FALSO só conta como respondida quando TODAS as
+  // afirmações foram julgadas — julgar só parte delas equivale a deixar em
+  // branco (nenhuma afirmação sem marcação vira "Falso" por omissão).
+  function estaRespondida(questao: QuestaoDaProva) {
+    if (questao.tipo === 'VERDADEIRO_FALSO') {
+      const marcadas = respostasVF[questao.questaoId] ?? {}
+      return questao.alternativas.length > 0 && questao.alternativas.every((a) => a.id in marcadas)
+    }
+    return typeof respostas[questao.questaoId] === 'number'
+  }
+
+  // Acerta a questão inteira só quando TODAS as afirmações batem com o
+  // gabarito — uma só errada derruba a questão toda (decisão confirmada).
+  function acertouQuestao(questao: QuestaoDaProva) {
+    if (questao.tipo === 'VERDADEIRO_FALSO') {
+      const marcadas = respostasVF[questao.questaoId] ?? {}
+      return questao.alternativas.every((a) => marcadas[a.id] === Boolean(a.correta))
+    }
+    const escolhida = questao.alternativas.find((a) => a.id === respostas[questao.questaoId])
+    return Boolean(escolhida?.correta)
+  }
+
+  // 'manual' = o próprio aluno clicou em "Finalizar simulado"; 'tempo' = tempo
+  // esgotado (auto-envio); 'saida' = o aluno saiu no meio da prova — igual a
+  // uma finalização manual pro back (mesmas questões em branco contam como
+  // erro), só muda o aviso mostrado e não fica esperando o aluno ver a
+  // correção: uma vez iniciado, sair conta como tentativa encerrada, sem
+  // conceder nova chance depois.
   const finalizar = useCallback(
-    async (porTempo: boolean) => {
+    async (motivo: 'manual' | 'tempo' | 'saida') => {
       if (finalizando) return
 
       setFinalizando(true)
@@ -318,15 +353,32 @@ export default function Simulado() {
         await simuladoAlunos.finalizar(idTentativa, {
           respostas: questoes.map((questao) => ({
             questaoId: questao.questaoId,
-            alternativaId: respostas[questao.questaoId] ?? null,
+            alternativaId: questao.tipo === 'VERDADEIRO_FALSO' ? null : (respostas[questao.questaoId] ?? null),
+            // Sem resposta pra alguma afirmação, a questão inteira conta como
+            // em branco (item 4.2) — não manda a lista parcial, manda nada.
+            alternativasVerdadeiras:
+              questao.tipo === 'VERDADEIRO_FALSO' && estaRespondida(questao)
+                ? questao.alternativas
+                    .filter((a) => respostasVF[questao.questaoId]?.[a.id] === true)
+                    .map((a) => a.id)
+                : undefined,
             tempoResposta: temposPorQuestao[questao.questaoId],
           })),
           tempoGastoTotal: segundos,
-          finalizadoPorTempo: porTempo,
+          finalizadoPorTempo: motivo === 'tempo',
         })
 
+        if (motivo === 'saida') {
+          toast.error(
+            'Simulado encerrado',
+            'Você saiu antes de terminar — a tentativa foi finalizada e as questões não respondidas contam como erro.',
+          )
+          navegar('/aluno/reforco')
+          return
+        }
+
         toast.success(
-          porTempo ? 'Tempo esgotado' : 'Simulado finalizado',
+          motivo === 'tempo' ? 'Tempo esgotado' : 'Simulado finalizado',
           'Confira sua correção abaixo.',
         )
 
@@ -341,7 +393,7 @@ export default function Simulado() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [finalizando, idTentativa, questoes, respostas, temposPorQuestao, segundos],
+    [finalizando, idTentativa, questoes, respostas, respostasVF, temposPorQuestao, segundos],
   )
 
   useEffect(() => {
@@ -358,7 +410,7 @@ export default function Simulado() {
 
     // A prova precisa ser encerrada mesmo sem ação do aluno — este é o único
     // caminho possível para isso.
-    void finalizar(true)
+    void finalizar('tempo')
   }, [restante, concluido, finalizando, finalizar])
 
   useEffect(() => {
@@ -374,17 +426,22 @@ export default function Simulado() {
   }, [concluido])
 
   const questaoAtual = questoes[indiceAtual]
+  const ehVerdadeiroFalso = questaoAtual?.tipo === 'VERDADEIRO_FALSO'
 
   const respostaAtualId = questaoAtual ? respostas[questaoAtual.questaoId] : undefined
-  const temSelecao = typeof respostaAtualId === 'number'
+  const respostasVFAtual = questaoAtual ? (respostasVF[questaoAtual.questaoId] ?? {}) : {}
+  const temSelecao = questaoAtual ? estaRespondida(questaoAtual) : false
   const revelada = questaoAtual ? Boolean(confirmadas[questaoAtual.questaoId]) : false
   // V/F pode ter mais de uma alternativa `correta` (cada afirmação julgada à
   // parte) — "acertou" não é "escolheu a mesma id que uma correta fixa", é
-  // "a alternativa que o aluno escolheu é, ela mesma, uma correta".
+  // "a alternativa que o aluno escolheu é, ela mesma, uma correta" (ou, em
+  // V/F, todas as afirmações julgadas corretamente).
   const alternativaEscolhidaAtual = questaoAtual?.alternativas.find(
     (item) => item.id === respostaAtualId,
   )
-  const acertouAtual = revelada && Boolean(alternativaEscolhidaAtual?.correta)
+  const acertouAtual = Boolean(
+    revelada && questaoAtual && (ehVerdadeiroFalso ? acertouQuestao(questaoAtual) : alternativaEscolhidaAtual?.correta),
+  )
 
   // Já dá pra saber se acertou assim que o aluno responde: as alternativas
   // (com `correta`) já estão todas carregadas no cliente antes mesmo da
@@ -434,7 +491,7 @@ export default function Simulado() {
   async function confirmarFinalizacao() {
     registrarTempoDaQuestao()
 
-    const semResposta = questoes.filter((questao) => !respostas[questao.questaoId]).length
+    const semResposta = questoes.filter((questao) => !estaRespondida(questao)).length
 
     await confirmar({
       titulo: 'Finalizar o simulado?',
@@ -444,7 +501,7 @@ export default function Simulado() {
           : 'Depois de finalizar não é possível alterar as respostas.',
       rotuloConfirmar: 'Finalizar',
       tone: semResposta > 0 ? 'danger' : 'default',
-      aoConfirmar: () => finalizar(false),
+      aoConfirmar: () => finalizar('manual'),
     })
   }
 
@@ -456,15 +513,13 @@ export default function Simulado() {
         if (indice === indiceAtual) return 'current'
 
         if (confirmadas[questao.questaoId]) {
-          const escolhida = questao.alternativas.find(
-            (alternativa) => alternativa.id === respostas[questao.questaoId],
-          )
-          return escolhida?.correta ? 'correct' : 'incorrect'
+          return acertouQuestao(questao) ? 'correct' : 'incorrect'
         }
 
-        return respostas[questao.questaoId] ? 'answered' : 'pending'
+        return estaRespondida(questao) ? 'answered' : 'pending'
       }),
-    [questoes, indiceAtual, respostas, confirmadas],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [questoes, indiceAtual, respostas, respostasVF, confirmadas],
   )
 
   const loading =
@@ -573,19 +628,31 @@ export default function Simulado() {
           {questoes.map((questao, indice) => {
             const resposta = respostasDoAluno.get(questao.questaoId)
 
+            const ehVF = questao.tipo === 'VERDADEIRO_FALSO'
+            const marcadasVerdadeiras = new Set(resposta?.alternativasVerdadeirasIds ?? [])
+            // `respondida` é novo — registros de simulados concluídos antes dessa
+            // mudança não têm esse campo preenchido (null). Sem fallback, todo
+            // resultado antigo passaria a aparecer como "Em branco" mesmo tendo
+            // sido respondido de verdade. Pro tipo ALTERNATIVAS o sinal antigo
+            // (alternativaId presente) ainda é confiável; só V/F antigo fica com
+            // a ambiguidade original (lista vazia = em branco).
+            const respondida =
+              resposta?.respondida ??
+              (ehVF ? (resposta?.alternativasVerdadeirasIds?.length ?? 0) > 0 : resposta?.alternativaId != null)
+
             return (
               <Card key={questao.questaoId}>
                 <QuestaoCabecalho>
                   <QuestaoTitulo>Questão {indice + 1}</QuestaoTitulo>
 
-                  {!resposta || resposta.alternativaId === null ? (
+                  {!respondida ? (
                     <Tag variant="neutral">Em branco</Tag>
-                  ) : resposta.acertou ? (
-                    <Tag variant="success" ponto>
+                  ) : resposta?.acertou ? (
+                    <Tag variant="success">
                       Você acertou
                     </Tag>
                   ) : (
-                    <Tag variant="error" ponto>
+                    <Tag variant="error">
                       Você errou
                     </Tag>
                   )}
@@ -594,19 +661,30 @@ export default function Simulado() {
                 <QuestaoEnunciado>{questao.enunciado}</QuestaoEnunciado>
 
                 <Alternativas>
-                  {questao.alternativas.map((alternativa, posicao) => {
-                    const marcada = alternativa.id === resposta?.alternativaId
+                  {ehVF
+                    ? questao.alternativas.map((alternativa) => (
+                        <AlternativaVerdadeiroFalso
+                          key={alternativa.id}
+                          texto={alternativa.texto}
+                          valor={respondida ? marcadasVerdadeiras.has(alternativa.id) : null}
+                          revelado
+                          correta={alternativa.correta}
+                          disabled
+                        />
+                      ))
+                    : questao.alternativas.map((alternativa, posicao) => {
+                        const marcada = alternativa.id === resposta?.alternativaId
 
-                    return (
-                      <AlternativaCard
-                        key={alternativa.id}
-                        letra={letraAlternativa(posicao)}
-                        texto={alternativa.texto}
-                        status={alternativa.correta ? 'correct' : marcada ? 'incorrect' : 'neutral'}
-                        legenda=""
-                      />
-                    )
-                  })}
+                        return (
+                          <AlternativaCard
+                            key={alternativa.id}
+                            letra={letraAlternativa(posicao)}
+                            texto={alternativa.texto}
+                            status={alternativa.correta ? 'correct' : marcada ? 'incorrect' : 'neutral'}
+                            legenda=""
+                          />
+                        )
+                      })}
                 </Alternativas>
               </Card>
             )
@@ -644,10 +722,11 @@ export default function Simulado() {
         onExit={() =>
           confirmar({
             titulo: 'Sair do simulado?',
-            descricao: 'Suas respostas não serão salvas e a tentativa continuará pendente.',
-            rotuloConfirmar: 'Sair',
+            descricao:
+              'Depois de iniciado, o simulado não pode ser retomado — sair agora finaliza a tentativa e as questões não respondidas contam como erro. Essa ação não pode ser desfeita.',
+            rotuloConfirmar: 'Sair e finalizar',
             tone: 'danger',
-            aoConfirmar: async () => navegar('/aluno/reforco'),
+            aoConfirmar: () => finalizar('saida'),
           })
         }
       />
@@ -664,32 +743,53 @@ export default function Simulado() {
       <EnunciadoSimuladoCard enunciado={textoBalao ?? questaoAtual.enunciado} mascoteSrc={mascoteReacao} />
 
       <Alternativas>
-        {questaoAtual.alternativas.map((alternativa, posicao) => (
-          <AlternativaButton
-            key={alternativa.id}
-            letra={letraAlternativa(posicao)}
-            texto={alternativa.texto}
-            disabled={revelada}
-            state={
-              revelada
-                ? alternativa.correta
-                  ? 'correct'
-                  : alternativa.id === respostaAtualId
-                    ? 'incorrect'
-                    : 'default'
-                : alternativa.id === respostaAtualId
-                  ? 'selected'
-                  : 'default'
-            }
-            onSelect={() => {
-              if (revelada) return
+        {ehVerdadeiroFalso
+          ? questaoAtual.alternativas.map((alternativa) => (
+              <AlternativaVerdadeiroFalso
+                key={alternativa.id}
+                texto={alternativa.texto}
+                valor={respostasVFAtual[alternativa.id] ?? null}
+                disabled={revelada}
+                revelado={revelada}
+                correta={alternativa.correta}
+                onSelect={(valor) => {
+                  if (revelada) return
 
-              // Pode trocar livremente antes de confirmar — só trava depois
-              // de clicar em "Confirmar resposta".
-              setRespostas((atuais) => ({ ...atuais, [questaoAtual.questaoId]: alternativa.id }))
-            }}
-          />
-        ))}
+                  // Pode trocar livremente antes de confirmar — só trava depois
+                  // de clicar em "Confirmar resposta".
+                  setRespostasVF((atuais) => ({
+                    ...atuais,
+                    [questaoAtual.questaoId]: { ...(atuais[questaoAtual.questaoId] ?? {}), [alternativa.id]: valor },
+                  }))
+                }}
+              />
+            ))
+          : questaoAtual.alternativas.map((alternativa, posicao) => (
+              <AlternativaButton
+                key={alternativa.id}
+                letra={letraAlternativa(posicao)}
+                texto={alternativa.texto}
+                disabled={revelada}
+                state={
+                  revelada
+                    ? alternativa.correta
+                      ? 'correct'
+                      : alternativa.id === respostaAtualId
+                        ? 'incorrect'
+                        : 'default'
+                    : alternativa.id === respostaAtualId
+                      ? 'selected'
+                      : 'default'
+                }
+                onSelect={() => {
+                  if (revelada) return
+
+                  // Pode trocar livremente antes de confirmar — só trava depois
+                  // de clicar em "Confirmar resposta".
+                  setRespostas((atuais) => ({ ...atuais, [questaoAtual.questaoId]: alternativa.id }))
+                }}
+              />
+            ))}
       </Alternativas>
 
       <Rodape>

@@ -136,7 +136,7 @@ export default function ProfessorFormulario() {
       <Header
         titulo={edicao ? 'Editar professor' : 'Novo professor'}
         voltarPara="/adm/professores"
-        rotuloVoltar="Voltar para professores"
+        rotuloVoltar="Professores"
         actions={
           <>
             {edicao ? (

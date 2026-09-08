@@ -101,9 +101,6 @@ export default function Alunos() {
     <Layout>
       <Header
         titulo="Alunos"
-        subtitulo={
-          !loading && !error ? `${filtrados.length} aluno(s) cadastrado(s)` : undefined
-        }
         actions={
           <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/alunos/novo')}>
             Adicionar aluno

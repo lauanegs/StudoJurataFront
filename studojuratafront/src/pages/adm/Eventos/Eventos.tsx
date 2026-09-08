@@ -206,11 +206,11 @@ export default function Eventos() {
       cabecalho: 'Situação',
       render: (evento) =>
         evento.concluido ? (
-          <Tag variant="success" ponto>
+          <Tag variant="success">
             Concluído
           </Tag>
         ) : (
-          <Tag variant="warning" ponto>
+          <Tag variant="warning">
             Pendente
           </Tag>
         ),
@@ -221,7 +221,6 @@ export default function Eventos() {
     <Layout>
       <Header
         titulo="Eventos"
-        subtitulo={!loading && !error ? `${filtrados.length} evento(s)` : undefined}
         actions={
           <Button size="large" icon={<Plus />} onClick={abrirNovo}>
             Adicionar evento

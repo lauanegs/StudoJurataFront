@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { ClipboardCheck, FolderInput, Plus, Rocket, Save, Sparkles, Users } from 'lucide-react'
+import { ClipboardCheck, FolderInput, Lock, Plus, Rocket, Save, Sparkles, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -10,7 +10,7 @@ import { CheckBox } from '../../../components/ui/CheckBox'
 import { Chip } from '../../../components/ui/Chip'
 import { DataTable } from '../../../components/ui/DataTable'
 import { DatePicker } from '../../../components/ui/DatePicker'
-import { Header } from '../../../components/ui/Header'
+import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Modal } from '../../../components/ui/Modal'
 import { QuestaoEditor } from '../../../components/ui/QuestaoEditor'
@@ -612,15 +612,15 @@ export default function SimuladoFormulario() {
         titulo={edicao ? 'Editar simulado' : 'Novo simulado'}
         subtitulo={
           somenteLeitura ? (
-            <Tag variant="warning">
-              Simulado já lançado — o conteúdo não pode mais ser alterado
-            </Tag>
+            <SubtituloItem icon={<Lock />}>
+              Status: Simulado já lançado — o conteúdo não pode mais ser alterado
+            </SubtituloItem>
           ) : (
-            <span>{questoes.length} questão(ões) montada(s)</span>
+            <SubtituloItem icon={<ClipboardCheck />}>Questões: {questoes.length} montada(s)</SubtituloItem>
           )
         }
         voltarPara="/professor/reforco/simulados"
-        rotuloVoltar="Voltar para simulados"
+        rotuloVoltar="Simulados"
         actions={
           <>
             {!somenteLeitura && (
@@ -812,7 +812,7 @@ export default function SimuladoFormulario() {
                         return (
                           <Chip
                             key={alunoId}
-                            variant="purple"
+                            variant="neutral"
                             disabled={somenteLeitura}
                             onRemove={
                               somenteLeitura

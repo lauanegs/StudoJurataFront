@@ -1,14 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Check, ClipboardCheck, Pencil, Save, X } from 'lucide-react'
+import { Check, ClipboardCheck, Pencil, Save, Sparkles, X } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
-import { Header } from '../../../components/ui/Header'
+import { Card } from '../../../components/ui/Card'
+import { Chip } from '../../../components/ui/Chip'
+import { DatePicker } from '../../../components/ui/DatePicker'
+import { Header, SubtituloItem } from '../../../components/ui/Header'
+import { Input } from '../../../components/ui/Input'
 import { QuestaoEditor } from '../../../components/ui/QuestaoEditor'
 import { validarQuestao, type ErrosQuestao, type QuestaoEditavel } from '../../../components/ui/QuestaoEditor/types'
+import { Select } from '../../../components/ui/Select'
 import { StatusBadge } from '../../../components/ui/StatusBadge'
+import { Tab } from '../../../components/ui/Tab'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -19,10 +25,17 @@ import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
   alternativas as servicoAlternativas,
+  alunos as servicoAlunos,
+  disciplinas as servicoDisciplinas,
+  ia as servicoIa,
+  planosEnsino,
   questoes as servicoQuestoes,
   simuladoQuestoes,
   simulados as servicoSimulados,
+  turmas as servicoTurmas,
 } from '../../../services/endpoints'
+import { formatarData, paraInputDataHora } from '../../../utils/format'
+import { OPCOES_DESTINACAO, ROTULO_MOTIVO_RECOMENDACAO } from '../../../utils/labels'
 
 const Navegador = styled.div`
   display: flex;
@@ -37,11 +50,32 @@ const Navegador = styled.div`
   box-shadow: ${({ theme }) => theme.shadow.base};
 `
 
+const Coluna = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+const Grade = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+type Aba = 'configuracao' | 'questoes'
+
 /**
- * Aprovação em lote das questões pendentes de um simulado, uma de cada vez —
- * reaproveita o mesmo QuestaoEditor usado em criar/editar simulado e em
- * revisar questão avulsa (confirmado no Figma: mesma estrutura de editor +
- * paginador de questões).
+ * Aprovação de um simulado gerado pela IA — duas abas:
+ * - Configuração: os mesmos campos de um simulado normal (SimuladoFormulario),
+ *   pra revisar/completar antes de lançar (confirmado pelo usuário) — em
+ *   especial "Disponível a partir de", que registra a data de lançamento e é
+ *   sugerida a partir do prazo de revisão (SimuladoGeradoIA.prazoLancamento)
+ *   quando o simulado ainda não tem uma definida.
+ * - Questões: aprovação em lote das questões pendentes, uma de cada vez —
+ *   reaproveita o mesmo QuestaoEditor usado em criar/editar simulado.
+ *
+ * Aluno-alvo e motivo da geração não são campos editáveis aqui — vêm do
+ * vínculo criado na geração (GeracaoSimuladoIAService) e são só informativos.
  */
 export default function AprovarSimulado() {
   const { simuladoId } = useParams()
@@ -51,6 +85,8 @@ export default function AprovarSimulado() {
 
   const idSimulado = Number(simuladoId)
 
+  const [aba, setAba] = useState<Aba>('configuracao')
+
   const [questoes, setQuestoes] = useState<QuestaoEditavel[]>([])
   const [questaoAtiva, setQuestaoAtiva] = useState(0)
   const [editando, setEditando] = useState(false)
@@ -58,10 +94,38 @@ export default function AprovarSimulado() {
   const [processando, setProcessando] = useState(false)
   const [processandoLote, setProcessandoLote] = useState(false)
 
+  // --- Configuração do simulado ---------------------------------------------
+  const [titulo, setTitulo] = useState('')
+  const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
+  const [turmaId, setTurmaId] = useState<number | null>(null)
+  const [planoEnsinoId, setPlanoEnsinoId] = useState<number | null>(null)
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
+  const [tempoLimite, setTempoLimite] = useState('')
+  const [notaMaxima, setNotaMaxima] = useState('10')
+
   const requisicaoSimulado = useRequisicao(() => servicoSimulados.buscar(idSimulado), [idSimulado])
   const requisicaoVinculos = useRequisicao(() => simuladoQuestoes.listar(), [])
   const requisicaoTodasQuestoes = useRequisicao(() => servicoQuestoes.listar(), [])
   const requisicaoAlternativas = useRequisicao(() => servicoAlternativas.listar(), [])
+
+  const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
+  const requisicaoTurmas = useRequisicao(() => servicoTurmas.listar(), [])
+  const requisicaoPlanos = useRequisicao(() => planosEnsino.listar(), [])
+  const requisicaoVinculosIA = useRequisicao(() => servicoIa.listarSimuladosGerados(), [])
+  const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [])
+
+  // Vínculo aluno/conteúdo/motivo/prazo criado na geração automática — só
+  // existe pra simulados de reforço via IA (ver SimuladoGeradoIA no back).
+  const vinculoIA = useMemo(
+    () => (requisicaoVinculosIA.data ?? []).find((item) => item.simuladoId === idSimulado) ?? null,
+    [requisicaoVinculosIA.data, idSimulado],
+  )
+
+  const alunoAlvo = useMemo(
+    () => (vinculoIA ? (requisicaoAlunos.data ?? []).find((aluno) => aluno.id === vinculoIA.alunoId) : null),
+    [vinculoIA, requisicaoAlunos.data],
+  )
 
   const prontoParaHidratar =
     requisicaoVinculos.data && requisicaoTodasQuestoes.data && requisicaoAlternativas.data ? idSimulado : null
@@ -96,7 +160,53 @@ export default function AprovarSimulado() {
     setQuestoes(pendentes)
   })
 
+  useHidratar(requisicaoSimulado.data, (simulado) => {
+    setTitulo(simulado.titulo)
+    setDisciplinaId(simulado.disciplinaId ?? null)
+    setTurmaId(simulado.turmaId ?? null)
+    setPlanoEnsinoId(simulado.planoEnsinoId ?? null)
+    setDataInicio(paraInputDataHora(simulado.dataInicio))
+    setDataFim(paraInputDataHora(simulado.dataFim))
+    setTempoLimite(simulado.tempoLimite?.toString() ?? '')
+    setNotaMaxima(simulado.notaMaxima?.toString() ?? '10')
+  })
+
+  // Sugere a "Disponível a partir de" pelo prazo de revisão (prazoLancamento)
+  // quando o simulado ainda não tem uma data própria — só preenche, nunca
+  // sobrescreve o que já foi definido (nem o que o professor já digitou).
+  useEffect(() => {
+    if (!vinculoIA) return
+    setDataInicio((atual) => atual || `${vinculoIA.prazoLancamento}T08:00`)
+  }, [vinculoIA])
+
   const questaoAtual = questoes[questaoAtiva] ?? null
+
+  const opcoesDisciplinas = useMemo(
+    () =>
+      (requisicaoDisciplinas.data ?? []).map((disciplina) => ({
+        value: disciplina.id,
+        label: disciplina.titulo ?? `Disciplina ${disciplina.id}`,
+      })),
+    [requisicaoDisciplinas.data],
+  )
+
+  const opcoesTurmas = useMemo(
+    () =>
+      (requisicaoTurmas.data ?? [])
+        .filter((turma) => turma.status !== 'INATIVA')
+        .map((turma) => ({ value: turma.id, label: turma.titulo ?? `Turma ${turma.id}` })),
+    [requisicaoTurmas.data],
+  )
+
+  const opcoesPlanos = useMemo(
+    () =>
+      (requisicaoPlanos.data ?? []).map((plano) => ({
+        value: plano.id,
+        label: plano.titulo ?? `Plano #${plano.id}`,
+        descricao: plano.curso?.nome,
+      })),
+    [requisicaoPlanos.data],
+  )
 
   async function salvarEdicao() {
     if (!questaoAtual?.id) return
@@ -251,8 +361,24 @@ export default function AprovarSimulado() {
     <Layout>
       <Header
         titulo={requisicaoSimulado.data?.titulo ?? 'Simulado'}
+        subtitulo={
+          <>
+            <SubtituloItem icon={<ClipboardCheck />}>Questões: {questoes.length} montada(s)</SubtituloItem>
+            {vinculoIA && (
+              <>
+                <SubtituloItem icon={<Sparkles />}>Gerado pela IA</SubtituloItem>
+                <SubtituloItem icon={<Sparkles />}>
+                  Motivo: {vinculoIA.motivos.map((motivo) => ROTULO_MOTIVO_RECOMENDACAO[motivo]).join(', ') || '—'}
+                </SubtituloItem>
+                <SubtituloItem icon={<Sparkles />}>
+                  Prazo de revisão: {formatarData(vinculoIA.prazoLancamento)}
+                </SubtituloItem>
+              </>
+            )}
+          </>
+        }
         voltarPara="/professor/reforco/aprovacao"
-        rotuloVoltar="Voltar para simulados aguardando aprovação"
+        rotuloVoltar="Simulados aguardando aprovação"
         actions={
           <>
             <Button
@@ -278,8 +404,123 @@ export default function AprovarSimulado() {
         }
       />
 
+      <Tab<Aba>
+        rotuloAcessivel="Seções do simulado"
+        value={aba}
+        onChange={setAba}
+        options={[
+          { value: 'configuracao', label: 'Configuração do simulado' },
+          { value: 'questoes', label: 'Questões', contador: questoes.length },
+        ]}
+      />
+
       {carregando ? (
         <SkeletonCartao />
+      ) : aba === 'configuracao' ? (
+        <Card titulo="Configuração do simulado">
+          <Coluna>
+            <Grade>
+              <Input
+                label="Título"
+                required
+                placeholder="Ex.: Reforço de frações"
+                value={titulo}
+                maxLength={150}
+                onChange={(evento) => setTitulo(evento.target.value)}
+              />
+
+              <Select<number>
+                label="Disciplina"
+                options={opcoesDisciplinas}
+                value={disciplinaId}
+                loading={requisicaoDisciplinas.loading}
+                searchable
+                clearable
+                placeholder="Selecionar disciplina..."
+                onChange={setDisciplinaId}
+              />
+
+              <Select<number>
+                label="Turma"
+                options={opcoesTurmas}
+                value={turmaId}
+                loading={requisicaoTurmas.loading}
+                searchable
+                clearable
+                placeholder="Selecionar turma..."
+                onChange={setTurmaId}
+              />
+
+              <Select<number>
+                label="Plano de ensino"
+                options={opcoesPlanos}
+                value={planoEnsinoId}
+                loading={requisicaoPlanos.loading}
+                searchable
+                clearable
+                placeholder="Selecionar plano..."
+                hint="Opcional."
+                onChange={setPlanoEnsinoId}
+              />
+
+              {/* Destinação e aluno-alvo não são editáveis aqui — um simulado
+                  de reforço automático nasce ESPECIFICO pra um único aluno já
+                  determinado pela recomendação que o gerou (ver SubtituloItem
+                  "Gerado pela IA" no cabeçalho); mudar isso não faz sentido
+                  pra esse tipo de simulado. */}
+              <Select
+                label="Destinação"
+                options={OPCOES_DESTINACAO.map((opcao) => ({ value: opcao.value, label: opcao.label }))}
+                value={requisicaoSimulado.data?.tipoDestinacao ?? null}
+                disabled
+                onChange={() => {}}
+              />
+
+              <DatePicker
+                label="Disponível a partir de"
+                modo="dataHora"
+                value={dataInicio}
+                hint="Sugerida a partir do prazo de revisão — ajuste se necessário."
+                onChange={(evento) => setDataInicio(evento.target.value)}
+              />
+
+              <DatePicker
+                label="Disponível até"
+                modo="dataHora"
+                value={dataFim}
+                onChange={(evento) => setDataFim(evento.target.value)}
+              />
+
+              <Input
+                label="Tempo limite"
+                type="number"
+                min={1}
+                placeholder="Ex.: 30"
+                value={tempoLimite}
+                hint="Em minutos. Deixe vazio para sem limite."
+                onChange={(evento) => setTempoLimite(evento.target.value)}
+              />
+
+              <Input
+                label="Nota máxima"
+                type="number"
+                min={1}
+                step="0.5"
+                value={notaMaxima}
+                hint="Distribuída igualmente entre as questões."
+                onChange={(evento) => setNotaMaxima(evento.target.value)}
+              />
+            </Grade>
+
+            {vinculoIA && (
+              <Coluna>
+                <Chip variant="neutral" disabled>
+                  {alunoAlvo?.pessoa?.nome ?? `Aluno ${vinculoIA.alunoId}`}
+                </Chip>
+              </Coluna>
+            )}
+          </Coluna>
+        </Card>
       ) : questoes.length === 0 ? (
         <EstadoVazio
           titulo="Nada para aprovar"

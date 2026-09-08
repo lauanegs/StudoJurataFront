@@ -10,8 +10,14 @@ import { Header } from '../../../components/ui/Header'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import { matriculas, turmas as servicoTurmas } from '../../../services/endpoints'
-import { formatarData, formatarIdade, normalizar } from '../../../utils/format'
+import {
+  frequencias as servicoFrequencias,
+  matriculas,
+  planosAula,
+  turmaDisciplinas,
+  turmas as servicoTurmas,
+} from '../../../services/endpoints'
+import { formatarCargaHoraria, formatarData, formatarIdade, normalizar } from '../../../utils/format'
 import type { AlunoTurma } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
@@ -26,6 +32,51 @@ export default function TurmaDetalhada() {
 
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(idTurma), [idTurma])
   const requisicaoAlunos = useRequisicao(() => matriculas.ativosPorTurma(idTurma), [idTurma])
+  const requisicaoVinculos = useRequisicao(() => turmaDisciplinas.listar(), [])
+
+  const vinculosDaTurma = useMemo(
+    () => (requisicaoVinculos.data ?? []).filter((vinculo) => vinculo.turma?.id === idTurma),
+    [requisicaoVinculos.data, idTurma],
+  )
+
+  /**
+   * Carga horária já cursada por cada aluno nesta turma — soma das aulas já
+   * ministradas (com frequência marcada presente) em qualquer disciplina da
+   * turma. Mesmo cálculo usado na chamada do professor (RegistrarAulaTurma),
+   * só que somando todas as disciplinas em vez de uma só.
+   */
+  const requisicaoCargaHoraria = useRequisicao(
+    async () => {
+      const alunos = requisicaoAlunos.data ?? []
+      if (alunos.length === 0 || vinculosDaTurma.length === 0) return new Map<number, number>()
+
+      const planosDaTurma = await Promise.all(
+        vinculosDaTurma.map((vinculo) => planosAula.listarPorTurmaDisciplina(vinculo.id)),
+      )
+      const idsPlanosDaTurma = new Set(planosDaTurma.flat().map((plano) => plano.id))
+
+      const frequenciasPorAluno = await Promise.all(
+        alunos.map((matricula) => servicoFrequencias.listarPorAluno(matricula.aluno.id)),
+      )
+
+      return new Map(
+        alunos.map((matricula, indice) => {
+          const total = frequenciasPorAluno[indice]
+            .filter((frequencia) => {
+              const idPlanoAula = frequencia.aula?.planoAula?.id
+              return frequencia.presente && idPlanoAula !== undefined && idsPlanosDaTurma.has(idPlanoAula)
+            })
+            .reduce((soma, frequencia) => soma + (frequencia.aula?.cargaHoraria ?? 0), 0)
+
+          return [matricula.aluno.id, total]
+        }),
+      )
+    },
+    [requisicaoAlunos.data, vinculosDaTurma],
+    { ativo: !requisicaoAlunos.loading && !requisicaoVinculos.loading },
+  )
+
+  const cargaHorariaPorAluno = requisicaoCargaHoraria.data ?? new Map<number, number>()
 
   const filtrados = useMemo(() => {
     const lista = requisicaoAlunos.data ?? []
@@ -47,6 +98,12 @@ export default function TurmaDetalhada() {
       key: 'idade',
       cabecalho: 'Idade',
       render: (matricula) => formatarIdade(matricula.aluno?.pessoa?.dataNascimento),
+    },
+    {
+      key: 'cargaHoraria',
+      cabecalho: 'Carga horária',
+      ocultarEmTelaPequena: true,
+      render: (matricula) => formatarCargaHoraria(cargaHorariaPorAluno.get(matricula.aluno.id) ?? 0),
     },
     {
       key: 'matricula',
@@ -73,7 +130,7 @@ export default function TurmaDetalhada() {
       <Header
         titulo={requisicaoTurma.data?.titulo ?? 'Turma'}
         voltarPara="/professor/turmas"
-        rotuloVoltar="Voltar para minhas turmas"
+        rotuloVoltar="Minhas turmas"
         actions={
           <Button
             size="large"

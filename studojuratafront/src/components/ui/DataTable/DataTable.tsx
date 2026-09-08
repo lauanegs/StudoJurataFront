@@ -159,9 +159,12 @@ export function DataTable<T>({
               })}
 
               {actions && (
-                // width:1% + nowrap é o truque clássico pra essa coluna encolher só até
-                // o necessário pros botões, em vez de herdar o espaço sobrando da tabela.
-                <Table.Th scope="col" style={{ textAlign: 'left', width: '1%', whiteSpace: 'nowrap' }}>
+                // Sem width:1% — agora que os botões de ação podem quebrar linha
+                // (ver Group abaixo), esse truque forçava a coluna a encolher pro
+                // mínimo (um botão só) e quebrar sempre, mesmo sobrando espaço na
+                // tabela. Sem largura fixa, a coluna cresce livremente e só quebra
+                // quando realmente não há mais espaço.
+                <Table.Th scope="col" style={{ textAlign: 'left' }}>
                   {rotuloColunaAcoes}
                 </Table.Th>
               )}
@@ -209,7 +212,10 @@ export function DataTable<T>({
                       style={{ textAlign: 'left' }}
                       onClick={(evento) => evento.stopPropagation()}
                     >
-                      <Group justify="flex-start" gap={tokens.spacing.xxs} wrap="nowrap">
+                      {/* Confirmado pelo usuário: quando os botões de ação não cabem
+                          numa linha só, eles quebram pra linha(s) de baixo — nunca
+                          forçam scroll horizontal na tabela nem ficam cortados. */}
+                      <Group justify="flex-start" gap={tokens.spacing.xxs} wrap="wrap">
                         {actions(item)}
                       </Group>
                     </Table.Td>

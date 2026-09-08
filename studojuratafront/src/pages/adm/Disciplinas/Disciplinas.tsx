@@ -78,7 +78,7 @@ export default function Disciplinas() {
       cabecalho: 'Status',
       render: (disciplina) =>
         disciplina.status ? (
-          <Tag variant={ATIVO_INATIVO_VARIANT[disciplina.status]} ponto>
+          <Tag variant={ATIVO_INATIVO_VARIANT[disciplina.status]}>
             {ROTULO_ATIVO_INATIVO[disciplina.status]}
           </Tag>
         ) : (
@@ -91,7 +91,6 @@ export default function Disciplinas() {
     <Layout>
       <Header
         titulo="Disciplinas"
-        subtitulo={!loading && !error ? `${filtradas.length} disciplina(s)` : undefined}
         actions={
           <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/disciplinas/nova')}>
             Adicionar disciplina

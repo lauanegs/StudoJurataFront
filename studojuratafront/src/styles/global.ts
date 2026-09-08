@@ -17,6 +17,15 @@ export const GlobalStyle = createGlobalStyle`
     height: 100%;
   }
 
+  /* Sem isso, rolar (mouse/trackpad) além do conteúdo faz a página "saltar"
+     mostrando espaço em branco acima/abaixo mesmo sem nada a rolar ali —
+     o rubber-band/overscroll do navegador. Cada painel com scroll próprio
+     continua rolando normalmente; isso só desliga o bounce da página. */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+
   body {
     font-family: ${({ theme }) => theme.typography.family};
     font-size: ${({ theme }) => theme.typography.sizes.sm};
@@ -114,6 +123,28 @@ export const GlobalStyle = createGlobalStyle`
   input[type='password']::-ms-reveal,
   input[type='password']::-ms-clear {
     display: none;
+  }
+
+  /* Utilitário de "imprimir relatório" (Reforço): quando a página tem um
+     elemento com essa classe, a impressão mostra só ele — todo o resto
+     (sidebar, header, botões...) some. Classe reaproveitável em qualquer
+     tela que precise de "Imprimir", não só no relatório de desempenho. */
+  @media print {
+    body.imprimindo-relatorio * {
+      visibility: hidden;
+    }
+
+    body.imprimindo-relatorio .area-impressao,
+    body.imprimindo-relatorio .area-impressao * {
+      visibility: visible;
+    }
+
+    body.imprimindo-relatorio .area-impressao {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

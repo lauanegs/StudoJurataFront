@@ -70,6 +70,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     },
   }
 
+  // A largura da área do ícone (leftSection/rightSection) da Mantine, por
+  // padrão, é calculada a partir do `--input-height` interno — que segue o
+  // `size` do input, não a `altura` sobrescrita na mão aqui (pra bater com
+  // Select/DatePicker). Tentar sobrescrever isso via `styles.section` perde
+  // pra essa variável CSS (ela também controla o padding do texto, então só
+  // mudar a largura visual da seção deixava ícone e texto ainda calculados
+  // pro tamanho antigo). `leftSectionWidth`/`rightSectionWidth` são a prop
+  // oficial da Mantine pra isso — ajustam a seção E o padding do texto juntos.
+  const larguraSecao = altura
+
   // type="password" + alternarVisibilidade usa o PasswordInput da Mantine
   // por baixo — é o único jeito de ter o botão de mostrar/esconder senha já
   // acessível (foco, aria) sem reimplementar à mão. Mantém a mesma moldura
@@ -94,6 +104,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           radius="md"
           style={{ maxWidth, ...style }}
           leftSection={comTamanho(icon, 18)}
+          leftSectionWidth={icon ? larguraSecao : undefined}
+          rightSectionWidth={larguraSecao}
           visibilityToggleIcon={({ reveal }) => (reveal ? <EyeOff size={18} /> : <Eye size={18} />)}
           visibilityToggleButtonProps={{ 'aria-label': 'Alternar visibilidade da senha' }}
           aria-invalid={error ? true : undefined}
@@ -134,6 +146,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         radius="md"
         style={{ maxWidth, ...style }}
         leftSection={comTamanho(icon, 18)}
+        leftSectionWidth={icon ? larguraSecao : undefined}
         rightSection={
           showClear ? (
             <CloseButton size="sm" aria-label="Limpar campo" onClick={onClear} />
@@ -141,6 +154,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             comTamanho(iconRight, 18)
           )
         }
+        rightSectionWidth={showClear || iconRight ? larguraSecao : undefined}
         rightSectionPointerEvents={showClear || iconRight ? 'auto' : 'none'}
         aria-invalid={error ? true : undefined}
         aria-errormessage={error ? `${fieldId}-error` : undefined}

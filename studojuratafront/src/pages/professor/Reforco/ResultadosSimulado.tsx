@@ -1,13 +1,12 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
-import { ClipboardList, Users } from 'lucide-react'
+import { ClipboardList, Percent, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Header } from '../../../components/ui/Header'
+import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import {
@@ -18,13 +17,6 @@ import {
 import { formatarPorcentagem, formatarTempo } from '../../../utils/format'
 import type { SimuladoAlunoResponse } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
-
-/* Confirmado no Figma: "Participação: X/Y" e "Média geral: Z%" em linhas
-   separadas de texto simples — não cards de indicador. */
-const Info = styled.div`
-  display: flex;
-  flex-direction: column;
-`
 
 export default function ResultadosSimulado() {
   const { simuladoId } = useParams()
@@ -108,15 +100,17 @@ export default function ResultadosSimulado() {
       <Header
         titulo={simulado?.titulo ?? 'Resultados do simulado'}
         subtitulo={
-          <Info>
-            <span>Participação: {resumo.concluidas}/{resumo.total}</span>
-            <span>
+          <>
+            <SubtituloItem icon={<Users />}>
+              Participação: {resumo.concluidas}/{resumo.total}
+            </SubtituloItem>
+            <SubtituloItem icon={<Percent />}>
               Média geral: {resumo.mediaPercentual !== null ? formatarPorcentagem(resumo.mediaPercentual) : '—'}
-            </span>
-          </Info>
+            </SubtituloItem>
+          </>
         }
         voltarPara="/professor/reforco/simulados"
-        rotuloVoltar="Voltar para simulados"
+        rotuloVoltar="Simulados"
       />
 
       <Card semPadding>

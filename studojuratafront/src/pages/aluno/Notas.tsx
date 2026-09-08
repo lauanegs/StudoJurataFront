@@ -19,7 +19,10 @@ import {
   simuladoAlunos,
   simulados as servicoSimulados,
 } from '../../services/endpoints'
+import { nivelDesempenho } from '../../utils/desempenho'
 import { formatarNota } from '../../utils/format'
+
+const VARIANTE_POR_NIVEL = { baixo: 'error', medio: 'warning', alto: 'success' } as const
 
 const Lista = styled.div`
   display: flex;
@@ -59,6 +62,13 @@ export default function AlunoNotas() {
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
 
+  // Com matrícula cíclica o aluno pode ter Nota em mais de uma turma da mesma
+  // disciplina (repetência) ou cursar mais de um curso — a lista mostra só
+  // uma turma por vez. null = "ainda não escolheu": usa a turma da Nota mais
+  // recente (o histórico já vem do back ordenado do mais novo pro mais
+  // antigo) como padrão, sem precisar de estado sincronizado por efeito.
+  const [turmaSelecionada, setTurmaSelecionada] = useState<number | null>(null)
+
   const requisicaoNotas = useRequisicao(
     () => servicoNotas.historicoPorAluno(alunoId as number),
     [alunoId],
@@ -77,36 +87,63 @@ export default function AlunoNotas() {
     [requisicaoSimulados.data],
   )
 
+  const opcoesTurmas = useMemo(() => {
+    const mapa = new Map<number, string>()
+    for (const nota of requisicaoNotas.data ?? []) {
+      if (nota.turma?.id) mapa.set(nota.turma.id, nota.turma.titulo ?? `Turma ${nota.turma.id}`)
+    }
+    return Array.from(mapa, ([value, label]) => ({ value, label }))
+  }, [requisicaoNotas.data])
+
+  const turmaId = turmaSelecionada ?? requisicaoNotas.data?.[0]?.turma?.id ?? null
+
   const opcoesDisciplinas = useMemo(() => {
-    const ids = new Set((requisicaoNotas.data ?? []).map((nota) => nota.disciplina?.id).filter(Boolean))
+    const ids = new Set(
+      (requisicaoNotas.data ?? [])
+        .filter((nota) => nota.turma?.id === turmaId)
+        .map((nota) => nota.disciplina?.id)
+        .filter(Boolean),
+    )
     return (requisicaoDisciplinas.data ?? [])
       .filter((disciplina) => ids.has(disciplina.id))
       .map((disciplina) => ({ value: disciplina.id, label: disciplina.titulo ?? '—' }))
-  }, [requisicaoNotas.data, requisicaoDisciplinas.data])
+  }, [requisicaoNotas.data, requisicaoDisciplinas.data, turmaId])
 
   const notas = useMemo(() => {
-    const lista = requisicaoNotas.data ?? []
-    return disciplinaId ? lista.filter((nota) => nota.disciplina?.id === disciplinaId) : lista
-  }, [requisicaoNotas.data, disciplinaId])
+    return (requisicaoNotas.data ?? []).filter(
+      (nota) => nota.turma?.id === turmaId && (!disciplinaId || nota.disciplina?.id === disciplinaId),
+    )
+  }, [requisicaoNotas.data, disciplinaId, turmaId])
 
   // Filtra também por turma: com matrícula cíclica o aluno pode ter mais de
   // uma Nota da mesma disciplina (repetência em outra turma) — sem a turma,
   // os dois acordeões mostrariam os mesmos simulados duplicados.
-  function simuladosDaDisciplina(disciplinaFiltroId?: number, turmaFiltroId?: number) {
+  function tentativasDaDisciplina(disciplinaFiltroId?: number, turmaFiltroId?: number) {
     return (requisicaoTentativas.data ?? [])
       .filter((tentativa) => {
         if (tentativa.status !== 'CONCLUIDO') return false
         const simulado = porSimulado.get(tentativa.simuladoId)
         return simulado?.disciplinaId === disciplinaFiltroId && simulado?.turmaId === turmaFiltroId
       })
-      .map((tentativa) => {
-        const simulado = porSimulado.get(tentativa.simuladoId)
+      .map((tentativa) => ({ tentativa, simulado: porSimulado.get(tentativa.simuladoId) }))
+  }
 
-        return {
-          label: simulado?.titulo ?? `Simulado ${tentativa.simuladoId}`,
-          value: `Nota: ${formatarNota(tentativa.nota)}/${formatarNota(simulado?.notaMaxima ?? 10)}`,
-        }
-      })
+  function simuladosDaDisciplina(disciplinaFiltroId?: number, turmaFiltroId?: number) {
+    return tentativasDaDisciplina(disciplinaFiltroId, turmaFiltroId).map(({ tentativa, simulado }) => ({
+      label: simulado?.titulo ?? `Simulado ${tentativa.simuladoId}`,
+      value: `Nota: ${formatarNota(tentativa.nota)}/${formatarNota(simulado?.notaMaxima ?? 10)}`,
+    }))
+  }
+
+  // Quantos pontos (de 100) a disciplina já distribuiu até agora: só os
+  // simulados com notaMaxima concluídos contam — o restante dos 100 pontos
+  // da disciplina ainda não foi "colocado em jogo". nota.total é sempre
+  // sobre essa base, nunca sobre os 100 pontos totais do curso inteiro.
+  function pontosDistribuidos(disciplinaFiltroId?: number, turmaFiltroId?: number) {
+    return tentativasDaDisciplina(disciplinaFiltroId, turmaFiltroId).reduce(
+      (soma, { simulado }) => soma + (simulado?.notaMaxima ?? 0),
+      0,
+    )
   }
 
   if (erroAluno) {
@@ -124,6 +161,22 @@ export default function AlunoNotas() {
         titulo="Notas"
         filtros={
           <CamposCabecalho>
+            {opcoesTurmas.length > 1 && (
+              <CampoLargura>
+                <Select<number>
+                  options={opcoesTurmas}
+                  value={turmaId}
+                  placeholder="Selecione a turma"
+                  emptyText="Nenhuma turma com notas"
+                  onChange={(valor) => {
+                    setTurmaSelecionada(valor)
+                    setDisciplinaSelecionada(null)
+                    setDisciplinaId(null)
+                  }}
+                />
+              </CampoLargura>
+            )}
+
             <CampoLargura>
               <Select<number>
                 options={opcoesDisciplinas}
@@ -158,20 +211,25 @@ export default function AlunoNotas() {
           />
         ) : (
           <Lista>
-            {notas.map((nota, indice) => (
-              <DropDown
-                key={nota.id}
-                titulo={
-                  nota.disciplina?.titulo
-                    ? `${nota.disciplina.titulo} · ${nota.turma?.titulo ?? '—'}`
-                    : `Disciplina ${nota.disciplina?.id}`
-                }
-                resumo={<Tag variant="neutral">Nota: {formatarNota(nota.total)}/100</Tag>}
-                abertoInicialmente={indice === 0}
-                itens={simuladosDaDisciplina(nota.disciplina?.id, nota.turma?.id)}
-                emptyText="Nenhum simulado concluído nesta disciplina ainda."
-              />
-            ))}
+            {notas.map((nota, indice) => {
+              const distribuido = pontosDistribuidos(nota.disciplina?.id, nota.turma?.id)
+              const percentual = distribuido > 0 ? ((nota.total ?? 0) / distribuido) * 100 : 0
+
+              return (
+                <DropDown
+                  key={nota.id}
+                  titulo={nota.disciplina?.titulo ?? `Disciplina ${nota.disciplina?.id}`}
+                  resumo={
+                    <Tag variant={VARIANTE_POR_NIVEL[nivelDesempenho(percentual)]}>
+                      Nota: {formatarNota(nota.total ?? 0)}/{formatarNota(distribuido)}
+                    </Tag>
+                  }
+                  abertoInicialmente={indice === 0}
+                  itens={simuladosDaDisciplina(nota.disciplina?.id, nota.turma?.id)}
+                  emptyText="Nenhum simulado concluído nesta disciplina ainda."
+                />
+              )
+            })}
           </Lista>
         )}
       </Card>

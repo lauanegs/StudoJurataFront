@@ -130,6 +130,7 @@ export const Navegacao = styled.nav`
 
   overflow-y: auto;
   min-height: 0;
+  overscroll-behavior-y: contain;
 
   &::-webkit-scrollbar {
     width: 4px;

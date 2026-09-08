@@ -140,7 +140,7 @@ export default function ResponsavelFormulario() {
       <Header
         titulo={edicao ? 'Editar responsável' : 'Novo responsável'}
         voltarPara="/adm/responsaveis"
-        rotuloVoltar="Voltar para responsáveis"
+        rotuloVoltar="Responsáveis"
         actions={
           <>
             {edicao ? (

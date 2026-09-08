@@ -414,7 +414,7 @@ export default function RegistrarAulaTurma() {
       <Header
         titulo={requisicaoTurma.data?.titulo ?? 'Turma'}
         voltarPara={`/professor/turmas/${idTurma}`}
-        rotuloVoltar="Voltar para a turma"
+        rotuloVoltar="Turma"
         filtros={
           <Coluna>
             <CamposCabecalho>
@@ -476,7 +476,17 @@ export default function RegistrarAulaTurma() {
             acao={
               <Button
                 icon={<Plus />}
-                onClick={() => navegar(`/professor/plano-aula/${planoAtual.id}/aulas/nova`)}
+                onClick={() => {
+                  // Sem isso, salvar a aula nova mandava o professor pra lista
+                  // de aulas do plano — daí ele tinha que sair, voltar em
+                  // Turmas, entrar na disciplina de novo só pra registrar a
+                  // chamada da aula que acabou de cadastrar. `retornarPara`
+                  // traz de volta direto pra cá, com a disciplina certa.
+                  const aqui = `/professor/turmas/${idTurma}/registrar-aula?vinculoId=${disciplinaAtiva}`
+                  navegar(
+                    `/professor/plano-aula/${planoAtual.id}/aulas/nova?retornarPara=${encodeURIComponent(aqui)}`,
+                  )
+                }}
               >
                 Cadastrar aula no plano
               </Button>

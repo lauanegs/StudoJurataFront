@@ -129,7 +129,7 @@ export default function Turmas() {
       cabecalho: 'Status',
       render: (turma) =>
         turma.status ? (
-          <Tag variant={turma.status === 'ATIVA' ? 'success' : 'neutral'} ponto>
+          <Tag variant={turma.status === 'ATIVA' ? 'success' : 'neutral'}>
             {ROTULO_STATUS_TURMA[turma.status]}
           </Tag>
         ) : (
@@ -142,7 +142,6 @@ export default function Turmas() {
     <Layout>
       <Header
         titulo="Turmas"
-        subtitulo={!loading && !error ? `${filtradas.length} turma(s)` : undefined}
         actions={
           <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/turmas/nova')}>
             Adicionar turma

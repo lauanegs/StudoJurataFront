@@ -92,7 +92,7 @@ export default function PlanosAula() {
       cabecalho: 'Situação',
       render: (plano) =>
         plano.status && (
-          <Tag variant={STATUS_PLANO_VARIANT[plano.status]} ponto>
+          <Tag variant={STATUS_PLANO_VARIANT[plano.status]}>
             {ROTULO_STATUS_PLANO[plano.status]}
           </Tag>
         ),

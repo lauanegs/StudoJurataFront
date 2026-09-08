@@ -154,7 +154,7 @@ export default function ConteudoFormulario() {
       <Header
         titulo={edicao ? 'Editar conteúdo' : 'Novo conteúdo'}
         voltarPara={`/professor/plano-ensino/${idPlano}/conteudos`}
-        rotuloVoltar="Voltar para conteúdos"
+        rotuloVoltar="Conteúdos"
         actions={
           <>
             <Button

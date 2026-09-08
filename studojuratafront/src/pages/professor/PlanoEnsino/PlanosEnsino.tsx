@@ -8,9 +8,11 @@ import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
+import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
+import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { planosEnsino as servicoPlanos } from '../../../services/endpoints'
 import { formatarCargaHoraria, normalizar } from '../../../utils/format'
@@ -32,27 +34,46 @@ const LarguraBusca = styled.div`
   width: 250px;
 `
 
+type Visao = 'meus' | 'outros'
+
 export default function PlanosEnsino() {
   const navegar = useNavigate()
+  const { professorId } = useProfessorLogado()
 
+  const [visao, setVisao] = useState<Visao>('meus')
   const [busca, setBusca] = useState('')
   const buscaAtrasada = useDebounce(busca)
 
   const { data, loading, error, reload } = useRequisicao(() => servicoPlanos.listar(), [])
 
+  // Separado em abas (pedido explícito): "Meus planos" primeiro (o caso
+  // comum — o professor cuidando do que é dele), "Outros planos" só pra
+  // consulta/referência do que os colegas já montaram pro mesmo curso.
+  // Planos antigos sem professor vinculado (dado migrado antes desse campo
+  // existir) caem em "Outros", nunca em "Meus" — evita atribuir autoria
+  // errada por omissão.
+  const meus = useMemo(
+    () => (data ?? []).filter((plano) => plano.professor?.id === professorId),
+    [data, professorId],
+  )
+  const outros = useMemo(
+    () => (data ?? []).filter((plano) => plano.professor?.id !== professorId),
+    [data, professorId],
+  )
+  const listaDaVisao = visao === 'meus' ? meus : outros
+
   const filtrados = useMemo(() => {
-    const lista = data ?? []
-    if (!buscaAtrasada.trim()) return lista
+    if (!buscaAtrasada.trim()) return listaDaVisao
 
     const termo = normalizar(buscaAtrasada)
 
-    return lista.filter(
+    return listaDaVisao.filter(
       (plano) =>
         normalizar(plano.turmaDisciplina?.turma?.titulo).includes(termo) ||
         normalizar(plano.curso?.nome).includes(termo) ||
         normalizar(plano.turmaDisciplina?.disciplina?.titulo).includes(termo),
     )
-  }, [data, buscaAtrasada])
+  }, [listaDaVisao, buscaAtrasada])
 
   const paginacao = usePaginacao(filtrados)
 
@@ -69,6 +90,17 @@ export default function PlanosEnsino() {
       cabecalho: 'Curso',
       render: (plano) => plano.curso?.nome ?? '—',
     },
+    // Só faz sentido mostrar de quem é o plano na aba "Outros" — na aba
+    // "Meus" seria sempre a mesma pessoa (redundante).
+    ...(visao === 'outros'
+      ? [
+          {
+            key: 'professor',
+            cabecalho: 'Professor',
+            render: (plano: PlanoEnsino) => plano.professor?.pessoa?.nome ?? '—',
+          } satisfies Coluna<PlanoEnsino>,
+        ]
+      : []),
     {
       key: 'disciplina',
       cabecalho: 'Disciplina',
@@ -86,7 +118,7 @@ export default function PlanosEnsino() {
       cabecalho: 'Situação',
       render: (plano) =>
         plano.status && (
-          <Tag variant={STATUS_PLANO_VARIANT[plano.status]} ponto>
+          <Tag variant={STATUS_PLANO_VARIANT[plano.status]}>
             {ROTULO_STATUS_PLANO[plano.status]}
           </Tag>
         ),
@@ -110,6 +142,16 @@ export default function PlanosEnsino() {
         }
       />
 
+      <Tab<Visao>
+        rotuloAcessivel="Meus planos ou de outros professores"
+        value={visao}
+        onChange={setVisao}
+        options={[
+          { value: 'meus', label: 'Meus planos', contador: meus.length },
+          { value: 'outros', label: 'Outros planos', contador: outros.length },
+        ]}
+      />
+
       <DataTable
         descricao="Planos de ensino"
         columns={colunas}
@@ -128,12 +170,18 @@ export default function PlanosEnsino() {
           onNext: paginacao.proxima,
         }}
         empty={{
-          titulo: busca ? 'Nenhum plano encontrado' : 'Nenhum plano de ensino',
+          titulo: busca
+            ? 'Nenhum plano encontrado'
+            : visao === 'meus'
+              ? 'Você ainda não tem planos de ensino'
+              : 'Nenhum plano de outro professor',
           descricao: busca
             ? 'Revise o termo buscado ou limpe o filtro.'
-            : 'O plano de ensino define a ementa e os conteúdos que serão trabalhados no período.',
+            : visao === 'meus'
+              ? 'O plano de ensino define a ementa e os conteúdos que serão trabalhados no período.'
+              : 'Ainda não há planos de ensino cadastrados por outros professores.',
           icon: <ClipboardList />,
-          acao: !busca && (
+          acao: !busca && visao === 'meus' && (
             <Button icon={<Plus />} onClick={() => navegar('/professor/plano-ensino/novo')}>
               Criar plano de ensino
             </Button>

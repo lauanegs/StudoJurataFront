@@ -47,7 +47,7 @@ export default function PlanoEnsinoFormulario() {
   const navegar = useNavigate()
   const toast = useToast()
   const confirmar = useConfirm()
-  const { professorId } = useProfessorLogado()
+  const { professorId, professor } = useProfessorLogado()
 
   const edicao = Boolean(id)
   const planoId = id ? Number(id) : null
@@ -147,6 +147,10 @@ export default function PlanoEnsinoFormulario() {
     try {
       const corpo = {
         curso,
+        // Vínculo pedido explicitamente: quem cria/edita o plano é sempre o
+        // professor responsável por ele — sem select à parte, pra não abrir
+        // brecha de um professor "assinar" um plano de outro sem querer.
+        professor: professor ?? undefined,
         turmaDisciplina: vinculoSelecionado ?? undefined,
         titulo: titulo.trim() || undefined,
         cargaHoraria: cargaHoraria ? Number(cargaHoraria) : undefined,
@@ -215,7 +219,7 @@ export default function PlanoEnsinoFormulario() {
       <Header
         titulo={edicao ? 'Editar plano de ensino' : 'Novo plano de ensino'}
         voltarPara="/professor/plano-ensino"
-        rotuloVoltar="Voltar para planos de ensino"
+        rotuloVoltar="Planos de ensino"
         actions={
           <>
             {edicao && (
@@ -293,6 +297,15 @@ export default function PlanoEnsinoFormulario() {
                   onChange={setCursoId}
                 />
               </Grade>
+
+              <Input
+                label="Professor responsável"
+                value={
+                  (edicao ? requisicaoPlano.data?.professor?.pessoa?.nome : professor?.pessoa?.nome) ?? '—'
+                }
+                disabled
+                hint="Sempre quem está logado ao criar o plano."
+              />
 
               <Grade>
                 <Select<number>

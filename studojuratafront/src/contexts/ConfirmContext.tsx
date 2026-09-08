@@ -12,16 +12,23 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     (novoPedido: PedidoConfirmacao) =>
       new Promise<void>((resolve) => {
         resolver.current = resolve
+        setProcessando(false)
         setPedido(novoPedido)
       }),
     [],
   )
 
+  // Não zera `processando` aqui: `pedido` vira null e `processando` viraria
+  // false no mesmo instante, e o Modal ainda leva a transição de fechamento
+  // (fade/scale) renderizando o rodapé por mais um instante — nesse meio
+  // tempo o botão "piscava", voltando do spinner pro rótulo normal antes de
+  // desaparecer de vez. Mantendo `processando` true até o próximo pedido
+  // (resetado em `confirmar`), o botão continua com o spinner a transição
+  // inteira, sem esse flash.
   const fechar = useCallback(() => {
     resolver.current?.()
     resolver.current = null
     setPedido(null)
-    setProcessando(false)
   }, [])
 
   const valor = useMemo(() => ({ confirmar }), [confirmar])

@@ -206,7 +206,7 @@ export default function PlanoAulaFormulario() {
       <Header
         titulo={edicao ? 'Editar plano de aula' : 'Novo plano de aula'}
         voltarPara="/professor/plano-aula"
-        rotuloVoltar="Voltar para planos de aula"
+        rotuloVoltar="Planos de aula"
         actions={
           <>
             {/* Cancelar só existe enquanto o plano ainda não foi salvo — depois

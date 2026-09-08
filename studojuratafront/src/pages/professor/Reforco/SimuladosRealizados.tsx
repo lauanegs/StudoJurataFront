@@ -264,7 +264,7 @@ export default function SimuladosRealizados() {
       <Header
         titulo="Simulados realizados"
         voltarPara="/professor/reforco"
-        rotuloVoltar="Voltar para o módulo de reforço"
+        rotuloVoltar="Módulo de reforço"
         filtros={
           <CamposCabecalho>
             <CampoLargura>

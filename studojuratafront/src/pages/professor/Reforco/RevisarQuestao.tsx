@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Check, Pencil, Save, X } from 'lucide-react'
+import { Check, Pencil, Save, Sparkles, User, X } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
-import { Header } from '../../../components/ui/Header'
+import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { QuestaoEditor } from '../../../components/ui/QuestaoEditor'
 import { validarQuestao, type ErrosQuestao, type QuestaoEditavel } from '../../../components/ui/QuestaoEditor/types'
-import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -168,13 +167,13 @@ export default function RevisarQuestao() {
         titulo="Revisar questão"
         subtitulo={
           requisicaoQuestao.data?.origem && (
-            <Tag variant={requisicaoQuestao.data.origem === 'IA' ? 'info' : 'neutral'}>
-              {ROTULO_ORIGEM_QUESTAO[requisicaoQuestao.data.origem]}
-            </Tag>
+            <SubtituloItem icon={requisicaoQuestao.data.origem === 'IA' ? <Sparkles /> : <User />}>
+              Origem: {ROTULO_ORIGEM_QUESTAO[requisicaoQuestao.data.origem]}
+            </SubtituloItem>
           )
         }
         voltarPara="/professor/reforco/questoes"
-        rotuloVoltar="Voltar para a fila de revisão"
+        rotuloVoltar="Fila de revisão"
         actions={
           editando ? (
             <>

@@ -95,7 +95,7 @@ export default function Professores() {
       cabecalho: 'Status',
       render: (professor) =>
         professor.status ? (
-          <Tag variant={ATIVO_INATIVO_VARIANT[professor.status]} ponto>
+          <Tag variant={ATIVO_INATIVO_VARIANT[professor.status]}>
             {ROTULO_ATIVO_INATIVO[professor.status]}
           </Tag>
         ) : (
@@ -108,7 +108,6 @@ export default function Professores() {
     <Layout>
       <Header
         titulo="Professores"
-        subtitulo={!loading && !error ? `${filtrados.length} professor(es)` : undefined}
         actions={
           <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/professores/novo')}>
             Adicionar professor

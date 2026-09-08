@@ -23,7 +23,15 @@ import {
   simuladoAlunos,
   simulados as servicoSimulados,
 } from '../../../services/endpoints'
+import { nivelDesempenho } from '../../../utils/desempenho'
 import { formatarNota } from '../../../utils/format'
+import type { TagVariant } from '../../../components/ui/Tag'
+
+const VARIANTE_POR_NIVEL: Record<'baixo' | 'medio' | 'alto', TagVariant> = {
+  baixo: 'error',
+  medio: 'warning',
+  alto: 'success',
+}
 import { ROTULO_STATUS_MATRICULA } from '../../../utils/labels'
 import type { AlunoTurma, SimuladoAlunoResponse } from '../../../types'
 
@@ -185,8 +193,10 @@ export default function Notas() {
     setFiltro({ turmaId, tipo, especificoId })
   }
 
-  // Dados pra montar os acordeões — a tela abre com a lista completa (todas
-  // as turmas/disciplinas do professor) na visão atual, sem exigir Buscar.
+  // A tela só monta os acordeões depois que o professor aplica um filtro
+  // (Buscar) — antes disso mostra um empty state pedindo pra filtrar (ver
+  // render abaixo). Sem filtro nenhum, a lista completa (todas as
+  // turmas/disciplinas/alunos do professor) ficava grande e desorganizada.
   const requisicaoMatriculasResultado = useRequisicao(
     () => matriculasDaVisao(filtro?.turmaId as number, visao),
     [filtro?.turmaId, visao],
@@ -194,25 +204,6 @@ export default function Notas() {
   )
   const requisicaoNotas = useRequisicao(() => servicoNotas.listar(), [])
   const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
-
-  // Sem filtro: uma matrícula por (turma, disciplina) do professor —
-  // equivalente a rodar o modo "por disciplina" pra cada vínculo dele.
-  const vinculosAtivos = useMemo(
-    () => (requisicaoVinculos.data ?? []).filter((v) => v.turma && v.disciplina && v.status !== 'INATIVO'),
-    [requisicaoVinculos.data],
-  )
-  const turmasUnicas = useMemo(
-    () => [...new Set(vinculosAtivos.map((v) => v.turma!.id))],
-    [vinculosAtivos],
-  )
-  const requisicaoMatriculasTodas = useRequisicao(
-    async () => {
-      const listas = await Promise.all(turmasUnicas.map((id) => matriculasDaVisao(id, visao)))
-      return new Map(turmasUnicas.map((id, indice) => [id, listas[indice]]))
-    },
-    [turmasUnicas, visao],
-    { ativo: !filtro && turmasUnicas.length > 0 },
-  )
 
   // Situação da matrícula no título — só aparece no Histórico (na aba
   // Ativos já é redundante, todo mundo ali está com a mesma situação).
@@ -223,19 +214,7 @@ export default function Notas() {
   )
 
   const linhasAcordeao = useMemo<LinhaAcordeao[]>(() => {
-    if (!filtro) {
-      return vinculosAtivos.flatMap((vinculo) => {
-        const alunosDaTurma = requisicaoMatriculasTodas.data?.get(vinculo.turma!.id) ?? []
-
-        return alunosDaTurma.map((matricula) => ({
-          chave: `${vinculo.id}-${matricula.aluno.id}`,
-          titulo: `${matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`} · ${vinculo.turma!.titulo} · ${vinculo.disciplina!.titulo}${sufixoSituacao(matricula)}`,
-          alunoId: matricula.aluno.id,
-          disciplinaId: vinculo.disciplina!.id,
-          turmaId: vinculo.turma!.id,
-        }))
-      })
-    }
+    if (!filtro) return []
 
     if (filtro.tipo === 'aluno') {
       return disciplinasDaTurma.map((disciplina) => ({
@@ -254,14 +233,7 @@ export default function Notas() {
       disciplinaId: filtro.especificoId,
       turmaId: filtro.turmaId,
     }))
-  }, [
-    filtro,
-    disciplinasDaTurma,
-    requisicaoMatriculasResultado.data,
-    vinculosAtivos,
-    requisicaoMatriculasTodas.data,
-    sufixoSituacao,
-  ])
+  }, [filtro, disciplinasDaTurma, requisicaoMatriculasResultado.data, sufixoSituacao])
 
   // Tentativas de simulado de cada aluno envolvido, buscadas uma vez por aluno distinto.
   const alunosEnvolvidos = useMemo(
@@ -294,7 +266,7 @@ export default function Notas() {
     )
   }
 
-  function simuladosDaLinha(alunoId: number, disciplinaId: number, turmaId: number) {
+  function tentativasDaLinha(alunoId: number, disciplinaId: number, turmaId: number) {
     const tentativas = requisicaoTentativas.data?.get(alunoId) ?? []
 
     return tentativas
@@ -303,21 +275,29 @@ export default function Notas() {
         const simulado = porSimulado.get(tentativa.simuladoId)
         return simulado?.disciplinaId === disciplinaId && simulado?.turmaId === turmaId
       })
-      .map((tentativa) => {
-        const simulado = porSimulado.get(tentativa.simuladoId)
+      .map((tentativa) => ({ tentativa, simulado: porSimulado.get(tentativa.simuladoId) }))
+  }
 
-        return {
-          label: simulado?.titulo ?? `Simulado ${tentativa.simuladoId}`,
-          value: `${formatarNota(tentativa.nota)} / ${formatarNota(simulado?.notaMaxima ?? 10)}`,
-        }
-      })
+  function simuladosDaLinha(alunoId: number, disciplinaId: number, turmaId: number) {
+    return tentativasDaLinha(alunoId, disciplinaId, turmaId).map(({ tentativa, simulado }) => ({
+      label: simulado?.titulo ?? `Simulado ${tentativa.simuladoId}`,
+      value: `${formatarNota(tentativa.nota)} / ${formatarNota(simulado?.notaMaxima ?? 10)}`,
+    }))
+  }
+
+  // Quantos pontos a disciplina já distribuiu pra esse aluno/turma até agora
+  // — só os simulados concluídos contam. nota.total é sempre sobre essa
+  // base, nunca sobre o total de pontos do curso inteiro (mesma regra da
+  // tela de Notas do aluno — ver pontosDistribuidos em pages/aluno/Notas.tsx).
+  function pontosDistribuidosDaLinha(alunoId: number, disciplinaId: number, turmaId: number) {
+    return tentativasDaLinha(alunoId, disciplinaId, turmaId).reduce(
+      (soma, { simulado }) => soma + (simulado?.notaMaxima ?? 0),
+      0,
+    )
   }
 
   const carregandoResultado =
-    requisicaoMatriculasResultado.loading ||
-    requisicaoMatriculasTodas.loading ||
-    requisicaoNotas.loading ||
-    requisicaoSimulados.loading
+    requisicaoMatriculasResultado.loading || requisicaoNotas.loading || requisicaoSimulados.loading
 
   if (requisicaoVinculos.error) {
     return (
@@ -394,17 +374,19 @@ export default function Notas() {
 
       {carregandoResultado ? (
         <Skeleton $altura="240px" $raio="8px" />
+      ) : !filtro ? (
+        <Card>
+          <EstadoVazio
+            titulo="Selecione os filtros para buscar as notas"
+            descricao="Escolha a turma e o tipo de busca (por disciplina ou por aluno) acima e clique em Buscar."
+            icon={<Search />}
+          />
+        </Card>
       ) : linhasAcordeao.length === 0 ? (
         <Card>
           <EstadoVazio
             titulo="Nada encontrado"
-            descricao={
-              filtro
-                ? 'Não há dados para esse filtro.'
-                : visao === 'historico'
-                  ? 'Nenhum aluno encerrou a matrícula nas suas turmas ainda.'
-                  : 'Você ainda não leciona em nenhuma turma.'
-            }
+            descricao="Não há dados para esse filtro."
             icon={<NotebookPen />}
           />
         </Card>
@@ -413,14 +395,18 @@ export default function Notas() {
           <Lista>
             {linhasAcordeao.map((linha, indice) => {
               const nota = notaDaLinha(linha.alunoId, linha.disciplinaId, linha.turmaId)
+              const distribuido = pontosDistribuidosDaLinha(linha.alunoId, linha.disciplinaId, linha.turmaId)
+              const percentual = distribuido > 0 ? ((nota?.total ?? 0) / distribuido) * 100 : 0
 
               return (
                 <DropDown
                   key={linha.chave}
                   titulo={linha.titulo}
                   resumo={
-                    typeof nota?.total === 'number' ? (
-                      <Tag variant="neutral">Nota: {formatarNota(nota.total)}</Tag>
+                    typeof nota?.total === 'number' && distribuido > 0 ? (
+                      <Tag variant={VARIANTE_POR_NIVEL[nivelDesempenho(percentual)]}>
+                        Nota: {formatarNota(nota.total)}/{formatarNota(distribuido)}
+                      </Tag>
                     ) : (
                       <Tag variant="neutral">Sem nota</Tag>
                     )

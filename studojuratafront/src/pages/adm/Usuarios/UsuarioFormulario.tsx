@@ -197,7 +197,7 @@ export default function UsuarioFormulario() {
       <Header
         titulo={edicao ? 'Editar usuário' : 'Novo usuário'}
         voltarPara="/adm/usuarios"
-        rotuloVoltar="Voltar para usuários"
+        rotuloVoltar="Usuários"
         actions={
           <>
             {edicao ? (

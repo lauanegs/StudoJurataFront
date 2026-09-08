@@ -37,7 +37,10 @@ export interface QuestaoEditorProps {
   actions?: React.ReactNode
 }
 
-export const MAXIMO_ALTERNATIVAS = 5
+// Confirmado com o usuário: a tela de simulado do aluno segue o layout do
+// Figma com até 3 alternativas por questão — o cadastro trava nesse mesmo
+// limite pra nenhuma questão nova sair maior do que a tela comporta.
+export const MAXIMO_ALTERNATIVAS = 3
 export const MINIMO_ALTERNATIVAS = 2
 
 /**

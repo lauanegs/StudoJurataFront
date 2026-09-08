@@ -1,12 +1,14 @@
 import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Target } from 'lucide-react'
+import { Clock, Target, User } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { AlternativaCard } from '../../../components/ui/AlternativaCard'
+import { AlternativaVerdadeiroFalso } from '../../../components/ui/AlternativaVerdadeiroFalso'
 import { Card } from '../../../components/ui/Card'
-import { Header } from '../../../components/ui/Header'
+import { Header, SubtituloItem } from '../../../components/ui/Header'
+import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -20,7 +22,6 @@ import {
   simulados as servicoSimulados,
 } from '../../../services/endpoints'
 import { formatarTempo, letraAlternativa } from '../../../utils/format'
-import type { AlternativaResponse } from '../../../types'
 
 const Lista = styled.div`
   display: flex;
@@ -31,22 +32,32 @@ const Lista = styled.div`
 const Alternativas = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${({ theme }) => theme.spacing.xxs};
   margin-top: ${({ theme }) => theme.spacing.sm};
 `
 
+const QuestaoCabecalho = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
+`
+
+/* Sem herdar o preto padrão do texto do card — mesmo cinza usado no título
+   da revisão do lado aluno (Simulado.tsx). */
+const QuestaoTitulo = styled.strong`
+  color: ${({ theme }) => theme.colors.textSecondary};
+`
+
 const Enunciado = styled.p`
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
   font-size: ${({ theme }) => theme.typography.sizes.sm};
   color: ${({ theme }) => theme.colors.textSecondary};
   line-height: ${({ theme }) => theme.typography.lineHeight.normal};
 `
 
-/* Confirmado no Figma: "Aluno(a): X", "Acertos: X/Y", "Tempo: HH:MM:SS" em
-   linhas separadas de texto simples no header — não tags. */
-const Info = styled.div`
-  display: flex;
-  flex-direction: column;
-`
 
 export default function ResultadoAluno() {
   const { simuladoId, simuladoAlunoId } = useParams()
@@ -81,27 +92,33 @@ export default function ResultadoAluno() {
 
     return respostas.map((resposta) => {
       const questao = questoes.find((item) => item.id === resposta.questaoId)
+      const ehVF = questao?.tipo === 'VERDADEIRO_FALSO'
+      const marcadasVerdadeiras = new Set(resposta.alternativasVerdadeirasIds ?? [])
 
       const alternativasDaQuestao = todasAlternativas
         .filter((alternativa) => alternativa.questaoId === resposta.questaoId)
         .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
 
+      // `respondida` é novo — registros de simulados concluídos antes dessa
+      // mudança não têm esse campo preenchido (null); mesmo fallback usado na
+      // revisão do lado aluno (Simulado.tsx).
+      const respondida =
+        resposta.respondida ??
+        (ehVF ? (resposta.alternativasVerdadeirasIds?.length ?? 0) > 0 : resposta.alternativaId != null)
+
       return {
         respostaId: resposta.id,
         enunciado: questao?.enunciado ?? 'Questão não encontrada',
         acertou: Boolean(resposta.acertou),
-        emBranco: resposta.alternativaId === null || resposta.alternativaId === undefined,
+        respondida,
+        ehVF,
+        marcadasVerdadeiras,
         tempoResposta: resposta.tempoResposta,
         alternativas: alternativasDaQuestao,
         alternativaMarcada: resposta.alternativaId ?? null,
       }
     })
   }, [requisicaoRespostas.data, requisicaoQuestoes.data, requisicaoAlternativas.data])
-
-  function letraDe(alternativa: AlternativaResponse, lista: AlternativaResponse[]) {
-    const posicao = lista.findIndex((item) => item.id === alternativa.id)
-    return letraAlternativa(posicao < 0 ? 0 : posicao)
-  }
 
   if (requisicaoTentativa.error) {
     return (
@@ -124,18 +141,18 @@ export default function ResultadoAluno() {
         titulo={simulado?.titulo ?? 'Correção da tentativa'}
         subtitulo={
           tentativa && (
-            <Info>
-              <span>Aluno(a): {nomeAluno}</span>
-              <span>
+            <>
+              <SubtituloItem icon={<User />}>Aluno(a): {nomeAluno}</SubtituloItem>
+              <SubtituloItem icon={<Target />}>
                 Acertos: {typeof tentativa.quantidadeAcertos === 'number' ? tentativa.quantidadeAcertos : '—'}
                 {simulado?.quantidadeQuestoes ? ` / ${simulado.quantidadeQuestoes}` : ''}
-              </span>
-              <span>Tempo: {formatarTempo(tentativa.tempoGasto)}</span>
-            </Info>
+              </SubtituloItem>
+              <SubtituloItem icon={<Clock />}>Tempo: {formatarTempo(tentativa.tempoGasto)}</SubtituloItem>
+            </>
           )
         }
         voltarPara={`/professor/reforco/simulados/${idSimulado}/resultados`}
-        rotuloVoltar="Voltar para os resultados"
+        rotuloVoltar="Resultados"
       />
 
       {requisicaoRespostas.loading ? (
@@ -150,30 +167,49 @@ export default function ResultadoAluno() {
         <Lista>
           {correcao.map((item, indice) => (
             <Card key={item.respostaId}>
-              <strong style={{ display: 'block', marginBottom: '8px' }}>Questão {indice + 1}</strong>
+              <QuestaoCabecalho>
+                <QuestaoTitulo>Questão {indice + 1}</QuestaoTitulo>
+
+                {!item.respondida ? (
+                  <Tag variant="neutral">Em branco</Tag>
+                ) : item.acertou ? (
+                  <Tag variant="success">
+                    Acertou
+                  </Tag>
+                ) : (
+                  <Tag variant="error">
+                    Errou
+                  </Tag>
+                )}
+              </QuestaoCabecalho>
 
               <Enunciado>{item.enunciado}</Enunciado>
 
               <Alternativas>
-                {item.alternativas.map((alternativa) => {
-                  const marcada = alternativa.id === item.alternativaMarcada
+                {item.ehVF
+                  ? item.alternativas.map((alternativa) => (
+                      <AlternativaVerdadeiroFalso
+                        key={alternativa.id}
+                        texto={alternativa.texto}
+                        valor={item.respondida ? item.marcadasVerdadeiras.has(alternativa.id) : null}
+                        revelado
+                        correta={alternativa.correta}
+                        disabled
+                      />
+                    ))
+                  : item.alternativas.map((alternativa, posicao) => {
+                      const marcada = alternativa.id === item.alternativaMarcada
 
-                  return (
-                    <AlternativaCard
-                      key={alternativa.id}
-                      letra={letraDe(alternativa, item.alternativas)}
-                      texto={alternativa.texto}
-                      status={
-                        alternativa.correta ? 'correct' : marcada ? 'incorrect' : 'neutral'
-                      }
-                      legenda={
-                        alternativa.correta && marcada
-                          ? 'Resposta correta (marcada pelo aluno)'
-                          : undefined
-                      }
-                    />
-                  )
-                })}
+                      return (
+                        <AlternativaCard
+                          key={alternativa.id}
+                          letra={letraAlternativa(posicao)}
+                          texto={alternativa.texto}
+                          status={alternativa.correta ? 'correct' : marcada ? 'incorrect' : 'neutral'}
+                          legenda=""
+                        />
+                      )
+                    })}
               </Alternativas>
             </Card>
           ))}

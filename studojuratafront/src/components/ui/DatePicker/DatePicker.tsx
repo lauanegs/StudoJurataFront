@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react'
+import { useRef, type ChangeEvent } from 'react'
 import { DatePickerInput, DateTimePicker } from '@mantine/dates'
 import dayjs from 'dayjs'
 import { Calendar } from 'lucide-react'
@@ -39,6 +39,15 @@ export function DatePicker({
   placeholder,
   maxWidth,
 }: DatePickerProps) {
+  // O elemento por trás do DatePickerInput/DateTimePicker é, ele mesmo, um
+  // <button> — clicar em qualquer parte dele já abre o calendário. O ícone
+  // decorativo (leftSection), porém, tem pointer-events desligado por
+  // padrão, então clicar exatamente em cima dele não fazia nada — quebra o
+  // hábito de "clicar no ícone pra abrir" que outros seletores já têm.
+  // Ligando o pointer-events e disparando um clique programático no botão
+  // real por trás, o ícone passa a funcionar como atalho pro mesmo gatilho.
+  const gatilhoRef = useRef<HTMLButtonElement>(null)
+
   function disparar(novoValor: string | null) {
     const valorFinal = novoValor ? dayjs(novoValor).format(FORMATO_SAIDA[modo]) : ''
     onChange?.({ target: { value: valorFinal } } as ChangeEvent<HTMLInputElement>)
@@ -54,10 +63,41 @@ export function DatePicker({
     },
   }
 
+  // A largura da área do ícone segue o `--input-height` interno (ligado ao
+  // `size`, não à altura sobrescrita em `estilos.input` acima) — por isso
+  // usa a prop oficial `leftSectionWidth` (não dá pra sobrescrever só via
+  // `styles`, porque essa variável também controla o padding do texto).
+  const larguraSecao = '56px'
+
+  const iconeCalendario = (
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-hidden="true"
+      disabled={disabled}
+      onClick={() => gatilhoRef.current?.click()}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        padding: 0,
+        background: 'none',
+        border: 'none',
+        color: 'inherit',
+        cursor: disabled ? 'default' : 'pointer',
+      }}
+    >
+      {comTamanho(<Calendar />, 18)}
+    </button>
+  )
+
   return (
     <Field label={label} required={required} hint={hint} error={error}>
       {modo === 'data' ? (
         <DatePickerInput
+          ref={gatilhoRef}
           id={id}
           value={(value as string) || null}
           onChange={disparar}
@@ -65,7 +105,9 @@ export function DatePicker({
           disabled={disabled}
           error={Boolean(error)}
           valueFormat={FORMATO_EXIBICAO.data}
-          leftSection={comTamanho(<Calendar />, 18)}
+          leftSection={iconeCalendario}
+          leftSectionWidth={larguraSecao}
+          leftSectionPointerEvents="auto"
           clearable
           radius="md"
           style={{ maxWidth }}
@@ -73,6 +115,7 @@ export function DatePicker({
         />
       ) : (
         <DateTimePicker
+          ref={gatilhoRef}
           id={id}
           value={(value as string) || null}
           onChange={disparar}
@@ -80,7 +123,9 @@ export function DatePicker({
           disabled={disabled}
           error={Boolean(error)}
           valueFormat={FORMATO_EXIBICAO.dataHora}
-          leftSection={comTamanho(<Calendar />, 18)}
+          leftSection={iconeCalendario}
+          leftSectionWidth={larguraSecao}
+          leftSectionPointerEvents="auto"
           clearable
           radius="md"
           style={{ maxWidth }}

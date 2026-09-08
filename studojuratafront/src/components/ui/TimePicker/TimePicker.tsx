@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react'
+import { useRef, type ChangeEvent } from 'react'
 import { TimePicker as MantineTimePicker } from '@mantine/dates'
 import { Clock } from 'lucide-react'
 
@@ -19,9 +19,41 @@ export function TimePicker({
   id,
   maxWidth,
 }: TimePickerProps) {
+  // O dropdown do TimePicker abre quando o campo de horas ganha foco (não
+  // tem um "abrir" imperativo próprio) — o ícone decorativo (leftSection)
+  // não reage a clique por padrão (pointer-events desligado), quebrando o
+  // hábito de "clicar no ícone pra abrir" que outros seletores já têm.
+  // Focando o campo de horas na mão a partir do clique no ícone reproduz o
+  // mesmo efeito.
+  const horasRef = useRef<HTMLInputElement>(null)
+
   function disparar(novoValor: string) {
     onChange?.({ target: { value: novoValor } } as ChangeEvent<HTMLInputElement>)
   }
+
+  const iconeRelogio = (
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-hidden="true"
+      disabled={disabled}
+      onClick={() => horasRef.current?.focus()}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        padding: 0,
+        background: 'none',
+        border: 'none',
+        color: 'inherit',
+        cursor: disabled ? 'default' : 'pointer',
+      }}
+    >
+      {comTamanho(<Clock />, 18)}
+    </button>
+  )
 
   return (
     <Field label={label} required={required} hint={hint} error={error}>
@@ -32,7 +64,10 @@ export function TimePicker({
         disabled={disabled}
         error={Boolean(error)}
         withDropdown
-        leftSection={comTamanho(<Clock />, 18)}
+        hoursRef={horasRef}
+        leftSection={iconeRelogio}
+        leftSectionWidth="56px"
+        leftSectionPointerEvents="auto"
         radius="md"
         style={{ maxWidth }}
         styles={{

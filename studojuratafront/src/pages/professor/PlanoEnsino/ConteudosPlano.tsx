@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { ListTree, Pencil, Plus, Trash2, Upload } from 'lucide-react'
+import { BookOpen, ListTree, Pencil, Plus, Trash2, Upload } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -9,7 +9,7 @@ import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { CheckBox } from '../../../components/ui/CheckBox'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Header } from '../../../components/ui/Header'
+import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Modal } from '../../../components/ui/Modal'
 import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
@@ -249,7 +249,7 @@ export default function ConteudosPlano() {
         const datas = datasMinistracaoPorConteudo.get(conteudo.id)
         if (!datas || datas.length === 0) {
           return (
-            <Tag variant="warning" ponto>
+            <Tag variant="warning">
               Pendente
             </Tag>
           )
@@ -262,7 +262,7 @@ export default function ConteudosPlano() {
         return (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
             {datas.map((data) => (
-              <Tag key={data} variant="success" ponto>
+              <Tag key={data} variant="success">
                 {formatarData(data)}
               </Tag>
             ))}
@@ -291,17 +291,19 @@ export default function ConteudosPlano() {
         subtitulo={
           requisicaoPlano.data && (
             <>
-              <strong>{requisicaoPlano.data.titulo ?? `Plano #${requisicaoPlano.data.id}`}</strong>
+              <SubtituloItem icon={<BookOpen />}>
+                Plano: {requisicaoPlano.data.titulo ?? `Plano #${requisicaoPlano.data.id}`}
+              </SubtituloItem>
               {conteudos.length > 0 && (
-                <Tag variant={totalMinistrados === conteudos.length ? 'success' : 'neutral'}>
-                  {totalMinistrados}/{conteudos.length} conteúdos já ministrados
-                </Tag>
+                <SubtituloItem icon={<ListTree />}>
+                  Progresso: {totalMinistrados}/{conteudos.length} conteúdos já ministrados
+                </SubtituloItem>
               )}
             </>
           )
         }
         voltarPara="/professor/plano-ensino"
-        rotuloVoltar="Voltar para planos de ensino"
+        rotuloVoltar="Planos de ensino"
         filtros={
           <CamposCabecalho>
             <Button icon={<Plus />} size="large" onClick={() => navegar(`/professor/plano-ensino/${idPlano}/conteudos/novo`)}>

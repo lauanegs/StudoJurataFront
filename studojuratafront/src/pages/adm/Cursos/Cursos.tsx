@@ -88,7 +88,7 @@ export default function Cursos() {
       cabecalho: 'Status',
       render: (curso) =>
         curso.status ? (
-          <Tag variant={ATIVO_INATIVO_VARIANT[curso.status]} ponto>
+          <Tag variant={ATIVO_INATIVO_VARIANT[curso.status]}>
             {ROTULO_ATIVO_INATIVO[curso.status]}
           </Tag>
         ) : (
@@ -101,7 +101,6 @@ export default function Cursos() {
     <Layout>
       <Header
         titulo="Cursos"
-        subtitulo={!loading && !error ? `${filtrados.length} curso(s)` : undefined}
         actions={
           <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/cursos/novo')}>
             Adicionar curso

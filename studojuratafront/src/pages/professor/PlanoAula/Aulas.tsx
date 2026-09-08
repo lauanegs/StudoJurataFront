@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { BarChart3, CalendarPlus, ClipboardList, Pencil, Plus, Trash2 } from 'lucide-react'
+import { BarChart3, BookOpen, CalendarPlus, ClipboardList, Pencil, Plus, Trash2, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Header } from '../../../components/ui/Header'
+import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
@@ -218,7 +218,7 @@ export default function Aulas() {
         aula.dataPublicacao ? (
           formatarData(aula.dataPublicacao)
         ) : (
-          <Tag variant="neutral" ponto>
+          <Tag variant="neutral">
             Planejada
           </Tag>
         ),
@@ -246,13 +246,13 @@ export default function Aulas() {
         subtitulo={
           plano && (
             <>
-              <strong>{plano.turmaDisciplina?.turma?.titulo}</strong>
-              <Tag variant="purple">{plano.turmaDisciplina?.disciplina?.titulo}</Tag>
+              <SubtituloItem icon={<Users />}>Turma: {plano.turmaDisciplina?.turma?.titulo}</SubtituloItem>
+              <SubtituloItem icon={<BookOpen />}>Disciplina: {plano.turmaDisciplina?.disciplina?.titulo}</SubtituloItem>
             </>
           )
         }
         voltarPara="/professor/plano-aula"
-        rotuloVoltar="Voltar para planos de aula"
+        rotuloVoltar="Planos de aula"
         filtros={
           <CamposCabecalho>
             <Button icon={<Plus />} size="large" onClick={() => navegar(`/professor/plano-aula/${idPlano}/aulas/nova`)}>

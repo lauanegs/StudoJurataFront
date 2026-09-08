@@ -99,7 +99,6 @@ export default function Responsaveis() {
     <Layout>
       <Header
         titulo="Responsáveis"
-        subtitulo={!loading && !error ? `${filtrados.length} responsável(is)` : undefined}
         actions={
           <Button size="large" icon={<Plus />} onClick={() => navegar('/adm/responsaveis/novo')}>
             Adicionar responsável

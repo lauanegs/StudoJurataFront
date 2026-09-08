@@ -42,7 +42,9 @@ const Valor = styled.strong`
 
 /* Confirmado no Figma (frame "home - professor", nós 1:3368/1:3374): o selo
    abaixo do número usa sempre o mesmo verde translúcido, independente da
-   categoria do indicador — não é uma cor por tom. */
+   categoria do indicador — não é uma cor por tom. Fundo alinhado à cor base
+   do sistema (theme.colors.success) a 30% de opacidade; texto continua
+   cinza, não acompanha a cor do fundo. */
 const Selo = styled.span`
   display: inline-flex;
   align-items: center;
@@ -51,7 +53,7 @@ const Selo = styled.span`
 
   padding: 4px 8px;
 
-  background: ${corComOpacidade('#18CB53', 0.3)};
+  background: ${({ theme }) => corComOpacidade(theme.colors.success, 0.3)};
   border-radius: 4px;
 
   font-size: ${({ theme }) => theme.typography.sizes.xs};

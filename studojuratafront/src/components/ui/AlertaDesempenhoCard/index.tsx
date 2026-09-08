@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 
-const Container = styled.div`
+type Tom = 'warning' | 'success'
+
+const Container = styled.div<{ $tom: Tom }>`
   display: flex;
   align-items: flex-start;
   gap: ${({ theme }) => theme.spacing.md};
@@ -10,12 +12,13 @@ const Container = styled.div`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
 
-  background: ${({ theme }) => theme.colors.warningBackground};
-  border: 1px solid ${({ theme }) => theme.colors.warning};
+  background: ${({ theme, $tom }) =>
+    $tom === 'success' ? theme.colors.successBackground : theme.colors.warningBackground};
+  border: 1px solid ${({ theme, $tom }) => ($tom === 'success' ? theme.colors.success : theme.colors.warning)};
   border-radius: ${({ theme }) => theme.radius.md};
 `
 
-const Icone = styled.span`
+const Icone = styled.span<{ $tom: Tom }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -25,7 +28,7 @@ const Icone = styled.span`
   height: 40px;
 
   border-radius: ${({ theme }) => theme.radius.circle};
-  background: ${({ theme }) => theme.colors.warning};
+  background: ${({ theme, $tom }) => ($tom === 'success' ? theme.colors.success : theme.colors.warning)};
   color: ${({ theme }) => theme.colors.textStrong};
 
   svg {
@@ -41,10 +44,10 @@ const Conteudo = styled.div`
   min-width: 0;
 `
 
-const Titulo = styled.strong`
+const Titulo = styled.strong<{ $tom: Tom }>`
   font-size: ${({ theme }) => theme.typography.sizes.sm};
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  color: ${({ theme }) => theme.colors.warningText};
+  color: ${({ theme, $tom }) => ($tom === 'success' ? theme.colors.successText : theme.colors.warningText)};
 `
 
 const Descricao = styled.p`
@@ -62,17 +65,19 @@ interface AlertaDesempenhoCardProps {
   titulo: string
   descricao: string
   acao?: ReactNode
+  /** 'warning' (padrão): algo pede atenção. 'success': confirmação de que está dentro do esperado. */
+  tom?: Tom
 }
 
-export function AlertaDesempenhoCard({ titulo, descricao, acao }: AlertaDesempenhoCardProps) {
+export function AlertaDesempenhoCard({ titulo, descricao, acao, tom = 'warning' }: AlertaDesempenhoCardProps) {
   return (
-    <Container role="status">
-      <Icone aria-hidden="true">
-        <AlertTriangle />
+    <Container role="status" $tom={tom}>
+      <Icone aria-hidden="true" $tom={tom}>
+        {tom === 'success' ? <CheckCircle2 /> : <AlertTriangle />}
       </Icone>
 
       <Conteudo>
-        <Titulo>{titulo}</Titulo>
+        <Titulo $tom={tom}>{titulo}</Titulo>
         <Descricao>{descricao}</Descricao>
       </Conteudo>
 

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { CheckCheck, ListTree, Save, Send, UserX, Users } from 'lucide-react'
+import { BookOpen, Calendar, CheckCheck, Clock, ListTree, Save, Send, UserX, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -9,7 +9,7 @@ import { Card } from '../../../components/ui/Card'
 import { CheckBox } from '../../../components/ui/CheckBox'
 import { Chip } from '../../../components/ui/Chip'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Header } from '../../../components/ui/Header'
+import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
@@ -319,23 +319,23 @@ export default function RegistrarAula() {
         subtitulo={
           aula && (
             <>
-              <strong>{aula.planoAula?.turmaDisciplina?.turma?.titulo}</strong>
-              <Tag variant="purple">{aula.planoAula?.turmaDisciplina?.disciplina?.titulo}</Tag>
-              {aula.dataPrevista && <span>prevista para {formatarData(aula.dataPrevista)}</span>}
+              <SubtituloItem icon={<Users />}>Turma: {aula.planoAula?.turmaDisciplina?.turma?.titulo}</SubtituloItem>
+              <SubtituloItem icon={<BookOpen />}>
+                Disciplina: {aula.planoAula?.turmaDisciplina?.disciplina?.titulo}
+              </SubtituloItem>
+              {aula.dataPrevista && (
+                <SubtituloItem icon={<Calendar />}>Prevista para: {formatarData(aula.dataPrevista)}</SubtituloItem>
+              )}
               {aula.dataPublicacao ? (
-                <Tag variant="success" ponto>
-                  Ministrada em {formatarData(aula.dataPublicacao)}
-                </Tag>
+                <SubtituloItem icon={<CheckCheck />}>Ministrada em: {formatarData(aula.dataPublicacao)}</SubtituloItem>
               ) : (
-                <Tag variant="neutral" ponto>
-                  Planejada
-                </Tag>
+                <SubtituloItem icon={<Clock />}>Status: Planejada</SubtituloItem>
               )}
             </>
           )
         }
         voltarPara={planoAulaId ? `/professor/plano-aula/${planoAulaId}/aulas` : '/professor/plano-aula'}
-        rotuloVoltar="Voltar para as aulas"
+        rotuloVoltar="Aulas"
         actions={
           <>
             {!aula?.dataPublicacao && (

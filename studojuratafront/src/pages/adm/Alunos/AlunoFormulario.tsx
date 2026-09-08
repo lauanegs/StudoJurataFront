@@ -9,6 +9,7 @@ import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
 import { IconButton } from '../../../components/ui/IconButton'
 import { Input } from '../../../components/ui/Input'
+import { Modal } from '../../../components/ui/Modal'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
@@ -115,6 +116,11 @@ export default function AlunoFormulario() {
   })
   const [matricula, setMatricula] = useState('')
   const [vinculos, setVinculos] = useState<VinculoForm[]>([])
+  // Item 10.3 (LGPD): o texto exato aceito fica gravado por vínculo
+  // (textoVersao) — antes só existia a tag "aceito"/"pendente", sem jeito de
+  // conferir depois o que, de fato, foi aceito. Esse modal só mostra o que
+  // já está salvo, não registra nada novo.
+  const [termoVisualizado, setTermoVisualizado] = useState<VinculoForm | null>(null)
 
   const requisicaoAluno = useRequisicao(
     () => servicoAlunos.buscar(alunoId as number),
@@ -319,7 +325,7 @@ export default function AlunoFormulario() {
   if (edicao && requisicaoAluno.error) {
     return (
       <Layout>
-        <Header titulo="Aluno" voltarPara="/adm/alunos" rotuloVoltar="Voltar para alunos" />
+        <Header titulo="Aluno" voltarPara="/adm/alunos" rotuloVoltar="Alunos" />
         <ErroCarregamento mensagem={requisicaoAluno.error} onRetry={requisicaoAluno.reload} />
       </Layout>
     )
@@ -332,7 +338,7 @@ export default function AlunoFormulario() {
       <Header
         titulo={edicao ? 'Editar aluno' : 'Novo aluno'}
         voltarPara="/adm/alunos"
-        rotuloVoltar="Voltar para alunos"
+        rotuloVoltar="Alunos"
         actions={
           <>
             {edicao ? (
@@ -497,14 +503,24 @@ export default function AlunoFormulario() {
                             : 'Termos pendentes'}
                         </Tag>
 
-                        <Button
-                          variant="secondary"
-                          size="small"
-                          disabled={!vinculo.id || vinculo.aceitouTermos || salvando}
-                          onClick={() => registrarAceite(vinculo)}
-                        >
-                          Registrar aceite
-                        </Button>
+                        {vinculo.aceitouTermos ? (
+                          <Button
+                            variant="secondary"
+                            size="small"
+                            onClick={() => setTermoVisualizado(vinculo)}
+                          >
+                            Ver termo aceito
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="secondary"
+                            size="small"
+                            disabled={!vinculo.id || salvando}
+                            onClick={() => registrarAceite(vinculo)}
+                          >
+                            Registrar aceite
+                          </Button>
+                        )}
                       </LinhaTermos>
                     </LinhaResponsavel>
                   ))}
@@ -515,6 +531,19 @@ export default function AlunoFormulario() {
           )}
         </>
       )}
+
+      <Modal
+        aberto={Boolean(termoVisualizado)}
+        onClose={() => setTermoVisualizado(null)}
+        titulo="Termo aceito"
+        descricao={
+          termoVisualizado
+            ? `Aceito em ${formatarData(termoVisualizado.dataAceite)}.`
+            : undefined
+        }
+      >
+        <p>{termoVisualizado?.textoVersao || TEXTO_VERSAO_LGPD}</p>
+      </Modal>
     </Layout>
   )
 }

@@ -149,7 +149,7 @@ export default function CursoFormulario() {
       <Header
         titulo={edicao ? 'Editar curso' : 'Novo curso'}
         voltarPara="/adm/cursos"
-        rotuloVoltar="Voltar para cursos"
+        rotuloVoltar="Cursos"
         actions={
           <>
             {edicao ? (

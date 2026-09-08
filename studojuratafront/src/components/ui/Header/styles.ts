@@ -23,32 +23,45 @@ export const Cartao = styled.div`
   box-shadow: ${({ theme }) => theme.shadow.base};
 `
 
-export const Voltar = styled.button`
-  display: inline-flex;
+/* Linha só com o botão de voltar (quando existe) e o título — confirmado
+   pelo usuário: o botão centralizado com a altura do título, não com o
+   bloco título+subtítulo inteiro (o subtítulo fica numa linha à parte,
+   abaixo, recuado pra alinhar com o texto do título). */
+export const LinhaTitulo = styled.div`
+  display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.xxs};
-  align-self: flex-start;
+  gap: ${({ theme }) => theme.spacing.md};
+`
 
-  font-size: ${({ theme }) => theme.typography.sizes.xs};
-  font-weight: ${({ theme }) => theme.typography.weights.medium};
+/* Confirmado pelo usuário: mesma altura do título (spacing.xxl bate com a
+   caixa visual do texto em title/32px), radius dos outros botões do sistema
+   (radius.md), fundo no tom do cinza de fundo da aplicação e ícone em escala
+   de cinza. */
+export const Voltar = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  width: ${({ theme }) => theme.spacing.xxl};
+  height: ${({ theme }) => theme.spacing.xxl};
+  border: none;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.textSecondary};
+  cursor: pointer;
 
-  transition: color ${({ theme }) => theme.transition.fast};
+  transition: filter ${({ theme }) => theme.transition.base};
 
   &:hover {
-    color: ${({ theme }) => theme.colors.purple};
-  }
-
-  svg {
-    width: 14px;
-    height: 14px;
+    filter: brightness(0.96);
   }
 `
 
 export const Titulos = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xxs};
+  gap: ${({ theme }) => theme.spacing.md};
   min-width: 0;
 `
 
@@ -63,13 +76,41 @@ export const Titulo = styled.h1`
   }
 `
 
-export const Subtitulo = styled.div`
+/* Confirmado pelo usuário: um item do subtítulo por linha, empilhados, não
+   lado a lado. Quando existe botão de voltar, recua pra alinhar com o texto
+   do título (não com o botão ao lado dele). */
+export const Subtitulo = styled.div<{ $recuada: boolean }>`
   display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.xs};
 
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
+  margin-left: ${({ theme, $recuada }) => ($recuada ? `calc(${theme.spacing.xxl} + ${theme.spacing.md})` : 0)};
+
+  font-size: ${({ theme }) => theme.typography.sizes.md};
+  font-weight: ${({ theme }) => theme.typography.weights.medium};
+  color: ${({ theme }) => theme.colors.textSecondary};
+`
+
+export const ItemSubtitulo = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+  line-height: ${({ theme }) => theme.typography.lineHeight.tight};
+`
+
+/* Badge em volta do ícone de cada item do subtítulo, no mesmo tom de cinza do
+   fundo da aplicação, ícone em escala de cinza — confirmado no Figma. */
+export const IconeSubtitulo = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  width: 26px;
+  height: 26px;
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background: ${({ theme }) => theme.colors.background};
   color: ${({ theme }) => theme.colors.textSecondary};
 `
 

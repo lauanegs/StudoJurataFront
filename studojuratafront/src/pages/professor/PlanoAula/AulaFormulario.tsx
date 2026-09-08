@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { ListTree, Save, Trash2 } from 'lucide-react'
+import { ListTree, Save, Trash2, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -9,7 +9,7 @@ import { Card } from '../../../components/ui/Card'
 import { CheckBox } from '../../../components/ui/CheckBox'
 import { Chip } from '../../../components/ui/Chip'
 import { DatePicker } from '../../../components/ui/DatePicker'
-import { Header } from '../../../components/ui/Header'
+import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Modal } from '../../../components/ui/Modal'
 import { TextArea } from '../../../components/ui/TextArea'
@@ -51,6 +51,15 @@ export default function AulaFormulario() {
   const idPlano = Number(planoAulaId)
   const edicao = Boolean(aulaId)
   const idAula = aulaId ? Number(aulaId) : null
+
+  // Atalho vindo de "Registrar aula" (RegistrarAulaTurma) quando a disciplina
+  // ainda não tem nenhuma aula pendente no plano: sem isso, salvar aqui
+  // sempre mandava de volta pra lista de aulas do plano — o professor tinha
+  // que sair, voltar em Turmas, entrar na disciplina de novo, só pra
+  // finalmente registrar a chamada da aula que acabou de cadastrar.
+  const [searchParams] = useSearchParams()
+  const retornarPara = searchParams.get('retornarPara')
+  const destinoPadrao = retornarPara || `/professor/plano-aula/${idPlano}/aulas`
 
   const [ordem, setOrdem] = useState('')
   const [titulo, setTitulo] = useState('')
@@ -161,7 +170,7 @@ export default function AulaFormulario() {
       }
 
       toast.success(edicao ? 'Aula atualizada' : 'Aula criada', corpo.titulo)
-      navegar(`/professor/plano-aula/${idPlano}/aulas`)
+      navegar(destinoPadrao)
     } catch (erroSalvar) {
       toast.error(
         'Não foi possível salvar',
@@ -182,7 +191,7 @@ export default function AulaFormulario() {
         try {
           await servicoAulas.excluir(idAula)
           toast.success('Aula excluída')
-          navegar(`/professor/plano-aula/${idPlano}/aulas`)
+          navegar(destinoPadrao)
         } catch (erroExclusao) {
           toast.error(
             'Não foi possível excluir',
@@ -246,9 +255,13 @@ export default function AulaFormulario() {
     <Layout>
       <Header
         titulo={edicao ? 'Editar aula' : 'Nova aula'}
-        subtitulo={requisicaoPlano.data?.turmaDisciplina?.turma?.titulo}
-        voltarPara={`/professor/plano-aula/${idPlano}/aulas`}
-        rotuloVoltar="Voltar para as aulas"
+        subtitulo={
+          requisicaoPlano.data?.turmaDisciplina?.turma?.titulo && (
+            <SubtituloItem icon={<Users />}>Turma: {requisicaoPlano.data.turmaDisciplina.turma.titulo}</SubtituloItem>
+          )
+        }
+        voltarPara={destinoPadrao}
+        rotuloVoltar={retornarPara ? 'Registrar aula' : 'Aulas'}
         actions={
           <>
             {edicao && (
@@ -266,7 +279,7 @@ export default function AulaFormulario() {
             <Button
               size="large"
               variant="danger"
-              onClick={() => navegar(`/professor/plano-aula/${idPlano}/aulas`)}
+              onClick={() => navegar(destinoPadrao)}
               disabled={salvando || excluindo}
             >
               Cancelar
