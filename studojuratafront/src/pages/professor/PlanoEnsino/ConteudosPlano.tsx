@@ -218,7 +218,7 @@ export default function ConteudosPlano() {
       cabecalho: 'Ordem',
       largura: '80px',
       alinhamento: 'center',
-      render: (conteudo) => <Tag variant="purple">{conteudo.ordem ?? '—'}</Tag>,
+      render: (conteudo) => <Tag variant="neutral">{conteudo.ordem ?? '—'}</Tag>,
     },
     {
       key: 'titulo',

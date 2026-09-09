@@ -27,8 +27,8 @@ import {
   simulados as servicoSimulados,
   turmas as servicoTurmas,
 } from '../../../services/endpoints'
-import { formatarDataHora, normalizar } from '../../../utils/format'
-import { ROTULO_DESTINACAO, ROTULO_STATUS_SIMULADO, STATUS_SIMULADO_VARIANT } from '../../../utils/labels'
+import { normalizar } from '../../../utils/format'
+import { ROTULO_STATUS_SIMULADO, STATUS_SIMULADO_VARIANT } from '../../../utils/labels'
 import { theme as tokens } from '../../../styles/theme'
 import type { SimuladoResponse, StatusSimulado } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
@@ -207,7 +207,7 @@ export default function Simulados() {
     {
       key: 'disciplina',
       cabecalho: 'Disciplina',
-      render: (simulado) => <Tag variant="purple">{nomeDisciplina(simulado.disciplinaId)}</Tag>,
+      render: (simulado) => <Tag variant="neutral">{nomeDisciplina(simulado.disciplinaId)}</Tag>,
     },
     {
       key: 'turma',
@@ -219,12 +219,6 @@ export default function Simulados() {
         ) : (
           <span style={{ color: tokens.colors.textDisabled }}>Sem turma</span>
         ),
-    },
-    {
-      key: 'destinacao',
-      cabecalho: 'Destinação',
-      ocultarEmTelaPequena: true,
-      render: (simulado) => ROTULO_DESTINACAO[simulado.tipoDestinacao],
     },
     {
       key: 'participacao',
@@ -242,13 +236,6 @@ export default function Simulados() {
           </Tag>
         )
       },
-    },
-    {
-      key: 'janela',
-      cabecalho: 'Janela',
-      ocultarEmTelaPequena: true,
-      render: (simulado) =>
-        simulado.dataInicio ? formatarDataHora(simulado.dataInicio) : 'sem data definida',
     },
     {
       key: 'status',

@@ -55,6 +55,19 @@ export function formatarHora(valor?: string | null): string {
   return valor.slice(0, 5)
 }
 
+/** "08:00:00" ou "08:00" (LocalTime) -> minutos desde 00:00 — usado pra calcular a duração de um HorarioTurma. */
+export function horaParaMinutos(valor: string): number {
+  const [horas, minutos] = valor.split(':').map(Number)
+  return horas * 60 + minutos
+}
+
+/** 1.5 -> "01:30" — carga horária (número de horas, aceita fração) pro formato do TimePicker, usado quando a turma ainda não tem horário cadastrado (única situação em que a duração é digitada, não escolhida). */
+export function horasParaHHmm(horas: number): string {
+  const horasInteiras = Math.floor(horas)
+  const minutos = Math.round((horas - horasInteiras) * 60)
+  return `${String(horasInteiras).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`
+}
+
 export function paraInputDataHora(valor?: string | null): string {
   if (!valor) return ''
   return valor.slice(0, 16)
@@ -174,8 +187,18 @@ export function formatarMoedas(valor?: number | null): string {
   return valor.toLocaleString('pt-BR')
 }
 
+/**
+ * "1h30" em vez de "1.5h" — a carga horária da aula passou a aceitar fração
+ * (calculada do horário da turma, ex.: 08:00 às 09:30 = 1.5), então o
+ * formato precisa mostrar minutos, não casa decimal.
+ */
 export function formatarCargaHoraria(horas?: number | null): string {
-  return horas === null || horas === undefined ? INVALIDO : `${horas}h`
+  if (horas === null || horas === undefined) return INVALIDO
+
+  const horasInteiras = Math.floor(horas)
+  const minutos = Math.round((horas - horasInteiras) * 60)
+
+  return minutos > 0 ? `${horasInteiras}h${String(minutos).padStart(2, '0')}` : `${horasInteiras}h`
 }
 
 export function nomeCurto(nome?: string | null): string {

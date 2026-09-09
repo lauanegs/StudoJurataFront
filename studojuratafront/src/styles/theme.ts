@@ -98,7 +98,10 @@ export const theme = {
   },
 
   shadow: {
-    base: '0 4px 15px rgba(0, 0, 0, 0.08)',
+    // Suavizada a pedido do usuário — a sombra padrão de card/input estava
+    // forçando demais a vista em telas com muitos cards juntos (blur/opacidade
+    // menores, mesmo deslocamento vertical).
+    base: '0 2px 10px rgba(0, 0, 0, 0.05)',
     light: '0 2px 4px rgba(0, 0, 0, 0.08)',
     medium: '0 4px 8px rgba(0, 0, 0, 0.08)',
     card: '0 8px 18px rgba(24, 39, 75, 0.12)',

@@ -23,6 +23,7 @@ import type {
   Evento,
   FinalizarSimuladoRequest,
   Frequencia,
+  GerarAulasLoteRequest,
   GerarSimuladoIARequest,
   HorarioTurma,
   LancarSimuladoRequest,
@@ -272,6 +273,10 @@ export const aulas = {
   publicar: (id: number, dataPublicacao?: string) =>
     api.post<Aula>(`/aulas/${id}/publicar`, undefined, { dataPublicacao }),
   excluir: (id: number) => api.delete(`/aulas/${id}`),
+
+  /** Gera várias aulas de uma vez, seguindo os horários já cadastrados na turma. */
+  gerarLote: (planoAulaId: number, dados: GerarAulasLoteRequest) =>
+    api.post<Aula[]>(`/aulas/plano-aula/${planoAulaId}/gerar-lote`, dados),
 
   // Aba "Registrar conteúdo"
   listarConteudos: (id: number) => api.get<AulaConteudo[]>(`/aulas/${id}/conteudos`),

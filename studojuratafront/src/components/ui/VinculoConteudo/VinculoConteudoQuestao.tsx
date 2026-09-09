@@ -138,9 +138,9 @@ export function VinculoConteudoQuestao({
   }
 
   return (
-    <S.SecaoConteudo>
-      <S.CabecalhoConteudo>
-        <S.TituloConteudo>Conteúdo</S.TituloConteudo>
+    <S.SecaoVinculo>
+      <S.CabecalhoVinculo>
+        <S.TituloVinculo>Conteúdo</S.TituloVinculo>
 
         {!somenteLeitura && (
           <Button
@@ -152,16 +152,16 @@ export function VinculoConteudoQuestao({
             Vincular conteúdo
           </Button>
         )}
-      </S.CabecalhoConteudo>
+      </S.CabecalhoVinculo>
 
       {!disciplinaId ? (
-        <S.DicaConteudo>Selecione a disciplina do simulado para vincular conteúdos.</S.DicaConteudo>
+        <S.DicaVinculo>Selecione a disciplina do simulado para vincular conteúdos.</S.DicaVinculo>
       ) : conteudosVinculados.length === 0 ? (
-        <S.DicaConteudo>
+        <S.DicaVinculo>
           Nenhum conteúdo vinculado — sem isso, esta questão fica fora do cálculo de desempenho por conteúdo.
-        </S.DicaConteudo>
+        </S.DicaVinculo>
       ) : (
-        <S.ChipsConteudo>
+        <S.ChipsVinculo>
           {conteudosVinculados.map((conteudo) => (
             <Chip
               key={conteudo.id}
@@ -172,7 +172,7 @@ export function VinculoConteudoQuestao({
               {conteudo.titulo ?? 'Conteúdo'}
             </Chip>
           ))}
-        </S.ChipsConteudo>
+        </S.ChipsVinculo>
       )}
 
       <Modal
@@ -211,6 +211,6 @@ export function VinculoConteudoQuestao({
           </S.Coluna>
         )}
       </Modal>
-    </S.SecaoConteudo>
+    </S.SecaoVinculo>
   )
 }

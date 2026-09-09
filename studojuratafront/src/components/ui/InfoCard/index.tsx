@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
-import { corComOpacidade } from '../../../utils/corComOpacidade'
-
 const Container = styled.article`
   display: flex;
   flex: 1 0 0;
@@ -40,11 +38,10 @@ const Valor = styled.strong`
   font-variant-numeric: tabular-nums;
 `
 
-/* Confirmado no Figma (frame "home - professor", nós 1:3368/1:3374): o selo
-   abaixo do número usa sempre o mesmo verde translúcido, independente da
-   categoria do indicador — não é uma cor por tom. Fundo alinhado à cor base
-   do sistema (theme.colors.success) a 30% de opacidade; texto continua
-   cinza, não acompanha a cor do fundo. */
+/* Selo abaixo do número: cinza neutro, não verde — confirmado pelo usuário
+   que o verde (usado antes) sugeria "acerto"/sucesso, o que não faz sentido
+   pra um indicador absoluto (contagem, não taxa). Mesmo tom neutro do Chip
+   variant="neutral". */
 const Selo = styled.span`
   display: inline-flex;
   align-items: center;
@@ -53,7 +50,7 @@ const Selo = styled.span`
 
   padding: 4px 8px;
 
-  background: ${({ theme }) => corComOpacidade(theme.colors.success, 0.3)};
+  background: ${({ theme }) => theme.colors.background};
   border-radius: 4px;
 
   font-size: ${({ theme }) => theme.typography.sizes.xs};

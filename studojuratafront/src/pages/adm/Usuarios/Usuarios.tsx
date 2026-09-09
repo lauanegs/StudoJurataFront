@@ -86,9 +86,7 @@ export default function Usuarios() {
       key: 'tipo',
       cabecalho: 'Tipo',
       render: (usuario) => (
-        <Tag variant="purple" size="small">
-          {ROTULO_TIPO_USUARIO[usuario.tipoUsuario]}
-        </Tag>
+        <Tag variant="neutral">{ROTULO_TIPO_USUARIO[usuario.tipoUsuario]}</Tag>
       ),
     },
     {

@@ -16,7 +16,6 @@ const CORES: Record<TagVariant, { bg: string }> = {
   warning: { bg: corComOpacidade(tokens.colors.warning, 0.3) },
   info: { bg: corComOpacidade(tokens.colors.info, 0.3) },
   neutral: { bg: tokens.colors.background },
-  purple: { bg: corComOpacidade(tokens.colors.purple, 0.3) },
 }
 
 const TAMANHOS: Record<NonNullable<TagProps['size']>, { fontSize: string; padding: string; icone: number }> = {

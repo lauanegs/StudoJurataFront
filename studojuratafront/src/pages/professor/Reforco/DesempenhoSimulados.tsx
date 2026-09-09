@@ -1,42 +1,31 @@
 import { useMemo, useState } from 'react'
-import styled from 'styled-components'
-import { BookOpen, FileText, TrendingUp, Users } from 'lucide-react'
+import { TrendingUp } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
-import { Card } from '../../../components/ui/Card'
-import { DesempenhoCard } from '../../../components/ui/DesempenhoCard'
+import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
 import { Tag } from '../../../components/ui/Tag'
-import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
-import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
-import { Skeleton } from '../../../components/feedback/Skeleton'
 import { DetalheSimuladoModal } from './DetalheSimuladoModal'
 import { FiltrosDesempenho } from './FiltrosDesempenho'
 import { useDesempenhoDados, type DesempenhoSimulado } from './useDesempenhoDados'
+import { nivelDesempenho } from '../../../utils/desempenho'
+import type { TagVariant } from '../../../components/ui/Tag'
+import type { Coluna } from '../../../components/ui/DataTable/types'
 
-/* Confirmado pelo usuário: aqui os cards são horizontais e um por linha
-   (não a grade de 4 colunas do Dashboard) — cabem melhor os dados extras
-   (turma, disciplina) sem espremer o card. */
-const Lista = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* Confirmado pelo usuário: no card, turma e disciplina viram tags com ícone
-   — o texto "Turma: X"/"Disciplina: Y" por extenso fica só no modal de
-   detalhamento (DetalheSimuladoModal). */
-const InfoSimulado = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.xs};
-`
+// Padronizado com as outras telas que mostram nível de desempenho em tabela
+// (ex.: Notas) — mesma paleta success/warning/error do gráfico e do card.
+const VARIANTE_POR_NIVEL: Record<'baixo' | 'medio' | 'alto', TagVariant> = {
+  baixo: 'error',
+  medio: 'warning',
+  alto: 'success',
+}
 
 /**
  * Detalhamento de "Desempenho por simulado" — versão filtrável por
- * turma/disciplina/aluno/período do card de mesmo nome no Dashboard. Clicar
- * num card abre o mesmo modal de detalhamento (DetalheSimuladoModal) já
- * usado lá, respeitando o aluno filtrado quando houver um selecionado.
+ * turma/disciplina/aluno/período do card de mesmo nome no Dashboard, em
+ * formato de tabela pra padronizar com as demais listagens do sistema.
+ * Clicar numa linha abre o mesmo modal de detalhamento (DetalheSimuladoModal)
+ * já usado lá, respeitando o aluno filtrado quando houver um selecionado.
  */
 export default function DesempenhoSimulados() {
   const {
@@ -95,6 +84,21 @@ export default function DesempenhoSimulados() {
     [desempenhos],
   )
 
+  const colunas: Coluna<DesempenhoSimulado>[] = [
+    { key: 'titulo', cabecalho: 'Título', render: (item) => item.titulo },
+    { key: 'turma', cabecalho: 'Turma', ocultarEmTelaPequena: true, render: (item) => item.turma },
+    { key: 'disciplina', cabecalho: 'Disciplina', ocultarEmTelaPequena: true, render: (item) => item.disciplina },
+    {
+      key: 'percentual',
+      cabecalho: 'Desempenho',
+      ordenavel: true,
+      valorOrdenacao: (item) => item.percentual,
+      render: (item) => (
+        <Tag variant={VARIANTE_POR_NIVEL[nivelDesempenho(item.percentual)]}>{Math.round(item.percentual)}%</Tag>
+      ),
+    },
+  ]
+
   return (
     <Layout>
       <Header
@@ -124,44 +128,20 @@ export default function DesempenhoSimulados() {
         }
       />
 
-      {loading ? (
-        <Skeleton $altura="140px" $raio="8px" />
-      ) : error ? (
-        <Card>
-          <ErroCarregamento mensagem={error} onRetry={reload} />
-        </Card>
-      ) : desempenhos.length === 0 ? (
-        <Card>
-          <EstadoVazio
-            titulo="Nada encontrado"
-            descricao="Não há simulados concluídos para os filtros selecionados."
-            icon={<TrendingUp />}
-          />
-        </Card>
-      ) : (
-        <Lista>
-          {desempenhosPorData.map((item) => (
-            <DesempenhoCard
-              key={item.simuladoId}
-              titulo={item.titulo}
-              descricao={
-                <InfoSimulado>
-                  <Tag variant="neutral" icon={<Users />}>
-                    {item.turma}
-                  </Tag>
-                  <Tag variant="neutral" icon={<BookOpen />}>
-                    {item.disciplina}
-                  </Tag>
-                </InfoSimulado>
-              }
-              porcentagem={item.percentual}
-              icon={<FileText />}
-              orientacao="horizontal"
-              onClick={() => setSimuladoDetalhado(item)}
-            />
-          ))}
-        </Lista>
-      )}
+      <DataTable<DesempenhoSimulado>
+        columns={colunas}
+        data={desempenhosPorData}
+        rowKey={(item) => item.simuladoId}
+        loading={loading}
+        error={error}
+        onReload={reload}
+        onRowClick={(item) => setSimuladoDetalhado(item)}
+        empty={{
+          titulo: 'Nada encontrado',
+          descricao: 'Não há simulados concluídos para os filtros selecionados.',
+          icon: <TrendingUp />,
+        }}
+      />
 
       <DetalheSimuladoModal
         aberto={Boolean(simuladoDetalhado)}

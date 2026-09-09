@@ -10,6 +10,7 @@ import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
+import { Tab } from '../../../components/ui/Tab'
 import { TextArea } from '../../../components/ui/TextArea'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -45,6 +46,8 @@ const Grade = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
+type Aba = 'identificacao' | 'proposta'
+
 export default function PlanoEnsinoFormulario() {
   const { id } = useParams()
   const navegar = useNavigate()
@@ -67,6 +70,7 @@ export default function PlanoEnsinoFormulario() {
   const [metodologia, setMetodologia] = useState('')
   const [status, setStatus] = useState<StatusPlano>('ATIVO')
   const [erros, setErros] = useState<Record<string, string | undefined>>({})
+  const [aba, setAba] = useState<Aba>('identificacao')
 
   const requisicaoPlano = useRequisicao(() => servicoPlanos.buscar(planoId as number), [planoId], {
     ativo: Boolean(planoId),
@@ -324,10 +328,23 @@ export default function PlanoEnsinoFormulario() {
         }
       />
 
+      {edicao && (
+        <Tab<Aba>
+          rotuloAcessivel="Seções do plano de ensino"
+          value={aba}
+          onChange={setAba}
+          options={[
+            { value: 'identificacao', label: 'Identificação' },
+            { value: 'proposta', label: 'Proposta pedagógica' },
+          ]}
+        />
+      )}
+
       {edicao && requisicaoPlano.loading ? (
         <SkeletonCartao />
       ) : (
         <>
+          {(!edicao || aba === 'identificacao') && (
           <Card titulo="Identificação">
             <Coluna>
               <Grade>
@@ -436,7 +453,9 @@ export default function PlanoEnsinoFormulario() {
               </Grade>
             </Coluna>
           </Card>
+          )}
 
+          {(!edicao || aba === 'proposta') && (
           <Card titulo="Proposta pedagógica">
             <Coluna>
               <TextArea
@@ -473,6 +492,7 @@ export default function PlanoEnsinoFormulario() {
               />
             </Coluna>
           </Card>
+          )}
         </>
       )}
     </Layout>

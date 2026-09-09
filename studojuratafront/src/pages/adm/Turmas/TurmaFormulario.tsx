@@ -4,6 +4,7 @@ import styled from 'styled-components'
 import { CalendarClock, Pencil, Plus, Save, Trash2, UserPlus, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
+import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
@@ -48,6 +49,7 @@ import { intervaloDeDatas } from '../../../utils/validacao'
 import type {
   AlunoTurma,
   DiaSemana,
+  Disciplina,
   HorarioTurma,
   StatusAtivoInativo,
   TurmaDisciplina,
@@ -230,6 +232,23 @@ export default function TurmaFormulario() {
       .filter((disciplina) => disciplina.status !== 'INATIVO' && idsDaGrade.has(disciplina.id))
       .map((disciplina) => ({ value: disciplina.id, label: disciplina.titulo ?? '—' }))
   }, [requisicaoDisciplinas.data, requisicaoGradeCurricular.data])
+
+  /** Visibilidade (pedido do usuário): disciplinas da grade curricular do curso ainda
+   * sem vínculo nesta turma, ou vinculadas mas sem professor — não bloqueia o salvamento,
+   * só sinaliza o que falta organizar. */
+  const disciplinasIncompletas = useMemo(() => {
+    const grade = (requisicaoGradeCurricular.data ?? []).filter((item) => item.status !== 'INATIVO')
+    return grade
+      .map((item) => {
+        const disciplina = item.disciplina
+        if (!disciplina) return null
+        const vinculo = vinculosDaTurma.find((v) => v.disciplina?.id === disciplina.id)
+        if (!vinculo) return { disciplina, motivo: 'nao-vinculada' as const }
+        if (!vinculo.professor) return { disciplina, motivo: 'sem-professor' as const }
+        return null
+      })
+      .filter((item): item is { disciplina: Disciplina; motivo: 'nao-vinculada' | 'sem-professor' } => item !== null)
+  }, [requisicaoGradeCurricular.data, vinculosDaTurma])
 
   const opcoesProfessores = useMemo(
     () =>
@@ -704,6 +723,20 @@ export default function TurmaFormulario() {
                   </Button>
                 </LinhaVinculo>
               </Card>
+
+              {disciplinasIncompletas.length > 0 && (
+                <AlertaDesempenhoCard
+                  titulo="Disciplinas pendentes de organização"
+                  descricao={`${disciplinasIncompletas.length} disciplina(s) da grade curricular ${
+                    disciplinasIncompletas.length === 1 ? 'está' : 'estão'
+                  } sem professor: ${disciplinasIncompletas
+                    .map(
+                      (item) =>
+                        `${item.disciplina.titulo}${item.motivo === 'nao-vinculada' ? ' (não vinculada)' : ''}`,
+                    )
+                    .join(', ')}. A turma pode ser salva assim mesmo — organize quando definir os professores.`}
+                />
+              )}
 
               <DataTable<TurmaDisciplina>
                 descricao="Disciplinas da turma"

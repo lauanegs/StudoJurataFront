@@ -9,7 +9,9 @@ import { Card } from '../../../components/ui/Card'
 import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
+import { Select } from '../../../components/ui/Select'
 import { TextArea } from '../../../components/ui/TextArea'
+import { TimePicker } from '../../../components/ui/TimePicker'
 import { VinculoConteudoAula } from '../../../components/ui/VinculoConteudo'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -18,7 +20,9 @@ import { useToast } from '../../../contexts/toastContexto'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { aulas as servicoAulas, planosAula } from '../../../services/endpoints'
+import { aulas as servicoAulas, horariosTurma, planosAula } from '../../../services/endpoints'
+import { formatarCargaHoraria, formatarHora, horaParaMinutos, horasParaHHmm } from '../../../utils/format'
+import { ROTULO_DIA_SEMANA_CURTO } from '../../../utils/labels'
 
 const Coluna = styled.div`
   display: flex;
@@ -60,7 +64,12 @@ export default function AulaFormulario() {
   // então não reenviar apagaria silenciosamente a data de uma aula já
   // ministrada só por ter sido editada aqui (título, observações...).
   const [dataPublicacao, setDataPublicacao] = useState('')
-  const [cargaHoraria, setCargaHoraria] = useState('')
+  // Horário da turma escolhido — a carga horária vem calculada dele (hora
+  // fim - hora início), não mais digitada. cargaHorariaManual (HH:mm, igual
+  // ao TimePicker de HorarioTurma) só é usada quando a turma ainda não tem
+  // NENHUM horário cadastrado — aí não há o que selecionar.
+  const [horarioTurmaId, setHorarioTurmaId] = useState<number | null>(null)
+  const [cargaHorariaManual, setCargaHorariaManual] = useState('')
   const [observacoes, setObservacoes] = useState('')
   const [erros, setErros] = useState<Record<string, string | undefined>>({})
   // Conteúdos escolhidos ANTES de a aula existir (sem idAula ainda) — fica só
@@ -76,14 +85,46 @@ export default function AulaFormulario() {
   })
   const requisicaoAulas = useRequisicao(() => servicoAulas.listarPorPlanoAula(idPlano), [idPlano])
 
+  const turmaId = requisicaoPlano.data?.turmaDisciplina?.turma?.id ?? null
+  const requisicaoHorarios = useRequisicao(
+    () => horariosTurma.listarPorTurma(turmaId as number),
+    [turmaId],
+    { ativo: Boolean(turmaId) },
+  )
+
   useHidratar(requisicaoAula.data, (aula) => {
     setOrdem(aula.ordem?.toString() ?? '')
     setTitulo(aula.titulo ?? '')
     setDataPrevista(aula.dataPrevista?.slice(0, 10) ?? '')
     setDataPublicacao(aula.dataPublicacao?.slice(0, 10) ?? '')
-    setCargaHoraria(aula.cargaHoraria?.toString() ?? '')
+    if (aula.horarioTurma?.id) {
+      setHorarioTurmaId(aula.horarioTurma.id)
+    } else if (aula.cargaHoraria) {
+      setCargaHorariaManual(horasParaHHmm(aula.cargaHoraria))
+    }
     setObservacoes(aula.observacoes ?? '')
   })
+
+  const opcoesHorarios = useMemo(
+    () =>
+      (requisicaoHorarios.data ?? []).map((horario) => {
+        const minutos = horaParaMinutos(horario.horaFim) - horaParaMinutos(horario.horaInicio)
+        return {
+          value: horario.id,
+          label: `${ROTULO_DIA_SEMANA_CURTO[horario.diaSemana]} — ${formatarHora(horario.horaInicio)} às ${formatarHora(horario.horaFim)} (${formatarCargaHoraria(minutos / 60)})`,
+        }
+      }),
+    [requisicaoHorarios.data],
+  )
+
+  const horarioSelecionado = (requisicaoHorarios.data ?? []).find((horario) => horario.id === horarioTurmaId)
+  const cargaHorariaCalculada = horarioSelecionado
+    ? (horaParaMinutos(horarioSelecionado.horaFim) - horaParaMinutos(horarioSelecionado.horaInicio)) / 60
+    : null
+
+  // Turma sem NENHUM horário cadastrado: não há o que selecionar, então a
+  // carga horária é digitada (TimePicker, HH:mm) em vez do Select.
+  const semHorarioCadastrado = !requisicaoHorarios.loading && opcoesHorarios.length === 0
 
   const proximaOrdem = useMemo(() => {
     const existentes = (requisicaoAulas.data ?? []).map((aula) => aula.ordem ?? 0)
@@ -103,8 +144,12 @@ export default function AulaFormulario() {
       encontrados.ordem = 'A ordem deve ser um número inteiro positivo'
     }
 
-    if (cargaHoraria && (!Number.isFinite(Number(cargaHoraria)) || Number(cargaHoraria) <= 0)) {
-      encontrados.cargaHoraria = 'Informe um número de horas maior que zero'
+    if (semHorarioCadastrado) {
+      if (!cargaHorariaManual || horaParaMinutos(cargaHorariaManual) <= 0) {
+        encontrados.cargaHoraria = 'Informe a carga horária da aula'
+      }
+    } else if (!horarioTurmaId) {
+      encontrados.horario = 'Selecione o horário da turma'
     }
 
     // Ordem duplicada confunde a sequência exibida na listagem.
@@ -128,7 +173,15 @@ export default function AulaFormulario() {
         ordem: ordemExibida ? Number(ordemExibida) : undefined,
         dataPrevista: dataPrevista || undefined,
         dataPublicacao: dataPublicacao || undefined,
-        cargaHoraria: cargaHoraria ? Number(cargaHoraria) : undefined,
+        // Com horário selecionado, o back recalcula cargaHoraria a partir
+        // dele de qualquer forma (AulaService.validar) — manda o valor já
+        // calculado aqui só pra não deixar o campo vazio até a resposta
+        // voltar. Sem horário cadastrado na turma, horarioTurma vai null e
+        // cargaHoraria é o que o professor digitou (HH:mm convertido em horas).
+        horarioTurma: semHorarioCadastrado ? null : (horarioSelecionado ?? null),
+        cargaHoraria: semHorarioCadastrado
+          ? horaParaMinutos(cargaHorariaManual) / 60
+          : (cargaHorariaCalculada ?? undefined),
         observacoes: observacoes.trim() || undefined,
         status: 'ATIVO' as const,
       }
@@ -270,16 +323,30 @@ export default function AulaFormulario() {
                 onChange={(evento) => setOrdem(evento.target.value)}
               />
 
-              <Input
-                label="Quantidade de horários"
-                type="number"
-                min={1}
-                placeholder="Ex.: 2"
-                value={cargaHoraria}
-                error={erros.cargaHoraria}
-                disabled={salvando}
-                onChange={(evento) => setCargaHoraria(evento.target.value)}
-              />
+              {semHorarioCadastrado ? (
+                <TimePicker
+                  label="Carga horária"
+                  required
+                  value={cargaHorariaManual}
+                  error={erros.cargaHoraria}
+                  disabled={salvando}
+                  hint="Esta turma ainda não tem horário cadastrado (Turmas, aba Horários) — digite a duração desta aula."
+                  onChange={(evento) => setCargaHorariaManual(evento.target.value)}
+                />
+              ) : (
+                <Select<number>
+                  label="Horário"
+                  required
+                  options={opcoesHorarios}
+                  value={horarioTurmaId}
+                  loading={requisicaoHorarios.loading}
+                  error={erros.horario}
+                  disabled={salvando}
+                  hint="A carga horária vem do horário escolhido."
+                  placeholder="Selecionar horário..."
+                  onChange={setHorarioTurmaId}
+                />
+              )}
 
               <DatePicker
                 label="Data prevista"

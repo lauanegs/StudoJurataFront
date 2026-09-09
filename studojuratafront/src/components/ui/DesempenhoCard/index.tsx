@@ -70,6 +70,8 @@ const Cabecalho = styled.div<{ $horizontal: boolean }>`
   ${({ $horizontal }) => $horizontal && `flex: 1;`}
 `
 
+/* Pedido do usuário: sem fundo, ícone em cinza claro — deixa de competir
+   visualmente com a barra de porcentagem, que é o dado principal do card. */
 const IconeSelo = styled.span`
   display: flex;
   align-items: center;
@@ -79,9 +81,7 @@ const IconeSelo = styled.span`
   width: 28px;
   height: 28px;
 
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.gradients.primary};
-  color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.textTertiary};
 `
 
 const Conteudo = styled.div`

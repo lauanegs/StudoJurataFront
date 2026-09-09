@@ -15,6 +15,7 @@ import { Input } from '../../../components/ui/Input'
 import { Modal } from '../../../components/ui/Modal'
 import { QuestaoEditor } from '../../../components/ui/QuestaoEditor'
 import { VinculoConteudoQuestao } from '../../../components/ui/VinculoConteudo'
+import * as SVinculo from '../../../components/ui/VinculoConteudo/styles'
 import {
   questaoVazia,
   validarQuestao,
@@ -24,7 +25,6 @@ import {
 import { Select } from '../../../components/ui/Select'
 import { StatusBadge } from '../../../components/ui/StatusBadge'
 import { Tab } from '../../../components/ui/Tab'
-import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -58,12 +58,6 @@ const Grade = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Chips = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.xs};
 `
 
 const ListaAlunos = styled.div`
@@ -849,21 +843,28 @@ export default function SimuladoFormulario() {
               </Grade>
 
               {tipoDestinacao === 'ESPECIFICO' && (
-                <Coluna>
-                  <div>
-                    <Button
-                      icon={<Users />}
-                      disabled={!turmaId || somenteLeitura}
-                      onClick={() => setModalAlunos(true)}
-                    >
-                      Selecionar alunos
-                    </Button>
-                  </div>
+                <SVinculo.SecaoVinculo>
+                  <SVinculo.CabecalhoVinculo>
+                    <SVinculo.TituloVinculo>Alunos</SVinculo.TituloVinculo>
+
+                    {!somenteLeitura && (
+                      <Button
+                        size="small"
+                        icon={<Users />}
+                        disabled={!turmaId}
+                        onClick={() => setModalAlunos(true)}
+                      >
+                        Selecionar alunos
+                      </Button>
+                    )}
+                  </SVinculo.CabecalhoVinculo>
 
                   {alunosSelecionados.length === 0 ? (
-                    <Tag variant="warning">Nenhum aluno selecionado</Tag>
+                    <SVinculo.DicaVinculo>
+                      Nenhum aluno selecionado — a destinação específica exige ao menos um.
+                    </SVinculo.DicaVinculo>
                   ) : (
-                    <Chips>
+                    <SVinculo.ChipsVinculo>
                       {alunosSelecionados.map((alunoId) => {
                         const aluno = (requisicaoAlunos.data ?? []).find(
                           (matricula) => matricula.aluno.id === alunoId,
@@ -887,9 +888,9 @@ export default function SimuladoFormulario() {
                           </Chip>
                         )
                       })}
-                    </Chips>
+                    </SVinculo.ChipsVinculo>
                   )}
-                </Coluna>
+                </SVinculo.SecaoVinculo>
               )}
             </Coluna>
           </Card>

@@ -23,8 +23,9 @@ import type {
   TipoQuestao,
   TipoUsuario,
 } from '../types'
+import type { TagVariant } from '../components/ui/Tag/types'
 
-export type TagVariant = 'success' | 'error' | 'warning' | 'info' | 'neutral' | 'purple'
+export type { TagVariant }
 
 function opcoes<T extends string>(mapa: Record<T, string>) {
   return (Object.keys(mapa) as T[]).map((value) => ({ value, label: mapa[value] }))

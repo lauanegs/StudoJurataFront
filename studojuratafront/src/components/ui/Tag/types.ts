@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type TagVariant = 'success' | 'error' | 'warning' | 'info' | 'neutral' | 'purple'
+export type TagVariant = 'success' | 'error' | 'warning' | 'info' | 'neutral'
 
 export interface TagProps {
   children: ReactNode

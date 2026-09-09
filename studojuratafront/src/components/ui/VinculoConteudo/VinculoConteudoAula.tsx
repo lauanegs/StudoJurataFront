@@ -144,9 +144,9 @@ export function VinculoConteudoAula({
   }
 
   return (
-    <S.SecaoConteudo>
-      <S.CabecalhoConteudo>
-        <S.TituloConteudo>Conteúdo</S.TituloConteudo>
+    <S.SecaoVinculo>
+      <S.CabecalhoVinculo>
+        <S.TituloVinculo>Conteúdo</S.TituloVinculo>
 
         {!somenteLeitura && (
           <Button
@@ -158,18 +158,18 @@ export function VinculoConteudoAula({
             Vincular conteúdo
           </Button>
         )}
-      </S.CabecalhoConteudo>
+      </S.CabecalhoVinculo>
 
       {!permitirModoLocal && !aulaId ? (
-        <S.DicaConteudo>Selecione uma aula do plano para vincular conteúdos.</S.DicaConteudo>
+        <S.DicaVinculo>Selecione uma aula do plano para vincular conteúdos.</S.DicaVinculo>
       ) : !planoEnsinoId ? (
-        <S.DicaConteudo>Esta turma ainda não tem plano de ensino — vincule um antes de registrar conteúdo.</S.DicaConteudo>
+        <S.DicaVinculo>Esta turma ainda não tem plano de ensino — vincule um antes de registrar conteúdo.</S.DicaVinculo>
       ) : conteudosVinculados.length === 0 ? (
-        <S.DicaConteudo>
+        <S.DicaVinculo>
           Nenhum conteúdo registrado — registrar o conteúdo alimenta o histórico do aluno e a repetição espaçada da IA.
-        </S.DicaConteudo>
+        </S.DicaVinculo>
       ) : (
-        <S.ChipsConteudo>
+        <S.ChipsVinculo>
           {conteudosVinculados.map((conteudo) => (
             <Chip
               key={conteudo.id}
@@ -180,7 +180,7 @@ export function VinculoConteudoAula({
               {conteudo.titulo ?? 'Conteúdo'}
             </Chip>
           ))}
-        </S.ChipsConteudo>
+        </S.ChipsVinculo>
       )}
 
       <Modal
@@ -219,6 +219,6 @@ export function VinculoConteudoAula({
           </S.Coluna>
         )}
       </Modal>
-    </S.SecaoConteudo>
+    </S.SecaoVinculo>
   )
 }

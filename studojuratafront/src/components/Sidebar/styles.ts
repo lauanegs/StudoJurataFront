@@ -269,8 +269,8 @@ export const Marca = styled.div<{ $colapsada: boolean }>`
 `
 
 export const LogoMarca = styled.img`
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
 `
 
@@ -282,7 +282,10 @@ export const TextoMarca = styled.div`
   strong {
     font-size: ${({ theme }) => theme.typography.sizes.sm};
     font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-    color: ${({ theme }) => theme.colors.purple};
+    /* Confirmado pelo usuário: roxo sobrecarregava o olho, mas textStrong
+       (cinza quase preto) ficou pesado demais — textSecondary é o mesmo
+       cinza mais leve já usado no "Portal Escolar" logo abaixo. */
+    color: ${({ theme }) => theme.colors.textSecondary};
     line-height: 1.2;
   }
 

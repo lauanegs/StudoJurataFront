@@ -69,6 +69,13 @@ export default function Alunos() {
 
   const colunas: Coluna<Aluno>[] = [
     {
+      key: 'matricula',
+      cabecalho: 'Matrícula',
+      ocultarEmTelaPequena: true,
+      render: (aluno) =>
+        aluno.matricula ? <Tag variant="neutral">{aluno.matricula}</Tag> : '—',
+    },
+    {
       key: 'nome',
       cabecalho: 'Nome',
       ordenavel: true,
@@ -87,13 +94,6 @@ export default function Alunos() {
       ordenavel: true,
       valorOrdenacao: (aluno) => aluno.pessoa?.dataNascimento ?? '',
       render: (aluno) => formatarIdade(aluno.pessoa?.dataNascimento),
-    },
-    {
-      key: 'matricula',
-      cabecalho: 'Matrícula',
-      ocultarEmTelaPequena: true,
-      render: (aluno) =>
-        aluno.matricula ? <Tag variant="neutral">{aluno.matricula}</Tag> : '—',
     },
   ]
 

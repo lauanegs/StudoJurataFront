@@ -227,6 +227,14 @@ export interface PlanoAula extends EntidadeBase {
 
 export interface Aula extends EntidadeBase {
   planoAula: PlanoAula
+  /**
+   * Horário semanal da turma a que esta aula corresponde — quando
+   * informado, cargaHoraria abaixo é CALCULADA a partir dele (hora fim -
+   * hora início) pelo back, não editável. Ausente só em aula fora do
+   * horário fixo (reposição etc.), onde cargaHoraria continua digitada.
+   */
+  horarioTurma?: HorarioTurma | null
+  /** Em horas, aceita fração (ex.: 1.5 = 1h30). */
   cargaHoraria?: number
   dataPrevista?: string
   ordem?: number
@@ -234,6 +242,18 @@ export interface Aula extends EntidadeBase {
   dataPublicacao?: string
   observacoes?: string
   status?: StatusAtivoInativo
+}
+
+/**
+ * Geração em lote de aulas pra um plano de aula — segue os horários já
+ * cadastrados na turma (HorarioTurma), ciclando entre eles a partir de
+ * dataInicio até completar a quantidade pedida.
+ */
+export interface GerarAulasLoteRequest {
+  quantidade: number
+  dataInicio?: string
+  /** Vira "{tituloBase} {ordem}" em cada aula gerada — default "Aula" quando vazio. */
+  tituloBase?: string
 }
 
 export interface AulaConteudo extends EntidadeBase {

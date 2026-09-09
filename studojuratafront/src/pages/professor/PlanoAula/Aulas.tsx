@@ -1,17 +1,19 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { BarChart3, BookOpen, CalendarPlus, ClipboardList, Pencil, Plus, Trash2, Users } from 'lucide-react'
+import { BookOpen, CalendarPlus, CalendarRange, ClipboardCheck, ClipboardList, Clock, Pencil, Plus, Trash2, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
+import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
+import { Input } from '../../../components/ui/Input'
+import { Modal } from '../../../components/ui/Modal'
 import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
-import { Skeleton } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
@@ -21,6 +23,12 @@ import { aulas as servicoAulas, planosAula } from '../../../services/endpoints'
 import { formatarCargaHoraria, formatarData, normalizar } from '../../../utils/format'
 import type { Aula, AulaConteudo } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
+
+const Coluna = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+`
 
 /* Confirmado no Figma: "Adicionar aula" (150px) + busca (250px) coladas. */
 const CamposCabecalho = styled.div`
@@ -32,72 +40,6 @@ const CamposCabecalho = styled.div`
 
 const LarguraBusca = styled.div`
   width: 250px;
-`
-
-/* Confirmado no Figma (node 1:1953): as duas estatísticas ficam lado a lado
-   dentro do corpo tintado do Card (corpoComFundo). */
-const CorpoEstatisticas = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-  align-items: center;
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.xl};
-`
-
-/* Cartão de estatística sem ícone (diferente do InfoCard genérico): rótulo em
-   cima, valor grande centralizado embaixo — confirmado no Figma (nós 1:1954
-   e 1:1959), específico desta tela. */
-const Estatistica = styled.article`
-  display: flex;
-  flex: 1 0 0;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.white};
-  border-radius: ${({ theme }) => theme.radius.md};
-  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.08);
-`
-
-const EstatisticaConteudo = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: ${({ theme }) => theme.spacing.xs};
-  width: 100%;
-`
-
-const EstatisticaLabel = styled.span`
-  font-size: ${({ theme }) => theme.typography.sizes.md};
-  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  letter-spacing: -0.8px;
-`
-
-const EstatisticaValorBox = styled.div`
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 2px;
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
-  border-radius: ${({ theme }) => theme.radius.sm};
-`
-
-const EstatisticaValor = styled.span`
-  font-size: ${({ theme }) => theme.typography.sizes.title};
-  font-weight: ${({ theme }) => theme.typography.weights.bold};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  letter-spacing: -1.6px;
-  white-space: nowrap;
-`
-
-const EstatisticaValorSufixo = styled.span`
-  font-size: ${({ theme }) => theme.typography.sizes.xl};
-  font-weight: ${({ theme }) => theme.typography.weights.medium};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  white-space: nowrap;
 `
 
 const ListaConteudos = styled.ul`
@@ -115,6 +57,15 @@ export default function Aulas() {
 
   const [busca, setBusca] = useState('')
   const buscaAtrasada = useDebounce(busca)
+
+  // Geração em lote (pedido explícito: gerar de uma vez, no início do
+  // curso, em vez de cadastrar aula por aula) — segue os horários já
+  // cadastrados na turma (HorarioTurma), ver AulaService.gerarLote.
+  const [modalGerarAberto, setModalGerarAberto] = useState(false)
+  const [quantidadeGerar, setQuantidadeGerar] = useState('10')
+  const [dataInicioGerar, setDataInicioGerar] = useState(() => new Date().toISOString().slice(0, 10))
+  const [tituloBaseGerar, setTituloBaseGerar] = useState('')
+  const [erroGerar, setErroGerar] = useState<string | undefined>()
 
   const requisicaoPlano = useRequisicao(() => planosAula.buscar(idPlano), [idPlano])
   const requisicaoAulas = useRequisicao(() => servicoAulas.listarPorPlanoAula(idPlano), [idPlano])
@@ -151,6 +102,7 @@ export default function Aulas() {
   const totalAulas = aulasAtivas.length
   const ministradas = aulasAtivas.filter((aula) => aula.dataPublicacao).length
   const cargaHorariaRealizada = requisicaoEstatisticas.data?.cargaHorariaRealizada
+  const cargaHorariaPrevista = requisicaoEstatisticas.data?.cargaHorariaPrevista
 
   const { executar: excluir, executando: excluindo } = useAcao(async (aula: Aula) => {
     await confirmar({
@@ -173,6 +125,32 @@ export default function Aulas() {
     })
   })
 
+  const { executar: gerarAulas, executando: gerando } = useAcao(async () => {
+    const quantidade = Number(quantidadeGerar)
+    if (!quantidadeGerar || !Number.isInteger(quantidade) || quantidade <= 0) {
+      setErroGerar('Informe uma quantidade inteira maior que zero')
+      return
+    }
+    setErroGerar(undefined)
+
+    try {
+      const geradas = await servicoAulas.gerarLote(idPlano, {
+        quantidade,
+        dataInicio: dataInicioGerar || undefined,
+        tituloBase: tituloBaseGerar.trim() || undefined,
+      })
+      toast.success(`${geradas.length} aula(s) gerada(s)`, 'Revise e ajuste o que precisar em cada uma.')
+      setModalGerarAberto(false)
+      setTituloBaseGerar('')
+      await Promise.all([requisicaoAulas.reload(), requisicaoEstatisticas.reload()])
+    } catch (erroGeracao) {
+      toast.error(
+        'Não foi possível gerar as aulas',
+        erroGeracao instanceof ApiError ? erroGeracao.message : undefined,
+      )
+    }
+  })
+
   const colunas: Coluna<Aula>[] = [
     {
       key: 'dataPrevista',
@@ -183,7 +161,7 @@ export default function Aulas() {
     },
     {
       key: 'carga',
-      cabecalho: 'Qt. horários',
+      cabecalho: 'Carga horária',
       alinhamento: 'center',
       render: (aula) => formatarCargaHoraria(aula.cargaHoraria),
     },
@@ -248,6 +226,14 @@ export default function Aulas() {
             <>
               <SubtituloItem icon={<Users />}>Turma: {plano.turmaDisciplina?.turma?.titulo}</SubtituloItem>
               <SubtituloItem icon={<BookOpen />}>Disciplina: {plano.turmaDisciplina?.disciplina?.titulo}</SubtituloItem>
+              <SubtituloItem icon={<ClipboardCheck />}>
+                Aulas realizadas: {ministradas}/{totalAulas}
+              </SubtituloItem>
+              <SubtituloItem icon={<Clock />}>
+                Carga horária:{' '}
+                {typeof cargaHorariaRealizada === 'number' ? formatarCargaHoraria(cargaHorariaRealizada) : '—'}
+                {typeof cargaHorariaPrevista === 'number' && `/${formatarCargaHoraria(cargaHorariaPrevista)}`}
+              </SubtituloItem>
             </>
           )
         }
@@ -259,48 +245,21 @@ export default function Aulas() {
               Adicionar aula
             </Button>
 
+            <Button
+              variant="secondary"
+              icon={<CalendarRange />}
+              size="large"
+              onClick={() => setModalGerarAberto(true)}
+            >
+              Gerar aulas
+            </Button>
+
             <LarguraBusca>
               <BuscaInput value={busca} onChange={setBusca} placeholder="Buscar aula..." />
             </LarguraBusca>
           </CamposCabecalho>
         }
       />
-
-      <Card titulo="Estatísticas" icon={<BarChart3 />} semPadding corpoComFundo>
-        <CorpoEstatisticas>
-          {requisicaoEstatisticas.loading ? (
-            <>
-              <Skeleton $altura="132px" $raio="8px" />
-              <Skeleton $altura="132px" $raio="8px" />
-            </>
-          ) : (
-            <>
-              <Estatistica>
-                <EstatisticaConteudo>
-                  <EstatisticaLabel>Aulas realizadas</EstatisticaLabel>
-                  <EstatisticaValorBox>
-                    <EstatisticaValor>{ministradas}</EstatisticaValor>
-                    <EstatisticaValorSufixo>/{totalAulas}</EstatisticaValorSufixo>
-                  </EstatisticaValorBox>
-                </EstatisticaConteudo>
-              </Estatistica>
-
-              <Estatistica>
-                <EstatisticaConteudo>
-                  <EstatisticaLabel>Carga horária realizada</EstatisticaLabel>
-                  <EstatisticaValorBox>
-                    <EstatisticaValor>
-                      {typeof cargaHorariaRealizada === 'number'
-                        ? formatarCargaHoraria(cargaHorariaRealizada)
-                        : '—'}
-                    </EstatisticaValor>
-                  </EstatisticaValorBox>
-                </EstatisticaConteudo>
-              </Estatistica>
-            </>
-          )}
-        </CorpoEstatisticas>
-      </Card>
 
       <Card semPadding>
         <DataTable
@@ -364,6 +323,49 @@ export default function Aulas() {
           )}
         />
       </Card>
+
+      <Modal
+        aberto={modalGerarAberto}
+        onClose={() => setModalGerarAberto(false)}
+        titulo="Gerar aulas"
+        descricao="Gera várias aulas de uma vez, seguindo os horários já cadastrados na turma (aba Horários, em Turmas) — depois é só ajustar cada uma conforme precisar."
+        largura="480px"
+        rodape={
+          <>
+            <Button variant="secondary" onClick={() => setModalGerarAberto(false)}>
+              Cancelar
+            </Button>
+            <Button variant="success" loading={gerando} onClick={gerarAulas}>
+              Gerar
+            </Button>
+          </>
+        }
+      >
+        <Coluna>
+          <Input
+            label="Quantidade de aulas"
+            type="number"
+            min={1}
+            value={quantidadeGerar}
+            error={erroGerar}
+            onChange={(evento) => setQuantidadeGerar(evento.target.value)}
+          />
+          <DatePicker
+            label="Data de início"
+            value={dataInicioGerar}
+            hint="A primeira aula gerada cai no primeiro dia, a partir desta data, que bater com um dos horários da turma."
+            onChange={(evento) => setDataInicioGerar(evento.target.value)}
+          />
+          <Input
+            label="Título base"
+            placeholder="Ex.: Aula de Robótica"
+            value={tituloBaseGerar}
+            hint='Cada aula vira "{título base} {número}" — ex.: "Aula de Robótica 1". Vazio usa só "Aula".'
+            maxLength={100}
+            onChange={(evento) => setTituloBaseGerar(evento.target.value)}
+          />
+        </Coluna>
+      </Modal>
     </Layout>
   )
 }
