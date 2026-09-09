@@ -30,6 +30,25 @@ export function formatarDataHora(valor?: string | Date | null): string {
   })}`
 }
 
+const MESES_ABREVIADOS = [
+  'jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez',
+]
+
+function formatarMesAno(valor?: string | Date | null): string {
+  const data = paraData(valor)
+  return data ? `${MESES_ABREVIADOS[data.getMonth()]}/${data.getFullYear()}` : INVALIDO
+}
+
+/** Período de um plano de ensino/aula: "mês/aaaa – mês/aaaa" — só mês/ano, o dia é ruído visual pra essa granularidade. */
+export function formatarPeriodo(dataInicio?: string | null, dataFim?: string | null): string {
+  const inicio = formatarMesAno(dataInicio)
+  const fim = formatarMesAno(dataFim)
+  if (inicio === INVALIDO && fim === INVALIDO) return INVALIDO
+  if (fim === INVALIDO) return inicio
+  if (inicio === INVALIDO) return fim
+  return `${inicio} – ${fim}`
+}
+
 export function formatarHora(valor?: string | null): string {
   if (!valor) return INVALIDO
   // LocalTime chega como "08:00:00".

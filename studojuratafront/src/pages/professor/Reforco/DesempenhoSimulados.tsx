@@ -12,7 +12,6 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
 import { DetalheSimuladoModal } from './DetalheSimuladoModal'
 import { FiltrosDesempenho } from './FiltrosDesempenho'
-import { ResumoFiltrosDesempenho } from './ResumoFiltrosDesempenho'
 import { useDesempenhoDados, type DesempenhoSimulado } from './useDesempenhoDados'
 
 /* Confirmado pelo usuário: aqui os cards são horizontais e um por linha
@@ -51,6 +50,8 @@ export default function DesempenhoSimulados() {
     setDataInicio,
     dataFim,
     setDataFim,
+    filtrosAplicados,
+    buscar,
     limparFiltros,
     opcoesTurmas,
     opcoesDisciplinas,
@@ -67,24 +68,17 @@ export default function DesempenhoSimulados() {
   const [simuladoDetalhado, setSimuladoDetalhado] = useState<DesempenhoSimulado | null>(null)
 
   // Nome do aluno filtrado, pra deixar claro no modal que os dados ali
-  // (gráfico, alerta, tabela) são só daquele aluno, não da turma toda.
-  const alunoFiltrado = alunoId ? opcoesAlunos.find((opcao) => opcao.value === alunoId)?.label : undefined
+  // (gráfico, alerta, tabela) são só daquele aluno, não da turma toda — usa
+  // o filtro APLICADO (não o formulário, que pode estar com um aluno
+  // diferente selecionado sem o professor ter clicado em "Buscar" ainda).
+  const alunoFiltrado = filtrosAplicados.alunoId
+    ? opcoesAlunos.find((opcao) => opcao.value === filtrosAplicados.alunoId)?.label
+    : undefined
 
-  // Confirmado pelo usuário: o recorte aplicado (turma/disciplina/aluno/
-  // período) não fica mais solto na tela — some só pro detalhamento de cada
-  // simulado, dentro do modal.
-  const resumoFiltros = (
-    <ResumoFiltrosDesempenho
-      opcoesTurmas={opcoesTurmas}
-      opcoesDisciplinas={opcoesDisciplinas}
-      opcoesAlunos={opcoesAlunos}
-      turmaId={turmaId}
-      disciplinaId={disciplinaId}
-      alunoId={alunoId}
-      dataInicio={dataInicio}
-      dataFim={dataFim}
-    />
-  )
+  // Confirmado pelo usuário: o modal de detalhamento (DetalheSimuladoModal)
+  // não recebe mais o resumo de filtros daqui — ele já mostra os próprios
+  // dados do simulado (turma, disciplina, data, destinação); repetir o
+  // recorte da tela por cima disso duplicava a mesma informação duas vezes.
 
   // Confirmado pelo usuário: aqui a ordem é por realização, mais recente
   // primeiro — diferente da ordem padrão de `desempenhos` (pior desempenho
@@ -105,8 +99,8 @@ export default function DesempenhoSimulados() {
     <Layout>
       <Header
         titulo="Desempenho por simulado"
-        voltarPara="/professor/reforco"
-        rotuloVoltar="Módulo de reforço"
+        voltarPara="/professor/desempenho"
+        rotuloVoltar="Desempenho"
         filtros={
           <FiltrosDesempenho
             opcoesTurmas={opcoesTurmas}
@@ -124,6 +118,7 @@ export default function DesempenhoSimulados() {
             onAlunoChange={setAlunoId}
             onDataInicioChange={setDataInicio}
             onDataFimChange={setDataFim}
+            onBuscar={buscar}
             onLimpar={limparFiltros}
           />
         }
@@ -180,12 +175,11 @@ export default function DesempenhoSimulados() {
           (tentativa) =>
             tentativa.simuladoId === simuladoDetalhado?.simuladoId &&
             tentativa.status === 'CONCLUIDO' &&
-            (!alunoId || tentativa.alunoId === alunoId),
+            (!filtrosAplicados.alunoId || tentativa.alunoId === filtrosAplicados.alunoId),
         )}
         data={simuladoDetalhado?.data}
         tipoDestinacao={simuladoDetalhado?.tipoDestinacao}
         alunoFiltrado={alunoFiltrado}
-        resumoFiltros={resumoFiltros}
       />
     </Layout>
   )

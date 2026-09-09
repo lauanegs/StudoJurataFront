@@ -6,6 +6,7 @@ import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { QuestaoEditor } from '../../../components/ui/QuestaoEditor'
+import { VinculoConteudoQuestao } from '../../../components/ui/VinculoConteudo'
 import { validarQuestao, type ErrosQuestao, type QuestaoEditavel } from '../../../components/ui/QuestaoEditor/types'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -230,6 +231,13 @@ export default function RevisarQuestao() {
           somenteLeitura={!editando}
           erros={erros}
           onChange={setQuestao}
+          conteudo={
+            <VinculoConteudoQuestao
+              questaoId={questao.id}
+              disciplinaId={questao.disciplinaId}
+              somenteLeitura={!editando}
+            />
+          }
         />
       )}
     </Layout>

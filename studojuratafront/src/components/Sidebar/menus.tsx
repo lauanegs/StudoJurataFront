@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   BookOpen,
   CalendarDays,
   ClipboardList,
@@ -43,6 +44,7 @@ export const MENUS: Record<TipoUsuario, ItemMenu[]> = {
     { label: 'Planos de Ensino', caminho: '/professor/plano-ensino', icon: <ClipboardList /> },
     { label: 'Planos de Aula', caminho: '/professor/plano-aula', icon: <Layers /> },
     { label: 'Reforço', caminho: '/professor/reforco', icon: <Sparkles /> },
+    { label: 'Desempenho', caminho: '/professor/desempenho', icon: <BarChart3 /> },
     { label: 'Notas', caminho: '/professor/notas', icon: <NotebookPen /> },
   ],
 

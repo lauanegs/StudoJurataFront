@@ -61,7 +61,7 @@ const ProfessorAulaFormulario = lazy(() => import('../pages/professor/PlanoAula/
 const ProfessorRegistrarAula = lazy(() => import('../pages/professor/PlanoAula/RegistrarAula'))
 const ProfessorRegistrarAulaTurma = lazy(() => import('../pages/professor/Turmas/RegistrarAulaTurma'))
 const ProfessorNotas = lazy(() => import('../pages/professor/Notas/Notas'))
-const ProfessorReforco = lazy(() => import('../pages/professor/Reforco/Dashboard'))
+const ProfessorDesempenho = lazy(() => import('../pages/professor/Reforco/Desempenho'))
 const ProfessorDesempenhoGeral = lazy(() => import('../pages/professor/Reforco/DesempenhoGeral'))
 const ProfessorDesempenhoEvolucao = lazy(() => import('../pages/professor/Reforco/DesempenhoEvolucao'))
 const ProfessorDesempenhoSimulados = lazy(
@@ -466,12 +466,20 @@ export function AppRoutes() {
           path="/professor/reforco"
           element={
             <RotaProtegida perfis={['PROFESSOR']}>
-              <ProfessorReforco />
+              <ProfessorSimulados />
             </RotaProtegida>
           }
         />
         <Route
-          path="/professor/reforco/desempenho/geral"
+          path="/professor/desempenho"
+          element={
+            <RotaProtegida perfis={['PROFESSOR']}>
+              <ProfessorDesempenho />
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/professor/desempenho/geral"
           element={
             <RotaProtegida perfis={['PROFESSOR']}>
               <ProfessorDesempenhoGeral />
@@ -479,7 +487,7 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="/professor/reforco/desempenho/evolucao"
+          path="/professor/desempenho/evolucao"
           element={
             <RotaProtegida perfis={['PROFESSOR']}>
               <ProfessorDesempenhoEvolucao />
@@ -487,18 +495,10 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="/professor/reforco/desempenho/simulados"
+          path="/professor/desempenho/simulados"
           element={
             <RotaProtegida perfis={['PROFESSOR']}>
               <ProfessorDesempenhoSimulados />
-            </RotaProtegida>
-          }
-        />
-        <Route
-          path="/professor/reforco/simulados"
-          element={
-            <RotaProtegida perfis={['PROFESSOR']}>
-              <ProfessorSimulados />
             </RotaProtegida>
           }
         />

@@ -4,7 +4,7 @@ import { theme as tokens } from '../../../styles/theme'
 import type { CardProps } from './types'
 
 const ELEVACAO: Record<NonNullable<CardProps['elevacao']>, { shadow?: string; border?: string }> = {
-  none: { border: `1px solid ${tokens.colors.border}` },
+  none: { border: `2px solid ${tokens.colors.border}` },
   default: { shadow: tokens.shadow.base },
   medium: { shadow: tokens.shadow.card },
 }

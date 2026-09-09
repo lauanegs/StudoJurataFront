@@ -16,6 +16,15 @@ export interface QuestaoEditavel {
   nivelDificuldade?: NivelDificuldade | null
   status?: StatusQuestao
   alternativas: AlternativaEditavel[]
+  /**
+   * Conteúdos escolhidos ANTES de a questão existir (sem `id` ainda) — mesmo
+   * princípio de `alternativas` acima: fica só no estado local até o
+   * formulário salvar, quando aí sim vira vínculo de verdade via API (ver
+   * SimuladoFormulario.salvar()). Ignorado assim que `id` existe — a partir
+   * daí o vínculo já é comitado na hora (VinculoConteudoQuestao muda pro
+   * modo "ao vivo").
+   */
+  conteudoPlanoIdsPendentes?: number[]
 }
 
 export interface ErrosQuestao {
@@ -35,6 +44,10 @@ export interface QuestaoEditorProps {
   onImport?: () => void
   /** Slot de ações extras no cabeçalho (aprovar/reprovar na revisão). */
   actions?: React.ReactNode
+  /** Navegação entre questões (números + "Nova questão") — fica dentro do mesmo card, não separada. Só o formulário de simulado (várias questões) usa. */
+  navegador?: React.ReactNode
+  /** Vínculo com conteúdo(s) do plano de ensino (VinculoConteudoQuestao) — fica dentro do mesmo card, mesmo padrão do navegador. */
+  conteudo?: React.ReactNode
 }
 
 // Confirmado com o usuário: a tela de simulado do aluno segue o layout do

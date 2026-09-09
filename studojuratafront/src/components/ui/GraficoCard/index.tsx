@@ -1,23 +1,25 @@
 import { useState, type ReactNode } from 'react'
 import styled from 'styled-components'
-import { Maximize2, Printer } from 'lucide-react'
+import { FileDown, FileSpreadsheet, Maximize2 } from 'lucide-react'
 
 import { Button } from '../Button'
 import { Card } from '../Card'
 import { Modal } from '../Modal'
-import { imprimirRelatorio } from '../../../utils/imprimir'
+import type { ItemTabelaResumo } from '../TabelaResumo'
+import { exportarExcel } from '../../../utils/exportarPlanilha'
+import { exportarPdfSecaoUnica } from '../../../utils/exportarPdf'
+import { renderizarGraficoComoImagem } from '../../../utils/renderizarGrafico'
 
-/* Separa o detalhamento (tabela de valores, ou o detalhe de uma coluna
-   clicada) do gráfico acima dele — mesmo padrão de divisor entre seções
-   usado no detalhamento de simulado (DetalheSimuladoModal). */
+/* Confirmado pelo usuário: em vez de uma linha separando as seções do
+   modal, cada uma vira seu próprio retângulo (Card elevacao="none" — borda
+   cinza suave, raio padrão) — mesmo tratamento dado às seções do
+   detalhamento de simulado (DetalheSimuladoModal). Também contém melhor o
+   gráfico grande, que antes ficava "solto" no modal. */
 const SecaoDetalhe = styled.div`
   margin-top: ${({ theme }) => theme.spacing.lg};
-  padding-top: ${({ theme }) => theme.spacing.lg};
-  border-top: 1px solid ${({ theme }) => theme.colors.border};
 `
 
-/* Espaço entre o resumo dos filtros aplicados e o gráfico abaixo dele —
-   mesmo tratamento do EnvolveContexto do DetalheSimuladoModal. */
+/* Espaço entre o resumo dos filtros aplicados e o gráfico abaixo dele. */
 const SecaoContexto = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `
@@ -32,9 +34,15 @@ interface GraficoCardProps {
   renderGrafico: (altura: number, interativo: boolean) => ReactNode
   /** Resumo do recorte aplicado (turma/disciplina/aluno/período) — mostrado só no modal de detalhamento, antes do gráfico. */
   contexto?: ReactNode
+  /** Mesmo recorte de `contexto`, como texto puro — vai no cabeçalho do PDF exportado (que não sabe renderizar o ReactNode de `contexto`). */
+  contextoTexto?: string[]
   /** Conteúdo extra abaixo do gráfico — tabela de valores exatos, ou o detalhe de uma coluna clicada
    * (e o pedido pra selecionar uma, enquanto nada foi clicado). Mostrado só no modal de detalhamento, nunca no card compacto. */
   detalhe?: ReactNode
+  /** Valores exatos por trás do gráfico — o que é exportado pro PDF e pro Excel. */
+  dados: ItemTabelaResumo[]
+  colunaRotulo?: string
+  colunaValor?: string
   alturaCompacta?: number
   alturaDetalhe?: number
 }
@@ -42,20 +50,31 @@ interface GraficoCardProps {
 /**
  * Cada gráfico do painel de Reforço fica no seu próprio card branco (dentro
  * da seção maior de fundo transparente, mesmo padrão da Home) com um botão
- * "Detalhar" — abre o mesmo gráfico maior num modal, com a opção de
- * imprimir. Componente único pra não repetir essa mecânica em cada gráfico
- * (Histograma/GraficoBarras/GraficoLinha usam o mesmo).
+ * "Detalhar" — abre o mesmo gráfico maior num modal, com as opções de
+ * exportar os valores exatos em PDF (jsPDF) ou Excel (SheetJS) — geradas a
+ * partir dos dados, não de uma captura da tela, que não imprimia de forma
+ * confiável. Componente único pra não repetir essa mecânica em cada
+ * gráfico (Histograma/GraficoBarras/GraficoLinha usam o mesmo).
  */
 export function GraficoCard({
   titulo,
   descricao,
   renderGrafico,
   contexto,
+  contextoTexto = [],
   detalhe,
+  dados,
+  colunaRotulo = 'Categoria',
+  colunaValor = 'Valor',
   alturaCompacta = 220,
-  alturaDetalhe = 380,
+  alturaDetalhe = 320,
 }: GraficoCardProps) {
   const [aberto, setAberto] = useState(false)
+
+  // Renderiza o MESMO gráfico (renderGrafico, não interativo) fora da tela
+  // pra capturar o desenho como imagem — vai embutido no relatório, além da
+  // tabela de valores exatos que já ia.
+  const capturarImagem = () => renderizarGraficoComoImagem(<>{renderGrafico(280, false)}</>, 640, 280)
 
   return (
     <>
@@ -82,16 +101,33 @@ export function GraficoCard({
         descricao={descricao}
         largura="760px"
         rodape={
-          <Button variant="secondary" icon={<Printer />} onClick={imprimirRelatorio}>
-            Imprimir
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              icon={<FileSpreadsheet />}
+              onClick={async () => exportarExcel(titulo, colunaRotulo, colunaValor, dados, await capturarImagem())}
+            >
+              Exportar Excel
+            </Button>
+            <Button
+              variant="secondary"
+              icon={<FileDown />}
+              onClick={async () =>
+                exportarPdfSecaoUnica(titulo, titulo, contextoTexto, colunaRotulo, colunaValor, dados, await capturarImagem())
+              }
+            >
+              Baixar PDF
+            </Button>
+          </>
         }
       >
-        <div className="area-impressao">
-          {contexto && <SecaoContexto>{contexto}</SecaoContexto>}
-          {renderGrafico(alturaDetalhe, true)}
-          {detalhe && <SecaoDetalhe>{detalhe}</SecaoDetalhe>}
-        </div>
+        {contexto && <SecaoContexto>{contexto}</SecaoContexto>}
+        <Card elevacao="none">{renderGrafico(alturaDetalhe, true)}</Card>
+        {detalhe && (
+          <SecaoDetalhe>
+            <Card elevacao="none">{detalhe}</Card>
+          </SecaoDetalhe>
+        )}
       </Modal>
     </>
   )

@@ -15,7 +15,7 @@ import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { planosEnsino as servicoPlanos } from '../../../services/endpoints'
-import { formatarCargaHoraria, normalizar } from '../../../utils/format'
+import { formatarCargaHoraria, formatarPeriodo, normalizar } from '../../../utils/format'
 import { ROTULO_STATUS_PLANO, STATUS_PLANO_VARIANT } from '../../../utils/labels'
 import type { PlanoEnsino } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
@@ -112,6 +112,12 @@ export default function PlanosEnsino() {
       cabecalho: 'Carga horária',
       ocultarEmTelaPequena: true,
       render: (plano) => formatarCargaHoraria(plano.cargaHoraria),
+    },
+    {
+      key: 'periodo',
+      cabecalho: 'Período',
+      ocultarEmTelaPequena: true,
+      render: (plano) => formatarPeriodo(plano.dataInicio, plano.dataFim),
     },
     {
       key: 'situacao',

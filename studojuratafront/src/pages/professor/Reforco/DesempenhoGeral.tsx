@@ -14,10 +14,11 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { alunos as servicoAlunos } from '../../../services/endpoints'
-import { estaNaFaixaHistograma } from '../../../utils/desempenho'
+import { calcularFaixasHistograma, estaNaFaixaHistograma } from '../../../utils/desempenho'
 import { formatarPorcentagem } from '../../../utils/format'
 import { FiltrosDesempenho } from './FiltrosDesempenho'
 import { ResumoFiltrosDesempenho } from './ResumoFiltrosDesempenho'
+import { resumoFiltrosTexto } from './resumoFiltrosTexto'
 import { useDesempenhoDados } from './useDesempenhoDados'
 
 /* Mesmo padrão do Dashboard (Dashboard.tsx): duas colunas lado a lado em
@@ -80,6 +81,8 @@ export default function DesempenhoGeral() {
     setDataInicio,
     dataFim,
     setDataFim,
+    filtrosAplicados,
+    buscar,
     limparFiltros,
     opcoesTurmas,
     opcoesDisciplinas,
@@ -123,29 +126,44 @@ export default function DesempenhoGeral() {
     [desempenhoPorDisciplina],
   )
 
+  // Valores exatos por trás do histograma — vira a tabela mostrada na
+  // impressão (no lugar do gráfico, que não imprime de forma confiável) e
+  // o conteúdo exportado pro Excel.
+  const tabelaDistribuicao = useMemo(
+    () =>
+      calcularFaixasHistograma(notasPercentuais).map((faixa) => ({
+        chave: faixa.rotulo,
+        rotulo: faixa.rotulo,
+        valor: String(faixa.quantidade),
+      })),
+    [notasPercentuais],
+  )
+
   // Confirmado pelo usuário: o recorte aplicado (turma/disciplina/aluno/
   // período) não fica mais solto na tela — some só pro detalhamento de cada
   // gráfico, dentro do modal "Detalhar" (mesmo padrão do contexto já exibido
   // no modal de "Desempenho por simulado").
-  const resumoFiltros = (
-    <ResumoFiltrosDesempenho
-      opcoesTurmas={opcoesTurmas}
-      opcoesDisciplinas={opcoesDisciplinas}
-      opcoesAlunos={opcoesAlunos}
-      turmaId={turmaId}
-      disciplinaId={disciplinaId}
-      alunoId={alunoId}
-      dataInicio={dataInicio}
-      dataFim={dataFim}
-    />
-  )
+  const recorteAplicado = {
+    opcoesTurmas,
+    opcoesDisciplinas,
+    opcoesAlunos,
+    turmaId: filtrosAplicados.turmaId,
+    disciplinaId: filtrosAplicados.disciplinaId,
+    alunoId: filtrosAplicados.alunoId,
+    dataInicio: filtrosAplicados.dataInicio,
+    dataFim: filtrosAplicados.dataFim,
+  }
+  const resumoFiltros = <ResumoFiltrosDesempenho {...recorteAplicado} />
+  // Mesmo recorte, em texto puro — vai no PDF exportado de cada gráfico
+  // (que não sabe renderizar o ReactNode acima).
+  const resumoFiltrosTextoAtual = resumoFiltrosTexto(recorteAplicado)
 
   return (
     <Layout>
       <Header
         titulo="Visão geral do desempenho"
-        voltarPara="/professor/reforco"
-        rotuloVoltar="Módulo de reforço"
+        voltarPara="/professor/desempenho"
+        rotuloVoltar="Desempenho"
         filtros={
           <FiltrosDesempenho
             opcoesTurmas={opcoesTurmas}
@@ -163,6 +181,7 @@ export default function DesempenhoGeral() {
             onAlunoChange={setAlunoId}
             onDataInicioChange={setDataInicio}
             onDataFimChange={setDataFim}
+            onBuscar={buscar}
             onLimpar={limparFiltros}
           />
         }
@@ -197,6 +216,10 @@ export default function DesempenhoGeral() {
               />
             )}
             contexto={resumoFiltros}
+            contextoTexto={resumoFiltrosTextoAtual}
+            dados={tabelaDistribuicao}
+            colunaRotulo="Faixa de nota"
+            colunaValor="Quantidade"
             detalhe={
               !faixaSelecionada ? (
                 <EstadoVazio
@@ -252,6 +275,10 @@ export default function DesempenhoGeral() {
               />
             )}
             contexto={resumoFiltros}
+            contextoTexto={resumoFiltrosTextoAtual}
+            dados={tabelaDisciplina}
+            colunaRotulo="Disciplina"
+            colunaValor="Desempenho médio"
             detalhe={<TabelaResumo colunaRotulo="Disciplina" colunaValor="Desempenho médio" itens={tabelaDisciplina} />}
           />
         </Grade>

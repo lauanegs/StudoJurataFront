@@ -13,6 +13,7 @@ import { Skeleton } from '../../../components/feedback/Skeleton'
 import { formatarPorcentagem } from '../../../utils/format'
 import { FiltrosDesempenho } from './FiltrosDesempenho'
 import { ResumoFiltrosDesempenho } from './ResumoFiltrosDesempenho'
+import { resumoFiltrosTexto } from './resumoFiltrosTexto'
 import { useDesempenhoDados } from './useDesempenhoDados'
 
 const Grade = styled.div`
@@ -40,6 +41,8 @@ export default function DesempenhoEvolucao() {
     setDataInicio,
     dataFim,
     setDataFim,
+    filtrosAplicados,
+    buscar,
     limparFiltros,
     opcoesTurmas,
     opcoesDisciplinas,
@@ -55,25 +58,25 @@ export default function DesempenhoEvolucao() {
   // Confirmado pelo usuário: o recorte aplicado (turma/disciplina/aluno/
   // período) não fica mais solto na tela — some só pro detalhamento de cada
   // gráfico, dentro do modal "Detalhar".
-  const resumoFiltros = (
-    <ResumoFiltrosDesempenho
-      opcoesTurmas={opcoesTurmas}
-      opcoesDisciplinas={opcoesDisciplinas}
-      opcoesAlunos={opcoesAlunos}
-      turmaId={turmaId}
-      disciplinaId={disciplinaId}
-      alunoId={alunoId}
-      dataInicio={dataInicio}
-      dataFim={dataFim}
-    />
-  )
+  const recorteAplicado = {
+    opcoesTurmas,
+    opcoesDisciplinas,
+    opcoesAlunos,
+    turmaId: filtrosAplicados.turmaId,
+    disciplinaId: filtrosAplicados.disciplinaId,
+    alunoId: filtrosAplicados.alunoId,
+    dataInicio: filtrosAplicados.dataInicio,
+    dataFim: filtrosAplicados.dataFim,
+  }
+  const resumoFiltros = <ResumoFiltrosDesempenho {...recorteAplicado} />
+  const resumoFiltrosTextoAtual = resumoFiltrosTexto(recorteAplicado)
 
   return (
     <Layout>
       <Header
         titulo="Evolução do desempenho"
-        voltarPara="/professor/reforco"
-        rotuloVoltar="Módulo de reforço"
+        voltarPara="/professor/desempenho"
+        rotuloVoltar="Desempenho"
         filtros={
           <FiltrosDesempenho
             opcoesTurmas={opcoesTurmas}
@@ -91,6 +94,7 @@ export default function DesempenhoEvolucao() {
             onAlunoChange={setAlunoId}
             onDataInicioChange={setDataInicio}
             onDataFimChange={setDataFim}
+            onBuscar={buscar}
             onLimpar={limparFiltros}
           />
         }
@@ -125,6 +129,14 @@ export default function DesempenhoEvolucao() {
                 />
               )}
               contexto={resumoFiltros}
+              contextoTexto={resumoFiltrosTextoAtual}
+              colunaRotulo="Simulado"
+              colunaValor="Nota"
+              dados={item.pontos.map((ponto) => ({
+                chave: ponto.chave,
+                rotulo: ponto.rotulo,
+                valor: formatarPorcentagem(ponto.valor),
+              }))}
               detalhe={
                 <TabelaResumo
                   colunaRotulo="Simulado"

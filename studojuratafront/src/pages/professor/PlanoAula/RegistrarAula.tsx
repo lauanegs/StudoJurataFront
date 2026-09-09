@@ -1,26 +1,24 @@
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { BookOpen, Calendar, CheckCheck, Clock, ListTree, Save, Send, UserX, Users } from 'lucide-react'
+import { BookOpen, Calendar, CheckCheck, Clock, Save, Send, UserX, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { CheckBox } from '../../../components/ui/CheckBox'
-import { Chip } from '../../../components/ui/Chip'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
-import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
+import { VinculoConteudoAula } from '../../../components/ui/VinculoConteudo'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
-import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { aulas as servicoAulas, conteudosPlano, matriculas } from '../../../services/endpoints'
+import { aulas as servicoAulas, matriculas } from '../../../services/endpoints'
 import { formatarData } from '../../../utils/format'
 import { theme as tokens } from '../../../styles/theme'
 import type { AlunoTurma } from '../../../types'
@@ -30,23 +28,6 @@ const Coluna = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Chips = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.xs};
-`
-
-const LinhaVincular = styled.div`
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: end;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    grid-template-columns: 1fr;
-  }
 `
 
 const Resumo = styled.div`
@@ -80,7 +61,6 @@ export default function RegistrarAula() {
 
   const [aba, setAba] = useState<Aba>('chamada')
   const [edicoes, setEdicoes] = useState<Record<number, Partial<LinhaChamada>>>({})
-  const [conteudoSelecionado, setConteudoSelecionado] = useState<number | null>(null)
 
   const requisicaoAula = useRequisicao(() => servicoAulas.buscar(idAula), [idAula])
 
@@ -93,8 +73,9 @@ export default function RegistrarAula() {
     { ativo: Boolean(turmaId) },
   )
   const requisicaoFrequencias = useRequisicao(() => servicoAulas.listarFrequencias(idAula), [idAula])
+  // Só pro contador da aba "Registrar conteúdo" abaixo — a lista em si (e
+  // vincular/desvincular) fica com VinculoConteudoAula, que busca por conta própria.
   const requisicaoConteudosAula = useRequisicao(() => servicoAulas.listarConteudos(idAula), [idAula])
-  const requisicaoConteudosPlano = useRequisicao(() => conteudosPlano.listar(), [])
 
   // Data de referência da aula, para não chamar quem matriculou depois dela.
   const dataAula = requisicaoAula.data?.dataPrevista ?? requisicaoAula.data?.dataPublicacao ?? null
@@ -130,25 +111,6 @@ export default function RegistrarAula() {
       }
     })
   }, [requisicaoMatriculas.data, requisicaoFrequencias.data, edicoes, dataAula])
-
-  const conteudosDisponiveis = useMemo(() => {
-    const vinculados = new Set(
-      (requisicaoConteudosAula.data ?? []).map((item) => item.conteudoPlano?.id),
-    )
-
-    return (requisicaoConteudosPlano.data ?? [])
-      .filter(
-        (conteudo) =>
-          conteudo.planoEnsino?.id === planoEnsinoId &&
-          conteudo.status !== 'INATIVO' &&
-          !vinculados.has(conteudo.id),
-      )
-      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-      .map((conteudo) => ({
-        value: conteudo.id,
-        label: `${conteudo.ordem ? `${conteudo.ordem}. ` : ''}${conteudo.titulo ?? 'Conteúdo'}`,
-      }))
-  }, [requisicaoConteudosPlano.data, requisicaoConteudosAula.data, planoEnsinoId])
 
   const presentes = linhas.filter((linha) => linha.presente).length
   const ausentes = linhas.length - presentes
@@ -206,38 +168,6 @@ export default function RegistrarAula() {
       )
     }
   })
-
-  const { executar: vincularConteudo, executando: vinculando } = useAcao(async () => {
-    if (!conteudoSelecionado) {
-      toast.warning('Selecione um conteúdo')
-      return
-    }
-
-    try {
-      await servicoAulas.vincularConteudo(idAula, conteudoSelecionado)
-      toast.success('Conteúdo vinculado à aula')
-      setConteudoSelecionado(null)
-      await requisicaoConteudosAula.reload()
-    } catch (erroVincular) {
-      toast.error(
-        'Não foi possível vincular',
-        erroVincular instanceof ApiError ? erroVincular.message : undefined,
-      )
-    }
-  })
-
-  async function desvincularConteudo(conteudoPlanoId: number) {
-    try {
-      await servicoAulas.desvincularConteudo(idAula, conteudoPlanoId)
-      toast.success('Conteúdo removido da aula')
-      await requisicaoConteudosAula.reload()
-    } catch (erroRemover) {
-      toast.error(
-        'Não foi possível remover',
-        erroRemover instanceof ApiError ? erroRemover.message : undefined,
-      )
-    }
-  }
 
   const { executar: publicar, executando: publicando } = useAcao(async () => {
     await confirmar({
@@ -422,46 +352,7 @@ export default function RegistrarAula() {
 
       {aba === 'conteudo' && (
         <Card titulo="Conteúdos trabalhados nesta aula">
-          <Coluna>
-            <LinhaVincular>
-              <Select<number>
-                label="Conteúdo do plano de ensino"
-                options={conteudosDisponiveis}
-                value={conteudoSelecionado}
-                loading={requisicaoConteudosPlano.loading}
-                searchable
-                placeholder="Selecionar conteúdo..."
-                emptyText="Todos os conteúdos do plano já foram vinculados"
-                hint="Só aparecem conteúdos do plano de ensino ligado a este plano de aula."
-                onChange={setConteudoSelecionado}
-              />
-
-              <Button loading={vinculando} onClick={vincularConteudo}>
-                Vincular
-              </Button>
-            </LinhaVincular>
-
-            {requisicaoConteudosAula.isEmpty ? (
-              <EstadoVazio
-                titulo="Nenhum conteúdo registrado"
-                descricao="Registrar o conteúdo alimenta o histórico do aluno e a repetição espaçada da IA."
-                icon={<ListTree />}
-              />
-            ) : (
-              <Chips>
-                {(requisicaoConteudosAula.data ?? []).map((vinculo) => (
-                  <Chip
-                    key={vinculo.id}
-                    variant="purple"
-                    onRemove={() => desvincularConteudo(vinculo.conteudoPlano.id)}
-                    rotuloRemover={`Remover ${vinculo.conteudoPlano?.titulo}`}
-                  >
-                    {vinculo.conteudoPlano?.titulo ?? 'Conteúdo'}
-                  </Chip>
-                ))}
-              </Chips>
-            )}
-          </Coluna>
+          <VinculoConteudoAula aulaId={idAula} planoEnsinoId={planoEnsinoId} />
         </Card>
       )}
     </Layout>

@@ -14,7 +14,7 @@ import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { planosAula as servicoPlanos, professores } from '../../../services/endpoints'
-import { normalizar } from '../../../utils/format'
+import { formatarPeriodo, normalizar } from '../../../utils/format'
 import { ROTULO_STATUS_PLANO, STATUS_PLANO_VARIANT } from '../../../utils/labels'
 import type { PlanoAula } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
@@ -86,6 +86,13 @@ export default function PlanosAula() {
       cabecalho: 'Disciplina',
       ocultarEmTelaPequena: true,
       render: (plano) => plano.turmaDisciplina?.disciplina?.titulo ?? '—',
+    },
+    {
+      key: 'periodo',
+      cabecalho: 'Período',
+      ocultarEmTelaPequena: true,
+      // Herdado do plano de ensino (nível macro) — PlanoAula não duplica datas.
+      render: (plano) => formatarPeriodo(plano.planoEnsino?.dataInicio, plano.planoEnsino?.dataFim),
     },
     {
       key: 'situacao',

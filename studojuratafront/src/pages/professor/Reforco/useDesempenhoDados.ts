@@ -54,11 +54,26 @@ export interface DesempenhoSimulado {
 export function useDesempenhoDados() {
   const { professorId } = useProfessorLogado()
 
+  // Estado do formulário (o que o professor está mexendo agora) — separado
+  // do que realmente filtra os gráficos (filtrosAplicados, atualizado só ao
+  // clicar em "Buscar", pedido explícito: trocar de campo em campo não pode
+  // ficar refiltrando a cada clique). turmaId continua reativo por conta
+  // própria porque alimenta as opções de disciplina/aluno (dependentes da
+  // turma) — trocá-lo não filtra nada sozinho, só teria efeito depois do
+  // "Buscar".
   const [turmaId, setTurmaId] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
   const [alunoId, setAlunoId] = useState<number | null>(null)
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
+
+  const [filtrosAplicados, setFiltrosAplicados] = useState({
+    turmaId: null as number | null,
+    disciplinaId: null as number | null,
+    alunoId: null as number | null,
+    dataInicio: '',
+    dataFim: '',
+  })
 
   const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
   const requisicaoTentativas = useRequisicao(() => simuladoAlunos.listar(), [])
@@ -113,14 +128,17 @@ export function useDesempenhoDados() {
   // abaixo (histograma geral, agregação por simulado, por disciplina e ao
   // longo do tempo), pra não repetir o mesmo filtro 4 vezes.
   const tentativasFiltradas = useMemo(() => {
+    const { turmaId: turmaAplicada, disciplinaId: disciplinaAplicada, alunoId: alunoAplicado, dataInicio: deAplicado, dataFim: ateAplicado } =
+      filtrosAplicados
+
     const simuladosFiltrados = (requisicaoSimulados.data ?? []).filter((simulado) => {
       if (!turmasDoProfessor.has(simulado.turmaId ?? undefined)) return false
-      if (turmaId && simulado.turmaId !== turmaId) return false
-      if (disciplinaId && simulado.disciplinaId !== disciplinaId) return false
+      if (turmaAplicada && simulado.turmaId !== turmaAplicada) return false
+      if (disciplinaAplicada && simulado.disciplinaId !== disciplinaAplicada) return false
 
       const data = (simulado.dataInicio ?? simulado.createdAt)?.slice(0, 10)
-      if (dataInicio && (!data || data < dataInicio)) return false
-      if (dataFim && (!data || data > dataFim)) return false
+      if (deAplicado && (!data || data < deAplicado)) return false
+      if (ateAplicado && (!data || data > ateAplicado)) return false
 
       return true
     })
@@ -133,10 +151,10 @@ export function useDesempenhoDados() {
           tentativa.status === 'CONCLUIDO' &&
           typeof tentativa.nota === 'number' &&
           mapaSimulados.has(tentativa.simuladoId) &&
-          (!alunoId || tentativa.alunoId === alunoId),
+          (!alunoAplicado || tentativa.alunoId === alunoAplicado),
       )
       .map((tentativa) => ({ tentativa, simulado: mapaSimulados.get(tentativa.simuladoId) }))
-  }, [requisicaoSimulados.data, requisicaoTentativas.data, turmasDoProfessor, turmaId, disciplinaId, alunoId, dataInicio, dataFim])
+  }, [requisicaoSimulados.data, requisicaoTentativas.data, turmasDoProfessor, filtrosAplicados])
 
   // Uma nota (0-100) por tentativa, sem agrupar por simulado — base do
   // histograma de distribuição geral. Cada item guarda também aluno/simulado
@@ -243,12 +261,19 @@ export function useDesempenhoDados() {
 
   const error = requisicaoSimulados.error ?? requisicaoTentativas.error ?? requisicaoVinculos.error
 
+  /** Copia o formulário pros filtros aplicados — só aqui os gráficos realmente refiltram (botão "Buscar", pedido explícito). */
+  function buscar() {
+    setFiltrosAplicados({ turmaId, disciplinaId, alunoId, dataInicio, dataFim })
+  }
+
+  /** "Limpar" é diferente de "Buscar vazio": reseta o formulário E já aplica na hora, sem precisar clicar em Buscar de novo. */
   function limparFiltros() {
     setTurmaId(null)
     setDisciplinaId(null)
     setAlunoId(null)
     setDataInicio('')
     setDataFim('')
+    setFiltrosAplicados({ turmaId: null, disciplinaId: null, alunoId: null, dataInicio: '', dataFim: '' })
   }
 
   return {
@@ -266,6 +291,8 @@ export function useDesempenhoDados() {
     setDataInicio,
     dataFim,
     setDataFim,
+    filtrosAplicados,
+    buscar,
     limparFiltros,
     opcoesTurmas,
     opcoesDisciplinas,

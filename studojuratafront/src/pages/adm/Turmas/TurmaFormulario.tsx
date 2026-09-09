@@ -27,6 +27,7 @@ import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
+  cursoDisciplinas as servicoCursoDisciplinas,
   cursos as servicoCursos,
   disciplinas as servicoDisciplinas,
   horariosTurma,
@@ -144,6 +145,14 @@ export default function TurmaFormulario() {
   const requisicaoCursos = useRequisicao(() => servicoCursos.listar(), [])
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
   const requisicaoProfessores = useRequisicao(() => servicoProfessores.listar(), [])
+  // Grade curricular do curso da turma (pedido explícito): só faz sentido
+  // vincular à turma uma disciplina que já faz parte do currículo do curso,
+  // cadastrado em /adm/cursos/:id (ver CursoFormulario).
+  const requisicaoGradeCurricular = useRequisicao(
+    () => servicoCursoDisciplinas.listarPorCurso(cursoId as number),
+    [cursoId],
+    { ativo: Boolean(cursoId) },
+  )
 
   const requisicaoHorarios = useRequisicao(
     () => horariosTurma.listarPorTurma(turmaId as number),
@@ -211,13 +220,16 @@ export default function TurmaFormulario() {
     [requisicaoCursos.data],
   )
 
-  const opcoesDisciplinas = useMemo(
-    () =>
-      (requisicaoDisciplinas.data ?? [])
-        .filter((disciplina) => disciplina.status !== 'INATIVO')
-        .map((disciplina) => ({ value: disciplina.id, label: disciplina.titulo ?? '—' })),
-    [requisicaoDisciplinas.data],
-  )
+  const opcoesDisciplinas = useMemo(() => {
+    const idsDaGrade = new Set(
+      (requisicaoGradeCurricular.data ?? [])
+        .filter((item) => item.status !== 'INATIVO')
+        .map((item) => item.disciplina?.id),
+    )
+    return (requisicaoDisciplinas.data ?? [])
+      .filter((disciplina) => disciplina.status !== 'INATIVO' && idsDaGrade.has(disciplina.id))
+      .map((disciplina) => ({ value: disciplina.id, label: disciplina.titulo ?? '—' }))
+  }, [requisicaoDisciplinas.data, requisicaoGradeCurricular.data])
 
   const opcoesProfessores = useMemo(
     () =>
@@ -275,7 +287,8 @@ export default function TurmaFormulario() {
         titulo: titulo.trim(),
         capacidadeMaxima: capacidadeMaxima ? Number(capacidadeMaxima) : undefined,
         dataInicio: dataInicio || undefined,
-        dataFim: dataFim || undefined,
+        // Turma ativa nunca tem data de término (ver DatePicker desabilitado acima).
+        dataFim: ativa ? undefined : dataFim || undefined,
         status: ativa ? ('ATIVA' as const) : ('INATIVA' as const),
       }
 
@@ -557,7 +570,10 @@ export default function TurmaFormulario() {
                     label="Data de término"
                     value={dataFim}
                     error={erros.dataFim}
-                    disabled={salvando}
+                    // Matrícula cíclica: uma turma ativa continua indefinidamente,
+                    // sem data de término definida — só ganha uma ao ser encerrada.
+                    disabled={salvando || ativa}
+                    hint={ativa ? 'Só é definida ao encerrar a turma (Situação: Inativa).' : undefined}
                     onChange={(evento) => setDataFim(evento.target.value)}
                   />
 
@@ -567,7 +583,11 @@ export default function TurmaFormulario() {
                     value={ativa ? 'ATIVO' : 'INATIVO'}
                     hint="Turmas inativas não recebem novas matrículas."
                     disabled={salvando}
-                    onChange={(valor) => setAtiva(valor !== 'INATIVO')}
+                    onChange={(valor) => {
+                      const novoAtiva = valor !== 'INATIVO'
+                      setAtiva(novoAtiva)
+                      if (novoAtiva) setDataFim('')
+                    }}
                   />
                 </Grade>
               </Coluna>
@@ -661,9 +681,10 @@ export default function TurmaFormulario() {
                     label="Disciplina"
                     options={opcoesDisciplinas}
                     value={novoVinculo.disciplinaId}
-                    loading={requisicaoDisciplinas.loading}
+                    loading={requisicaoDisciplinas.loading || requisicaoGradeCurricular.loading}
                     searchable
                     placeholder="Selecionar disciplina..."
+                    emptyText="O curso desta turma ainda não tem disciplinas na grade curricular"
                     onChange={(value) => setNovoVinculo((atual) => ({ ...atual, disciplinaId: value }))}
                   />
 

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, FileText, Pencil, Plus, Rocket, Square } from 'lucide-react'
+import { BarChart3, BookOpen, ClipboardCheck, FileText, Pencil, Plus, Rocket, Square } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
+import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
@@ -13,11 +14,16 @@ import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
+import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
   disciplinas as servicoDisciplinas,
+  ia as servicoIa,
+  professores as servicoProfessores,
+  questoes as servicoQuestoes,
   simuladoAlunos,
+  simuladoQuestoes,
   simulados as servicoSimulados,
   turmas as servicoTurmas,
 } from '../../../services/endpoints'
@@ -33,6 +39,7 @@ export default function Simulados() {
   const navegar = useNavigate()
   const toast = useToast()
   const confirmar = useConfirm()
+  const { professorId } = useProfessorLogado()
 
   const [filtro, setFiltro] = useState<Filtro>('todos')
   const [busca, setBusca] = useState('')
@@ -43,6 +50,51 @@ export default function Simulados() {
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
   const requisicaoTurmas = useRequisicao(() => servicoTurmas.listar(), [])
   const requisicaoTentativas = useRequisicao(() => simuladoAlunos.listar(), [])
+  const requisicaoQuestoesPendentes = useRequisicao(() => servicoQuestoes.listarPendentes(), [])
+  const requisicaoSimuladoQuestoes = useRequisicao(() => simuladoQuestoes.listar(), [])
+  const requisicaoVinculos = useRequisicao(
+    () => servicoProfessores.turmasLecionadas(professorId as number),
+    [professorId],
+    { ativo: Boolean(professorId) },
+  )
+  // Vínculo aluno/conteúdo/motivo/prazo de cada simulado gerado pela IA —
+  // usado só pra detectar os que passaram do prazo sem ter sido lançados
+  // (ver simuladosAtrasados). Detalhamento completo fica na tela de
+  // aprovação (SimuladosAprovacao.tsx).
+  const requisicaoVinculosIA = useRequisicao(() => servicoIa.listarSimuladosGerados(), [])
+
+  // O botão "Simulados para aprovação" leva pra SimuladosAprovacao.tsx, que
+  // lista SIMULADOS, não questões — contar questoesPendentes.length aqui
+  // direto não bate com o total real de simulados naquela tela (um simulado
+  // pode ter várias questões pendentes, inflando o número; e a contagem
+  // também não é filtrada pelas turmas deste professor). Mesma lógica de
+  // agrupamento da tela de aprovação, só que contando em vez de listar.
+  const pendentes = useMemo(() => {
+    const turmasDoProfessor = new Set((requisicaoVinculos.data ?? []).map((vinculo) => vinculo.turma?.id))
+    const idsQuestoesPendentes = new Set((requisicaoQuestoesPendentes.data ?? []).map((questao) => questao.id))
+
+    const simuladosComPendencia = new Set(
+      (requisicaoSimuladoQuestoes.data ?? [])
+        .filter((vinculo) => idsQuestoesPendentes.has(vinculo.questaoId))
+        .map((vinculo) => vinculo.simuladoId),
+    )
+
+    return (data ?? []).filter(
+      (simulado) => simuladosComPendencia.has(simulado.id) && turmasDoProfessor.has(simulado.turmaId ?? undefined),
+    ).length
+  }, [requisicaoVinculos.data, requisicaoQuestoesPendentes.data, requisicaoSimuladoQuestoes.data, data])
+
+  // Simulados gerados pela IA que passaram do prazo de revisão sem terem
+  // sido lançados (Simulado.status ainda RASCUNHO).
+  const simuladosAtrasados = useMemo(() => {
+    const hojeISO = new Date().toISOString().slice(0, 10)
+    const simuladosPorId = new Map((data ?? []).map((simulado) => [simulado.id, simulado]))
+
+    return (requisicaoVinculosIA.data ?? []).filter((vinculo) => {
+      const simulado = simuladosPorId.get(vinculo.simuladoId)
+      return simulado?.status === 'RASCUNHO' && vinculo.prazoLancamento < hojeISO
+    })
+  }, [requisicaoVinculosIA.data, data])
 
   const nomeDisciplina = (id?: number | null) =>
     (requisicaoDisciplinas.data ?? []).find((disciplina) => disciplina.id === id)?.titulo ?? '—'
@@ -215,16 +267,50 @@ export default function Simulados() {
   return (
     <Layout>
       <Header
-        titulo="Simulados"
-        voltarPara="/professor/reforco"
-        rotuloVoltar="Módulo de reforço"
+        titulo="Módulo de Reforço"
         actions={
-          <Button size="large" icon={<Plus />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
-            Novo simulado
-          </Button>
+          <>
+            <Button
+              size="large"
+              variant="secondary"
+              icon={<ClipboardCheck />}
+              onClick={() => navegar('/professor/reforco/aprovacao')}
+            >
+              Simulados para aprovação{pendentes > 0 ? ` (${pendentes})` : ''}
+            </Button>
+            <Button
+              size="large"
+              variant="secondary"
+              icon={<BookOpen />}
+              onClick={() => navegar('/professor/reforco/questoes?aba=aprovadas')}
+            >
+              Banco de questões
+            </Button>
+            <Button size="large" icon={<Plus />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
+              Novo simulado
+            </Button>
+          </>
         }
         filtros={<BuscaInput value={busca} onChange={setBusca} placeholder="Buscar simulado..." />}
       />
+
+      {simuladosAtrasados.length > 0 && (
+        <AlertaDesempenhoCard
+          titulo="Revisões de reforço atrasadas"
+          descricao={`${simuladosAtrasados.length} simulado(s) gerado(s) pela IA passou(aram) do prazo de revisão e ainda não ${
+            simuladosAtrasados.length === 1 ? 'foi lançado' : 'foram lançados'
+          }.`}
+          acao={
+            <Button
+              size="small"
+              icon={<ClipboardCheck />}
+              onClick={() => navegar('/professor/reforco/aprovacao')}
+            >
+              Ver simulados
+            </Button>
+          }
+        />
+      )}
 
       <Tab<Filtro>
         rotuloAcessivel="Filtrar simulados"

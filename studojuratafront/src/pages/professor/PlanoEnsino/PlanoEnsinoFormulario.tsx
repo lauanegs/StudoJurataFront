@@ -20,13 +20,16 @@ import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
+  conteudosPlano as servicoConteudos,
+  cursoDisciplinas as servicoCursoDisciplinas,
   cursos as servicoCursos,
   planosEnsino as servicoPlanos,
   professores as servicoProfessores,
 } from '../../../services/endpoints'
+import { formatarData } from '../../../utils/format'
 import { OPCOES_STATUS_PLANO } from '../../../utils/labels'
 import { intervaloDeDatas } from '../../../utils/validacao'
-import type { StatusPlano } from '../../../types'
+import type { CursoDisciplina, StatusPlano } from '../../../types'
 
 const Coluna = styled.div`
   display: flex;
@@ -74,6 +77,13 @@ export default function PlanoEnsinoFormulario() {
     [professorId],
     { ativo: Boolean(professorId) },
   )
+  // Grade curricular do curso escolhido (pedido explícito): só usada pra
+  // sugerir a carga horária ao criar — não sobrescreve edição existente.
+  const requisicaoGradeCurricular = useRequisicao(
+    () => servicoCursoDisciplinas.listarPorCurso(cursoId as number),
+    [cursoId],
+    { ativo: Boolean(cursoId) && !edicao },
+  )
 
   useHidratar(requisicaoPlano.data, (plano) => {
     setTitulo(plano.titulo ?? '')
@@ -120,6 +130,51 @@ export default function PlanoEnsinoFormulario() {
       ) ?? null,
     [requisicaoVinculos.data, turmaId, disciplinaId],
   )
+
+  // Continuidade pedagógica (pedido explícito): cursos costumam durar mais
+  // que um ciclo de plano de ensino — quando a turma/disciplina escolhida já
+  // teve um plano CONCLUIDO antes, avisa o professor de onde parou, só como
+  // informação (não pré-preenche nada, ele decide os conteúdos do novo ciclo).
+  const requisicaoPlanosExistentes = useRequisicao(() => servicoPlanos.listar(), [], {
+    ativo: !edicao,
+  })
+  const requisicaoConteudosExistentes = useRequisicao(() => servicoConteudos.listar(), [], {
+    ativo: !edicao,
+  })
+
+  const planoAnteriorConcluido = useMemo(() => {
+    if (!vinculoSelecionado) return null
+    return (
+      (requisicaoPlanosExistentes.data ?? [])
+        .filter(
+          (plano) => plano.turmaDisciplina?.id === vinculoSelecionado.id && plano.status === 'CONCLUIDO',
+        )
+        .sort((a, b) => (b.dataFim ?? '').localeCompare(a.dataFim ?? ''))[0] ?? null
+    )
+  }, [requisicaoPlanosExistentes.data, vinculoSelecionado])
+
+  const avisoContinuidade = useMemo(() => {
+    if (!planoAnteriorConcluido) return undefined
+
+    const ultimoConteudo = (requisicaoConteudosExistentes.data ?? [])
+      .filter((conteudo) => conteudo.planoEnsino?.id === planoAnteriorConcluido.id)
+      .sort((a, b) => (b.ordem ?? 0) - (a.ordem ?? 0))[0]
+
+    const fim = formatarData(planoAnteriorConcluido.dataFim)
+    return ultimoConteudo
+      ? `Ciclo anterior concluído em ${fim} — último conteúdo visto: "${ultimoConteudo.titulo}". Continue a partir daqui.`
+      : `Ciclo anterior concluído em ${fim}.`
+  }, [planoAnteriorConcluido, requisicaoConteudosExistentes.data])
+
+  /** Sugere a carga horária definida na grade curricular do curso — só preenche se o campo ainda estiver vazio (não sobrescreve o que o professor já digitou). */
+  function sugerirCargaHoraria(disciplinaSelecionada: number | null, grade: CursoDisciplina[]) {
+    if (cargaHoraria || !cursoId || !disciplinaSelecionada) return
+
+    const encontrado = grade.find(
+      (item) => item.disciplina?.id === disciplinaSelecionada && item.status !== 'INATIVO',
+    )
+    if (encontrado?.cargaHoraria) setCargaHoraria(String(encontrado.cargaHoraria))
+  }
 
   function validar() {
     const encontrados: Record<string, string | undefined> = {}
@@ -333,7 +388,11 @@ export default function PlanoEnsinoFormulario() {
                   clearable
                   placeholder="Selecionar disciplina..."
                   emptyText={turmaId ? 'Sem disciplinas nessa turma' : 'Selecione a turma primeiro'}
-                  onChange={setDisciplinaId}
+                  hint={avisoContinuidade}
+                  onChange={(valor) => {
+                    setDisciplinaId(valor)
+                    sugerirCargaHoraria(valor, requisicaoGradeCurricular.data ?? [])
+                  }}
                 />
               </Grade>
 

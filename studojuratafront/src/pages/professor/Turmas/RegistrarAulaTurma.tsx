@@ -7,15 +7,14 @@ import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { CheckBox } from '../../../components/ui/CheckBox'
-import { Chip } from '../../../components/ui/Chip'
 import { DataTable } from '../../../components/ui/DataTable'
 import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
-import { Modal } from '../../../components/ui/Modal'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { TextArea } from '../../../components/ui/TextArea'
+import { VinculoConteudoAula } from '../../../components/ui/VinculoConteudo'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { useToast } from '../../../contexts/toastContexto'
@@ -24,7 +23,6 @@ import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
   aulas as servicoAulas,
-  conteudosPlano,
   frequencias as servicoFrequencias,
   matriculas,
   planosAula,
@@ -32,7 +30,6 @@ import {
   turmas as servicoTurmas,
 } from '../../../services/endpoints'
 import { formatarCargaHoraria } from '../../../utils/format'
-import { theme as tokens } from '../../../styles/theme'
 import type { AlunoTurma } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
@@ -64,18 +61,6 @@ const CamposCabecalho = styled.div`
 const CampoLargura = styled.div<{ $largura: string }>`
   width: ${({ $largura }) => $largura};
   max-width: 100%;
-`
-
-const Chips = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.xs};
-`
-
-const Ajuda = styled.p`
-  margin: 0;
-  font-size: ${({ theme }) => theme.typography.sizes.xs};
-  color: ${({ theme }) => theme.colors.textTertiary};
 `
 
 /* Botões "flutuantes" acima da tabela — soltos no fundo cinza da página,
@@ -137,8 +122,6 @@ export default function RegistrarAulaTurma() {
   const [dataPublicacao, setDataPublicacao] = useState(() => new Date().toISOString().slice(0, 10))
   const [observacoes, setObservacoes] = useState('')
   const [edicoesChamada, setEdicoesChamada] = useState<Record<number, boolean>>({})
-  const [modalConteudoAberto, setModalConteudoAberto] = useState(false)
-  const [conteudosSelecionados, setConteudosSelecionados] = useState<Set<number>>(new Set())
 
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(idTurma), [idTurma])
 
@@ -239,18 +222,6 @@ export default function RegistrarAulaTurma() {
 
   const requisicaoMatriculas = useRequisicao(() => matriculas.ativosPorTurma(idTurma), [idTurma])
 
-  const requisicaoConteudosAula = useRequisicao(
-    () => servicoAulas.listarConteudos(aulaAlvo?.id as number),
-    [aulaAlvo?.id],
-    { ativo: Boolean(aulaAlvo) },
-  )
-
-  const requisicaoConteudosPlano = useRequisicao(
-    () => conteudosPlano.listar(),
-    [],
-    { ativo: modalConteudoAberto },
-  )
-
   // Carga horária acumulada de cada aluno nesta disciplina — soma das aulas
   // ministradas (com data de publicação) em que ele foi marcado presente.
   const requisicaoCargaHoraria = useRequisicao(
@@ -288,21 +259,6 @@ export default function RegistrarAulaTurma() {
     }))
   }, [requisicaoMatriculas.data, requisicaoCargaHoraria.data, edicoesChamada])
 
-  const conteudosDisponiveis = useMemo(() => {
-    if (!planoAtual) return []
-
-    const vinculados = new Set((requisicaoConteudosAula.data ?? []).map((item) => item.conteudoPlano?.id))
-
-    return (requisicaoConteudosPlano.data ?? [])
-      .filter(
-        (conteudo) =>
-          conteudo.planoEnsino?.id === planoAtual.planoEnsino?.id &&
-          conteudo.status !== 'INATIVO' &&
-          !vinculados.has(conteudo.id),
-      )
-      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-  }, [requisicaoConteudosPlano.data, requisicaoConteudosAula.data, planoAtual])
-
   const { executar: salvar, executando: salvando } = useAcao(async () => {
     if (!planoAtual) {
       toast.warning('Sem plano de aula', 'Esta disciplina ainda não tem um plano de aula nesta turma.')
@@ -339,43 +295,6 @@ export default function RegistrarAulaTurma() {
       toast.error('Não foi possível salvar', erroSalvar instanceof ApiError ? erroSalvar.message : undefined)
     }
   })
-
-  const { executar: vincularConteudos, executando: vinculando } = useAcao(async () => {
-    if (!aulaAlvo || conteudosSelecionados.size === 0) return
-
-    try {
-      await Promise.all(
-        [...conteudosSelecionados].map((conteudoId) => servicoAulas.vincularConteudo(aulaAlvo.id, conteudoId)),
-      )
-      toast.success('Conteúdo vinculado à aula')
-      setConteudosSelecionados(new Set())
-      setModalConteudoAberto(false)
-      await requisicaoConteudosAula.reload()
-    } catch (erroVincular) {
-      toast.error('Não foi possível vincular', erroVincular instanceof ApiError ? erroVincular.message : undefined)
-    }
-  })
-
-  async function desvincularConteudo(conteudoPlanoId: number) {
-    if (!aulaAlvo) return
-
-    try {
-      await servicoAulas.desvincularConteudo(aulaAlvo.id, conteudoPlanoId)
-      toast.success('Conteúdo removido da aula')
-      await requisicaoConteudosAula.reload()
-    } catch (erroRemover) {
-      toast.error('Não foi possível remover', erroRemover instanceof ApiError ? erroRemover.message : undefined)
-    }
-  }
-
-  function alternarConteudoSelecionado(id: number) {
-    setConteudosSelecionados((atuais) => {
-      const novos = new Set(atuais)
-      if (novos.has(id)) novos.delete(id)
-      else novos.add(id)
-      return novos
-    })
-  }
 
   const colunasChamada: Coluna<LinhaChamada>[] = [
     {
@@ -416,54 +335,44 @@ export default function RegistrarAulaTurma() {
         voltarPara={`/professor/turmas/${idTurma}`}
         rotuloVoltar="Turma"
         filtros={
-          <Coluna>
-            <CamposCabecalho>
-              <CampoLargura $largura="320px">
-                <Select
-                  label="Disciplina"
-                  options={disciplinasDaTurma}
-                  value={disciplinaAtiva}
-                  loading={requisicaoVinculos.loading}
-                  emptyText="Você não leciona disciplinas nesta turma"
-                  onChange={setTurmaDisciplinaId}
-                />
-              </CampoLargura>
+          <CamposCabecalho>
+            <CampoLargura $largura="320px">
+              <Select
+                label="Disciplina"
+                options={disciplinasDaTurma}
+                value={disciplinaAtiva}
+                loading={requisicaoVinculos.loading}
+                emptyText="Você não leciona disciplinas nesta turma"
+                onChange={setTurmaDisciplinaId}
+              />
+            </CampoLargura>
 
-              <CampoLargura $largura="360px">
-                <Select
-                  label="Aula do plano de aula"
-                  options={opcoesAulasPlano}
-                  value={aulaAlvo?.id ?? null}
-                  clearable
-                  loading={requisicaoAulasPlano.loading}
-                  disabled={!disciplinaAtiva}
-                  emptyText="Este plano de aula ainda não tem aulas cadastradas"
-                  onChange={setAulaSelecionadaManualId}
-                />
-              </CampoLargura>
+            <CampoLargura $largura="360px">
+              <Select
+                label="Aula do plano de aula"
+                options={opcoesAulasPlano}
+                value={aulaAlvo?.id ?? null}
+                clearable
+                loading={requisicaoAulasPlano.loading}
+                disabled={!disciplinaAtiva}
+                emptyText="Este plano de aula ainda não tem aulas cadastradas"
+                onChange={setAulaSelecionadaManualId}
+              />
+            </CampoLargura>
 
-              <BotaoSalvar>
-                <Button
-                  size="large"
-                  variant="success"
-                  icon={<Save />}
-                  loading={salvando}
-                  disabled={!aulaAlvo}
-                  onClick={salvar}
-                >
-                  Salvar
-                </Button>
-              </BotaoSalvar>
-            </CamposCabecalho>
-
-            {/* Fora da linha de campos (não como hint de um select específico):
-                um texto embaixo de só um dos campos empurrava a caixa dele pra
-                baixo, desalinhando com Disciplina/Salvar na mesma linha. */}
-            <Ajuda>
-              A próxima aula pendente vem selecionada sozinha em "Aula do plano de aula" — troque se não for a
-              aula certa.
-            </Ajuda>
-          </Coluna>
+            <BotaoSalvar>
+              <Button
+                size="large"
+                variant="success"
+                icon={<Save />}
+                loading={salvando}
+                disabled={!aulaAlvo}
+                onClick={salvar}
+              >
+                Salvar
+              </Button>
+            </BotaoSalvar>
+          </CamposCabecalho>
         }
       />
 
@@ -578,41 +487,11 @@ export default function RegistrarAulaTurma() {
               />
             </Grade>
 
-            <div>
-              <Button
-                icon={<ListTree />}
-                disabled={!aulaAlvo}
-                onClick={() => setModalConteudoAberto(true)}
-              >
-                Vincular conteúdo do plano de ensino
-              </Button>
-              {!aulaAlvo && (
-                <div style={{ fontSize: '12px', color: tokens.colors.textTertiary, marginTop: '4px' }}>
-                  Cadastre a aula no plano de aula antes de vincular conteúdos.
-                </div>
-              )}
-            </div>
-
-            {requisicaoConteudosAula.isEmpty ? (
-              <EstadoVazio
-                titulo="Nenhum conteúdo registrado"
-                descricao="Registrar o conteúdo alimenta o histórico do aluno e a repetição espaçada da IA."
-                icon={<ListTree />}
-              />
-            ) : (
-              <Chips>
-                {(requisicaoConteudosAula.data ?? []).map((vinculo) => (
-                  <Chip
-                    key={vinculo.id}
-                    variant="neutral"
-                    onRemove={() => desvincularConteudo(vinculo.conteudoPlano.id)}
-                    rotuloRemover={`Remover ${vinculo.conteudoPlano?.titulo}`}
-                  >
-                    {vinculo.conteudoPlano?.titulo ?? 'Conteúdo'}
-                  </Chip>
-                ))}
-              </Chips>
-            )}
+            <VinculoConteudoAula
+              aulaId={aulaAlvo?.id}
+              planoEnsinoId={planoAtual?.planoEnsino?.id}
+              permitirModoLocal={false}
+            />
 
             <TextArea
               label="Observações"
@@ -627,48 +506,6 @@ export default function RegistrarAulaTurma() {
           </Coluna>
         </Card>
       )}
-
-      <Modal
-        aberto={modalConteudoAberto}
-        onClose={() => setModalConteudoAberto(false)}
-        titulo="Vincular conteúdo"
-        descricao="Selecione um ou mais conteúdos do plano de ensino para vincular a esta aula."
-        largura="600px"
-        rodape={
-          <>
-            <Button variant="secondary" onClick={() => setModalConteudoAberto(false)}>
-              Cancelar
-            </Button>
-            <Button
-              variant="success"
-              loading={vinculando}
-              disabled={conteudosSelecionados.size === 0}
-              onClick={vincularConteudos}
-            >
-              Salvar
-            </Button>
-          </>
-        }
-      >
-        {requisicaoConteudosPlano.isEmpty ? (
-          <EstadoVazio
-            titulo="Nenhum conteúdo disponível"
-            descricao="Todos os conteúdos do plano de ensino já foram vinculados a esta aula."
-            icon={<ListTree />}
-          />
-        ) : (
-          <Coluna>
-            {conteudosDisponiveis.map((conteudo) => (
-              <CheckBox
-                key={conteudo.id}
-                label={`${conteudo.ordem ? `${conteudo.ordem}. ` : ''}${conteudo.titulo ?? 'Conteúdo'}`}
-                checked={conteudosSelecionados.has(conteudo.id)}
-                onChange={() => alternarConteudoSelecionado(conteudo.id)}
-              />
-            ))}
-          </Coluna>
-        )}
-      </Modal>
     </Layout>
   )
 }

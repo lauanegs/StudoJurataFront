@@ -16,6 +16,7 @@ import type {
   ChamadaRequest,
   ConteudoPlano,
   Curso,
+  CursoDisciplina,
   Disciplina,
   Escola,
   EstatisticasPlanoAula,
@@ -35,6 +36,7 @@ import type {
   Professor,
   QuestaoAlunoRequest,
   QuestaoAlunoResponse,
+  QuestaoConteudo,
   QuestaoRequest,
   QuestaoResponse,
   Recomendacao,
@@ -144,9 +146,20 @@ export const cursos = {
   listar: () => api.get<Curso[]>('/cursos'),
   buscar: (id: number) => api.get<Curso>(`/cursos/${id}`),
   planosDeEnsino: (id: number) => api.get<PlanoEnsino[]>(`/cursos/${id}/planos-ensino`),
+  disciplinas: (id: number) => api.get<CursoDisciplina[]>(`/cursos/${id}/disciplinas`),
   criar: (dados: Partial<Curso>) => api.post<Curso>('/cursos', dados),
   atualizar: (id: number, dados: Partial<Curso>) => api.put<Curso>(`/cursos/${id}`, dados),
   excluir: (id: number) => api.delete(`/cursos/${id}`),
+}
+
+/** Grade curricular: disciplinas + carga horária de cada curso (ver CursoDisciplina). */
+export const cursoDisciplinas = {
+  listar: () => api.get<CursoDisciplina[]>('/curso-disciplina'),
+  listarPorCurso: (cursoId: number) => cursos.disciplinas(cursoId),
+  criar: (dados: Partial<CursoDisciplina>) => api.post<CursoDisciplina>('/curso-disciplina', dados),
+  atualizar: (id: number, dados: Partial<CursoDisciplina>) =>
+    api.put<CursoDisciplina>(`/curso-disciplina/${id}`, dados),
+  excluir: (id: number) => api.delete(`/curso-disciplina/${id}`),
 }
 
 export const disciplinas = {
@@ -320,6 +333,15 @@ export const questoes = {
   aprovar: (id: number) => api.post<QuestaoResponse>(`/questoes/${id}/aprovar`),
   rejeitar: (id: number) => api.post<QuestaoResponse>(`/questoes/${id}/rejeitar`),
   excluir: (id: number) => api.delete(`/questoes/${id}`),
+
+  // Conteúdos vinculados (aba "Conteúdo" do QuestaoEditor) — sem esse
+  // vínculo a questão fica fora do cálculo de desempenho por conteúdo que
+  // decide o nível de reforço (RecomendacaoService, no back).
+  listarConteudos: (id: number) => api.get<QuestaoConteudo[]>(`/questoes/${id}/conteudos`),
+  vincularConteudo: (id: number, conteudoPlanoId: number) =>
+    api.post<QuestaoConteudo>(`/questoes/${id}/conteudos/${conteudoPlanoId}`),
+  desvincularConteudo: (id: number, conteudoPlanoId: number) =>
+    api.delete(`/questoes/${id}/conteudos/${conteudoPlanoId}`),
 }
 
 export const alternativas = {

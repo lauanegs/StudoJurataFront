@@ -14,6 +14,7 @@ import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Modal } from '../../../components/ui/Modal'
 import { QuestaoEditor } from '../../../components/ui/QuestaoEditor'
+import { VinculoConteudoQuestao } from '../../../components/ui/VinculoConteudo'
 import {
   questaoVazia,
   validarQuestao,
@@ -63,19 +64,6 @@ const Chips = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.xs};
-`
-
-const Navegador = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.xs};
-
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.white};
-  border-radius: ${({ theme }) => theme.radius.md};
-  box-shadow: ${({ theme }) => theme.shadow.base};
 `
 
 const ListaAlunos = styled.div`
@@ -165,11 +153,15 @@ export default function SimuladoFormulario() {
     { ativo: Boolean(turmaId) },
   )
 
+  // `edicao` entra no `ativo` das duas de baixo (banco de questões/alternativas)
+  // além dos modais de importação: são as mesmas usadas pra resolver o
+  // enunciado/alternativas completos de cada questão já vinculada a este
+  // simulado, na hidratação logo abaixo (ver requisicaoVinculosSimulado).
   const requisicaoBancoQuestoes = useRequisicao(() => servicoQuestoes.listar(), [], {
-    ativo: modalImportar || modalImportarSimulado,
+    ativo: modalImportar || modalImportarSimulado || edicao,
   })
   const requisicaoBancoAlternativas = useRequisicao(() => servicoAlternativas.listar(), [], {
-    ativo: modalImportar || modalImportarSimulado,
+    ativo: modalImportar || modalImportarSimulado || edicao,
   })
   const requisicaoSimuladosOrigem = useRequisicao(() => servicoSimulados.listar(), [], {
     ativo: modalImportarSimulado,
@@ -177,6 +169,11 @@ export default function SimuladoFormulario() {
   const requisicaoSimuladoQuestoesOrigem = useRequisicao(() => simuladoQuestoes.listar(), [], {
     ativo: modalImportarSimulado,
   })
+
+  // Vínculos (SimuladoQuestao) DESTE simulado — separada da de cima
+  // (que é só pro modal "Importar simulado", de OUTRO simulado) pra não
+  // misturar as duas responsabilidades; ver hidratação de `questoes` abaixo.
+  const requisicaoVinculosSimulado = useRequisicao(() => simuladoQuestoes.listar(), [], { ativo: edicao })
 
   const opcoesTurmasImportar = useMemo(
     () =>
@@ -308,6 +305,60 @@ export default function SimuladoFormulario() {
     setDataFim(paraInputDataHora(simulado.dataFim))
     setTempoLimite(simulado.tempoLimite?.toString() ?? '')
     setNotaMaxima(simulado.notaMaxima?.toString() ?? '10')
+  })
+
+  // Carrega as questões JÁ SALVAS deste simulado (editar um existente sem
+  // isso mostrava sempre 1 questão em branco, mesmo com questões reais
+  // vinculadas — o estado `questoes` só era populado pra criação do zero ou
+  // pelos fluxos de importar). Combina as 3 requisições numa só referência
+  // estável, porque useHidratar só aplica quando o valor muda de referência
+  // e as 3 precisam estar prontas juntas pra resolver enunciado+alternativas
+  // de cada questão vinculada.
+  const dadosParaHidratarQuestoes = useMemo(() => {
+    if (!edicao) return null
+    if (!requisicaoVinculosSimulado.data || !requisicaoBancoQuestoes.data || !requisicaoBancoAlternativas.data) {
+      return null
+    }
+    return {
+      vinculos: requisicaoVinculosSimulado.data,
+      bancoQuestoes: requisicaoBancoQuestoes.data,
+      bancoAlternativas: requisicaoBancoAlternativas.data,
+    }
+  }, [edicao, requisicaoVinculosSimulado.data, requisicaoBancoQuestoes.data, requisicaoBancoAlternativas.data])
+
+  useHidratar(dadosParaHidratarQuestoes, ({ vinculos, bancoQuestoes, bancoAlternativas }) => {
+    const vinculosDesteSimulado = vinculos
+      .filter((vinculo) => vinculo.simuladoId === simuladoId && vinculo.status !== 'REMOVIDA')
+      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+
+    // Rascunho recém-criado, ainda sem questão salva: mantém o
+    // questaoVazia() inicial em vez de esvaziar a lista.
+    if (vinculosDesteSimulado.length === 0) return
+
+    const carregadas: QuestaoEditavel[] = vinculosDesteSimulado
+      .map((vinculo) => bancoQuestoes.find((item) => item.id === vinculo.questaoId))
+      .filter((item): item is QuestaoResponse => Boolean(item))
+      .map((original) => ({
+        id: original.id,
+        enunciado: original.enunciado,
+        tipo: original.tipo,
+        disciplinaId: original.disciplinaId ?? null,
+        nivelDificuldade: original.nivelDificuldade ?? null,
+        status: original.status,
+        alternativas: bancoAlternativas
+          .filter((alternativa) => alternativa.questaoId === original.id)
+          .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+          .map((alternativa) => ({
+            id: alternativa.id,
+            texto: alternativa.texto,
+            correta: Boolean(alternativa.correta),
+          })),
+      }))
+
+    if (carregadas.length > 0) {
+      setQuestoes(carregadas)
+      setQuestaoAtiva(0)
+    }
   })
 
   const opcoesDisciplinas = useMemo(
@@ -459,6 +510,16 @@ export default function SimuladoFormulario() {
             ordem: indice + 1,
             pontuacao: pontuacaoPorQuestao,
           })
+
+          // Conteúdos escolhidos antes de a questão existir (VinculoConteudoQuestao
+          // em modo local) — comitados agora que ela finalmente tem id.
+          if (questao.conteudoPlanoIdsPendentes && questao.conteudoPlanoIdsPendentes.length > 0) {
+            await Promise.all(
+              questao.conteudoPlanoIdsPendentes.map((conteudoPlanoId) =>
+                servicoQuestoes.vincularConteudo(questaoSalva.id, conteudoPlanoId),
+              ),
+            )
+          }
         }
       }
 
@@ -467,7 +528,7 @@ export default function SimuladoFormulario() {
         'Ele fica em rascunho até você lançá-lo para os alunos.',
       )
 
-      navegar('/professor/reforco/simulados')
+      navegar('/professor/reforco')
     } catch (erroSalvar) {
       toast.error(
         'Não foi possível salvar',
@@ -513,7 +574,7 @@ export default function SimuladoFormulario() {
           })
 
           toast.success('Simulado lançado', 'Os alunos já podem iniciar as tentativas.')
-          navegar('/professor/reforco/simulados')
+          navegar('/professor/reforco')
         } catch (erroLancar) {
           toast.error(
             'Não foi possível lançar',
@@ -595,7 +656,7 @@ export default function SimuladoFormulario() {
   if (edicao && requisicaoSimulado.error) {
     return (
       <Layout>
-        <Header titulo="Simulado" voltarPara="/professor/reforco/simulados" />
+        <Header titulo="Simulado" voltarPara="/professor/reforco" />
         <ErroCarregamento
           mensagem={requisicaoSimulado.error}
           onRetry={requisicaoSimulado.reload}
@@ -619,8 +680,8 @@ export default function SimuladoFormulario() {
             <SubtituloItem icon={<ClipboardCheck />}>Questões: {questoes.length} montada(s)</SubtituloItem>
           )
         }
-        voltarPara="/professor/reforco/simulados"
-        rotuloVoltar="Simulados"
+        voltarPara="/professor/reforco"
+        rotuloVoltar="Módulo de reforço"
         actions={
           <>
             {!somenteLeitura && (
@@ -645,7 +706,7 @@ export default function SimuladoFormulario() {
             <Button
               size="large"
               variant="danger"
-              onClick={() => navegar('/professor/reforco/simulados')}
+              onClick={() => navegar('/professor/reforco')}
               disabled={salvando}
             >
               Cancelar
@@ -849,6 +910,41 @@ export default function SimuladoFormulario() {
               }
               onRemove={() => removerQuestao(questaoAtiva)}
               onImport={() => setModalImportar(true)}
+              conteudo={
+                <VinculoConteudoQuestao
+                  questaoId={questao.id}
+                  disciplinaId={questao.disciplinaId ?? disciplinaId}
+                  somenteLeitura={somenteLeitura}
+                  conteudoPlanoIdsPendentes={questao.conteudoPlanoIdsPendentes}
+                  onChangePendentes={(ids) =>
+                    setQuestoes((atuais) =>
+                      atuais.map((item, i) => (i === questaoAtiva ? { ...item, conteudoPlanoIdsPendentes: ids } : item)),
+                    )
+                  }
+                />
+              }
+              navegador={
+                <>
+                  {questoes.map((_, indice) => (
+                    <StatusBadge
+                      key={indice}
+                      shape="square"
+                      color={errosQuestoes[indice] ? 'red' : indice === questaoAtiva ? 'purple' : 'gray'}
+                      selected={indice === questaoAtiva}
+                      ariaLabel={`Ir para a questão ${indice + 1}`}
+                      onClick={() => setQuestaoAtiva(indice)}
+                    >
+                      {indice + 1}
+                    </StatusBadge>
+                  ))}
+
+                  {!somenteLeitura && (
+                    <Button variant="secondary" size="small" icon={<Plus />} onClick={adicionarQuestao}>
+                      Nova questão
+                    </Button>
+                  )}
+                </>
+              }
             />
           )}
 
@@ -860,27 +956,6 @@ export default function SimuladoFormulario() {
               acao={<Button icon={<Plus />} onClick={adicionarQuestao}>Adicionar questão</Button>}
             />
           )}
-
-          <Navegador role="group" aria-label="Navegação entre questões">
-            {questoes.map((_, indice) => (
-              <StatusBadge
-                key={indice}
-                shape="square"
-                color={errosQuestoes[indice] ? 'red' : indice === questaoAtiva ? 'purple' : 'gray'}
-                selected={indice === questaoAtiva}
-                ariaLabel={`Ir para a questão ${indice + 1}`}
-                onClick={() => setQuestaoAtiva(indice)}
-              >
-                {indice + 1}
-              </StatusBadge>
-            ))}
-
-            {!somenteLeitura && (
-              <Button variant="secondary" size="small" icon={<Plus />} onClick={adicionarQuestao}>
-                Nova questão
-              </Button>
-            )}
-          </Navegador>
         </>
       )}
 

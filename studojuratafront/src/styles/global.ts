@@ -125,28 +125,6 @@ export const GlobalStyle = createGlobalStyle`
     display: none;
   }
 
-  /* Utilitário de "imprimir relatório" (Reforço): quando a página tem um
-     elemento com essa classe, a impressão mostra só ele — todo o resto
-     (sidebar, header, botões...) some. Classe reaproveitável em qualquer
-     tela que precise de "Imprimir", não só no relatório de desempenho. */
-  @media print {
-    body.imprimindo-relatorio * {
-      visibility: hidden;
-    }
-
-    body.imprimindo-relatorio .area-impressao,
-    body.imprimindo-relatorio .area-impressao * {
-      visibility: visible;
-    }
-
-    body.imprimindo-relatorio .area-impressao {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

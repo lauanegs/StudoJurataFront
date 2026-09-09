@@ -19,7 +19,12 @@ const Container = styled.article<{ $clicavel: boolean; $horizontal: boolean }>`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
 
+  /* Confirmado pelo usuário: numa grade (GradeDesempenho), todo card tem a
+     mesma altura — height:100% reforça o stretch que o grid já aplica por
+     padrão, garantindo que funcione mesmo fora de um grid (ex.: dentro de
+     um flex). */
   width: 100%;
+  height: 100%;
   padding: ${({ theme }) => theme.spacing.md};
 
   background: ${({ theme }) => theme.colors.white};
@@ -113,11 +118,20 @@ const BarraPorcentagem = styled.div<{ $cor: string; $horizontal: boolean }>`
   border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ $cor }) => $cor};
 
+  /* Confirmado pelo usuário: a barra fica sempre na extrema inferior do
+     card, mesmo quando a descrição de outro card na mesma linha ocupa mais
+     linhas — margin-top:auto empurra a barra pro fim do container flex
+     (coluna), independente da altura do cabeçalho acima dela. Só faz
+     sentido no layout vertical: no horizontal a barra já é um bloco à
+     direita, alinhado ao centro da linha. */
   ${({ $horizontal }) =>
-    $horizontal &&
-    `
+    $horizontal
+      ? `
       flex-shrink: 0;
       min-width: 96px;
+    `
+      : `
+      margin-top: auto;
     `}
 `
 

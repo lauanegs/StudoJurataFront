@@ -16,7 +16,7 @@ import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { matriculas, turmas as servicoTurmas } from '../../../services/endpoints'
-import { formatarData, normalizar } from '../../../utils/format'
+import { normalizar } from '../../../utils/format'
 import { ROTULO_STATUS_TURMA } from '../../../utils/labels'
 import type { Turma } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
@@ -114,15 +114,6 @@ export default function Turmas() {
           </Tag>
         )
       },
-    },
-    {
-      key: 'periodo',
-      cabecalho: 'Período',
-      ocultarEmTelaPequena: true,
-      render: (turma) =>
-        turma.dataInicio
-          ? `${formatarData(turma.dataInicio)} — ${turma.dataFim ? formatarData(turma.dataFim) : 'em aberto'}`
-          : '—',
     },
     {
       key: 'status',

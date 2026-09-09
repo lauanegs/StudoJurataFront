@@ -125,6 +125,7 @@ export interface Curso extends EntidadeBase {
   escola: Escola
   nome: string
   descricao?: string
+  /** Soma das cargas horárias ativas da grade curricular (CursoDisciplina) — não editável diretamente. */
   cargaHorariaTotal?: number
   status?: StatusAtivoInativo
 }
@@ -151,6 +152,19 @@ export interface HorarioTurma extends EntidadeBase {
   /** Formato HH:mm:ss vindo de java.time.LocalTime. */
   horaInicio: string
   horaFim: string
+}
+
+/**
+ * Grade curricular: quais disciplinas compõem um Curso, cada uma com sua
+ * própria carga horária — reaproveitada pelo seletor de disciplina na
+ * Turma (restringe às da grade do curso) e pelo Plano de Ensino (pré-preenche
+ * a carga horária).
+ */
+export interface CursoDisciplina extends EntidadeBase {
+  curso: Curso
+  disciplina: Disciplina
+  cargaHoraria?: number
+  status?: StatusAtivoInativo
 }
 
 export interface TurmaDisciplina extends EntidadeBase {
@@ -224,6 +238,18 @@ export interface Aula extends EntidadeBase {
 
 export interface AulaConteudo extends EntidadeBase {
   aula: Aula
+  conteudoPlano: ConteudoPlano
+}
+
+/**
+ * Vínculo questão-conteúdo (aba "Conteúdo" do QuestaoEditor) — alimenta o
+ * cálculo de desempenho por conteúdo/nível que decide o reforço (back:
+ * RecomendacaoService). `questao` só carrega o `id`: o endpoint devolve a
+ * entidade completa, mas nada na tela usa mais que isso — o resto do dado da
+ * questão já está no estado local do editor.
+ */
+export interface QuestaoConteudo extends EntidadeBase {
+  questao: { id: number }
   conteudoPlano: ConteudoPlano
 }
 
@@ -459,6 +485,8 @@ export interface Recomendacao {
   conteudoTitulo: string
   motivos: MotivoRecomendacao[]
   taxaAcerto?: number
+  /** Só presente com motivo BAIXO_APROVEITAMENTO: nível de dificuldade mais fraco do aluno nesse conteúdo — o mesmo nível que a IA usa ao gerar o reforço, salvo escolha manual do professor. */
+  nivelPrioritario?: NivelDificuldade
   dataProximoReforco?: string
 }
 

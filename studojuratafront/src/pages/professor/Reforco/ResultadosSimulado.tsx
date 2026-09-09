@@ -86,7 +86,7 @@ export default function ResultadosSimulado() {
   if (requisicaoSimulado.error) {
     return (
       <Layout>
-        <Header titulo="Resultados" voltarPara="/professor/reforco/simulados" />
+        <Header titulo="Resultados" voltarPara="/professor/reforco" />
         <ErroCarregamento
           mensagem={requisicaoSimulado.error}
           onRetry={requisicaoSimulado.reload}
@@ -109,8 +109,8 @@ export default function ResultadosSimulado() {
             </SubtituloItem>
           </>
         }
-        voltarPara="/professor/reforco/simulados"
-        rotuloVoltar="Simulados"
+        voltarPara="/professor/reforco"
+        rotuloVoltar="Módulo de reforço"
       />
 
       <Card semPadding>

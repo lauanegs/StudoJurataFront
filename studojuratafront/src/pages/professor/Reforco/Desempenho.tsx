@@ -5,7 +5,9 @@ import {
   ArrowRight,
   BarChart3,
   BookOpen,
-  ClipboardCheck,
+  CalendarClock,
+  FileDown,
+  FileSpreadsheet,
   FileText,
   Rocket,
   Target,
@@ -23,23 +25,25 @@ import { GraficoCard } from '../../../components/ui/GraficoCard'
 import { GraficoLinha, type PontoGraficoLinha } from '../../../components/ui/GraficoLinha'
 import { Header } from '../../../components/ui/Header'
 import { Histograma } from '../../../components/ui/Histograma'
+import { InfoCard } from '../../../components/ui/InfoCard'
+import { ListaInfo } from '../../../components/ui/ListaInfo'
+import { Select, type SelectOption } from '../../../components/ui/Select'
 import { Tag } from '../../../components/ui/Tag'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
-import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import {
   disciplinas as servicoDisciplinas,
-  ia as servicoIa,
-  professores as servicoProfessores,
-  questoes as servicoQuestoes,
   simuladoAlunos,
-  simuladoQuestoes,
   simulados as servicoSimulados,
   turmas as servicoTurmas,
 } from '../../../services/endpoints'
-import { formatarData } from '../../../utils/format'
+import { calcularFaixasHistograma } from '../../../utils/desempenho'
+import { exportarExcelAbas } from '../../../utils/exportarPlanilha'
+import { exportarPdf } from '../../../utils/exportarPdf'
+import { formatarData, formatarPorcentagem } from '../../../utils/format'
+import { renderizarGraficoComoImagem, type ImagemGrafico } from '../../../utils/renderizarGrafico'
 import type { TipoDestinacaoSimulado } from '../../../types'
 import { DetalheSimuladoModal } from './DetalheSimuladoModal'
 
@@ -83,6 +87,39 @@ const InfoSimulado = styled.div`
   gap: ${({ theme }) => theme.spacing.xs};
 `
 
+/* Pedido explícito: cards de números absolutos no topo, mesmo padrão da
+   Home do admin (Indicadores em Home.tsx) — visão geral "de sempre",
+   independente do período selecionado pros gráficos abaixo. */
+const Indicadores = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+const LarguraPeriodo = styled.div`
+  width: 200px;
+`
+
+type PeriodoPreset = 'mes' | 'ano' | 'tudo'
+
+const OPCOES_PERIODO: SelectOption<PeriodoPreset>[] = [
+  { value: 'mes', label: 'Este mês' },
+  { value: 'ano', label: 'Este ano' },
+  { value: 'tudo', label: 'Todo o histórico' },
+]
+
+/** Simulado "no período" pela data em que foi aplicado (mesmo campo usado pra ordenar por realização). */
+function estaNoPeriodo(dataIso: string | undefined, preset: PeriodoPreset): boolean {
+  if (preset === 'tudo') return true
+  if (!dataIso) return false
+
+  const data = new Date(dataIso)
+  const agora = new Date()
+
+  if (preset === 'ano') return data.getFullYear() === agora.getFullYear()
+  return data.getFullYear() === agora.getFullYear() && data.getMonth() === agora.getMonth()
+}
+
 interface DesempenhoSimulado {
   simuladoId: number
   titulo: string
@@ -97,37 +134,30 @@ interface DesempenhoSimulado {
 }
 
 /**
- * Painel do módulo de Reforço.
+ * Painel de Desempenho (pedido explícito: aba própria na sidebar, separada
+ * do módulo de Reforço, pra não misturar "gerenciar simulados" com "ver
+ * indicadores").
  *
  * Não há endpoint agregado no back, então o desempenho por simulado é
  * calculado aqui: para cada simulado com tentativas concluídas, a nota
  * média dos alunos é comparada com a notaMaxima do simulado (confirmado no
  * Figma: um card por simulado, não por disciplina).
  */
-export default function ReforcoDashboard() {
+export default function Desempenho() {
   const navegar = useNavigate()
-  const { professorId } = useProfessorLogado()
 
   const [simuladoDetalhado, setSimuladoDetalhado] = useState<DesempenhoSimulado | null>(null)
+  // Pedido explícito: os gráficos que abrem a tela já vêm filtrados por um
+  // período (ano atual por padrão) — "Todo o histórico" continua disponível
+  // pra quem quiser o panorama completo.
+  const [periodo, setPeriodo] = useState<PeriodoPreset>('ano')
 
   const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
   const requisicaoTentativas = useRequisicao(() => simuladoAlunos.listar(), [])
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
   const requisicaoTurmas = useRequisicao(() => servicoTurmas.listar(), [])
-  const requisicaoQuestoesPendentes = useRequisicao(() => servicoQuestoes.listarPendentes(), [])
-  const requisicaoSimuladoQuestoes = useRequisicao(() => simuladoQuestoes.listar(), [])
-  const requisicaoVinculos = useRequisicao(
-    () => servicoProfessores.turmasLecionadas(professorId as number),
-    [professorId],
-    { ativo: Boolean(professorId) },
-  )
-  // Vínculo aluno/conteúdo/motivo/prazo de cada simulado gerado pela IA —
-  // usado só pra detectar os que passaram do prazo sem ter sido lançados
-  // (ver simuladosAtrasados). Detalhamento completo fica na tela de
-  // aprovação (SimuladosAprovacao.tsx).
-  const requisicaoVinculosIA = useRequisicao(() => servicoIa.listarSimuladosGerados(), [])
 
-  const desempenhos = useMemo<DesempenhoSimulado[]>(() => {
+  const desempenhosTotais = useMemo<DesempenhoSimulado[]>(() => {
     const simulados = requisicaoSimulados.data ?? []
     const tentativas = requisicaoTentativas.data ?? []
     const listaDisciplinas = requisicaoDisciplinas.data ?? []
@@ -174,6 +204,20 @@ export default function ReforcoDashboard() {
       })
   }, [requisicaoSimulados.data, requisicaoTentativas.data, requisicaoDisciplinas.data, requisicaoTurmas.data])
 
+  // Recorte pelo período selecionado — só afeta os gráficos abaixo; os
+  // cards de números absolutos no topo continuam somando tudo (ver
+  // totais* mais abaixo, calculados a partir de desempenhosTotais).
+  const desempenhos = useMemo(
+    () => desempenhosTotais.filter((item) => estaNoPeriodo(item.data, periodo)),
+    [desempenhosTotais, periodo],
+  )
+
+  const rotuloPeriodo = OPCOES_PERIODO.find((opcao) => opcao.value === periodo)?.label ?? ''
+  const contextoTextoPeriodo = [`Período: ${rotuloPeriodo}`]
+  const contextoPeriodo = (
+    <ListaInfo itens={[{ icon: <CalendarClock />, texto: contextoTextoPeriodo[0] }]} />
+  )
+
   const criticos = desempenhos.filter((item) => item.percentual < 50)
 
   // O card "Desempenho por simulado" do painel mostra só uma amostra — os 4
@@ -181,41 +225,39 @@ export default function ReforcoDashboard() {
   // ordenada por realização) fica na tela de detalhamento.
   const desempenhosRecentes = desempenhos.slice(0, 4)
 
-  // O botão leva pra "Simulados aguardando aprovação" (SimuladosAprovacao.tsx),
-  // que lista SIMULADOS, não questões — contar questoesPendentes.length aqui
-  // direto não batia com o total real de simulados naquela tela (um simulado
-  // pode ter várias questões pendentes, inflando o número; e a contagem
-  // também não era filtrada pelas turmas deste professor). Mesma lógica de
-  // agrupamento da tela de aprovação, só que contando em vez de listar.
-  const pendentes = useMemo(() => {
-    const turmasDoProfessor = new Set((requisicaoVinculos.data ?? []).map((vinculo) => vinculo.turma?.id))
-    const idsQuestoesPendentes = new Set((requisicaoQuestoesPendentes.data ?? []).map((questao) => questao.id))
-
-    const simuladosComPendencia = new Set(
-      (requisicaoSimuladoQuestoes.data ?? [])
-        .filter((vinculo) => idsQuestoesPendentes.has(vinculo.questaoId))
-        .map((vinculo) => vinculo.simuladoId),
-    )
-
-    return (requisicaoSimulados.data ?? []).filter(
-      (simulado) => simuladosComPendencia.has(simulado.id) && turmasDoProfessor.has(simulado.turmaId ?? undefined),
-    ).length
-  }, [requisicaoVinculos.data, requisicaoQuestoesPendentes.data, requisicaoSimuladoQuestoes.data, requisicaoSimulados.data])
-
   // Distribuição geral: toda tentativa concluída de todo simulado deste
-  // professor, agregada — diferente do histograma por simulado (que só
-  // aparece dentro do detalhamento de UM simulado), este mostra o panorama
-  // da turma toda ao longo de tudo que já foi aplicado.
+  // professor no período selecionado, agregada — diferente do histograma
+  // por simulado (que só aparece dentro do detalhamento de UM simulado),
+  // este mostra o panorama da turma toda no recorte escolhido.
   const notasGeraisPercentuais = useMemo(() => {
+    const idsNoPeriodo = new Set(desempenhos.map((item) => item.simuladoId))
     const simuladosDoProfessor = new Map((requisicaoSimulados.data ?? []).map((simulado) => [simulado.id, simulado]))
 
     return (requisicaoTentativas.data ?? [])
-      .filter((tentativa) => tentativa.status === 'CONCLUIDO' && typeof tentativa.nota === 'number')
+      .filter(
+        (tentativa) =>
+          tentativa.status === 'CONCLUIDO' &&
+          typeof tentativa.nota === 'number' &&
+          idsNoPeriodo.has(tentativa.simuladoId),
+      )
       .map((tentativa) => {
         const maxima = simuladosDoProfessor.get(tentativa.simuladoId)?.notaMaxima || 10
         return Math.min(100, ((tentativa.nota as number) / maxima) * 100)
       })
-  }, [requisicaoSimulados.data, requisicaoTentativas.data])
+  }, [desempenhos, requisicaoSimulados.data, requisicaoTentativas.data])
+
+  // Valores exatos por trás do histograma acima — vira a tabela mostrada na
+  // impressão (no lugar do gráfico, que não imprime de forma confiável) e o
+  // conteúdo exportado pro Excel.
+  const tabelaDistribuicaoGeral = useMemo(
+    () =>
+      calcularFaixasHistograma(notasGeraisPercentuais).map((faixa) => ({
+        chave: faixa.rotulo,
+        rotulo: faixa.rotulo,
+        valor: String(faixa.quantidade),
+      })),
+    [notasGeraisPercentuais],
+  )
 
   // Desempenho médio por disciplina — média dos percentuais já calculados
   // por simulado (não recalcula do zero), só reagrupando por disciplina em
@@ -238,11 +280,10 @@ export default function ReforcoDashboard() {
   }, [desempenhos])
 
   // Evolução ao longo do tempo, por disciplina: os simulados já concluídos
-  // dessa disciplina, em ordem cronológica — mostra se a turma está
-  // melhorando ou piorando entre um simulado e outro, não só a média
-  // isolada de cada um. Só entram disciplinas com 2+ simulados (tendência
-  // não existe com um ponto só) e a data vem do próprio simulado (sem data
-  // registrada, fica de fora — não dá pra ordenar cronologicamente).
+  // dessa disciplina no período selecionado, em ordem cronológica — mostra
+  // se a turma está melhorando ou piorando entre um simulado e outro, não
+  // só a média isolada de cada um. Só entram disciplinas com 2+ simulados
+  // (tendência não existe com um ponto só).
   const tendenciaPorDisciplina = useMemo(() => {
     const porDisciplina = new Map<string, DesempenhoSimulado[]>()
 
@@ -268,19 +309,133 @@ export default function ReforcoDashboard() {
       .filter((item) => item.pontos.length >= 2)
   }, [desempenhos])
 
-  // Simulados gerados pela IA que passaram do prazo de revisão sem terem
-  // sido lançados (Simulado.status ainda RASCUNHO) — substitui o antigo
-  // aviso de "revisão espaçada vencendo hoje" (um contador sem ação) por
-  // algo acionável: simulados de verdade parados, esperando o professor.
-  const simuladosAtrasados = useMemo(() => {
-    const hojeISO = new Date().toISOString().slice(0, 10)
-    const simuladosPorId = new Map((requisicaoSimulados.data ?? []).map((simulado) => [simulado.id, simulado]))
+  // Valores exatos do gráfico de desempenho por disciplina (mesma linha de
+  // raciocínio da tabela de distribuição acima).
+  const tabelaDesempenhoPorDisciplina = useMemo(
+    () =>
+      desempenhoPorDisciplina.map((item) => ({
+        chave: item.chave,
+        rotulo: item.rotulo,
+        valor: formatarPorcentagem(item.valor),
+      })),
+    [desempenhoPorDisciplina],
+  )
 
-    return (requisicaoVinculosIA.data ?? []).filter((vinculo) => {
-      const simulado = simuladosPorId.get(vinculo.simuladoId)
-      return simulado?.status === 'RASCUNHO' && vinculo.prazoLancamento < hojeISO
-    })
-  }, [requisicaoVinculosIA.data, requisicaoSimulados.data])
+  // Cards de números absolutos no topo (pedido explícito, mesmo padrão da
+  // Home do admin) — sempre o total geral, independente do período
+  // selecionado pros gráficos abaixo.
+  const totalTentativasConcluidas = useMemo(
+    () => (requisicaoTentativas.data ?? []).filter((tentativa) => tentativa.status === 'CONCLUIDO').length,
+    [requisicaoTentativas.data],
+  )
+  const totalAlunosAvaliados = useMemo(() => {
+    const ids = new Set(
+      (requisicaoTentativas.data ?? [])
+        .filter((tentativa) => tentativa.status === 'CONCLUIDO')
+        .map((tentativa) => tentativa.alunoId),
+    )
+    return ids.size
+  }, [requisicaoTentativas.data])
+  const totalDisciplinasAvaliadas = useMemo(
+    () => new Set(desempenhosTotais.map((item) => item.disciplina)).size,
+    [desempenhosTotais],
+  )
+
+  // Pedido explícito: exportar TUDO — todas as seções da tela, num arquivo
+  // só, organizadas (uma aba por seção no Excel, uma tabela por seção no
+  // PDF) — não só o gráfico que estiver aberto no momento.
+  const secoesRelatorioCompleto = useMemo(
+    () => [
+      {
+        titulo: 'Resumo geral',
+        colunaRotulo: 'Indicador',
+        colunaValor: 'Valor',
+        linhas: [
+          { chave: 'simulados', rotulo: 'Simulados aplicados', valor: String(desempenhosTotais.length) },
+          { chave: 'tentativas', rotulo: 'Tentativas concluídas', valor: String(totalTentativasConcluidas) },
+          { chave: 'alunos', rotulo: 'Alunos avaliados', valor: String(totalAlunosAvaliados) },
+          { chave: 'disciplinas', rotulo: 'Disciplinas avaliadas', valor: String(totalDisciplinasAvaliadas) },
+        ],
+      },
+      {
+        titulo: 'Distribuição geral das notas',
+        colunaRotulo: 'Faixa de nota',
+        colunaValor: 'Quantidade',
+        linhas: tabelaDistribuicaoGeral,
+      },
+      {
+        titulo: 'Desempenho médio por disciplina',
+        colunaRotulo: 'Disciplina',
+        colunaValor: 'Desempenho médio',
+        linhas: tabelaDesempenhoPorDisciplina,
+      },
+      ...tendenciaPorDisciplina.map((item) => ({
+        titulo: `Evolução — ${item.disciplina}`,
+        colunaRotulo: 'Simulado',
+        colunaValor: 'Nota',
+        linhas: item.pontos.map((ponto) => ({
+          chave: ponto.chave,
+          rotulo: ponto.rotulo,
+          valor: formatarPorcentagem(ponto.valor),
+        })),
+      })),
+      {
+        titulo: 'Desempenho por simulado',
+        colunaRotulo: 'Simulado',
+        colunaValor: 'Desempenho',
+        linhas: desempenhos.map((item) => ({
+          chave: String(item.simuladoId),
+          rotulo: `${item.titulo} — ${item.turma} — ${item.disciplina}`,
+          valor: formatarPorcentagem(item.percentual),
+        })),
+      },
+    ],
+    [
+      desempenhosTotais.length,
+      totalTentativasConcluidas,
+      totalAlunosAvaliados,
+      totalDisciplinasAvaliadas,
+      tabelaDistribuicaoGeral,
+      tabelaDesempenhoPorDisciplina,
+      tendenciaPorDisciplina,
+      desempenhos,
+    ],
+  )
+
+  // Pra "Exportar tudo": captura o desenho de cada gráfico da tela (os
+  // MESMOS componentes, renderizados fora da tela) e casa com a seção de
+  // mesmo título em secoesRelatorioCompleto acima — "Resumo geral" e
+  // "Desempenho por simulado" não têm gráfico correspondente, ficam só com
+  // a tabela.
+  const capturarImagensRelatorio = async (): Promise<Map<string, ImagemGrafico | null>> => {
+    const alturaDisciplina = Math.max(120, desempenhoPorDisciplina.length * 44)
+
+    const [distribuicaoGeral, porDisciplina, ...evolucoes] = await Promise.all([
+      renderizarGraficoComoImagem(
+        <Histograma valores={notasGeraisPercentuais} rotuloAcessivel="Distribuição geral de notas" />,
+        640,
+        280,
+      ),
+      renderizarGraficoComoImagem(
+        <GraficoBarras itens={desempenhoPorDisciplina} altura={alturaDisciplina} rotuloAcessivel="Desempenho médio por disciplina" />,
+        640,
+        alturaDisciplina,
+      ),
+      ...tendenciaPorDisciplina.map((item) =>
+        renderizarGraficoComoImagem(
+          <GraficoLinha pontos={item.pontos} rotuloAcessivel={`Evolução do desempenho em ${item.disciplina}`} />,
+          640,
+          280,
+        ),
+      ),
+    ])
+
+    const mapa = new Map<string, ImagemGrafico | null>()
+    mapa.set('Distribuição geral das notas', distribuicaoGeral)
+    mapa.set('Desempenho médio por disciplina', porDisciplina)
+    tendenciaPorDisciplina.forEach((item, indice) => mapa.set(`Evolução — ${item.disciplina}`, evolucoes[indice]))
+    return mapa
+  }
 
   const loading =
     requisicaoSimulados.loading ||
@@ -293,39 +448,62 @@ export default function ReforcoDashboard() {
   return (
     <Layout>
       <Header
-        titulo="Módulo de Reforço"
+        titulo="Desempenho"
         actions={
           <>
             <Button
               size="large"
               variant="secondary"
-              icon={<ClipboardCheck />}
-              onClick={() => navegar('/professor/reforco/aprovacao')}
+              icon={<FileSpreadsheet />}
+              onClick={async () => {
+                const imagens = await capturarImagensRelatorio()
+                exportarExcelAbas(
+                  'Relatório de desempenho',
+                  secoesRelatorioCompleto.map((secao) => ({
+                    nome: secao.titulo,
+                    ...secao,
+                    imagem: imagens.get(secao.titulo) ?? null,
+                  })),
+                )
+              }}
             >
-              Simulados para aprovação{pendentes > 0 ? ` (${pendentes})` : ''}
+              Exportar tudo (Excel)
             </Button>
             <Button
               size="large"
               variant="secondary"
-              icon={<FileText />}
-              onClick={() => navegar('/professor/reforco/simulados')}
+              icon={<FileDown />}
+              onClick={async () => {
+                const imagens = await capturarImagensRelatorio()
+                exportarPdf(
+                  'Relatório de desempenho',
+                  'Relatório de desempenho',
+                  contextoTextoPeriodo,
+                  secoesRelatorioCompleto.map((secao) => ({ ...secao, imagem: imagens.get(secao.titulo) ?? null })),
+                )
+              }}
             >
-              Ver simulados
-            </Button>
-            <Button
-              size="large"
-              variant="secondary"
-              icon={<BookOpen />}
-              onClick={() => navegar('/professor/reforco/questoes?aba=aprovadas')}
-            >
-              Banco de questões
-            </Button>
-            <Button size="large" icon={<Rocket />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
-              Lançar simulado
+              Exportar tudo (PDF)
             </Button>
           </>
         }
+        filtros={
+          <LarguraPeriodo>
+            <Select<PeriodoPreset>
+              options={OPCOES_PERIODO}
+              value={periodo}
+              onChange={(valor) => setPeriodo(valor ?? 'ano')}
+            />
+          </LarguraPeriodo>
+        }
       />
+
+      <Indicadores>
+        <InfoCard value={desempenhosTotais.length} label="simulados aplicados" />
+        <InfoCard value={totalTentativasConcluidas} label="tentativas concluídas" />
+        <InfoCard value={totalAlunosAvaliados} label="alunos avaliados" />
+        <InfoCard value={totalDisciplinasAvaliadas} label="disciplinas avaliadas" />
+      </Indicadores>
 
       {criticos.length > 0 && (
         <AlertaDesempenhoCard
@@ -341,24 +519,6 @@ export default function ReforcoDashboard() {
         />
       )}
 
-      {simuladosAtrasados.length > 0 && (
-        <AlertaDesempenhoCard
-          titulo="Revisões de reforço atrasadas"
-          descricao={`${simuladosAtrasados.length} simulado(s) gerado(s) pela IA passou(aram) do prazo de revisão e ainda não ${
-            simuladosAtrasados.length === 1 ? 'foi lançado' : 'foram lançados'
-          }.`}
-          acao={
-            <Button
-              size="small"
-              icon={<ClipboardCheck />}
-              onClick={() => navegar('/professor/reforco/aprovacao')}
-            >
-              Ver simulados
-            </Button>
-          }
-        />
-      )}
-
       {!loading && !error && desempenhos.length > 0 && (
         <Card
           titulo="Visão geral"
@@ -369,7 +529,7 @@ export default function ReforcoDashboard() {
               variant="subtle"
               size="small"
               icon={<ArrowRight />}
-              onClick={() => navegar('/professor/reforco/desempenho/geral')}
+              onClick={() => navegar('/professor/desempenho/geral')}
             >
               Ver detalhes
             </Button>
@@ -386,6 +546,11 @@ export default function ReforcoDashboard() {
                   rotuloAcessivel="Distribuição geral de notas de todos os simulados"
                 />
               )}
+              contexto={contextoPeriodo}
+              contextoTexto={contextoTextoPeriodo}
+              dados={tabelaDistribuicaoGeral}
+              colunaRotulo="Faixa de nota"
+              colunaValor="Quantidade"
             />
 
             <GraficoCard
@@ -398,6 +563,11 @@ export default function ReforcoDashboard() {
                   rotuloAcessivel="Desempenho médio por disciplina"
                 />
               )}
+              contexto={contextoPeriodo}
+              contextoTexto={contextoTextoPeriodo}
+              dados={tabelaDesempenhoPorDisciplina}
+              colunaRotulo="Disciplina"
+              colunaValor="Desempenho médio"
             />
           </GradeVisaoGeral>
         </Card>
@@ -413,7 +583,7 @@ export default function ReforcoDashboard() {
               variant="subtle"
               size="small"
               icon={<ArrowRight />}
-              onClick={() => navegar('/professor/reforco/desempenho/evolucao')}
+              onClick={() => navegar('/professor/desempenho/evolucao')}
             >
               Ver detalhes
             </Button>
@@ -432,6 +602,15 @@ export default function ReforcoDashboard() {
                     rotuloAcessivel={`Evolução do desempenho em ${item.disciplina} ao longo do tempo`}
                   />
                 )}
+                contexto={contextoPeriodo}
+              contextoTexto={contextoTextoPeriodo}
+                colunaRotulo="Simulado"
+                colunaValor="Nota"
+                dados={item.pontos.map((ponto) => ({
+                  chave: ponto.chave,
+                  rotulo: ponto.rotulo,
+                  valor: formatarPorcentagem(ponto.valor),
+                }))}
               />
             ))}
           </GradeVisaoGeral>
@@ -447,7 +626,7 @@ export default function ReforcoDashboard() {
             variant="subtle"
             size="small"
             icon={<ArrowRight />}
-            onClick={() => navegar('/professor/reforco/desempenho/simulados')}
+            onClick={() => navegar('/professor/desempenho/simulados')}
           >
             Ver detalhes
           </Button>
@@ -459,13 +638,27 @@ export default function ReforcoDashboard() {
           <ErroCarregamento mensagem={error} onRetry={requisicaoSimulados.reload} />
         ) : desempenhos.length === 0 ? (
           <EstadoVazio
-            titulo="Ainda não há simulados concluídos"
-            descricao="Assim que os alunos finalizarem os primeiros simulados, o desempenho aparece aqui."
+            titulo={
+              desempenhosTotais.length > 0
+                ? `Nenhum simulado concluído em "${rotuloPeriodo}"`
+                : 'Ainda não há simulados concluídos'
+            }
+            descricao={
+              desempenhosTotais.length > 0
+                ? 'Troque o período no topo da tela pra ver um recorte maior.'
+                : 'Assim que os alunos finalizarem os primeiros simulados, o desempenho aparece aqui.'
+            }
             icon={<TrendingUp />}
             acao={
-              <Button icon={<Rocket />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
-                Lançar simulado
-              </Button>
+              desempenhosTotais.length > 0 ? (
+                <Button variant="secondary" onClick={() => setPeriodo('tudo')}>
+                  Ver todo o histórico
+                </Button>
+              ) : (
+                <Button icon={<Rocket />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
+                  Lançar simulado
+                </Button>
+              )
             }
           />
         ) : (

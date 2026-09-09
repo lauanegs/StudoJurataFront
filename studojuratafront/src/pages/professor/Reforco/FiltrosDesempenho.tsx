@@ -1,25 +1,28 @@
+import { useState } from 'react'
 import styled from 'styled-components'
-import { X } from 'lucide-react'
+import { Filter, Search, X } from 'lucide-react'
 
 import { Button } from '../../../components/ui/Button'
 import { DatePicker } from '../../../components/ui/DatePicker'
+import { Modal } from '../../../components/ui/Modal'
 import { Select } from '../../../components/ui/Select'
 import type { SelectOption } from '../../../components/ui/Select'
 
-/* Confirmado no Figma (mesmo padrão de Notas.tsx): campos de largura fixa
-   numa linha só, sem rótulo separado acima (o placeholder já identifica o
-   campo). Os filtros aqui aplicam na hora — não há "Buscar": já é um recorte
-   sobre dados já carregados, diferente de Notas.tsx (que só monta o
-   acordeão depois de aplicar). */
-const Campos = styled.div`
+/* Confirmado pelo usuário: os 5 campos numa linha só, dentro do slot de
+   filtros do Header, ficavam grandes e apertados — viraram um botão
+   "Filtros" que abre um modal com os campos empilhados. Continua valendo o
+   pedido anterior: só filtra de verdade ao clicar em "Buscar" dentro do
+   modal, nunca ao trocar um campo. */
+const Coluna = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-const CampoLargura = styled.div`
-  width: 190px;
+const GradePeriodo = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: ${({ theme }) => theme.spacing.md};
 `
 
 interface FiltrosDesempenhoProps {
@@ -38,6 +41,7 @@ interface FiltrosDesempenhoProps {
   onAlunoChange: (valor: number | null) => void
   onDataInicioChange: (valor: string) => void
   onDataFimChange: (valor: string) => void
+  onBuscar: () => void
   onLimpar: () => void
 }
 
@@ -46,7 +50,8 @@ interface FiltrosDesempenhoProps {
  * (Visão geral, Evolução, Por simulado) — turma, disciplina, aluno
  * individual e período. Um único lugar pra manter os 3 consistentes entre
  * si (ver useDesempenhoDados, que já traz as opções derivadas certas pra
- * cada campo).
+ * cada campo). Fica atrás de um botão "Filtros" (modal), não solto no
+ * Header — 5 campos numa linha só não cabia bem.
  */
 export function FiltrosDesempenho({
   opcoesTurmas,
@@ -64,62 +69,90 @@ export function FiltrosDesempenho({
   onAlunoChange,
   onDataInicioChange,
   onDataFimChange,
+  onBuscar,
   onLimpar,
 }: FiltrosDesempenhoProps) {
-  const temFiltroAtivo = Boolean(turmaId || disciplinaId || alunoId || dataInicio || dataFim)
+  const [aberto, setAberto] = useState(false)
+
+  const quantidadeAtiva = [turmaId, disciplinaId, alunoId, dataInicio, dataFim].filter(Boolean).length
+  const temFiltroAtivo = quantidadeAtiva > 0
+
+  function buscar() {
+    onBuscar()
+    setAberto(false)
+  }
 
   return (
-    <Campos>
-      <CampoLargura>
-        <Select
-          placeholder="Turma"
-          options={opcoesTurmas}
-          value={turmaId}
-          loading={carregandoTurmas}
-          clearable
-          emptyText="Você não leciona em nenhuma turma"
-          onChange={onTurmaChange}
-        />
-      </CampoLargura>
+    <>
+      <Button
+        size="large"
+        variant={temFiltroAtivo ? 'primary' : 'secondary'}
+        icon={<Filter />}
+        onClick={() => setAberto(true)}
+      >
+        Filtros{temFiltroAtivo ? ` (${quantidadeAtiva})` : ''}
+      </Button>
 
-      <CampoLargura>
-        <Select
-          placeholder="Disciplina"
-          options={opcoesDisciplinas}
-          value={disciplinaId}
-          clearable
-          disabled={!turmaId}
-          emptyText="Selecione uma turma primeiro"
-          onChange={onDisciplinaChange}
-        />
-      </CampoLargura>
+      <Modal
+        aberto={aberto}
+        onClose={() => setAberto(false)}
+        titulo="Filtros"
+        descricao="Turma, disciplina, aluno e período considerados nos gráficos."
+        largura="440px"
+        rodape={
+          <>
+            {temFiltroAtivo && (
+              <Button variant="subtle" icon={<X />} onClick={onLimpar}>
+                Limpar filtros
+              </Button>
+            )}
+            <Button icon={<Search />} onClick={buscar}>
+              Buscar
+            </Button>
+          </>
+        }
+      >
+        <Coluna>
+          <Select
+            label="Turma"
+            placeholder="Todas as turmas"
+            options={opcoesTurmas}
+            value={turmaId}
+            loading={carregandoTurmas}
+            clearable
+            emptyText="Você não leciona em nenhuma turma"
+            onChange={onTurmaChange}
+          />
 
-      <CampoLargura>
-        <Select
-          placeholder="Aluno"
-          options={opcoesAlunos}
-          value={alunoId}
-          clearable
-          disabled={!turmaId}
-          loading={carregandoAlunos}
-          emptyText="Selecione uma turma primeiro"
-          onChange={onAlunoChange}
-        />
-      </CampoLargura>
+          <Select
+            label="Disciplina"
+            placeholder="Todas as disciplinas"
+            options={opcoesDisciplinas}
+            value={disciplinaId}
+            clearable
+            disabled={!turmaId}
+            emptyText="Selecione uma turma primeiro"
+            onChange={onDisciplinaChange}
+          />
 
-      <CampoLargura>
-        <DatePicker placeholder="De" value={dataInicio} onChange={(e) => onDataInicioChange(e.target.value)} />
-      </CampoLargura>
+          <Select
+            label="Aluno"
+            placeholder="Todos os alunos"
+            options={opcoesAlunos}
+            value={alunoId}
+            clearable
+            disabled={!turmaId}
+            loading={carregandoAlunos}
+            emptyText="Selecione uma turma primeiro"
+            onChange={onAlunoChange}
+          />
 
-      <CampoLargura>
-        <DatePicker placeholder="Até" value={dataFim} onChange={(e) => onDataFimChange(e.target.value)} />
-      </CampoLargura>
-
-      {temFiltroAtivo && (
-        <Button variant="subtle" size="small" icon={<X />} onClick={onLimpar}>
-          Limpar filtros
-        </Button>
-      )}
-    </Campos>
+          <GradePeriodo>
+            <DatePicker label="De" value={dataInicio} onChange={(e) => onDataInicioChange(e.target.value)} />
+            <DatePicker label="Até" value={dataFim} onChange={(e) => onDataFimChange(e.target.value)} />
+          </GradePeriodo>
+        </Coluna>
+      </Modal>
+    </>
   )
 }

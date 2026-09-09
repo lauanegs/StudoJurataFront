@@ -1,9 +1,10 @@
 import { useMemo, type ReactNode } from 'react'
 import styled from 'styled-components'
-import { BookOpen, CalendarClock, Printer, Target, User, Users } from 'lucide-react'
+import { BookOpen, CalendarClock, FileDown, FileSpreadsheet, Target, User, Users } from 'lucide-react'
 
 import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
 import { Button } from '../../../components/ui/Button'
+import { Card } from '../../../components/ui/Card'
 import { Histograma } from '../../../components/ui/Histograma'
 import { ListaInfo } from '../../../components/ui/ListaInfo'
 import { Modal } from '../../../components/ui/Modal'
@@ -17,8 +18,11 @@ import {
   questoes as servicoQuestoes,
   simuladoQuestoes,
 } from '../../../services/endpoints'
+import { calcularFaixasHistograma } from '../../../utils/desempenho'
+import { exportarExcelAbas } from '../../../utils/exportarPlanilha'
+import { exportarPdf } from '../../../utils/exportarPdf'
 import { formatarData, formatarPorcentagem } from '../../../utils/format'
-import { imprimirRelatorio } from '../../../utils/imprimir'
+import { renderizarGraficoComoImagem } from '../../../utils/renderizarGrafico'
 import { ROTULO_DESTINACAO } from '../../../utils/labels'
 import type { SimuladoAlunoResponse, TipoDestinacaoSimulado } from '../../../types'
 
@@ -29,26 +33,6 @@ const Coluna = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.lg};
-`
-
-/* Divisor entre seções (mesmo padrão do cabeçalho do Card: borda de 1px na
-   cor neutra) — sem isso, "Distribuição de notas", "Alunos abaixo de X%" e
-   "Desempenho por questão" ficavam grudadas, sem nenhuma quebra visual. */
-const Secao = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  & + & {
-    padding-top: ${({ theme }) => theme.spacing.lg};
-    border-top: 1px solid ${({ theme }) => theme.colors.border};
-  }
-`
-
-const TituloSecao = styled.h3`
-  font-size: ${({ theme }) => theme.typography.sizes.md};
-  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  color: ${({ theme }) => theme.colors.textStrong};
 `
 
 /* Espaço entre o campo inicial (ListaInfo, componente compartilhado) e o
@@ -96,22 +80,6 @@ const LinhaAluno = styled.div`
   font-size: ${({ theme }) => theme.typography.sizes.sm};
 `
 
-/* Só existe pro relatório impresso — o próprio Modal já mostra título e
-   ficha de contexto na tela (bug real: o seletor `.area-impressao &` casava
-   sempre, já que este elemento está sempre dentro de uma div com essa
-   classe, então ficava duplicado na tela também). Escopado a @media print,
-   igual à regra de impressão em styles/global.ts. */
-const CabecalhoImpressao = styled.div`
-  display: none;
-
-  @media print {
-    body.imprimindo-relatorio & {
-      display: block;
-      margin-bottom: ${({ theme }) => theme.spacing.md};
-    }
-  }
-`
-
 interface DetalheSimuladoModalProps {
   aberto: boolean
   onClose: () => void
@@ -126,8 +94,6 @@ interface DetalheSimuladoModalProps {
   tipoDestinacao?: TipoDestinacaoSimulado
   /** Nome do aluno, quando o detalhamento foi aberto com um filtro de aluno aplicado (tela "Desempenho por simulado"). */
   alunoFiltrado?: string
-  /** Resumo do recorte de turma/disciplina/aluno/período aplicado na tela (ResumoFiltrosDesempenho) — só quando o modal é aberto a partir de uma tela com esses filtros. */
-  resumoFiltros?: ReactNode
 }
 
 /**
@@ -141,6 +107,10 @@ interface DetalheSimuladoModalProps {
  * aluno (ver DesempenhoSimulados.tsx) — todo o conteúdo abaixo reflete isso
  * automaticamente, mas os textos/alertas mudam de "turma" pra "aluno" pra
  * não sugerir uma estatística de turma sobre o dado de uma pessoa só.
+ *
+ * Exportar PDF/Excel gera os TRÊS blocos de dados da tela (distribuição de
+ * notas, alunos abaixo do limiar e desempenho por questão) — não só o
+ * histograma — cada um vira uma seção/aba própria.
  */
 export function DetalheSimuladoModal({
   aberto,
@@ -154,7 +124,6 @@ export function DetalheSimuladoModal({
   data,
   tipoDestinacao,
   alunoFiltrado,
-  resumoFiltros,
 }: DetalheSimuladoModalProps) {
   const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [], { ativo: aberto })
   const requisicaoQuestoes = useRequisicao(() => servicoQuestoes.listar(), [], { ativo: aberto })
@@ -188,6 +157,28 @@ export function DetalheSimuladoModal({
       .filter((item) => item.percentual < LIMIAR_DESEMPENHO)
       .sort((a, b) => a.percentual - b.percentual)
   }, [tentativas, notaMaxima, requisicaoAlunos.data])
+
+  // Valores exatos de cada bloco da tela — a mesma base usada pra desenhar
+  // os gráficos/listas vira as seções/abas exportadas (PDF e Excel).
+  const tabelaDistribuicao = useMemo(
+    () =>
+      calcularFaixasHistograma(notasPercentuais).map((faixa) => ({
+        chave: faixa.rotulo,
+        rotulo: faixa.rotulo,
+        valor: String(faixa.quantidade),
+      })),
+    [notasPercentuais],
+  )
+
+  const tabelaAlunosAbaixo = useMemo(
+    () =>
+      alunosAbaixoDoLimiar.map((item) => ({
+        chave: String(item.tentativa.id),
+        rotulo: item.nome,
+        valor: formatarPorcentagem(item.percentual),
+      })),
+    [alunosAbaixoDoLimiar],
+  )
 
   const percentualTurmaAbaixo =
     notasPercentuais.length > 0 ? (alunosAbaixoDoLimiar.length / notasPercentuais.length) * 100 : 0
@@ -223,8 +214,7 @@ export function DetalheSimuladoModal({
       : null,
   ]
   const itensContextoValidos = itensContexto.filter((item): item is { icon: ReactNode; texto: string } => item !== null)
-
-  const resumoImpressao = itensContextoValidos.map((item) => item.texto).join(' · ')
+  const contextoTexto = itensContextoValidos.map((item) => item.texto)
 
   const desempenhoPorQuestao = useMemo(() => {
     if (!simuladoId) return []
@@ -250,6 +240,44 @@ export function DetalheSimuladoModal({
       })
   }, [simuladoId, tentativas, requisicaoQuestoes.data, requisicaoVinculos.data, requisicaoRespostas.data])
 
+  const tabelaQuestoes = useMemo(
+    () =>
+      desempenhoPorQuestao.map((item, indice) => ({
+        chave: String(item.questaoId),
+        rotulo: `Questão ${indice + 1} — ${item.enunciado}`,
+        valor: item.percentualAcerto === null ? '—' : formatarPorcentagem(item.percentualAcerto),
+      })),
+    [desempenhoPorQuestao],
+  )
+
+  // As mesmas 3 seções da tela (histograma / alunos abaixo / por questão) —
+  // "alunos abaixo" só entra quando não há um aluno já filtrado (a lista de
+  // 1 nome não faz sentido nesse caso, mesma regra da tela).
+  // Só o histograma (Distribuição de notas) tem um desenho pra capturar —
+  // "Alunos abaixo" e "Desempenho por questão" são listas/tabelas na tela,
+  // sem gráfico correspondente.
+  const capturarImagemHistograma = () =>
+    renderizarGraficoComoImagem(
+      <Histograma valores={notasPercentuais} rotuloAcessivel={`Distribuição de notas de ${titulo}`} />,
+      640,
+      280,
+    )
+
+  const secoesRelatorio = [
+    { titulo: 'Distribuição de notas', colunaRotulo: 'Faixa de nota', colunaValor: 'Quantidade', linhas: tabelaDistribuicao },
+    ...(!alunoFiltrado
+      ? [
+          {
+            titulo: `Alunos abaixo de ${LIMIAR_DESEMPENHO}%`,
+            colunaRotulo: 'Aluno',
+            colunaValor: 'Nota',
+            linhas: tabelaAlunosAbaixo,
+          },
+        ]
+      : []),
+    { titulo: 'Desempenho por questão', colunaRotulo: 'Questão', colunaValor: '% de acerto', linhas: tabelaQuestoes },
+  ]
+
   return (
     <Modal
       aberto={aberto}
@@ -257,128 +285,143 @@ export function DetalheSimuladoModal({
       titulo={titulo}
       largura="720px"
       rodape={
-        <Button variant="secondary" icon={<Printer />} onClick={imprimirRelatorio}>
-          Imprimir relatório
-        </Button>
+        <>
+          <Button
+            variant="secondary"
+            icon={<FileSpreadsheet />}
+            onClick={async () => {
+              const imagem = await capturarImagemHistograma()
+              exportarExcelAbas(
+                titulo,
+                secoesRelatorio.map((secao, indice) => ({ nome: secao.titulo, ...secao, imagem: indice === 0 ? imagem : null })),
+              )
+            }}
+          >
+            Exportar Excel
+          </Button>
+          <Button
+            variant="secondary"
+            icon={<FileDown />}
+            onClick={async () => {
+              const imagem = await capturarImagemHistograma()
+              exportarPdf(
+                titulo,
+                titulo,
+                contextoTexto,
+                secoesRelatorio.map((secao, indice) => ({ ...secao, imagem: indice === 0 ? imagem : null })),
+              )
+            }}
+          >
+            Baixar PDF
+          </Button>
+        </>
       }
     >
-      <div className="area-impressao">
-        <CabecalhoImpressao>
-          <strong>{titulo}</strong>
-          <div>{resumoImpressao}</div>
-        </CabecalhoImpressao>
+      <EnvolveContexto>
+        <ListaInfo itens={itensContextoValidos} />
+      </EnvolveContexto>
 
-        {resumoFiltros && <EnvolveContexto>{resumoFiltros}</EnvolveContexto>}
+      {carregando ? (
+        <Coluna>
+          <Skeleton $altura="160px" $raio="8px" />
+          <Skeleton $altura="120px" $raio="8px" />
+        </Coluna>
+      ) : notasPercentuais.length === 0 ? (
+        <EstadoVazio
+          titulo="Sem tentativas concluídas"
+          descricao="Assim que os alunos finalizarem este simulado, o detalhamento aparece aqui."
+          icon={<Users />}
+        />
+      ) : (
+        <Coluna>
+          {alunoFiltrado ? (
+            <AlertaDesempenhoCard
+              tom={alunoAbaixoDoLimiar ? 'warning' : 'success'}
+              titulo={`Aproveitamento de ${formatarPorcentagem(mediaAluno)} — ${
+                alunoAbaixoDoLimiar ? 'abaixo do esperado' : 'dentro do esperado'
+              }`}
+              descricao={
+                alunoAbaixoDoLimiar
+                  ? `${alunoFiltrado} está abaixo de ${LIMIAR_DESEMPENHO}% neste simulado — candidato a reforço individual (a IA pode gerar automaticamente, pela regra de baixo aproveitamento).`
+                  : `${alunoFiltrado} está dentro do esperado neste simulado — sem gatilho de reforço.`
+              }
+            />
+          ) : pedeReforcoManual ? (
+            <AlertaDesempenhoCard
+              titulo={`${formatarPorcentagem(percentualTurmaAbaixo)} da turma abaixo de ${LIMIAR_DESEMPENHO}%`}
+              descricao="Pela regra de acompanhamento, isso pede um reforço lançado manualmente pelo professor — a IA fica reservada a casos individuais."
+            />
+          ) : (
+            <AlertaDesempenhoCard
+              tom="success"
+              titulo={`Só ${formatarPorcentagem(percentualTurmaAbaixo)} da turma abaixo de ${LIMIAR_DESEMPENHO}%`}
+              descricao="Dentro do esperado — sem gatilho de reforço geral pra esta turma."
+            />
+          )}
 
-        <EnvolveContexto>
-          <ListaInfo itens={itensContextoValidos} />
-        </EnvolveContexto>
+          <Card
+            elevacao="none"
+            titulo={alunoFiltrado ? `Notas de ${alunoFiltrado} neste simulado` : 'Distribuição de notas da turma'}
+          >
+            <Histograma valores={notasPercentuais} rotuloAcessivel={`Distribuição de notas de ${titulo}`} />
+          </Card>
 
-        {carregando ? (
-          <Coluna>
-            <Skeleton $altura="160px" $raio="8px" />
-            <Skeleton $altura="120px" $raio="8px" />
-          </Coluna>
-        ) : notasPercentuais.length === 0 ? (
-          <EstadoVazio
-            titulo="Sem tentativas concluídas"
-            descricao="Assim que os alunos finalizarem este simulado, o detalhamento aparece aqui."
-            icon={<Users />}
-          />
-        ) : (
-          <Coluna>
-            {alunoFiltrado ? (
-              <AlertaDesempenhoCard
-                tom={alunoAbaixoDoLimiar ? 'warning' : 'success'}
-                titulo={`Aproveitamento de ${formatarPorcentagem(mediaAluno)} — ${
-                  alunoAbaixoDoLimiar ? 'abaixo do esperado' : 'dentro do esperado'
-                }`}
-                descricao={
-                  alunoAbaixoDoLimiar
-                    ? `${alunoFiltrado} está abaixo de ${LIMIAR_DESEMPENHO}% neste simulado — candidato a reforço individual (a IA pode gerar automaticamente, pela regra de baixo aproveitamento).`
-                    : `${alunoFiltrado} está dentro do esperado neste simulado — sem gatilho de reforço.`
-                }
-              />
-            ) : pedeReforcoManual ? (
-              <AlertaDesempenhoCard
-                titulo={`${formatarPorcentagem(percentualTurmaAbaixo)} da turma abaixo de ${LIMIAR_DESEMPENHO}%`}
-                descricao="Pela regra de acompanhamento, isso pede um reforço lançado manualmente pelo professor — a IA fica reservada a casos individuais."
-              />
-            ) : (
-              <AlertaDesempenhoCard
-                tom="success"
-                titulo={`Só ${formatarPorcentagem(percentualTurmaAbaixo)} da turma abaixo de ${LIMIAR_DESEMPENHO}%`}
-                descricao="Dentro do esperado — sem gatilho de reforço geral pra esta turma."
-              />
-            )}
-
-            <Secao>
-              <TituloSecao>
-                {alunoFiltrado ? `Notas de ${alunoFiltrado} neste simulado` : 'Distribuição de notas da turma'}
-              </TituloSecao>
-              <Histograma valores={notasPercentuais} rotuloAcessivel={`Distribuição de notas de ${titulo}`} />
-            </Secao>
-
-            {!alunoFiltrado && (
-              <Secao>
-                <TituloSecao>
-                  Alunos abaixo de {LIMIAR_DESEMPENHO}% ({alunosAbaixoDoLimiar.length})
-                </TituloSecao>
-                {alunosAbaixoDoLimiar.length === 0 ? (
-                  <EstadoVazio titulo="Ninguém abaixo do limiar" descricao="Todos os alunos foram bem neste simulado." />
-                ) : (
-                  <ListaAlunos>
-                    {alunosAbaixoDoLimiar.map((item) => (
-                      <LinhaAluno key={item.tentativa.id}>
-                        <span>{item.nome}</span>
-                        <Tag variant="error">
-                          {formatarPorcentagem(item.percentual)}
-                        </Tag>
-                      </LinhaAluno>
-                    ))}
-                  </ListaAlunos>
-                )}
-              </Secao>
-            )}
-
-            <Secao>
-              <TituloSecao>
-                Desempenho por questão{alunoFiltrado ? ` — ${alunoFiltrado}` : ''}
-              </TituloSecao>
-              <TabelaQuestoes>
-                <thead>
-                  <tr>
-                    <th>Questão</th>
-                    <th>% de acerto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {desempenhoPorQuestao.map((item, indice) => (
-                    <tr key={item.questaoId}>
-                      <td>
-                        Questão {indice + 1} — {item.enunciado}
-                      </td>
-                      <td>
-                        {item.percentualAcerto === null ? (
-                          '—'
-                        ) : (
-                          <Tag
-                            variant={
-                              item.percentualAcerto < 40 ? 'error' : item.percentualAcerto < 70 ? 'warning' : 'success'
-                            }
-                          >
-                            {formatarPorcentagem(item.percentualAcerto)}
-                          </Tag>
-                        )}
-                      </td>
-                    </tr>
+          {!alunoFiltrado && (
+            <Card
+              elevacao="none"
+              titulo={`Alunos abaixo de ${LIMIAR_DESEMPENHO}% (${alunosAbaixoDoLimiar.length})`}
+            >
+              {alunosAbaixoDoLimiar.length === 0 ? (
+                <EstadoVazio titulo="Ninguém abaixo do limiar" descricao="Todos os alunos foram bem neste simulado." />
+              ) : (
+                <ListaAlunos>
+                  {alunosAbaixoDoLimiar.map((item) => (
+                    <LinhaAluno key={item.tentativa.id}>
+                      <span>{item.nome}</span>
+                      <Tag variant="error">
+                        {formatarPorcentagem(item.percentual)}
+                      </Tag>
+                    </LinhaAluno>
                   ))}
-                </tbody>
-              </TabelaQuestoes>
-            </Secao>
-          </Coluna>
-        )}
-      </div>
+                </ListaAlunos>
+              )}
+            </Card>
+          )}
+
+          <Card elevacao="none" titulo={`Desempenho por questão${alunoFiltrado ? ` — ${alunoFiltrado}` : ''}`}>
+            <TabelaQuestoes>
+              <thead>
+                <tr>
+                  <th>Questão</th>
+                  <th>% de acerto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {desempenhoPorQuestao.map((item, indice) => (
+                  <tr key={item.questaoId}>
+                    <td>
+                      Questão {indice + 1} — {item.enunciado}
+                    </td>
+                    <td>
+                      {item.percentualAcerto === null ? (
+                        '—'
+                      ) : (
+                        <Tag
+                          variant={
+                            item.percentualAcerto < 40 ? 'error' : item.percentualAcerto < 70 ? 'warning' : 'success'
+                          }
+                        >
+                          {formatarPorcentagem(item.percentualAcerto)}
+                        </Tag>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </TabelaQuestoes>
+          </Card>
+        </Coluna>
+      )}
     </Modal>
   )
 }

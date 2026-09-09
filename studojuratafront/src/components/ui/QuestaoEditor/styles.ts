@@ -154,3 +154,21 @@ export const Dica = styled.span`
   font-size: ${({ theme }) => theme.typography.sizes.xs};
   color: ${({ theme }) => theme.colors.textTertiary};
 `
+
+/* Confirmado pelo usuário: a navegação entre questões (números + "Nova
+   questão") fica dentro do mesmo card da questão atual, não num card
+   branco separado embaixo — mesmo tratamento de borda superior do Rodape
+   (alternativas), só que centralizado e envolvendo pílulas que quebram
+   linha em telas estreitas. */
+export const SecaoNavegador = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.xs};
+
+  margin-top: ${({ theme }) => theme.spacing.md};
+  padding-top: ${({ theme }) => theme.spacing.md};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`
+

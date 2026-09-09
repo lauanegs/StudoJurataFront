@@ -45,6 +45,8 @@ export function QuestaoEditor({
   onRemove,
   onImport,
   actions,
+  navegador,
+  conteudo,
 }: QuestaoEditorProps) {
   const verdadeiroFalso = questao.tipo === 'VERDADEIRO_FALSO'
 
@@ -320,6 +322,14 @@ export function QuestaoEditor({
           </Button>
         )}
       </S.Rodape>
+
+      {conteudo}
+
+      {navegador && (
+        <S.SecaoNavegador role="group" aria-label="Navegação entre questões">
+          {navegador}
+        </S.SecaoNavegador>
+      )}
     </Card>
   )
 }
