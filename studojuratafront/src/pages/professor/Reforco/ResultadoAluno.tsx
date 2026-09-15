@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Clock, Target, User } from 'lucide-react'
+import { Clock, GraduationCap, Target } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { AlternativaCard } from '../../../components/ui/AlternativaCard'
@@ -142,7 +142,7 @@ export default function ResultadoAluno() {
         subtitulo={
           tentativa && (
             <>
-              <SubtituloItem icon={<User />}>Aluno(a): {nomeAluno}</SubtituloItem>
+              <SubtituloItem icon={<GraduationCap />}>Aluno(a): {nomeAluno}</SubtituloItem>
               <SubtituloItem icon={<Target />}>
                 Acertos: {typeof tentativa.quantidadeAcertos === 'number' ? tentativa.quantidadeAcertos : '—'}
                 {simulado?.quantidadeQuestoes ? ` / ${simulado.quantidadeQuestoes}` : ''}

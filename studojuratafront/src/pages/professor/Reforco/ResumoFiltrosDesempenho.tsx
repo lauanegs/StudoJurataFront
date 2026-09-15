@@ -1,4 +1,4 @@
-import { BookOpen, CalendarClock, User, Users } from 'lucide-react'
+import { BookOpen, CalendarClock, GraduationCap, Users } from 'lucide-react'
 
 import { ListaInfo } from '../../../components/ui/ListaInfo'
 import { resumoFiltrosTexto, type RecorteDesempenho } from './resumoFiltrosTexto'
@@ -19,7 +19,7 @@ export function ResumoFiltrosDesempenho(props: RecorteDesempenho) {
       itens={[
         { icon: <Users />, texto: turma },
         { icon: <BookOpen />, texto: disciplina },
-        { icon: <User />, texto: aluno },
+        { icon: <GraduationCap />, texto: aluno },
         { icon: <CalendarClock />, texto: periodo },
       ]}
     />

@@ -1,10 +1,11 @@
 import { useMemo, type ReactNode } from 'react'
 import styled from 'styled-components'
-import { BookOpen, CalendarClock, FileDown, FileSpreadsheet, Target, User, Users } from 'lucide-react'
+import { BookOpen, CalendarClock, FileDown, FileSpreadsheet, GraduationCap, Target, Users } from 'lucide-react'
 
 import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
+import { DataTable } from '../../../components/ui/DataTable'
 import { Histograma } from '../../../components/ui/Histograma'
 import { ListaInfo } from '../../../components/ui/ListaInfo'
 import { Modal } from '../../../components/ui/Modal'
@@ -25,6 +26,7 @@ import { formatarData, formatarPorcentagem } from '../../../utils/format'
 import { renderizarGraficoComoImagem } from '../../../utils/renderizarGrafico'
 import { ROTULO_DESTINACAO } from '../../../utils/labels'
 import type { SimuladoAlunoResponse, TipoDestinacaoSimulado } from '../../../types'
+import type { Coluna } from '../../../components/ui/DataTable/types'
 
 /** Limiar da tese: turma com essa % de alunos abaixo dessa nota pede reforço manual do professor. */
 export const LIMIAR_DESEMPENHO = 60
@@ -40,28 +42,6 @@ const Coluna = styled.div`
    a usa define o espaçamento conforme o próprio layout. */
 const EnvolveContexto = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
-`
-
-const TabelaQuestoes = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-
-  th,
-  td {
-    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-    text-align: left;
-    font-size: ${({ theme }) => theme.typography.sizes.sm};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  }
-
-  th {
-    color: ${({ theme }) => theme.colors.textTertiary};
-    font-weight: ${({ theme }) => theme.typography.weights.medium};
-  }
-
-  td {
-    color: ${({ theme }) => theme.colors.textSecondary};
-  }
 `
 
 const ListaAlunos = styled.div`
@@ -210,7 +190,7 @@ export function DetalheSimuladoModal({
     data ? { icon: <CalendarClock />, texto: `Aplicado em ${formatarData(data)}` } : null,
     rotuloDestinacao ? { icon: <Target />, texto: `Destinação: ${rotuloDestinacao}` } : null,
     alunoFiltrado
-      ? { icon: <User />, texto: `Filtrado por aluno: ${alunoFiltrado} — dados abaixo são só dele(a)` }
+      ? { icon: <GraduationCap />, texto: `Filtrado por aluno: ${alunoFiltrado} — dados abaixo são só dele(a)` }
       : null,
   ]
   const itensContextoValidos = itensContexto.filter((item): item is { icon: ReactNode; texto: string } => item !== null)
@@ -239,6 +219,32 @@ export function DetalheSimuladoModal({
         }
       })
   }, [simuladoId, tentativas, requisicaoQuestoes.data, requisicaoVinculos.data, requisicaoRespostas.data])
+
+  // Colunas do DataTable padrão (trocado no lugar da <table> própria que
+  // existia aqui — confirmado pelo usuário: usar o mesmo componente das
+  // demais listagens do sistema, pra comparar visualmente).
+  const colunasDesempenhoQuestao: Coluna<(typeof desempenhoPorQuestao)[number]>[] = [
+    {
+      key: 'questao',
+      cabecalho: 'Questão',
+      render: (item) => `Questão ${desempenhoPorQuestao.indexOf(item) + 1} — ${item.enunciado}`,
+    },
+    {
+      key: 'percentual',
+      cabecalho: '% de acerto',
+      alinhamento: 'right',
+      valorOrdenacao: (item) => item.percentualAcerto,
+      ordenavel: true,
+      render: (item) =>
+        item.percentualAcerto === null ? (
+          '—'
+        ) : (
+          <Tag variant={item.percentualAcerto < 40 ? 'error' : item.percentualAcerto < 70 ? 'warning' : 'success'}>
+            {formatarPorcentagem(item.percentualAcerto)}
+          </Tag>
+        ),
+    },
+  ]
 
   const tabelaQuestoes = useMemo(
     () =>
@@ -388,37 +394,18 @@ export function DetalheSimuladoModal({
             </Card>
           )}
 
-          <Card elevacao="none" titulo={`Desempenho por questão${alunoFiltrado ? ` — ${alunoFiltrado}` : ''}`}>
-            <TabelaQuestoes>
-              <thead>
-                <tr>
-                  <th>Questão</th>
-                  <th>% de acerto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {desempenhoPorQuestao.map((item, indice) => (
-                  <tr key={item.questaoId}>
-                    <td>
-                      Questão {indice + 1} — {item.enunciado}
-                    </td>
-                    <td>
-                      {item.percentualAcerto === null ? (
-                        '—'
-                      ) : (
-                        <Tag
-                          variant={
-                            item.percentualAcerto < 40 ? 'error' : item.percentualAcerto < 70 ? 'warning' : 'success'
-                          }
-                        >
-                          {formatarPorcentagem(item.percentualAcerto)}
-                        </Tag>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </TabelaQuestoes>
+          <Card
+            elevacao="none"
+            semPadding
+            titulo={`Desempenho por questão${alunoFiltrado ? ` — ${alunoFiltrado}` : ''}`}
+          >
+            <DataTable
+              descricao="Desempenho por questão"
+              columns={colunasDesempenhoQuestao}
+              data={desempenhoPorQuestao}
+              rowKey={(item) => item.questaoId}
+              empty={{ titulo: 'Nenhuma questão vinculada a este simulado' }}
+            />
           </Card>
         </Coluna>
       )}

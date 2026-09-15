@@ -199,7 +199,6 @@ export interface PlanoEnsino extends EntidadeBase {
   turmaDisciplina?: TurmaDisciplina | null
   /** Professor responsável pelo plano — indireto até então (só via turmaDisciplina, que é opcional). */
   professor?: Professor | null
-  titulo?: string
   curso: Curso
   cargaHoraria?: number
   ementa?: string
@@ -513,7 +512,6 @@ export interface Recomendacao {
 export interface GerarSimuladoIARequest {
   alunoId: number
   conteudoPlanoId: number
-  quantidadeQuestoes?: number
   nivelDificuldade?: NivelDificuldade
   /** Motivo(s) da Recomendacao que originou esta chamada, quando houver (ver SimuladoGeradoIAResponse). */
   motivos?: MotivoRecomendacao[]

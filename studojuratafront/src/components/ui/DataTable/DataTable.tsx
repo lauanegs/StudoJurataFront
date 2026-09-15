@@ -31,6 +31,7 @@ export function DataTable<T>({
   onRowClick,
   actions,
   rotuloColunaAcoes = 'Ações',
+  quebrarAcoes = false,
   paginacao,
   densidade = 'confortavel',
   descricao,
@@ -159,12 +160,17 @@ export function DataTable<T>({
               })}
 
               {actions && (
-                // Sem width:1% — agora que os botões de ação podem quebrar linha
-                // (ver Group abaixo), esse truque forçava a coluna a encolher pro
-                // mínimo (um botão só) e quebrar sempre, mesmo sobrando espaço na
-                // tabela. Sem largura fixa, a coluna cresce livremente e só quebra
-                // quando realmente não há mais espaço.
-                <Table.Th scope="col" style={{ textAlign: 'left' }}>
+                // width:1% + whiteSpace:nowrap (truque clássico de tabela): reserva
+                // só o espaço que os botões precisam em uma linha, sem forçar a
+                // coluna pro mínimo absoluto nem deixar outras colunas tomarem
+                // espaço demais. Só faz sentido quando a coluna NÃO pode quebrar
+                // (quebrarAcoes=false, o padrão) — com quebrarAcoes=true a coluna
+                // segue o algoritmo normal da tabela, pra sobrar espaço real pros
+                // botões antes de precisar ir pra uma segunda linha.
+                <Table.Th
+                  scope="col"
+                  style={quebrarAcoes ? { textAlign: 'left' } : { textAlign: 'left', width: '1%', whiteSpace: 'nowrap' }}
+                >
                   {rotuloColunaAcoes}
                 </Table.Th>
               )}
@@ -184,11 +190,20 @@ export function DataTable<T>({
               ))}
 
             {!loading &&
-              dadosOrdenados.map((item) => (
+              dadosOrdenados.map((item, indice) => (
                 <Table.Tr
                   key={rowKey(item)}
                   tabIndex={onRowClick ? 0 : undefined}
-                  style={{ cursor: onRowClick ? 'pointer' : undefined }}
+                  // Última linha sem borda embaixo — o Paper que envolve a tabela
+                  // já fecha o quadro por conta própria (borda dupla senão). A
+                  // chave só entra no objeto quando é mesmo a última linha —
+                  // com ela sempre presente (mesmo como `undefined`), o merge
+                  // do `style` local por cima do `styles.tr` do Mantine
+                  // apagaria a borda de TODAS as linhas, não só da última.
+                  style={{
+                    cursor: onRowClick ? 'pointer' : undefined,
+                    ...(indice === dadosOrdenados.length - 1 ? { borderBottom: 'none' } : null),
+                  }}
                   onClick={() => onRowClick?.(item)}
                   onKeyDown={(evento) => {
                     if (onRowClick && (evento.key === 'Enter' || evento.key === ' ')) {
@@ -209,13 +224,10 @@ export function DataTable<T>({
 
                   {actions && (
                     <Table.Td
-                      style={{ textAlign: 'left' }}
+                      style={quebrarAcoes ? { textAlign: 'left' } : { textAlign: 'left', whiteSpace: 'nowrap' }}
                       onClick={(evento) => evento.stopPropagation()}
                     >
-                      {/* Confirmado pelo usuário: quando os botões de ação não cabem
-                          numa linha só, eles quebram pra linha(s) de baixo — nunca
-                          forçam scroll horizontal na tabela nem ficam cortados. */}
-                      <Group justify="flex-start" gap={tokens.spacing.xxs} wrap="wrap">
+                      <Group justify="flex-start" gap={tokens.spacing.xxs} wrap={quebrarAcoes ? 'wrap' : 'nowrap'}>
                         {actions(item)}
                       </Group>
                     </Table.Td>

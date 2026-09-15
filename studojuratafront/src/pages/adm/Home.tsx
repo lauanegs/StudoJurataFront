@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
-import { Cake, CalendarDays, Plus } from 'lucide-react'
+import { BookOpen, Cake, CalendarDays, GraduationCap, Plus, School, Users } from 'lucide-react'
 
 import { Layout } from '../../components/layout'
 import { AniversarianteCard } from '../../components/ui/AniversarianteCard'
@@ -88,10 +88,20 @@ export default function AdmHome() {
         </Indicadores>
       ) : (
         <Indicadores>
-          <InfoCard value={requisicaoAlunos.data?.length ?? 0} label="alunos cadastrados" />
-          <InfoCard value={requisicaoProfessores.data?.length ?? 0} label="professores" />
-          <InfoCard value={turmasAtivas.length} label="turmas ativas" />
-          <InfoCard value={requisicaoDisciplinas.data?.length ?? 0} label="disciplinas" />
+          <InfoCard value={requisicaoAlunos.data?.length ?? 0} label="alunos cadastrados" icon={<Users />} tom="blue" />
+          <InfoCard
+            value={requisicaoProfessores.data?.length ?? 0}
+            label="professores"
+            icon={<GraduationCap />}
+            tom="purple"
+          />
+          <InfoCard value={turmasAtivas.length} label="turmas ativas" icon={<School />} tom="success" />
+          <InfoCard
+            value={requisicaoDisciplinas.data?.length ?? 0}
+            label="disciplinas"
+            icon={<BookOpen />}
+            tom="orange"
+          />
         </Indicadores>
       )}
 
@@ -135,8 +145,12 @@ export default function AdmHome() {
             <Button variant="subtle" size="small" onClick={() => navegar('/adm/eventos')}>
               Ver todos
             </Button>
-            <Button size="small" icon={<Plus />} onClick={() => navegar('/adm/eventos')}>
-              Novo evento
+            <Button
+              size="small"
+              icon={<Plus />}
+              onClick={() => navegar('/adm/eventos', { state: { abrirNovo: true } })}
+            >
+              Adicionar evento
             </Button>
           </>
         }
@@ -154,8 +168,8 @@ export default function AdmHome() {
             descricao="Cadastre aulas demonstrativas, reuniões e datas importantes."
             icon={<CalendarDays />}
             acao={
-              <Button icon={<Plus />} onClick={() => navegar('/adm/eventos')}>
-                Criar evento
+              <Button icon={<Plus />} onClick={() => navegar('/adm/eventos', { state: { abrirNovo: true } })}>
+                Cadastrar evento
               </Button>
             }
           />

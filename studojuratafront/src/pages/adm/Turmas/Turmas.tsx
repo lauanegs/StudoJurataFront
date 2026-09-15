@@ -166,7 +166,7 @@ export default function Turmas() {
           icon: <Users />,
           acao: !busca && (
             <Button icon={<Plus />} onClick={() => navegar('/adm/turmas/nova')}>
-              Criar turma
+              Cadastrar turma
             </Button>
           ),
         }}

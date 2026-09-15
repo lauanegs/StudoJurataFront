@@ -4,25 +4,21 @@ import styled from 'styled-components'
 import { ClipboardList, ListTree, Plus } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
-import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
+import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
-import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { planosEnsino as servicoPlanos } from '../../../services/endpoints'
-import { formatarCargaHoraria, formatarPeriodo, normalizar } from '../../../utils/format'
+import { formatarCargaHoraria, formatarPeriodo } from '../../../utils/format'
 import { ROTULO_STATUS_PLANO, STATUS_PLANO_VARIANT } from '../../../utils/labels'
 import type { PlanoEnsino } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
-/* Confirmado no Figma: botão "Adicionar plano" (150px) + busca (250px) na
-   mesma linha, coladas uma na outra — mesmo padrão já usado em Registrar
-   Aula/Notas (o slot de filtros do Header encolhe pro conteúdo real). */
 const CamposCabecalho = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -30,8 +26,8 @@ const CamposCabecalho = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-const LarguraBusca = styled.div`
-  width: 250px;
+const LarguraFiltro = styled.div`
+  width: 220px;
 `
 
 type Visao = 'meus' | 'outros'
@@ -41,10 +37,20 @@ export default function PlanosEnsino() {
   const { professorId } = useProfessorLogado()
 
   const [visao, setVisao] = useState<Visao>('meus')
-  const [busca, setBusca] = useState('')
-  const buscaAtrasada = useDebounce(busca)
+  const [turmaId, setTurmaId] = useState<number | null>(null)
 
   const { data, loading, error, reload } = useRequisicao(() => servicoPlanos.listar(), [])
+
+  // Sem requisição própria pra turmas — reaproveita as que já aparecem nos
+  // planos carregados (evita mais uma chamada só pra montar o filtro).
+  const opcoesTurmas = useMemo(() => {
+    const unicas = new Map<number, string>()
+    for (const plano of data ?? []) {
+      const turma = plano.turmaDisciplina?.turma
+      if (turma) unicas.set(turma.id, turma.titulo)
+    }
+    return [...unicas.entries()].map(([value, label]) => ({ value, label }))
+  }, [data])
 
   // Separado em abas (pedido explícito): "Meus planos" primeiro (o caso
   // comum — o professor cuidando do que é dele), "Outros planos" só pra
@@ -63,21 +69,21 @@ export default function PlanosEnsino() {
   const listaDaVisao = visao === 'meus' ? meus : outros
 
   const filtrados = useMemo(() => {
-    if (!buscaAtrasada.trim()) return listaDaVisao
-
-    const termo = normalizar(buscaAtrasada)
-
-    return listaDaVisao.filter(
-      (plano) =>
-        normalizar(plano.turmaDisciplina?.turma?.titulo).includes(termo) ||
-        normalizar(plano.curso?.nome).includes(termo) ||
-        normalizar(plano.turmaDisciplina?.disciplina?.titulo).includes(termo),
-    )
-  }, [listaDaVisao, buscaAtrasada])
+    if (!turmaId) return listaDaVisao
+    return listaDaVisao.filter((plano) => plano.turmaDisciplina?.turma?.id === turmaId)
+  }, [listaDaVisao, turmaId])
 
   const paginacao = usePaginacao(filtrados)
 
   const colunas: Coluna<PlanoEnsino>[] = [
+    {
+      key: 'numero',
+      cabecalho: 'Nº',
+      largura: '64px',
+      ordenavel: true,
+      valorOrdenacao: (plano) => plano.id,
+      render: (plano) => plano.id,
+    },
     {
       key: 'turma',
       cabecalho: 'Turma',
@@ -141,9 +147,16 @@ export default function PlanosEnsino() {
               Adicionar plano
             </Button>
 
-            <LarguraBusca>
-              <BuscaInput value={busca} onChange={setBusca} placeholder="Buscar plano..." />
-            </LarguraBusca>
+            <LarguraFiltro>
+              <Select<number>
+                placeholder="Filtrar por turma"
+                options={opcoesTurmas}
+                value={turmaId}
+                clearable
+                searchable
+                onChange={setTurmaId}
+              />
+            </LarguraFiltro>
           </CamposCabecalho>
         }
       />
@@ -166,6 +179,10 @@ export default function PlanosEnsino() {
         loading={loading}
         error={error}
         onReload={reload}
+        // Muitas colunas (até 8 + Ações, "Outros planos" ainda soma "Professor")
+        // — sem isso, "Detalhar"/"Conteúdo" numa linha só empurravam a tabela
+        // pro scroll horizontal desnecessariamente.
+        quebrarAcoes
         paginacao={{
           pagina: paginacao.pagina,
           totalPaginas: paginacao.totalPaginas,
@@ -176,20 +193,20 @@ export default function PlanosEnsino() {
           onNext: paginacao.proxima,
         }}
         empty={{
-          titulo: busca
+          titulo: turmaId
             ? 'Nenhum plano encontrado'
             : visao === 'meus'
               ? 'Você ainda não tem planos de ensino'
               : 'Nenhum plano de outro professor',
-          descricao: busca
-            ? 'Revise o termo buscado ou limpe o filtro.'
+          descricao: turmaId
+            ? 'Nenhum plano de ensino para a turma selecionada.'
             : visao === 'meus'
               ? 'O plano de ensino define a ementa e os conteúdos que serão trabalhados no período.'
               : 'Ainda não há planos de ensino cadastrados por outros professores.',
           icon: <ClipboardList />,
-          acao: !busca && visao === 'meus' && (
+          acao: !turmaId && visao === 'meus' && (
             <Button icon={<Plus />} onClick={() => navegar('/professor/plano-ensino/novo')}>
-              Criar plano de ensino
+              Cadastrar plano de ensino
             </Button>
           ),
         }}

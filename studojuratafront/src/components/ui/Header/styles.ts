@@ -66,13 +66,13 @@ export const Titulos = styled.div`
 `
 
 export const Titulo = styled.h1`
-  font-size: ${({ theme }) => theme.typography.sizes.title};
+  font-size: ${({ theme }) => theme.typography.sizes.xxl};
   font-weight: ${({ theme }) => theme.typography.weights.medium};
   line-height: ${({ theme }) => theme.typography.lineHeight.tight};
   color: ${({ theme }) => theme.colors.textSecondary};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    font-size: ${({ theme }) => theme.typography.sizes.xxl};
+    font-size: ${({ theme }) => theme.typography.sizes.xl};
   }
 `
 

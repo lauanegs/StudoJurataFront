@@ -6,6 +6,8 @@ import {
   BarChart3,
   BookOpen,
   CalendarClock,
+  CheckCircle2,
+  ClipboardCheck,
   FileDown,
   FileSpreadsheet,
   FileText,
@@ -499,10 +501,25 @@ export default function Desempenho() {
       />
 
       <Indicadores>
-        <InfoCard value={desempenhosTotais.length} label="simulados aplicados" />
-        <InfoCard value={totalTentativasConcluidas} label="tentativas concluídas" />
-        <InfoCard value={totalAlunosAvaliados} label="alunos avaliados" />
-        <InfoCard value={totalDisciplinasAvaliadas} label="disciplinas avaliadas" />
+        <InfoCard
+          value={desempenhosTotais.length}
+          label="simulados aplicados"
+          icon={<ClipboardCheck />}
+          tom="purple"
+        />
+        <InfoCard
+          value={totalTentativasConcluidas}
+          label="tentativas concluídas"
+          icon={<CheckCircle2 />}
+          tom="blue"
+        />
+        <InfoCard value={totalAlunosAvaliados} label="alunos avaliados" icon={<Users />} tom="success" />
+        <InfoCard
+          value={totalDisciplinasAvaliadas}
+          label="disciplinas avaliadas"
+          icon={<BookOpen />}
+          tom="orange"
+        />
       </Indicadores>
 
       {criticos.length > 0 && (
@@ -531,7 +548,7 @@ export default function Desempenho() {
               icon={<ArrowRight />}
               onClick={() => navegar('/professor/desempenho/geral')}
             >
-              Ver detalhes
+              Detalhar
             </Button>
           }
         >
@@ -585,7 +602,7 @@ export default function Desempenho() {
               icon={<ArrowRight />}
               onClick={() => navegar('/professor/desempenho/evolucao')}
             >
-              Ver detalhes
+              Detalhar
             </Button>
           }
         >
@@ -628,7 +645,7 @@ export default function Desempenho() {
             icon={<ArrowRight />}
             onClick={() => navegar('/professor/desempenho/simulados')}
           >
-            Ver detalhes
+            Detalhar
           </Button>
         }
       >

@@ -63,6 +63,21 @@ export default function Simulados() {
   // aprovação (SimuladosAprovacao.tsx).
   const requisicaoVinculosIA = useRequisicao(() => servicoIa.listarSimuladosGerados(), [])
 
+  // IDs de simulado com ao menos uma questão ainda PENDENTE — enquanto isso
+  // for verdade, o simulado só pode ser mexido pela tela de aprovação
+  // (SimuladosAprovacao.tsx/AprovarSimulado.tsx), nunca por Editar/Lançar
+  // aqui: editar/lançar direto puxaria pra revisão um simulado que ainda não
+  // passou pela aprovação questão por questão.
+  const simuladosComPendencia = useMemo(() => {
+    const idsQuestoesPendentes = new Set((requisicaoQuestoesPendentes.data ?? []).map((questao) => questao.id))
+
+    return new Set(
+      (requisicaoSimuladoQuestoes.data ?? [])
+        .filter((vinculo) => idsQuestoesPendentes.has(vinculo.questaoId))
+        .map((vinculo) => vinculo.simuladoId),
+    )
+  }, [requisicaoQuestoesPendentes.data, requisicaoSimuladoQuestoes.data])
+
   // O botão "Simulados para aprovação" leva pra SimuladosAprovacao.tsx, que
   // lista SIMULADOS, não questões — contar questoesPendentes.length aqui
   // direto não bate com o total real de simulados naquela tela (um simulado
@@ -71,18 +86,11 @@ export default function Simulados() {
   // agrupamento da tela de aprovação, só que contando em vez de listar.
   const pendentes = useMemo(() => {
     const turmasDoProfessor = new Set((requisicaoVinculos.data ?? []).map((vinculo) => vinculo.turma?.id))
-    const idsQuestoesPendentes = new Set((requisicaoQuestoesPendentes.data ?? []).map((questao) => questao.id))
-
-    const simuladosComPendencia = new Set(
-      (requisicaoSimuladoQuestoes.data ?? [])
-        .filter((vinculo) => idsQuestoesPendentes.has(vinculo.questaoId))
-        .map((vinculo) => vinculo.simuladoId),
-    )
 
     return (data ?? []).filter(
       (simulado) => simuladosComPendencia.has(simulado.id) && turmasDoProfessor.has(simulado.turmaId ?? undefined),
     ).length
-  }, [requisicaoVinculos.data, requisicaoQuestoesPendentes.data, requisicaoSimuladoQuestoes.data, data])
+  }, [requisicaoVinculos.data, simuladosComPendencia, data])
 
   // Simulados gerados pela IA que passaram do prazo de revisão sem terem
   // sido lançados (Simulado.status ainda RASCUNHO).
@@ -274,7 +282,7 @@ export default function Simulados() {
               Banco de questões
             </Button>
             <Button size="large" icon={<Plus />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
-              Novo simulado
+              Adicionar simulado
             </Button>
           </>
         }
@@ -337,7 +345,7 @@ export default function Simulados() {
           icon: <FileText />,
           acao: !busca && filtro === 'todos' && (
             <Button icon={<Plus />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
-              Criar simulado
+              Cadastrar simulado
             </Button>
           ),
         }}
@@ -352,7 +360,18 @@ export default function Simulados() {
               Resultados
             </Button>
 
-            {simulado.status === 'RASCUNHO' && (
+            {simulado.status === 'RASCUNHO' && simuladosComPendencia.has(simulado.id) && (
+              <Button
+                variant="subtle"
+                size="small"
+                icon={<ClipboardCheck />}
+                onClick={() => navegar(`/professor/reforco/aprovacao/${simulado.id}`)}
+              >
+                Revisar questões
+              </Button>
+            )}
+
+            {simulado.status === 'RASCUNHO' && !simuladosComPendencia.has(simulado.id) && (
               <>
                 <Button
                   variant="subtle"

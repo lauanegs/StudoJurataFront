@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
-import { ClipboardCheck, ClipboardList, Search, Sparkles } from 'lucide-react'
+import { ClipboardCheck, ClipboardList, Search, Sparkles, Zap } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -12,9 +12,11 @@ import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
 import { Skeleton } from '../../../components/feedback/Skeleton'
+import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
+import { ApiError } from '../../../services/api'
 import {
   alunos as servicoAlunos,
   conteudosPlano,
@@ -111,7 +113,10 @@ function atrasoEmDias(prazoLancamento?: string): number | null {
 export default function SimuladosAprovacao() {
   const navegar = useNavigate()
   const toast = useToast()
+  const confirmar = useConfirm()
   const { professorId } = useProfessorLogado()
+
+  const [gerando, setGerando] = useState<string | null>(null)
 
   const [aba, setAba] = useState<Aba>('aprovacao')
 
@@ -282,6 +287,15 @@ export default function SimuladosAprovacao() {
       const tituloConteudo = (conteudoPlanoId: number) =>
         conteudos.find((conteudo) => conteudo.id === conteudoPlanoId)?.titulo ?? `Conteúdo ${conteudoPlanoId}`
 
+      // Já gerado pra este mesmo ciclo (aluno+conteúdo+prazo — mesma chave
+      // usada pelos jobs automáticos no back pra não duplicar) — sem isso, um
+      // item continua aparecendo aqui pra sempre depois de gerado, porque
+      // RevisaoConteudo.dataProximoReforco só muda quando o professor de fato
+      // revisa (não acontece ainda no lançamento, é uma lacuna à parte).
+      const jaGerado = new Set(
+        (requisicaoVinculosIA.data ?? []).map((vinculo) => `${vinculo.alunoId}-${vinculo.conteudoPlanoId}-${vinculo.prazoLancamento}`),
+      )
+
       const hoje = new Date().toISOString().slice(0, 10)
       const porChave = new Map<string, ProximaGeracaoIA>()
 
@@ -290,7 +304,7 @@ export default function SimuladosAprovacao() {
         // ou futura) — dominadas (dataProximoReforco null) não entram, a
         // repetição parou pra elas.
         revisoesPorAluno[indice]
-          .filter((revisao) => revisao.dataProximoReforco)
+          .filter((revisao) => revisao.dataProximoReforco && !jaGerado.has(`${alunoId}-${revisao.conteudoPlanoId}-${revisao.dataProximoReforco}`))
           .forEach((revisao) => {
             porChave.set(`${alunoId}-${revisao.conteudoPlanoId}`, {
               alunoId,
@@ -306,6 +320,9 @@ export default function SimuladosAprovacao() {
         // atingido agora) — entra pra "hoje", ou se junta ao motivo acima
         // quando o mesmo conteúdo já tem repetição espaçada marcada.
         recomendacoesPorAluno[indice].forEach((recomendacao) => {
+          const dataPrevista = recomendacao.dataProximoReforco ?? hoje
+          if (jaGerado.has(`${alunoId}-${recomendacao.conteudoPlanoId}-${dataPrevista}`)) return
+
           const chave = `${alunoId}-${recomendacao.conteudoPlanoId}`
           const existente = porChave.get(chave)
 
@@ -324,7 +341,7 @@ export default function SimuladosAprovacao() {
             conteudoPlanoId: recomendacao.conteudoPlanoId,
             conteudoTitulo: recomendacao.conteudoTitulo,
             motivos: recomendacao.motivos,
-            dataGeracaoPrevista: recomendacao.dataProximoReforco ?? hoje,
+            dataGeracaoPrevista: dataPrevista,
             taxaAcerto: recomendacao.taxaAcerto,
           })
         })
@@ -334,9 +351,13 @@ export default function SimuladosAprovacao() {
         (a, b) => new Date(a.dataGeracaoPrevista).getTime() - new Date(b.dataGeracaoPrevista).getTime(),
       )
     },
-    [alunosDoProfessor, requisicaoConteudos.data],
+    [alunosDoProfessor, requisicaoConteudos.data, requisicaoVinculosIA.data],
     {
-      ativo: !requisicaoVinculos.loading && !requisicaoMatriculasGerais.loading && !requisicaoConteudos.loading,
+      ativo:
+        !requisicaoVinculos.loading &&
+        !requisicaoMatriculasGerais.loading &&
+        !requisicaoConteudos.loading &&
+        !requisicaoVinculosIA.loading,
     },
   )
 
@@ -371,6 +392,53 @@ export default function SimuladosAprovacao() {
     },
   ]
 
+  /**
+   * A geração automática roda sozinha no prazo calculado (ver comentário de
+   * `ProximaGeracaoIA` acima) — este botão só adianta manualmente esse
+   * mesmo job pra um item específico, pra quando o professor não quiser
+   * esperar a data prevista. Reaproveita o mesmo endpoint que o job usa
+   * (`ia.gerarSimulado`); o resultado cai direto na aba "Aguardando
+   * aprovação", como qualquer simulado gerado pela IA.
+   */
+  async function gerarAgora(item: ProximaGeracaoIA) {
+    const chave = `${item.alunoId}-${item.conteudoPlanoId}`
+
+    await confirmar({
+      titulo: 'Gerar simulado agora?',
+      descricao: `Um simulado de reforço para ${item.alunoNome} (${item.conteudoTitulo}) será gerado imediatamente, sem esperar a data prevista. Ele entra na aba "Aguardando aprovação" para revisão.`,
+      rotuloConfirmar: 'Gerar agora',
+      aoConfirmar: async () => {
+        setGerando(chave)
+
+        try {
+          await servicoIa.gerarSimulado({
+            alunoId: item.alunoId,
+            conteudoPlanoId: item.conteudoPlanoId,
+            motivos: item.motivos,
+          })
+
+          toast.success('Simulado gerado', 'Já está disponível em "Aguardando aprovação" para revisão.')
+
+          await Promise.all([
+            requisicaoProximasGeracoes.reload(),
+            requisicaoVinculosIA.reload(),
+            requisicaoSimulados.reload(),
+            requisicaoPendentes.reload(),
+            requisicaoSimuladoQuestoes.reload(),
+          ])
+          setAba('aprovacao')
+        } catch (erroGerar) {
+          toast.error(
+            'Não foi possível gerar',
+            erroGerar instanceof ApiError ? erroGerar.message : undefined,
+          )
+        } finally {
+          setGerando(null)
+        }
+      },
+    })
+  }
+
   const colunasProximasGeracoes: Coluna<ProximaGeracaoIA>[] = [
     { key: 'aluno', cabecalho: 'Aluno', render: (item) => item.alunoNome },
     { key: 'conteudo', cabecalho: 'Conteúdo', render: (item) => item.conteudoTitulo },
@@ -396,54 +464,52 @@ export default function SimuladosAprovacao() {
         voltarPara="/professor/reforco"
         rotuloVoltar="Módulo de reforço"
         filtros={
-          aba === 'aprovacao' ? (
-            <CamposCabecalho>
-              <CampoLargura>
-                <Select
-                  placeholder="Turma"
-                  options={opcoesTurmas}
-                  value={turmaId}
-                  loading={requisicaoVinculos.loading}
-                  emptyText="Você não leciona em nenhuma turma"
-                  onChange={(valor) => {
-                    setTurmaId(valor)
-                    setEspecificoId(null)
-                  }}
-                />
-              </CampoLargura>
+          <CamposCabecalho>
+            <CampoLargura>
+              <Select
+                placeholder="Turma"
+                options={opcoesTurmas}
+                value={turmaId}
+                loading={requisicaoVinculos.loading}
+                emptyText="Você não leciona em nenhuma turma"
+                onChange={(valor) => {
+                  setTurmaId(valor)
+                  setEspecificoId(null)
+                }}
+              />
+            </CampoLargura>
 
-              <CampoLargura>
-                <Select<TipoFiltro>
-                  placeholder="Disciplina / Aluno"
-                  options={opcoesTipo}
-                  value={tipo}
-                  emptyText="—"
-                  onChange={(valor) => {
-                    setTipo(valor)
-                    setEspecificoId(null)
-                  }}
-                />
-              </CampoLargura>
+            <CampoLargura>
+              <Select<TipoFiltro>
+                placeholder="Disciplina / Aluno"
+                options={opcoesTipo}
+                value={tipo}
+                emptyText="—"
+                onChange={(valor) => {
+                  setTipo(valor)
+                  setEspecificoId(null)
+                }}
+              />
+            </CampoLargura>
 
-              <CampoLargura>
-                <Select
-                  placeholder="Disc/Aluno (Específico)"
-                  options={opcoesEspecifico}
-                  value={especificoId}
-                  disabled={!tipo || !turmaId}
-                  loading={tipo === 'aluno' && requisicaoMatriculasTurma.loading}
-                  emptyText="Selecione turma e tipo primeiro"
-                  onChange={setEspecificoId}
-                />
-              </CampoLargura>
+            <CampoLargura>
+              <Select
+                placeholder="Disc/Aluno (Específico)"
+                options={opcoesEspecifico}
+                value={especificoId}
+                disabled={!tipo || !turmaId}
+                loading={tipo === 'aluno' && requisicaoMatriculasTurma.loading}
+                emptyText="Selecione turma e tipo primeiro"
+                onChange={setEspecificoId}
+              />
+            </CampoLargura>
 
-              <LarguraBotao>
-                <Button size="large" icon={<Search />} onClick={buscar}>
-                  Buscar
-                </Button>
-              </LarguraBotao>
-            </CamposCabecalho>
-          ) : undefined
+            <LarguraBotao>
+              <Button size="large" icon={<Search />} onClick={buscar}>
+                Buscar
+              </Button>
+            </LarguraBotao>
+          </CamposCabecalho>
         }
       />
 
@@ -508,6 +574,17 @@ export default function SimuladosAprovacao() {
                 'Nenhum aluno das suas turmas está com repetição espaçada agendada ou aproveitamento baixo no momento.',
               icon: <Sparkles />,
             }}
+            actions={(item) => (
+              <Button
+                variant="subtle"
+                size="small"
+                icon={<Zap />}
+                loading={gerando === `${item.alunoId}-${item.conteudoPlanoId}`}
+                onClick={() => gerarAgora(item)}
+              >
+                Gerar agora
+              </Button>
+            )}
           />
         </Card>
       )}

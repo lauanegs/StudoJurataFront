@@ -58,7 +58,6 @@ export default function PlanoEnsinoFormulario() {
   const edicao = Boolean(id)
   const planoId = id ? Number(id) : null
 
-  const [titulo, setTitulo] = useState('')
   const [cursoId, setCursoId] = useState<number | null>(null)
   const [turmaId, setTurmaId] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
@@ -90,7 +89,6 @@ export default function PlanoEnsinoFormulario() {
   )
 
   useHidratar(requisicaoPlano.data, (plano) => {
-    setTitulo(plano.titulo ?? '')
     setCursoId(plano.curso?.id ?? null)
     setTurmaId(plano.turmaDisciplina?.turma?.id ?? null)
     setDisciplinaId(plano.turmaDisciplina?.disciplina?.id ?? null)
@@ -103,10 +101,22 @@ export default function PlanoEnsinoFormulario() {
     setStatus(plano.status ?? 'ATIVO')
   })
 
-  const opcoesCursos = useMemo(
-    () => (requisicaoCursos.data ?? []).map((curso) => ({ value: curso.id, label: curso.nome })),
-    [requisicaoCursos.data],
-  )
+  // Pedido explícito: curso e turma se filtram mutuamente — escolher um
+  // restringe as opções do outro ao mesmo curso (a turma só pertence a UM
+  // curso; forçar as duas escolhas a baterem evita salvar um plano com
+  // turma de um curso diferente do informado).
+  const opcoesCursos = useMemo(() => {
+    const cursos = requisicaoCursos.data ?? []
+    if (!turmaId) return cursos.map((curso) => ({ value: curso.id, label: curso.nome }))
+
+    const cursoDaTurmaId = (requisicaoVinculos.data ?? []).find(
+      (vinculo) => vinculo.turma?.id === turmaId,
+    )?.turma?.curso?.id
+
+    return cursos
+      .filter((curso) => curso.id === cursoDaTurmaId)
+      .map((curso) => ({ value: curso.id, label: curso.nome }))
+  }, [requisicaoCursos.data, requisicaoVinculos.data, turmaId])
 
   // Turma e disciplina — dois selects (Figma), não um combinado: escolhe a
   // turma primeiro, a disciplina é filtrada pelas que o professor leciona
@@ -114,10 +124,12 @@ export default function PlanoEnsinoFormulario() {
   const opcoesTurmas = useMemo(() => {
     const unicas = new Map<number, string>()
     for (const vinculo of requisicaoVinculos.data ?? []) {
-      if (vinculo.turma) unicas.set(vinculo.turma.id, vinculo.turma.titulo)
+      if (!vinculo.turma) continue
+      if (cursoId && vinculo.turma.curso?.id !== cursoId) continue
+      unicas.set(vinculo.turma.id, vinculo.turma.titulo)
     }
     return [...unicas.entries()].map(([value, label]) => ({ value, label }))
-  }, [requisicaoVinculos.data])
+  }, [requisicaoVinculos.data, cursoId])
 
   const opcoesDisciplinas = useMemo(
     () =>
@@ -211,7 +223,6 @@ export default function PlanoEnsinoFormulario() {
         // brecha de um professor "assinar" um plano de outro sem querer.
         professor: professor ?? undefined,
         turmaDisciplina: vinculoSelecionado ?? undefined,
-        titulo: titulo.trim() || undefined,
         cargaHoraria: cargaHoraria ? Number(cargaHoraria) : undefined,
         dataInicio: dataInicio || undefined,
         dataFim: dataFim || undefined,
@@ -328,33 +339,31 @@ export default function PlanoEnsinoFormulario() {
         }
       />
 
-      {edicao && (
-        <Tab<Aba>
-          rotuloAcessivel="Seções do plano de ensino"
-          value={aba}
-          onChange={setAba}
-          options={[
-            { value: 'identificacao', label: 'Identificação' },
-            { value: 'proposta', label: 'Proposta pedagógica' },
-          ]}
-        />
-      )}
+      <Tab<Aba>
+        rotuloAcessivel="Seções do plano de ensino"
+        value={aba}
+        onChange={setAba}
+        options={[
+          { value: 'identificacao', label: 'Identificação' },
+          { value: 'proposta', label: 'Proposta pedagógica' },
+        ]}
+      />
 
       {edicao && requisicaoPlano.loading ? (
         <SkeletonCartao />
       ) : (
         <>
-          {(!edicao || aba === 'identificacao') && (
+          {aba === 'identificacao' && (
           <Card titulo="Identificação">
             <Coluna>
               <Grade>
+                {/* Pedido explícito: título era texto livre e não aparecia em
+                    nenhuma listagem — a identificação do plano é o próprio
+                    id, só leitura. Não existe ainda ao criar. */}
                 <Input
-                  label="Título do plano"
-                  placeholder="Ex.: Robótica — 1º semestre"
-                  value={titulo}
-                  disabled={salvando}
-                  maxLength={120}
-                  onChange={(evento) => setTitulo(evento.target.value)}
+                  label="Número do plano"
+                  value={edicao && requisicaoPlano.data ? `Nº ${requisicaoPlano.data.id}` : 'Gerado automaticamente ao salvar'}
+                  disabled
                 />
 
                 <Select<number>
@@ -366,7 +375,20 @@ export default function PlanoEnsinoFormulario() {
                   error={erros.cursoId}
                   searchable
                   placeholder="Selecionar curso..."
-                  onChange={setCursoId}
+                  onChange={(valor) => {
+                    setCursoId(valor)
+                    // A turma escolhida pode não pertencer mais ao curso novo —
+                    // limpa em vez de deixar uma combinação inconsistente.
+                    if (
+                      valor &&
+                      turmaId &&
+                      (requisicaoVinculos.data ?? []).find((vinculo) => vinculo.turma?.id === turmaId)?.turma?.curso
+                        ?.id !== valor
+                    ) {
+                      setTurmaId(null)
+                      setDisciplinaId(null)
+                    }
+                  }}
                 />
               </Grade>
 
@@ -393,6 +415,13 @@ export default function PlanoEnsinoFormulario() {
                   onChange={(valor) => {
                     setTurmaId(valor)
                     setDisciplinaId(null)
+                    // A turma só pertence a um curso — escolher a turma já
+                    // resolve o curso, sem exigir escolher os dois à parte.
+                    const cursoDaTurma = valor
+                      ? (requisicaoVinculos.data ?? []).find((vinculo) => vinculo.turma?.id === valor)?.turma?.curso
+                          ?.id
+                      : undefined
+                    if (cursoDaTurma) setCursoId(cursoDaTurma)
                   }}
                 />
 
@@ -455,7 +484,7 @@ export default function PlanoEnsinoFormulario() {
           </Card>
           )}
 
-          {(!edicao || aba === 'proposta') && (
+          {aba === 'proposta' && (
           <Card titulo="Proposta pedagógica">
             <Coluna>
               <TextArea

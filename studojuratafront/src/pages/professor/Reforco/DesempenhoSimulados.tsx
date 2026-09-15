@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { TrendingUp } from 'lucide-react'
+import { ClipboardList, TrendingUp } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
+import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
 import { Tag } from '../../../components/ui/Tag'
@@ -23,9 +24,10 @@ const VARIANTE_POR_NIVEL: Record<'baixo' | 'medio' | 'alto', TagVariant> = {
 /**
  * Detalhamento de "Desempenho por simulado" — versão filtrável por
  * turma/disciplina/aluno/período do card de mesmo nome no Dashboard, em
- * formato de tabela pra padronizar com as demais listagens do sistema.
- * Clicar numa linha abre o mesmo modal de detalhamento (DetalheSimuladoModal)
- * já usado lá, respeitando o aluno filtrado quando houver um selecionado.
+ * formato de tabela pra padronizar com as demais listagens do sistema. O
+ * botão "Detalhar" (mesmo padrão das outras tabelas) abre o mesmo modal de
+ * detalhamento (DetalheSimuladoModal) já usado lá, respeitando o aluno
+ * filtrado quando houver um selecionado.
  */
 export default function DesempenhoSimulados() {
   const {
@@ -135,12 +137,21 @@ export default function DesempenhoSimulados() {
         loading={loading}
         error={error}
         onReload={reload}
-        onRowClick={(item) => setSimuladoDetalhado(item)}
         empty={{
           titulo: 'Nada encontrado',
           descricao: 'Não há simulados concluídos para os filtros selecionados.',
           icon: <TrendingUp />,
         }}
+        actions={(item) => (
+          <Button
+            variant="subtle"
+            size="small"
+            icon={<ClipboardList />}
+            onClick={() => setSimuladoDetalhado(item)}
+          >
+            Detalhar
+          </Button>
+        )}
       />
 
       <DetalheSimuladoModal

@@ -92,7 +92,9 @@ export const BotaoCorreta = styled.button<{ $correta: boolean }>`
   justify-content: center;
   flex-shrink: 0;
 
-  width: 40px;
+  /* Quadrado do tamanho da altura do Input ao lado (56px, o padrão do
+     componente) — largura acompanha a altura, não um valor fixo à parte. */
+  width: 56px;
   height: 56px;
 
   border-radius: ${({ theme }) => theme.radius.sm};

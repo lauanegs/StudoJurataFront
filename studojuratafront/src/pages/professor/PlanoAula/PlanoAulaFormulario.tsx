@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Save, Trash2 } from 'lucide-react'
+import { ClipboardList, Save, Trash2 } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -13,15 +13,10 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
-import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import {
-  planosAula as servicoPlanosAula,
-  planosEnsino,
-  professores,
-} from '../../../services/endpoints'
+import { planosAula as servicoPlanosAula } from '../../../services/endpoints'
 import { formatarCargaHoraria } from '../../../utils/format'
 import { OPCOES_STATUS_PLANO } from '../../../utils/labels'
 import type { StatusPlano } from '../../../types'
@@ -32,9 +27,11 @@ const Coluna = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-/* Curso e Carga horária não são campos do plano de aula (não existem no
-   back) — vêm do plano de ensino vinculado, mostrados em modo leitura pra
-   confirmar que é o plano certo. 2 campos por linha (pedido explícito). */
+/* Pedido explícito: plano de aula não é mais criado/editado na mão — nasce
+   sozinho junto com o plano de ensino (ver PlanoEnsinoService no back), e
+   esta tela vira só leitura do vínculo + o único campo que ainda faz
+   sentido editar aqui (Situação). 2 campos por linha, como no resto do
+   sistema. */
 const Grade = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -46,118 +43,29 @@ export default function PlanoAulaFormulario() {
   const navegar = useNavigate()
   const toast = useToast()
   const confirmar = useConfirm()
-  const { professorId } = useProfessorLogado()
 
-  const edicao = Boolean(id)
-  const planoAulaId = id ? Number(id) : null
+  const planoAulaId = Number(id)
 
-  const [turmaId, setTurmaId] = useState<number | null>(null)
-  const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
-  const [planoEnsinoId, setPlanoEnsinoId] = useState<number | null>(null)
   const [status, setStatus] = useState<StatusPlano>('ATIVO')
-  const [erros, setErros] = useState<Record<string, string | undefined>>({})
 
-  const requisicaoPlano = useRequisicao(
-    () => servicoPlanosAula.buscar(planoAulaId as number),
-    [planoAulaId],
-    { ativo: Boolean(planoAulaId) },
-  )
-  const requisicaoVinculos = useRequisicao(
-    () => professores.turmasLecionadas(professorId as number),
-    [professorId],
-    { ativo: Boolean(professorId) },
-  )
-  const requisicaoPlanosEnsino = useRequisicao(() => planosEnsino.listar(), [])
+  const requisicaoPlano = useRequisicao(() => servicoPlanosAula.buscar(planoAulaId), [planoAulaId])
+  const plano = requisicaoPlano.data
 
-  useHidratar(requisicaoPlano.data, (plano) => {
-    setTurmaId(plano.turmaDisciplina?.turma?.id ?? null)
-    setDisciplinaId(plano.turmaDisciplina?.disciplina?.id ?? null)
-    setPlanoEnsinoId(plano.planoEnsino?.id ?? null)
-    setStatus(plano.status ?? 'ATIVO')
+  useHidratar(plano, (item) => {
+    setStatus(item.status ?? 'ATIVO')
   })
 
-  const opcoesTurmas = useMemo(() => {
-    const unicas = new Map<number, string>()
-    for (const vinculo of requisicaoVinculos.data ?? []) {
-      if (vinculo.turma) unicas.set(vinculo.turma.id, vinculo.turma.titulo)
-    }
-    return [...unicas.entries()].map(([value, label]) => ({ value, label }))
-  }, [requisicaoVinculos.data])
-
-  const opcoesDisciplinas = useMemo(
-    () =>
-      (requisicaoVinculos.data ?? [])
-        .filter((vinculo) => vinculo.turma?.id === turmaId && vinculo.disciplina)
-        .map((vinculo) => ({ value: vinculo.disciplina!.id, label: vinculo.disciplina?.titulo ?? '—' })),
-    [requisicaoVinculos.data, turmaId],
-  )
-
-  const vinculoSelecionado = useMemo(
-    () =>
-      (requisicaoVinculos.data ?? []).find(
-        (item) => item.turma?.id === turmaId && item.disciplina?.id === disciplinaId,
-      ) ?? null,
-    [requisicaoVinculos.data, turmaId, disciplinaId],
-  )
-
-  /**
-   * Sugere primeiro os planos de ensino do mesmo curso da turma escolhida —
-   * o back não filtra isso, então a ajuda é feita aqui.
-   */
-  const opcoesPlanosEnsino = useMemo(() => {
-    const cursoDaTurma = vinculoSelecionado?.turma?.curso?.id
-
-    return (requisicaoPlanosEnsino.data ?? [])
-      .filter((plano) => plano.status !== 'CONCLUIDO')
-      .sort((a, b) => {
-        const pesoA = a.curso?.id === cursoDaTurma ? 0 : 1
-        const pesoB = b.curso?.id === cursoDaTurma ? 0 : 1
-        return pesoA - pesoB
-      })
-      .map((plano) => ({
-        value: plano.id,
-        label: plano.titulo ?? `Plano #${plano.id}`,
-        descricao: plano.curso?.nome ?? 'Sem curso',
-      }))
-  }, [requisicaoPlanosEnsino.data, vinculoSelecionado])
-
-  const planoEnsinoSelecionado = useMemo(
-    () => (requisicaoPlanosEnsino.data ?? []).find((item) => item.id === planoEnsinoId) ?? null,
-    [requisicaoPlanosEnsino.data, planoEnsinoId],
-  )
-
-  function validar() {
-    const encontrados: Record<string, string | undefined> = {}
-
-    // Ambos são @ManyToOne(optional = false) em PlanoAula.
-    if (!vinculoSelecionado) encontrados.turmaDisciplinaId = 'Selecione a turma e a disciplina'
-    if (!planoEnsinoId) encontrados.planoEnsinoId = 'Selecione o plano de ensino'
-
-    setErros(encontrados)
-    return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
-  }
-
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    if (!validar()) return
-
-    if (!vinculoSelecionado || !planoEnsinoSelecionado) return
+    if (!plano) return
 
     try {
-      const corpo = {
-        turmaDisciplina: vinculoSelecionado,
-        planoEnsino: planoEnsinoSelecionado,
+      await servicoPlanosAula.atualizar(planoAulaId, {
+        turmaDisciplina: plano.turmaDisciplina,
+        planoEnsino: plano.planoEnsino,
         status,
-      }
-
-      if (edicao) {
-        await servicoPlanosAula.atualizar(planoAulaId as number, corpo)
-        toast.success('Plano de aula atualizado')
-        navegar(`/professor/plano-aula/${planoAulaId}/aulas`)
-      } else {
-        const criado = await servicoPlanosAula.criar(corpo)
-        toast.success('Plano de aula criado', 'Agora cadastre as aulas do período.')
-        navegar(`/professor/plano-aula/${criado.id}/aulas`)
-      }
+      })
+      toast.success('Plano de aula atualizado')
+      navegar(`/professor/plano-aula/${planoAulaId}/aulas`)
     } catch (erroSalvar) {
       toast.error(
         'Não foi possível salvar',
@@ -167,8 +75,6 @@ export default function PlanoAulaFormulario() {
   })
 
   const { executar: excluir, executando: excluindo } = useAcao(async () => {
-    if (!planoAulaId) return
-
     await confirmar({
       titulo: 'Excluir plano de aula?',
       descricao: 'As aulas, frequências e conteúdos já registrados permanecem.',
@@ -189,7 +95,7 @@ export default function PlanoAulaFormulario() {
     })
   })
 
-  if (edicao && requisicaoPlano.error) {
+  if (requisicaoPlano.error) {
     return (
       <Layout>
         <Header titulo="Plano de aula" voltarPara="/professor/plano-aula" />
@@ -204,34 +110,33 @@ export default function PlanoAulaFormulario() {
   return (
     <Layout>
       <Header
-        titulo={edicao ? 'Editar plano de aula' : 'Novo plano de aula'}
+        titulo="Plano de aula"
         voltarPara="/professor/plano-aula"
         rotuloVoltar="Planos de aula"
         actions={
           <>
-            {/* Cancelar só existe enquanto o plano ainda não foi salvo — depois
-                de salvo, desfazer é Excluir (soft-delete), não Cancelar. */}
-            {edicao ? (
+            {/* Pedido explícito: quem menciona quem é o plano de aula — daqui
+                dá pra voltar pro plano de ensino de origem. */}
+            {plano?.planoEnsino && (
               <Button
                 size="large"
-                variant="danger"
-                icon={<Trash2 />}
-                loading={excluindo}
-                onClick={excluir}
-                disabled={salvando}
+                variant="secondary"
+                icon={<ClipboardList />}
+                onClick={() => navegar(`/professor/plano-ensino/${plano.planoEnsino.id}`)}
               >
-                Excluir
-              </Button>
-            ) : (
-              <Button
-                size="large"
-                variant="danger"
-                onClick={() => navegar('/professor/plano-aula')}
-                disabled={salvando}
-              >
-                Cancelar
+                Plano de ensino
               </Button>
             )}
+            <Button
+              size="large"
+              variant="danger"
+              icon={<Trash2 />}
+              loading={excluindo}
+              onClick={excluir}
+              disabled={salvando}
+            >
+              Excluir
+            </Button>
             <Button
               size="large"
               variant="success"
@@ -246,66 +151,35 @@ export default function PlanoAulaFormulario() {
         }
       />
 
-      {edicao && requisicaoPlano.loading ? (
+      {requisicaoPlano.loading ? (
         <SkeletonCartao />
       ) : (
         <Card titulo="Vínculo do plano">
           <Coluna>
             <Grade>
-              <Select<number>
-                label="Plano de ensino"
-                required
-                options={opcoesPlanosEnsino}
-                value={planoEnsinoId}
-                loading={requisicaoPlanosEnsino.loading}
-                error={erros.planoEnsinoId}
-                searchable
-                placeholder="Selecionar plano de ensino..."
-                hint="Os planos do mesmo curso da turma aparecem primeiro."
-                emptyText="Cadastre um plano de ensino primeiro"
-                onChange={setPlanoEnsinoId}
-              />
-
-              <Input label="Curso" value={planoEnsinoSelecionado?.curso?.nome ?? '—'} disabled />
-            </Grade>
-
-            <Grade>
-              <Select<number>
-                label="Turma"
-                required
-                options={opcoesTurmas}
-                value={turmaId}
-                loading={requisicaoVinculos.loading}
-                error={erros.turmaDisciplinaId}
-                searchable
-                placeholder="Selecionar turma..."
-                emptyText="Você ainda não leciona em nenhuma turma"
-                onChange={(valor) => {
-                  setTurmaId(valor)
-                  setDisciplinaId(null)
-                }}
-              />
-
-              <Select<number>
-                label="Disciplina"
-                required
-                options={opcoesDisciplinas}
-                value={disciplinaId}
-                disabled={!turmaId}
-                searchable
-                placeholder="Selecionar disciplina..."
-                emptyText={turmaId ? 'Sem disciplinas nessa turma' : 'Selecione a turma primeiro'}
-                onChange={setDisciplinaId}
-              />
-            </Grade>
-
-            <Grade>
               <Input
-                label="Carga horária total"
-                value={formatarCargaHoraria(planoEnsinoSelecionado?.cargaHoraria)}
+                label="Plano de ensino"
+                value={
+                  plano?.planoEnsino
+                    ? `${plano.planoEnsino.curso?.nome ?? 'Sem curso'} — Plano nº ${plano.planoEnsino.id}`
+                    : '—'
+                }
                 disabled
               />
 
+              <Input
+                label="Carga horária total"
+                value={formatarCargaHoraria(plano?.planoEnsino?.cargaHoraria)}
+                disabled
+              />
+            </Grade>
+
+            <Grade>
+              <Input label="Turma" value={plano?.turmaDisciplina?.turma?.titulo ?? '—'} disabled />
+              <Input label="Disciplina" value={plano?.turmaDisciplina?.disciplina?.titulo ?? '—'} disabled />
+            </Grade>
+
+            <Grade>
               <Select<StatusPlano>
                 label="Situação"
                 options={OPCOES_STATUS_PLANO}

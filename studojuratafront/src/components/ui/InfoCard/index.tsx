@@ -1,15 +1,15 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
+import { theme as tokens } from '../../../styles/theme'
+import { comTamanho } from '../../../utils/redimensionarIcone'
+
 const Container = styled.article`
   display: flex;
-  flex: 1 0 0;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  flex: 1 0 0;
   gap: ${({ theme }) => theme.spacing.md};
 
-  height: 100%;
   padding: ${({ theme }) => theme.spacing.md};
 
   background: ${({ theme }) => theme.colors.white};
@@ -17,23 +17,32 @@ const Container = styled.article`
   box-shadow: ${({ theme }) => theme.shadow.base};
 `
 
-const Anel = styled.div`
+const Icone = styled.div<{ $bg: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 
-  width: 100px;
-  height: 100px;
+  width: 48px;
+  height: 48px;
 
-  border: 4px solid ${({ theme }) => theme.colors.background};
-  border-radius: 300px;
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ $bg }) => $bg};
+  color: ${({ theme }) => theme.colors.white};
+`
+
+const Textos = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xxs};
+  min-width: 0;
 `
 
 const Valor = styled.strong`
-  font-size: 38px;
+  font-size: 28px;
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  letter-spacing: -1.9px;
+  letter-spacing: -0.5px;
+  line-height: ${({ theme }) => theme.typography.lineHeight.tight};
   color: ${({ theme }) => theme.colors.textSecondary};
   font-variant-numeric: tabular-nums;
 `
@@ -45,31 +54,47 @@ const Valor = styled.strong`
 const Selo = styled.span`
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   white-space: nowrap;
-
-  padding: 4px 8px;
-
-  background: ${({ theme }) => theme.colors.background};
-  border-radius: 4px;
 
   font-size: ${({ theme }) => theme.typography.sizes.xs};
   font-weight: ${({ theme }) => theme.typography.weights.medium};
-  color: ${({ theme }) => theme.colors.textSecondary};
+  color: ${({ theme }) => theme.colors.textTertiary};
 `
+
+type Tom = 'purple' | 'blue' | 'success' | 'orange'
+
+// Cor sólida (não tingida) por trás do ícone branco — confirmado pelo
+// usuário: nem tom único (ficava monótono) nem cor de fundo suave a 15%
+// (não destacava o suficiente) funcionaram; badge cheio na cor + ícone
+// branco é o que ficou melhor. Sempre uma cor já existente no sistema.
+const CORES: Record<Tom, string> = {
+  purple: tokens.colors.purple,
+  blue: tokens.colors.blue,
+  success: tokens.colors.success,
+  orange: tokens.colors.orange,
+}
 
 interface InfoCardProps {
   value: ReactNode
   label: string
+  /** Ícone pra memória visual — ajuda a diferenciar os cards num relance, sem depender só do texto do rótulo. */
+  icon?: ReactNode
+  /** @default 'purple' */
+  tom?: Tom
 }
 
-export function InfoCard({ value, label }: InfoCardProps) {
+export function InfoCard({ value, label, icon, tom = 'purple' }: InfoCardProps) {
   return (
     <Container>
-      <Anel>
+      {icon && (
+        <Icone $bg={CORES[tom]} aria-hidden="true">
+          {comTamanho(icon, 22)}
+        </Icone>
+      )}
+      <Textos>
         <Valor>{value}</Valor>
-      </Anel>
-      <Selo>{label}</Selo>
+        <Selo>{label}</Selo>
+      </Textos>
     </Container>
   )
 }

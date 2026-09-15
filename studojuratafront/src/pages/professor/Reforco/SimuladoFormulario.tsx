@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { ClipboardCheck, FolderInput, Lock, Plus, Rocket, Save, Sparkles, Users } from 'lucide-react'
@@ -57,6 +57,16 @@ const Coluna = styled.div`
 const Grade = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+/* Campos de data/hora numa linha própria, cheia — pedido explícito: dentro
+   da Grade normal (minmax 220px) o DatePicker "dataHora" (dois campos
+   internos: data + hora) ficava espremido demais, cortando o texto digitado.
+   minmax maior aqui dá espaço de sobra pros dois campos internos. */
+const LinhaDatas = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
 `
 
@@ -168,6 +178,31 @@ export default function SimuladoFormulario() {
   // (que é só pro modal "Importar simulado", de OUTRO simulado) pra não
   // misturar as duas responsabilidades; ver hidratação de `questoes` abaixo.
   const requisicaoVinculosSimulado = useRequisicao(() => simuladoQuestoes.listar(), [], { ativo: edicao })
+
+  // Trava de revisão humana (mesma regra de SimuladoService.lancar() no
+  // back): enquanto este simulado tiver questão ATIVA ainda PENDENTE, ele só
+  // pode ser mexido pela tela de aprovação (AprovarSimulado.tsx) — nunca por
+  // este editor normal, que tem "Lançar" disponível. Cobre quem chega aqui
+  // direto por URL/atalho, não só quem navega pela listagem (Simulados.tsx
+  // já para de linkar "Editar"/"Lançar" pra esses simulados).
+  const carregandoTravaAprovacao =
+    edicao && (requisicaoVinculosSimulado.loading || requisicaoBancoQuestoes.loading)
+
+  const temQuestaoPendente = useMemo(() => {
+    if (!edicao || !requisicaoVinculosSimulado.data || !requisicaoBancoQuestoes.data) return false
+
+    const bancoQuestoesPorId = new Map(requisicaoBancoQuestoes.data.map((questao) => [questao.id, questao]))
+
+    return requisicaoVinculosSimulado.data
+      .filter((vinculo) => vinculo.simuladoId === simuladoId && vinculo.status !== 'REMOVIDA')
+      .some((vinculo) => bancoQuestoesPorId.get(vinculo.questaoId)?.status === 'PENDENTE')
+  }, [edicao, requisicaoVinculosSimulado.data, requisicaoBancoQuestoes.data, simuladoId])
+
+  useEffect(() => {
+    if (temQuestaoPendente) {
+      navegar(`/professor/reforco/aprovacao/${simuladoId}`, { replace: true })
+    }
+  }, [temQuestaoPendente, simuladoId, navegar])
 
   const opcoesTurmasImportar = useMemo(
     () =>
@@ -376,7 +411,7 @@ export default function SimuladoFormulario() {
     () =>
       (requisicaoPlanos.data ?? []).map((plano) => ({
         value: plano.id,
-        label: plano.titulo ?? `Plano #${plano.id}`,
+        label: `Plano nº ${plano.id}`,
         descricao: plano.curso?.nome,
       })),
     [requisicaoPlanos.data],
@@ -729,7 +764,7 @@ export default function SimuladoFormulario() {
         ]}
       />
 
-      {edicao && requisicaoSimulado.loading ? (
+      {(edicao && requisicaoSimulado.loading) || carregandoTravaAprovacao || temQuestaoPendente ? (
         <SkeletonCartao />
       ) : aba === 'configuracao' ? (
         <>
@@ -800,23 +835,6 @@ export default function SimuladoFormulario() {
                   onChange={(value) => setTipoDestinacao(value ?? 'TODOS')}
                 />
 
-                <DatePicker
-                  label="Disponível a partir de"
-                  modo="dataHora"
-                  value={dataInicio}
-                  disabled={somenteLeitura}
-                  onChange={(evento) => setDataInicio(evento.target.value)}
-                />
-
-                <DatePicker
-                  label="Disponível até"
-                  modo="dataHora"
-                  value={dataFim}
-                  error={erros.dataFim}
-                  disabled={somenteLeitura}
-                  onChange={(evento) => setDataFim(evento.target.value)}
-                />
-
                 <Input
                   label="Tempo limite"
                   type="number"
@@ -841,6 +859,25 @@ export default function SimuladoFormulario() {
                   onChange={(evento) => setNotaMaxima(evento.target.value)}
                 />
               </Grade>
+
+              <LinhaDatas>
+                <DatePicker
+                  label="Disponível a partir de"
+                  modo="dataHora"
+                  value={dataInicio}
+                  disabled={somenteLeitura}
+                  onChange={(evento) => setDataInicio(evento.target.value)}
+                />
+
+                <DatePicker
+                  label="Disponível até"
+                  modo="dataHora"
+                  value={dataFim}
+                  error={erros.dataFim}
+                  disabled={somenteLeitura}
+                  onChange={(evento) => setDataFim(evento.target.value)}
+                />
+              </LinhaDatas>
 
               {tipoDestinacao === 'ESPECIFICO' && (
                 <SVinculo.SecaoVinculo>
@@ -1011,7 +1048,7 @@ export default function SimuladoFormulario() {
         largura="720px"
         rodape={
           <>
-            <Button variant="danger" onClick={() => setModalImportar(false)}>
+            <Button variant="secondary" onClick={() => setModalImportar(false)}>
               Cancelar
             </Button>
             <Button
@@ -1062,7 +1099,7 @@ export default function SimuladoFormulario() {
         largura="720px"
         rodape={
           <>
-            <Button variant="danger" onClick={() => setModalImportarSimulado(false)}>
+            <Button variant="secondary" onClick={() => setModalImportarSimulado(false)}>
               Cancelar
             </Button>
             <Button variant="success" disabled={!simuladoOrigemId} loading={importandoSimulado} onClick={importarSimulado}>

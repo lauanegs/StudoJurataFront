@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { CalendarDays, Check, Pencil, Plus, Trash2 } from 'lucide-react'
 
@@ -40,6 +41,8 @@ const FORMULARIO_VAZIO = { dataHorario: '', titulo: '', descricao: '', concluido
 export default function Eventos() {
   const toast = useToast()
   const confirmar = useConfirm()
+  const localizacao = useLocation()
+  const navegar = useNavigate()
 
   const [filtro, setFiltro] = useState<Filtro>('todos')
   const [busca, setBusca] = useState('')
@@ -87,6 +90,18 @@ export default function Eventos() {
     paginacao.reiniciar()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtro, buscaAtrasada])
+
+  // Chegando aqui com state.abrirNovo (Home > "Adicionar evento") já abre o
+  // modal de criação direto, sem o usuário precisar clicar de novo aqui —
+  // replace:true limpa o state pra um "voltar" do navegador não reabrir o
+  // modal sozinho.
+  useEffect(() => {
+    if ((localizacao.state as { abrirNovo?: boolean } | null)?.abrirNovo) {
+      abrirNovo()
+      navegar(localizacao.pathname, { replace: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function abrirNovo() {
     setEmEdicao(null)
@@ -266,7 +281,7 @@ export default function Eventos() {
           icon: <CalendarDays />,
           acao: !busca && filtro === 'todos' && (
             <Button icon={<Plus />} onClick={abrirNovo}>
-              Criar evento
+              Cadastrar evento
             </Button>
           ),
         }}
@@ -305,7 +320,7 @@ export default function Eventos() {
         rodape={
           <>
             <Button
-              variant="danger"
+              variant="secondary"
               onClick={() => setModalAberto(false)}
               disabled={salvando}
             >

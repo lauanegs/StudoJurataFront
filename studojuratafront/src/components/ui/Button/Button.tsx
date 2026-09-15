@@ -61,12 +61,17 @@ export function Button({
   return (
     <MantineButton
       type={type}
-      variant={fundo ? 'filled' : gradient ? 'gradient' : variant === 'secondary' ? 'outline' : 'subtle'}
+      // "secondary" era outline (fundo branco + borda roxa 2px) — confundia
+      // com a receita visual de Input/Select/DatePicker (mesma borda roxa
+      // grossa). "default" é o branco neutro da própria Mantine; o
+      // contorno fino cinza + texto roxo em negrito (ver styles.root abaixo)
+      // substitui a cor/espessura da borda sem trocar de variante de novo.
+      variant={fundo ? 'filled' : gradient ? 'gradient' : variant === 'secondary' ? 'default' : 'subtle'}
       gradient={gradient ? { from: gradient.from, to: gradient.to, deg: 180 } : undefined}
       // Confirmado no Figma: botão discreto de ação de linha (Detalhar,
       // Registrar aula na tabela...) segue o cinza/azul neutro no hover —
       // o roxo de marca fica reservado pra ação secundária/de destaque.
-      color={variant === 'secondary' ? 'brandPurple' : variant === 'subtle' ? 'brandNeutral' : undefined}
+      color={variant === 'subtle' ? 'brandNeutral' : undefined}
       leftSection={comTamanho(icon, ICON_SIZES[size])}
       rightSection={comTamanho(iconRight, ICON_SIZES[size])}
       loading={loading}
@@ -76,12 +81,26 @@ export function Button({
       styles={{
         root: {
           ...SIZE_STYLES[size],
-          fontWeight: tokens.typography.weights.medium,
+          fontWeight: variant === 'secondary' ? tokens.typography.weights.semiBold : tokens.typography.weights.medium,
           background: fundo && !disabled ? fundo.background : undefined,
           // Desabilitado nunca tem borda: com a borda de 2px, um botão gradient
           // desligado ficava parecendo campo de formulário (input/select), em
           // vez de um botão que simplesmente não pode ser clicado agora.
           border: corDaBorda && !disabled && !noBorder ? `2px solid ${corDaBorda}` : undefined,
+          // "secondary": contorno fino cinza (não roxo, pra não colidir com a
+          // borda de 2px roxa dos campos) + texto roxo escuro em negrito —
+          // ainda lê como ação de marca, mas com receita visual própria.
+          ...(variant === 'secondary' && !disabled
+            ? {
+                // Mesma grossura de borda do Input/Select/DatePicker (2px) —
+                // só a cor muda (cinza neutro, não roxo). Sem sombra: mesmo
+                // shadow.base (a mais suave do sistema) ainda chamava atenção
+                // demais pra um botão de contorno — um botão outline lê bem
+                // só com a borda, não precisa de elevação.
+                border: `2px solid ${tokens.colors.borderStrong}`,
+                color: tokens.colors.purpleDark,
+              }
+            : null),
         },
       }}
       {...rest}

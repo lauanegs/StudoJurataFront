@@ -258,7 +258,8 @@ export const planosAula = {
   listarPorTurmaDisciplina: (turmaDisciplinaId: number) =>
     api.get<PlanoAula[]>(`/plano-aula/turma-disciplina/${turmaDisciplinaId}`),
   estatisticas: (id: number) => api.get<EstatisticasPlanoAula>(`/plano-aula/${id}/estatisticas`),
-  criar: (dados: Partial<PlanoAula>) => api.post<PlanoAula>('/plano-aula', dados),
+  // Sem criar(): plano de aula nasce sozinho junto com o plano de ensino
+  // (ver PlanoEnsinoService no back) — não existe mais tela pra isso.
   atualizar: (id: number, dados: Partial<PlanoAula>) =>
     api.put<PlanoAula>(`/plano-aula/${id}`, dados),
   excluir: (id: number) => api.delete(`/plano-aula/${id}`),

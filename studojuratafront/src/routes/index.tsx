@@ -406,14 +406,8 @@ export function AppRoutes() {
             </RotaProtegida>
           }
         />
-        <Route
-          path="/professor/plano-aula/novo"
-          element={
-            <RotaProtegida perfis={['PROFESSOR']}>
-              <ProfessorPlanoAulaFormulario />
-            </RotaProtegida>
-          }
-        />
+        {/* Sem rota "/novo": pedido explícito — plano de aula não é mais
+            criado na mão, nasce sozinho junto com o plano de ensino. */}
         <Route
           path="/professor/plano-aula/:id"
           element={

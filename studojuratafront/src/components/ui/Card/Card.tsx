@@ -67,8 +67,11 @@ export function Card({
                   height: 28,
                   flexShrink: 0,
                   borderRadius: tokens.radius.md,
-                  background: tokens.gradients.primary,
-                  color: tokens.colors.white,
+                  // Mesmas cores do botão "voltar" do Header em todo card,
+                  // com ou sem corpo transparente — o roxo forte do degradê
+                  // antigo destoava dos demais cabeçalhos já neutros.
+                  background: tokens.colors.background,
+                  color: tokens.colors.textSecondary,
                 }}
               >
                 {icon}

@@ -56,10 +56,14 @@ export function Modal({
         <MantineModal.Body>{children}</MantineModal.Body>
 
         {rodape && (
+          // Padding lateral igual ao do Header/Body da Mantine (--mantine-spacing-md,
+          // usado internamente por eles) — antes era spacing.xl aqui, o dobro do
+          // Header/Body, deixando os botões visivelmente mais recuados que o
+          // resto do conteúdo do modal.
           <Group
             justify="flex-end"
             gap="md"
-            style={{ padding: `0 ${tokens.spacing.xl} ${tokens.spacing.xl}` }}
+            style={{ padding: `0 var(--mantine-spacing-md) ${tokens.spacing.xl}` }}
           >
             {rodape}
           </Group>

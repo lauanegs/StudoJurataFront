@@ -453,8 +453,8 @@ export default function Simulado() {
   const textoBalao = !revelada
     ? questaoAtual?.enunciado
     : acertouAtual
-      ? 'Você acertou, parabéns! 🎉'
-      : 'Não foi dessa vez... 😕'
+      ? 'Você acertou, parabéns!'
+      : 'Não foi dessa vez...'
 
   // Mesma revelação que troca a frase do balão troca a imagem do mascote:
   // feliz quando acerta, triste quando erra — volta ao normal na próxima questão.

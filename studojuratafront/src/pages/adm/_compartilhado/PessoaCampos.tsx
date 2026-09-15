@@ -1,5 +1,6 @@
 import styled from 'styled-components'
 
+import { DatePicker } from '../../../components/ui/DatePicker'
 import { Input } from '../../../components/ui/Input'
 import { RadioGroup } from '../../../components/ui/RadioGroup'
 import { Select } from '../../../components/ui/Select'
@@ -160,9 +161,8 @@ export function PessoaCampos({
         onBlur={() => onExit('cpf')}
       />
 
-      <Input
+      <DatePicker
         label="Data de nascimento"
-        type="date"
         value={valores.dataNascimento}
         error={erros.dataNascimento}
         disabled={disabled}

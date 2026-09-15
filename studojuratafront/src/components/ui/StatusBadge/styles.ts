@@ -66,12 +66,6 @@ export const Container = styled.button<{
 
   ${({ $color }) => colors[$color]}
 
-  ${({ $selected, theme }) =>
-    $selected &&
-    css`
-      box-shadow: 0 0 0 3px ${theme.colors.white}, 0 0 0 5px ${theme.colors.purple};
-    `}
-
   &:hover:not(:disabled) {
     transform: ${({ $clickable }) => ($clickable ? 'translateY(-1px)' : 'none')};
   }

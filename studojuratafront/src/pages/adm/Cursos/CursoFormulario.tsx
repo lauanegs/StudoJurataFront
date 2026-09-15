@@ -353,76 +353,78 @@ export default function CursoFormulario() {
           )}
 
           {edicao && aba === 'grade' && (
-          <Card titulo="Grade curricular">
-              <Coluna>
-                <DescricaoGrade>
-                  Disciplinas que compõem este curso — usadas para restringir o
-                  seletor de disciplina ao vincular uma turma e para pré-preencher
-                  a carga horária ao criar um plano de ensino.
-                </DescricaoGrade>
+            <>
+              <Card titulo="Grade curricular">
+                <Coluna>
+                  <DescricaoGrade>
+                    Disciplinas que compõem este curso — usadas para restringir o
+                    seletor de disciplina ao vincular uma turma e para pré-preencher
+                    a carga horária ao criar um plano de ensino.
+                  </DescricaoGrade>
 
-                <LinhaVinculo>
-                  <Select<number>
-                    label="Disciplina"
-                    options={opcoesDisciplinas}
-                    value={novaGrade.disciplinaId}
-                    loading={requisicaoDisciplinas.loading}
-                    searchable
-                    placeholder="Selecionar disciplina..."
-                    onChange={(value) => setNovaGrade((atual) => ({ ...atual, disciplinaId: value }))}
-                  />
-
-                  <Input
-                    label="Carga horária (h)"
-                    type="number"
-                    min={1}
-                    placeholder="Ex.: 30"
-                    value={novaGrade.cargaHoraria}
-                    onChange={(evento) =>
-                      setNovaGrade((atual) => ({ ...atual, cargaHoraria: evento.target.value }))
-                    }
-                  />
-
-                  <Button size="large" icon={<Plus />} onClick={adicionarDisciplina}>
-                    Adicionar
-                  </Button>
-                </LinhaVinculo>
-
-                <DataTable<CursoDisciplina>
-                  descricao="Disciplinas do curso"
-                  columns={[
-                    {
-                      key: 'disciplina',
-                      cabecalho: 'Disciplina',
-                      render: (vinculo) => vinculo.disciplina?.titulo ?? '—',
-                    },
-                    {
-                      key: 'cargaHoraria',
-                      cabecalho: 'Carga horária',
-                      render: (vinculo) => formatarCargaHoraria(vinculo.cargaHoraria),
-                    },
-                  ]}
-                  data={gradeAtiva}
-                  rowKey={(vinculo) => vinculo.id}
-                  loading={requisicaoGrade.loading}
-                  error={requisicaoGrade.error}
-                  onReload={requisicaoGrade.reload}
-                  densidade="compacta"
-                  empty={{
-                    titulo: 'Nenhuma disciplina na grade curricular',
-                    descricao: 'Adicione as disciplinas que compõem este curso.',
-                  }}
-                  actions={(vinculo) => (
-                    <IconButton
-                      label="Remover disciplina"
-                      icon={<Trash2 />}
-                      variant="danger"
-                      onClick={() => removerDisciplina(vinculo)}
+                  <LinhaVinculo>
+                    <Select<number>
+                      label="Disciplina"
+                      options={opcoesDisciplinas}
+                      value={novaGrade.disciplinaId}
+                      loading={requisicaoDisciplinas.loading}
+                      searchable
+                      placeholder="Selecionar disciplina..."
+                      onChange={(value) => setNovaGrade((atual) => ({ ...atual, disciplinaId: value }))}
                     />
-                  )}
-                />
-              </Coluna>
-          </Card>
+
+                    <Input
+                      label="Carga horária (h)"
+                      type="number"
+                      min={1}
+                      placeholder="Ex.: 30"
+                      value={novaGrade.cargaHoraria}
+                      onChange={(evento) =>
+                        setNovaGrade((atual) => ({ ...atual, cargaHoraria: evento.target.value }))
+                      }
+                    />
+
+                    <Button size="large" icon={<Plus />} onClick={adicionarDisciplina}>
+                      Adicionar
+                    </Button>
+                  </LinhaVinculo>
+                </Coluna>
+              </Card>
+
+              <DataTable<CursoDisciplina>
+                descricao="Disciplinas do curso"
+                columns={[
+                  {
+                    key: 'disciplina',
+                    cabecalho: 'Disciplina',
+                    render: (vinculo) => vinculo.disciplina?.titulo ?? '—',
+                  },
+                  {
+                    key: 'cargaHoraria',
+                    cabecalho: 'Carga horária',
+                    render: (vinculo) => formatarCargaHoraria(vinculo.cargaHoraria),
+                  },
+                ]}
+                data={gradeAtiva}
+                rowKey={(vinculo) => vinculo.id}
+                loading={requisicaoGrade.loading}
+                error={requisicaoGrade.error}
+                onReload={requisicaoGrade.reload}
+                densidade="compacta"
+                empty={{
+                  titulo: 'Nenhuma disciplina na grade curricular',
+                  descricao: 'Adicione as disciplinas que compõem este curso.',
+                }}
+                actions={(vinculo) => (
+                  <IconButton
+                    label="Remover disciplina"
+                    icon={<Trash2 />}
+                    variant="danger"
+                    onClick={() => removerDisciplina(vinculo)}
+                  />
+                )}
+              />
+            </>
           )}
         </>
       )}

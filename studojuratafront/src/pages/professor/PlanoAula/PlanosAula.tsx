@@ -1,26 +1,23 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
-import { CalendarDays, ClipboardList, Layers, Plus } from 'lucide-react'
+import { CalendarDays, ClipboardList, Layers } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
-import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
+import { Select } from '../../../components/ui/Select'
 import { Tag } from '../../../components/ui/Tag'
-import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { planosAula as servicoPlanos, professores } from '../../../services/endpoints'
-import { formatarPeriodo, normalizar } from '../../../utils/format'
+import { formatarPeriodo } from '../../../utils/format'
 import { ROTULO_STATUS_PLANO, STATUS_PLANO_VARIANT } from '../../../utils/labels'
 import type { PlanoAula } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
-/* Confirmado no Figma: botão "Adicionar plano" (150px) + busca (250px) na
-   mesma linha, coladas — mesmo padrão de Planos de Ensino. */
 const CamposCabecalho = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -28,16 +25,15 @@ const CamposCabecalho = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-const LarguraBusca = styled.div`
-  width: 250px;
+const LarguraFiltro = styled.div`
+  width: 220px;
 `
 
 export default function PlanosAula() {
   const navegar = useNavigate()
   const { professorId } = useProfessorLogado()
 
-  const [busca, setBusca] = useState('')
-  const buscaAtrasada = useDebounce(busca)
+  const [turmaId, setTurmaId] = useState<number | null>(null)
 
   const requisicaoVinculos = useRequisicao(
     () => professores.turmasLecionadas(professorId as number),
@@ -47,6 +43,14 @@ export default function PlanosAula() {
 
   const { data, loading, error, reload } = useRequisicao(() => servicoPlanos.listar(), [])
 
+  const opcoesTurmas = useMemo(() => {
+    const unicas = new Map<number, string>()
+    for (const vinculo of requisicaoVinculos.data ?? []) {
+      if (vinculo.turma) unicas.set(vinculo.turma.id, vinculo.turma.titulo)
+    }
+    return [...unicas.entries()].map(([value, label]) => ({ value, label }))
+  }, [requisicaoVinculos.data])
+
   const meusPlanos = useMemo(() => {
     const meusVinculos = new Set((requisicaoVinculos.data ?? []).map((vinculo) => vinculo.id))
 
@@ -54,17 +58,9 @@ export default function PlanosAula() {
   }, [data, requisicaoVinculos.data])
 
   const filtrados = useMemo(() => {
-    if (!buscaAtrasada.trim()) return meusPlanos
-
-    const termo = normalizar(buscaAtrasada)
-
-    return meusPlanos.filter(
-      (plano) =>
-        normalizar(plano.turmaDisciplina?.turma?.titulo).includes(termo) ||
-        normalizar(plano.turmaDisciplina?.turma?.curso?.nome).includes(termo) ||
-        normalizar(plano.turmaDisciplina?.disciplina?.titulo).includes(termo),
-    )
-  }, [meusPlanos, buscaAtrasada])
+    if (!turmaId) return meusPlanos
+    return meusPlanos.filter((plano) => plano.turmaDisciplina?.turma?.id === turmaId)
+  }, [meusPlanos, turmaId])
 
   const paginacao = usePaginacao(filtrados)
 
@@ -86,6 +82,14 @@ export default function PlanosAula() {
       cabecalho: 'Disciplina',
       ocultarEmTelaPequena: true,
       render: (plano) => plano.turmaDisciplina?.disciplina?.titulo ?? '—',
+    },
+    {
+      // Pedido explícito: referência ao plano de ensino de origem (quem
+      // menciona quem é o plano de aula, não o contrário).
+      key: 'planoEnsino',
+      cabecalho: 'Plano de ensino',
+      ocultarEmTelaPequena: true,
+      render: (plano) => (plano.planoEnsino ? `Nº ${plano.planoEnsino.id}` : '—'),
     },
     {
       key: 'periodo',
@@ -112,13 +116,18 @@ export default function PlanosAula() {
         titulo="Planos de Aula"
         filtros={
           <CamposCabecalho>
-            <Button icon={<Plus />} size="large" onClick={() => navegar('/professor/plano-aula/novo')}>
-              Adicionar plano
-            </Button>
-
-            <LarguraBusca>
-              <BuscaInput value={busca} onChange={setBusca} placeholder="Buscar plano..." />
-            </LarguraBusca>
+            <LarguraFiltro>
+              <Select<number>
+                placeholder="Filtrar por turma"
+                options={opcoesTurmas}
+                value={turmaId}
+                loading={requisicaoVinculos.loading}
+                clearable
+                searchable
+                emptyText="Você ainda não leciona em nenhuma turma"
+                onChange={setTurmaId}
+              />
+            </LarguraFiltro>
           </CamposCabecalho>
         }
       />
@@ -141,16 +150,11 @@ export default function PlanosAula() {
           onNext: paginacao.proxima,
         }}
         empty={{
-          titulo: busca ? 'Nenhum plano encontrado' : 'Nenhum plano de aula',
-          descricao: busca
-            ? 'Revise o termo buscado ou limpe o filtro.'
-            : 'O plano de aula liga uma turma/disciplina a um plano de ensino e organiza as aulas do período.',
+          titulo: turmaId ? 'Nenhum plano encontrado' : 'Nenhum plano de aula',
+          descricao: turmaId
+            ? 'Nenhum plano de aula para a turma selecionada.'
+            : 'O plano de aula nasce sozinho quando você cria um plano de ensino com turma e disciplina vinculadas.',
           icon: <Layers />,
-          acao: !busca && (
-            <Button icon={<Plus />} onClick={() => navegar('/professor/plano-aula/novo')}>
-              Criar plano de aula
-            </Button>
-          ),
         }}
         actions={(plano) => (
           <>

@@ -291,9 +291,7 @@ export default function ConteudosPlano() {
         subtitulo={
           requisicaoPlano.data && (
             <>
-              <SubtituloItem icon={<BookOpen />}>
-                Plano: {requisicaoPlano.data.titulo ?? `Plano #${requisicaoPlano.data.id}`}
-              </SubtituloItem>
+              <SubtituloItem icon={<BookOpen />}>Plano: Nº {requisicaoPlano.data.id}</SubtituloItem>
               {conteudos.length > 0 && (
                 <SubtituloItem icon={<ListTree />}>
                   Progresso: {totalMinistrados}/{conteudos.length} conteúdos já ministrados
@@ -408,7 +406,7 @@ export default function ConteudosPlano() {
             {conteudosImportaveis.map((conteudo) => (
               <CheckBox
                 key={conteudo.id}
-                label={`${conteudo.titulo ?? 'Conteúdo'} (${conteudo.planoEnsino?.titulo ?? `Plano #${conteudo.planoEnsino?.id}`})`}
+                label={`${conteudo.titulo ?? 'Conteúdo'} (Plano nº ${conteudo.planoEnsino?.id})`}
                 checked={conteudosParaImportar.has(conteudo.id)}
                 onChange={() => alternarImportar(conteudo.id)}
               />

@@ -409,9 +409,17 @@ export default function AlunoFormulario() {
                     label="Matrícula"
                     placeholder="Código interno da escola (opcional)"
                     value={matricula}
-                    disabled={salvando}
+                    // Depois de criado, a matrícula vira um identificador do
+                    // aluno — como um id, não deve mais ser alterada; só é
+                    // editável na criação, quando ainda pode ficar em branco
+                    // pra secretaria preencher depois.
+                    disabled={salvando || edicao}
                     maxLength={30}
-                    hint="Deixe em branco para a secretaria preencher depois."
+                    hint={
+                      edicao
+                        ? 'Identificador do aluno — não pode ser alterado depois de criado.'
+                        : 'Deixe em branco para a secretaria preencher depois.'
+                    }
                     onChange={(evento) => setMatricula(evento.target.value)}
                   />
                 )}

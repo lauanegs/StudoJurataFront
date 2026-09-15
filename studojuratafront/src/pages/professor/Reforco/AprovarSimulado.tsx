@@ -15,6 +15,8 @@ import { validarQuestao, type ErrosQuestao, type QuestaoEditavel } from '../../.
 import { Select } from '../../../components/ui/Select'
 import { StatusBadge } from '../../../components/ui/StatusBadge'
 import { Tab } from '../../../components/ui/Tab'
+import { VinculoConteudoQuestao } from '../../../components/ui/VinculoConteudo'
+import * as SVinculo from '../../../components/ui/VinculoConteudo/styles'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -37,19 +39,6 @@ import {
 import { formatarData, paraInputDataHora } from '../../../utils/format'
 import { OPCOES_DESTINACAO, ROTULO_MOTIVO_RECOMENDACAO } from '../../../utils/labels'
 
-const Navegador = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.xs};
-
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.white};
-  border-radius: ${({ theme }) => theme.radius.md};
-  box-shadow: ${({ theme }) => theme.shadow.base};
-`
-
 const Coluna = styled.div`
   display: flex;
   flex-direction: column;
@@ -59,6 +48,15 @@ const Coluna = styled.div`
 const Grade = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+/* Campos de data/hora numa linha própria, cheia — mesmo motivo de
+   SimuladoFormulario.tsx: dentro da Grade normal, o DatePicker "dataHora"
+   (dois campos internos: data + hora) ficava espremido, cortando o texto. */
+const LinhaDatas = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: ${({ theme }) => theme.spacing.md};
 `
 
@@ -202,7 +200,7 @@ export default function AprovarSimulado() {
     () =>
       (requisicaoPlanos.data ?? []).map((plano) => ({
         value: plano.id,
-        label: plano.titulo ?? `Plano #${plano.id}`,
+        label: `Plano nº ${plano.id}`,
         descricao: plano.curso?.nome,
       })),
     [requisicaoPlanos.data],
@@ -476,21 +474,6 @@ export default function AprovarSimulado() {
                 onChange={() => {}}
               />
 
-              <DatePicker
-                label="Disponível a partir de"
-                modo="dataHora"
-                value={dataInicio}
-                hint="Sugerida a partir do prazo de revisão — ajuste se necessário."
-                onChange={(evento) => setDataInicio(evento.target.value)}
-              />
-
-              <DatePicker
-                label="Disponível até"
-                modo="dataHora"
-                value={dataFim}
-                onChange={(evento) => setDataFim(evento.target.value)}
-              />
-
               <Input
                 label="Tempo limite"
                 type="number"
@@ -512,12 +495,29 @@ export default function AprovarSimulado() {
               />
             </Grade>
 
+            <LinhaDatas>
+              <DatePicker
+                label="Disponível a partir de"
+                modo="dataHora"
+                value={dataInicio}
+                hint="Sugerida a partir do prazo de revisão — ajuste se necessário."
+                onChange={(evento) => setDataInicio(evento.target.value)}
+              />
+
+              <DatePicker
+                label="Disponível até"
+                modo="dataHora"
+                value={dataFim}
+                onChange={(evento) => setDataFim(evento.target.value)}
+              />
+            </LinhaDatas>
+
             {vinculoIA && (
-              <Coluna>
+              <SVinculo.ChipsVinculo>
                 <Chip variant="neutral" disabled>
                   {alunoAlvo?.pessoa?.nome ?? `Aluno ${vinculoIA.alunoId}`}
                 </Chip>
-              </Coluna>
+              </SVinculo.ChipsVinculo>
             )}
           </Coluna>
         </Card>
@@ -529,93 +529,95 @@ export default function AprovarSimulado() {
         />
       ) : (
         questaoAtual && (
-          <>
-            <QuestaoEditor
-              questao={questaoAtual}
-              indice={questaoAtiva}
-              total={questoes.length}
-              somenteLeitura={!editando}
-              erros={erros}
-              onChange={(atualizada) =>
-                setQuestoes((atuais) => atuais.map((item, i) => (i === questaoAtiva ? atualizada : item)))
-              }
-              actions={
-                editando ? (
-                  <>
-                    <Button
-                      variant="danger"
-                      size="small"
-                      onClick={() => {
-                        setEditando(false)
-                        setErros({})
-                      }}
-                      disabled={processando}
-                    >
-                      Cancelar edição
-                    </Button>
-                    <Button
-                      variant="success"
-                      size="small"
-                      icon={<Save />}
-                      loading={processando}
-                      onClick={salvarEdicao}
-                    >
-                      Salvar alterações
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="secondary"
-                      size="small"
-                      icon={<Pencil />}
-                      onClick={() => setEditando(true)}
-                      disabled={processando}
-                    >
-                      Editar questão
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="small"
-                      icon={<X />}
-                      onClick={reprovarQuestao}
-                      disabled={processando}
-                    >
-                      Reprovar questão
-                    </Button>
-                    <Button
-                      variant="success"
-                      size="small"
-                      icon={<Check />}
-                      loading={processando}
-                      onClick={aprovarQuestao}
-                    >
-                      Aprovar questão
-                    </Button>
-                  </>
-                )
-              }
-            />
-
-            <Navegador role="group" aria-label="Navegação entre questões">
-              {questoes.map((_, indice) => (
-                <StatusBadge
-                  key={indice}
-                  shape="square"
-                  color={indice === questaoAtiva ? 'purple' : 'gray'}
-                  selected={indice === questaoAtiva}
-                  ariaLabel={`Ir para a questão ${indice + 1}`}
-                  onClick={() => {
-                    setQuestaoAtiva(indice)
-                    setEditando(false)
-                    setErros({})
-                  }}
-                >
-                  {indice + 1}
-                </StatusBadge>
-              ))}
-            </Navegador>
-          </>
+          <QuestaoEditor
+            questao={questaoAtual}
+            indice={questaoAtiva}
+            total={questoes.length}
+            somenteLeitura={!editando}
+            erros={erros}
+            onChange={(atualizada) =>
+              setQuestoes((atuais) => atuais.map((item, i) => (i === questaoAtiva ? atualizada : item)))
+            }
+            conteudo={
+              <VinculoConteudoQuestao
+                questaoId={questaoAtual.id}
+                disciplinaId={questaoAtual.disciplinaId}
+                somenteLeitura={!editando}
+              />
+            }
+            navegador={questoes.map((_, indice) => (
+              <StatusBadge
+                key={indice}
+                shape="square"
+                color={indice === questaoAtiva ? 'purple' : 'gray'}
+                selected={indice === questaoAtiva}
+                ariaLabel={`Ir para a questão ${indice + 1}`}
+                onClick={() => {
+                  setQuestaoAtiva(indice)
+                  setEditando(false)
+                  setErros({})
+                }}
+              >
+                {indice + 1}
+              </StatusBadge>
+            ))}
+            actions={
+              editando ? (
+                <>
+                  <Button
+                    variant="danger"
+                    size="small"
+                    onClick={() => {
+                      setEditando(false)
+                      setErros({})
+                    }}
+                    disabled={processando}
+                  >
+                    Cancelar edição
+                  </Button>
+                  <Button
+                    variant="success"
+                    size="small"
+                    icon={<Save />}
+                    loading={processando}
+                    onClick={salvarEdicao}
+                  >
+                    Salvar alterações
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    icon={<Pencil />}
+                    onClick={() => setEditando(true)}
+                    disabled={processando}
+                  >
+                    Editar questão
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="small"
+                    icon={<X />}
+                    onClick={reprovarQuestao}
+                    disabled={processando}
+                  >
+                    Reprovar questão
+                  </Button>
+                  <Button
+                    variant="success"
+                    size="small"
+                    icon={<Check />}
+                    loading={processando}
+                    onClick={aprovarQuestao}
+                  >
+                    Aprovar questão
+                  </Button>
+                </>
+              )
+            }
+          />
         )
       )}
     </Layout>
