@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Save, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -164,19 +164,41 @@ export default function UsuarioFormulario() {
     if (!usuarioId) return
 
     await confirmar({
-      titulo: 'Excluir usuário?',
-      descricao: 'O login será desativado; o histórico de ações continua registrado.',
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar usuário?',
+      descricao: 'O login será inativado; o histórico de ações continua registrado.',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoUsuarios.excluir(usuarioId)
-          toast.success('Usuário excluído')
+          toast.success('Usuário inativado')
           navegar('/adm/usuarios')
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async () => {
+    if (!usuarioId) return
+
+    await confirmar({
+      titulo: 'Ativar usuário?',
+      descricao: 'O login voltará a ficar ativo.',
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoUsuarios.ativar(usuarioId)
+          toast.success('Usuário ativado')
+          await requisicao.reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -200,16 +222,27 @@ export default function UsuarioFormulario() {
         rotuloVoltar="Usuários"
         actions={
           <>
-            {edicao ? (
+            {edicao && requisicao.data?.status === 'INATIVO' ? (
+              <Button
+                variant="success"
+                size="large"
+                icon={<ArchiveRestore />}
+                loading={ativando}
+                onClick={ativar}
+                disabled={salvando}
+              >
+                Ativar
+              </Button>
+            ) : edicao ? (
               <Button
                 variant="danger"
                 size="large"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 loading={excluindo}
                 onClick={excluir}
                 disabled={salvando}
               >
-                Excluir
+                Inativar
               </Button>
             ) : (
               <Button

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Plus, Save, Trash2, UserRound } from 'lucide-react'
+import { Archive, ArchiveRestore, Plus, Save, Trash2, UserRound } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -33,7 +33,7 @@ import { OPCOES_PARENTESCO, TEXTO_VERSAO_LGPD } from '../../../utils/labels'
 import type { Parentesco } from '../../../types'
 import { PessoaCampos } from '../_compartilhado/PessoaCampos'
 import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
-import { dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
+import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
 
 /* Confirmado pelo usuário: mesmo padrão da aba "Alunos ativos" de Turmas —
    ação de destaque flutuante, alinhada à direita, acima do conteúdo (não
@@ -228,7 +228,10 @@ export default function AlunoFormulario() {
 
   const { executar: salvar, executando: salvando } = useAcao(async () => {
     const enviado = await formulario.aoEnviar(async (pessoa) => {
-      if (!validarVinculos()) return
+      if (!validarVinculos()) {
+        setAba('responsaveis')
+        return
+      }
 
       try {
         const payloadPessoa = paraPayloadPessoa(pessoa)
@@ -266,6 +269,8 @@ export default function AlunoFormulario() {
     })()
 
     if (!enviado) {
+      const primeiroCampo = Object.keys(formulario.erros)[0] as keyof DadosPessoa | undefined
+      if (primeiroCampo) setAba(abaDoCampoPessoa(primeiroCampo))
       toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
     }
   })
@@ -303,19 +308,41 @@ export default function AlunoFormulario() {
     if (!alunoId) return
 
     await confirmar({
-      titulo: 'Excluir aluno?',
-      descricao: 'O aluno deixará de aparecer nas listagens, mas o histórico é preservado.',
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar aluno?',
+      descricao: 'O aluno deixará de aparecer nas listagens. Só funciona se ele nunca teve matrícula em turma — matrícula ativa ou histórico impede.',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoAlunos.excluir(alunoId)
-          toast.success('Aluno excluído')
+          toast.success('Aluno inativado')
           navegar('/adm/alunos')
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativarAluno, executando: ativando } = useAcao(async () => {
+    if (!alunoId) return
+
+    await confirmar({
+      titulo: 'Ativar aluno?',
+      descricao: 'O aluno voltará a ficar ativo.',
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoAlunos.ativar(alunoId)
+          toast.success('Aluno ativado')
+          await requisicaoAluno.reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -341,16 +368,27 @@ export default function AlunoFormulario() {
         rotuloVoltar="Alunos"
         actions={
           <>
-            {edicao ? (
+            {edicao && requisicaoAluno.data?.pessoa?.status === 'INATIVO' ? (
+              <Button
+                variant="success"
+                size="large"
+                icon={<ArchiveRestore />}
+                loading={ativando}
+                onClick={ativarAluno}
+                disabled={salvando}
+              >
+                Ativar
+              </Button>
+            ) : edicao ? (
               <Button
                 variant="danger"
                 size="large"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 loading={excluindo}
                 onClick={excluirAluno}
                 disabled={salvando}
               >
-                Excluir
+                Inativar
               </Button>
             ) : (
               <Button

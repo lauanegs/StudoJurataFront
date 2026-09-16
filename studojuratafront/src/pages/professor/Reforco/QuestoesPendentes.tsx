@@ -28,7 +28,7 @@ import {
 import type { QuestaoResponse } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
-type Aba = 'pendentes' | 'aprovadas' | 'todas'
+type Aba = 'pendentes' | 'aprovadas' | 'rejeitadas' | 'todas'
 
 /**
  * Fila de moderação de questões — e, nas abas "Aprovadas"/"Todas", o banco
@@ -47,7 +47,8 @@ export default function QuestoesPendentes() {
   const [searchParams] = useSearchParams()
 
   const abaDaUrl = searchParams.get('aba')
-  const abaInicial: Aba = abaDaUrl === 'aprovadas' || abaDaUrl === 'todas' ? abaDaUrl : 'pendentes'
+  const abaInicial: Aba =
+    abaDaUrl === 'aprovadas' || abaDaUrl === 'rejeitadas' || abaDaUrl === 'todas' ? abaDaUrl : 'pendentes'
 
   const [aba, setAba] = useState<Aba>(abaInicial)
   const [busca, setBusca] = useState('')
@@ -68,6 +69,7 @@ export default function QuestoesPendentes() {
   const filtradas = useMemo(() => {
     let lista = data ?? []
     if (aba === 'aprovadas') lista = lista.filter((questao) => questao.status === 'APROVADA')
+    if (aba === 'rejeitadas') lista = lista.filter((questao) => questao.status === 'REJEITADA')
 
     if (!buscaAtrasada.trim()) return lista
 
@@ -191,7 +193,13 @@ export default function QuestoesPendentes() {
   ]
 
   const titulo =
-    aba === 'todas' ? 'Banco de questões' : aba === 'aprovadas' ? 'Questões aprovadas' : 'Questões aguardando aprovação'
+    aba === 'todas'
+      ? 'Banco de questões'
+      : aba === 'aprovadas'
+        ? 'Questões aprovadas'
+        : aba === 'rejeitadas'
+          ? 'Questões rejeitadas'
+          : 'Questões aguardando aprovação'
 
   return (
     <Layout>
@@ -209,6 +217,7 @@ export default function QuestoesPendentes() {
         options={[
           { value: 'pendentes', label: 'Pendentes' },
           { value: 'aprovadas', label: 'Aprovadas' },
+          { value: 'rejeitadas', label: 'Rejeitadas' },
           { value: 'todas', label: 'Todas' },
         ]}
       />
@@ -219,7 +228,9 @@ export default function QuestoesPendentes() {
             ? 'Todas as questões do banco'
             : aba === 'aprovadas'
               ? 'Questões aprovadas, prontas para reaproveitar em um simulado'
-              : 'Questões pendentes de aprovação'
+              : aba === 'rejeitadas'
+                ? 'Questões rejeitadas — não podem ser usadas em novos simulados'
+                : 'Questões pendentes de aprovação'
         }
         columns={colunas}
         data={paginacao.itensDaPagina}
@@ -237,14 +248,24 @@ export default function QuestoesPendentes() {
           onNext: paginacao.proxima,
         }}
         empty={{
-          titulo: busca ? 'Nenhuma questão encontrada' : aba === 'aprovadas' ? 'Nenhuma questão aprovada ainda' : aba === 'todas' ? 'Nenhuma questão cadastrada' : 'Nada para revisar',
+          titulo: busca
+            ? 'Nenhuma questão encontrada'
+            : aba === 'aprovadas'
+              ? 'Nenhuma questão aprovada ainda'
+              : aba === 'rejeitadas'
+                ? 'Nenhuma questão rejeitada'
+                : aba === 'todas'
+                  ? 'Nenhuma questão cadastrada'
+                  : 'Nada para revisar',
           descricao: busca
             ? 'Revise o termo buscado ou limpe o filtro.'
             : aba === 'aprovadas'
               ? 'Aprove questões na aba "Pendentes" para elas aparecerem aqui.'
-              : aba === 'todas'
-                ? 'As questões criadas em simulados ou geradas por IA aparecem aqui.'
-                : 'Todas as questões geradas já foram aprovadas ou rejeitadas.',
+              : aba === 'rejeitadas'
+                ? 'Questões rejeitadas na aba "Pendentes" aparecem aqui.'
+                : aba === 'todas'
+                  ? 'As questões criadas em simulados ou geradas por IA aparecem aqui.'
+                  : 'Todas as questões geradas já foram aprovadas ou rejeitadas.',
           icon: <ClipboardCheck />,
         }}
         actions={(questao) => (

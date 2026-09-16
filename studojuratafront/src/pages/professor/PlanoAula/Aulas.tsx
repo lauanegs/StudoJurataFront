@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { BookOpen, CalendarPlus, CalendarRange, ClipboardCheck, ClipboardList, Clock, Pencil, Plus, Trash2, Users } from 'lucide-react'
+import { Archive, BookOpen, CalendarPlus, CalendarRange, ClipboardCheck, ClipboardList, Clock, Pencil, Plus, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -106,18 +106,18 @@ export default function Aulas() {
 
   const { executar: excluir, executando: excluindo } = useAcao(async (aula: Aula) => {
     await confirmar({
-      titulo: 'Excluir aula?',
-      descricao: 'A aula será desativada. Frequências e conteúdos já registrados são preservados.',
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar aula?',
+      descricao: 'A aula será inativada. Frequências e conteúdos já registrados são preservados.',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoAulas.excluir(aula.id)
-          toast.success('Aula excluída')
+          toast.success('Aula inativada')
           await requisicaoAulas.reload()
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
           )
         }
@@ -313,11 +313,11 @@ export default function Aulas() {
               <Button
                 variant="subtle"
                 size="small"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 disabled={excluindo}
                 onClick={() => excluir(aula)}
               >
-                Excluir
+                Inativar
               </Button>
             </>
           )}

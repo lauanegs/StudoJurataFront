@@ -84,13 +84,8 @@ export function FiltrosDesempenho({
 
   return (
     <>
-      <Button
-        size="large"
-        variant={temFiltroAtivo ? 'primary' : 'secondary'}
-        icon={<Filter />}
-        onClick={() => setAberto(true)}
-      >
-        Filtros{temFiltroAtivo ? ` (${quantidadeAtiva})` : ''}
+      <Button size="large" variant="primary" icon={<Filter />} onClick={() => setAberto(true)}>
+        Filtrar{temFiltroAtivo ? ` (${quantidadeAtiva})` : ''}
       </Button>
 
       <Modal

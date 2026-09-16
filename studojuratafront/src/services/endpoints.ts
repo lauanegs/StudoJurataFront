@@ -88,6 +88,7 @@ export const alunos = {
   criar: (dados: Partial<Aluno>) => api.post<Aluno>('/alunos', dados),
   atualizar: (id: number, dados: Partial<Aluno>) => api.put<Aluno>(`/alunos/${id}`, dados),
   excluir: (id: number) => api.delete(`/alunos/${id}`),
+  ativar: (id: number) => api.post<Aluno>(`/alunos/${id}/ativar`),
 }
 
 export const professores = {
@@ -98,6 +99,7 @@ export const professores = {
   atualizar: (id: number, dados: Partial<Professor>) =>
     api.put<Professor>(`/professores/${id}`, dados),
   excluir: (id: number) => api.delete(`/professores/${id}`),
+  ativar: (id: number) => api.post<Professor>(`/professores/${id}/ativar`),
 }
 
 export const responsaveis = {
@@ -107,6 +109,7 @@ export const responsaveis = {
   atualizar: (id: number, dados: Partial<Responsavel>) =>
     api.put<Responsavel>(`/responsaveis/${id}`, dados),
   excluir: (id: number) => api.delete(`/responsaveis/${id}`),
+  ativar: (id: number) => api.post<Responsavel>(`/responsaveis/${id}/ativar`),
 }
 
 export const vinculosResponsavel = {
@@ -129,6 +132,7 @@ export const usuarios = {
   criar: (dados: Partial<Usuario>) => api.post<Usuario>('/usuarios', dados),
   atualizar: (id: number, dados: Partial<Usuario>) => api.put<Usuario>(`/usuarios/${id}`, dados),
   excluir: (id: number) => api.delete(`/usuarios/${id}`),
+  ativar: (id: number) => api.post<Usuario>(`/usuarios/${id}/ativar`),
 }
 
 export const escolas = {
@@ -151,6 +155,7 @@ export const cursos = {
   criar: (dados: Partial<Curso>) => api.post<Curso>('/cursos', dados),
   atualizar: (id: number, dados: Partial<Curso>) => api.put<Curso>(`/cursos/${id}`, dados),
   excluir: (id: number) => api.delete(`/cursos/${id}`),
+  ativar: (id: number) => api.post<Curso>(`/cursos/${id}/ativar`),
 }
 
 /** Grade curricular: disciplinas + carga horária de cada curso (ver CursoDisciplina). */
@@ -170,6 +175,7 @@ export const disciplinas = {
   atualizar: (id: number, dados: Partial<Disciplina>) =>
     api.put<Disciplina>(`/disciplinas/${id}`, dados),
   excluir: (id: number) => api.delete(`/disciplinas/${id}`),
+  ativar: (id: number) => api.post<Disciplina>(`/disciplinas/${id}/ativar`),
 }
 
 export const turmas = {
@@ -180,6 +186,7 @@ export const turmas = {
   criar: (dados: Partial<Turma>) => api.post<Turma>('/turmas', dados),
   atualizar: (id: number, dados: Partial<Turma>) => api.put<Turma>(`/turmas/${id}`, dados),
   excluir: (id: number) => api.delete(`/turmas/${id}`),
+  ativar: (id: number) => api.post<Turma>(`/turmas/${id}/ativar`),
 }
 
 export const horariosTurma = {
@@ -227,11 +234,6 @@ export const matriculas = {
     api.post<AlunoTurma>(`/aluno-turma/${id}/cancelar`, undefined, { dataFim }),
   concluir: (id: number, dataFim?: string) =>
     api.post<AlunoTurma>(`/aluno-turma/${id}/concluir`, undefined, { dataFim }),
-  transferir: (id: number, turmaDestinoId: number, dataTransferencia?: string) =>
-    api.post<AlunoTurma>(`/aluno-turma/${id}/transferir`, undefined, {
-      turmaDestinoId,
-      dataTransferencia,
-    }),
 }
 
 export const planosEnsino = {
@@ -257,6 +259,8 @@ export const planosAula = {
   buscar: (id: number) => api.get<PlanoAula>(`/plano-aula/${id}`),
   listarPorTurmaDisciplina: (turmaDisciplinaId: number) =>
     api.get<PlanoAula[]>(`/plano-aula/turma-disciplina/${turmaDisciplinaId}`),
+  listarPorPlanoEnsino: (planoEnsinoId: number) =>
+    api.get<PlanoAula[]>(`/plano-aula/plano-ensino/${planoEnsinoId}`),
   estatisticas: (id: number) => api.get<EstatisticasPlanoAula>(`/plano-aula/${id}/estatisticas`),
   // Sem criar(): plano de aula nasce sozinho junto com o plano de ensino
   // (ver PlanoEnsinoService no back) — não existe mais tela pra isso.
@@ -369,6 +373,9 @@ export const simulados = {
   lancar: (id: number, dados?: LancarSimuladoRequest) =>
     api.post<SimuladoResponse>(`/simulados/${id}/lancar`, dados ?? {}),
   encerrar: (id: number) => api.post<SimuladoResponse>(`/simulados/${id}/encerrar`),
+  /** Único campo editável depois de PUBLICADO — "disponibilizar por mais tempo". */
+  estenderDisponibilidade: (id: number, dataFim: string | null) =>
+    api.patch<SimuladoResponse>(`/simulados/${id}/disponibilidade`, { dataFim }),
   excluir: (id: number) => api.delete(`/simulados/${id}`),
 }
 

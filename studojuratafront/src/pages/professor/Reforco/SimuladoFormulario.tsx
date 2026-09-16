@@ -48,6 +48,9 @@ import { OPCOES_DESTINACAO, ROTULO_TIPO_QUESTAO } from '../../../utils/labels'
 import type { QuestaoResponse, SimuladoResponse, TipoDestinacaoSimulado } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
+/** Regra de negócio: um simulado nunca pode ter mais que 10 questões (ver SimuladoQuestaoService no back). */
+const MAXIMO_QUESTOES = 10
+
 const Coluna = styled.div`
   display: flex;
   flex-direction: column;
@@ -127,6 +130,10 @@ export default function SimuladoFormulario() {
   // questão nova no simulado (não substitui o slot ativo).
   const [modalImportar, setModalImportar] = useState(false)
   const [disciplinaBancoId, setDisciplinaBancoId] = useState<number | null>(null)
+  // Valor efetivamente usado no filtro — só atualiza ao clicar "Buscar"
+  // (pedido explícito: trocar a disciplina no Select não deve refiltrar
+  // sozinho, senão parece que a busca "adivinha" sem precisar do clique).
+  const [disciplinaBancoIdAplicada, setDisciplinaBancoIdAplicada] = useState<number | null>(null)
   const [filtroBancoAplicado, setFiltroBancoAplicado] = useState(false)
   const [questoesBancoSelecionadas, setQuestoesBancoSelecionadas] = useState<Set<number>>(new Set())
 
@@ -136,6 +143,11 @@ export default function SimuladoFormulario() {
   const [modalImportarSimulado, setModalImportarSimulado] = useState(false)
   const [turmaImportarId, setTurmaImportarId] = useState<number | null>(null)
   const [disciplinaImportarId, setDisciplinaImportarId] = useState<number | null>(null)
+  // Valores efetivamente usados no filtro — só atualizam ao clicar "Buscar"
+  // (mesmo motivo do banco de questões acima: trocar Turma/Disciplina não
+  // deve refiltrar sozinho depois do primeiro clique em Buscar).
+  const [turmaImportarIdAplicada, setTurmaImportarIdAplicada] = useState<number | null>(null)
+  const [disciplinaImportarIdAplicada, setDisciplinaImportarIdAplicada] = useState<number | null>(null)
   const [filtroImportarAplicado, setFiltroImportarAplicado] = useState(false)
   const [simuladoOrigemId, setSimuladoOrigemId] = useState<number | null>(null)
   const [importandoSimulado, setImportandoSimulado] = useState(false)
@@ -218,10 +230,16 @@ export default function SimuladoFormulario() {
     return (requisicaoSimuladosOrigem.data ?? []).filter(
       (item) =>
         item.id !== simuladoId &&
-        (!turmaImportarId || item.turmaId === turmaImportarId) &&
-        (!disciplinaImportarId || item.disciplinaId === disciplinaImportarId),
+        (!turmaImportarIdAplicada || item.turmaId === turmaImportarIdAplicada) &&
+        (!disciplinaImportarIdAplicada || item.disciplinaId === disciplinaImportarIdAplicada),
     )
-  }, [requisicaoSimuladosOrigem.data, filtroImportarAplicado, turmaImportarId, disciplinaImportarId, simuladoId])
+  }, [
+    requisicaoSimuladosOrigem.data,
+    filtroImportarAplicado,
+    turmaImportarIdAplicada,
+    disciplinaImportarIdAplicada,
+    simuladoId,
+  ])
 
   async function importarSimulado() {
     if (!simuladoOrigemId) return
@@ -258,12 +276,22 @@ export default function SimuladoFormulario() {
         return
       }
 
-      setQuestoes(importadas)
+      // Defensivo: o simulado de origem, em tese, já respeita o limite — mas
+      // corta aqui também (ex.: dado antigo de antes da regra existir).
+      const cortadas = Math.max(0, importadas.length - MAXIMO_QUESTOES)
+      const importadasFinal = importadas.slice(0, MAXIMO_QUESTOES)
+
+      setQuestoes(importadasFinal)
       setQuestaoAtiva(0)
       setErrosQuestoes({})
       setModalImportarSimulado(false)
       setSimuladoOrigemId(null)
-      toast.success('Simulado importado', `${importadas.length} questão(ões) copiada(s). Revise antes de salvar.`)
+      toast.success(
+        'Simulado importado',
+        cortadas > 0
+          ? `${importadasFinal.length} questão(ões) copiada(s) — ${cortadas} não coube(ram) (limite de ${MAXIMO_QUESTOES}). Revise antes de salvar.`
+          : `${importadasFinal.length} questão(ões) copiada(s). Revise antes de salvar.`,
+      )
     } finally {
       setImportandoSimulado(false)
     }
@@ -281,9 +309,9 @@ export default function SimuladoFormulario() {
       (item) =>
         item.status !== 'REJEITADA' &&
         !idsJaNoSimulado.has(item.id) &&
-        (!disciplinaBancoId || item.disciplinaId === disciplinaBancoId),
+        (!disciplinaBancoIdAplicada || item.disciplinaId === disciplinaBancoIdAplicada),
     )
-  }, [requisicaoBancoQuestoes.data, idsJaNoSimulado, filtroBancoAplicado, disciplinaBancoId])
+  }, [requisicaoBancoQuestoes.data, idsJaNoSimulado, filtroBancoAplicado, disciplinaBancoIdAplicada])
 
   const colunasBancoQuestoes: Coluna<QuestaoResponse>[] = [
     {
@@ -418,6 +446,10 @@ export default function SimuladoFormulario() {
   )
 
   const somenteLeitura = edicao && requisicaoSimulado.data?.status !== 'RASCUNHO'
+  // Item pedido pelo usuário: mesmo travado (somenteLeitura), um simulado
+  // PUBLICADO ainda pode ter a disponibilidade estendida — único campo
+  // editável depois do lançamento (ver salvarDisponibilidade()).
+  const podeEstenderDisponibilidade = requisicaoSimulado.data?.status === 'PUBLICADO'
 
   function validarCabecalho() {
     const encontrados: Record<string, string | undefined> = {}
@@ -568,6 +600,37 @@ export default function SimuladoFormulario() {
     }
   }
 
+  /**
+   * Item pedido pelo usuário: mesmo com o simulado já PUBLICADO (edição
+   * geral travada — ver `somenteLeitura`), o professor ainda precisa poder
+   * "disponibilizar por mais tempo". Único campo que continua editável
+   * depois do lançamento, via endpoint dedicado (não passa pelo `salvar()`
+   * geral, que o back rejeita fora do RASCUNHO).
+   */
+  async function salvarDisponibilidade() {
+    if (!simuladoId) return
+
+    if (dataInicio && dataFim && new Date(dataFim) <= new Date(dataInicio)) {
+      setErros((atuais) => ({ ...atuais, dataFim: 'A data final deve ser posterior à inicial' }))
+      return
+    }
+
+    setSalvando(true)
+
+    try {
+      await servicoSimulados.estenderDisponibilidade(simuladoId, deInputDataHora(dataFim))
+      toast.success('Disponibilidade atualizada')
+      await requisicaoSimulado.reload()
+    } catch (erroSalvar) {
+      toast.error(
+        'Não foi possível atualizar',
+        erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
+      )
+    } finally {
+      setSalvando(false)
+    }
+  }
+
   async function lancar() {
     if (!simuladoId) {
       toast.warning('Salve o simulado primeiro', 'Só é possível lançar um simulado já criado.')
@@ -617,6 +680,10 @@ export default function SimuladoFormulario() {
   }
 
   function adicionarQuestao() {
+    if (questoes.length >= MAXIMO_QUESTOES) {
+      toast.warning('Limite de questões atingido', `Um simulado pode ter no máximo ${MAXIMO_QUESTOES} questões.`)
+      return
+    }
     setQuestoes((atuais) => [...atuais, questaoVazia()])
     setQuestaoAtiva(questoes.length)
   }
@@ -645,8 +712,17 @@ export default function SimuladoFormulario() {
   }
 
   function importarQuestoesSelecionadas() {
-    const escolhidas = opcoesBancoQuestoes.filter((item) => questoesBancoSelecionadas.has(item.id))
-    if (escolhidas.length === 0) return
+    const todasEscolhidas = opcoesBancoQuestoes.filter((item) => questoesBancoSelecionadas.has(item.id))
+    if (todasEscolhidas.length === 0) return
+
+    const primeiraVaziaAntes = questoes.length === 1 && !questoes[0].enunciado.trim() && !questoes[0].id
+    const espacoDisponivel = MAXIMO_QUESTOES - (primeiraVaziaAntes ? 0 : questoes.length)
+    const escolhidas = todasEscolhidas.slice(0, Math.max(0, espacoDisponivel))
+
+    if (escolhidas.length === 0) {
+      toast.warning('Limite de questões atingido', `Um simulado pode ter no máximo ${MAXIMO_QUESTOES} questões.`)
+      return
+    }
 
     const importadas: QuestaoEditavel[] = escolhidas.map((escolhida) => {
       const alternativasDaQuestao = (requisicaoBancoAlternativas.data ?? [])
@@ -665,20 +741,28 @@ export default function SimuladoFormulario() {
     })
 
     // A primeira questão (se ainda vazia) é substituída; as demais são adicionadas.
-    setQuestoes((atuais) => {
-      const primeiraVazia =
-        atuais.length === 1 && !atuais[0].enunciado.trim() && !atuais[0].id ? atuais.slice(1) : atuais
-      return [...primeiraVazia, ...importadas]
-    })
-    setQuestaoAtiva(Math.max(0, questoes.length + importadas.length - 1))
+    // O índice final precisa vir do tamanho do array RESULTANTE (calculado
+    // aqui, não de `questoes.length` do closure) — quando a única questão
+    // vazia inicial é descartada, o array final fica 1 item menor do que
+    // `questoes.length + importadas.length` sugeriria, e `questaoAtiva`
+    // apontava pra fora do array: a questão importada nunca aparecia,
+    // porque o editor renderizava `questoes[questaoAtiva]` undefined.
+    const questoesFinal = primeiraVaziaAntes ? importadas : [...questoes, ...importadas]
+    const cortadasPeloLimite = todasEscolhidas.length - escolhidas.length
+
+    setQuestoes(questoesFinal)
+    setQuestaoAtiva(Math.max(0, questoesFinal.length - 1))
     setErrosQuestoes({})
     setModalImportar(false)
     setQuestoesBancoSelecionadas(new Set())
     setDisciplinaBancoId(null)
+    setDisciplinaBancoIdAplicada(null)
     setFiltroBancoAplicado(false)
     toast.success(
       `${importadas.length} questão(ões) importada(s)`,
-      'Revise o conteúdo antes de salvar.',
+      cortadasPeloLimite > 0
+        ? `${cortadasPeloLimite} não coube(ram) — limite de ${MAXIMO_QUESTOES} questões por simulado. Revise antes de salvar.`
+        : 'Revise o conteúdo antes de salvar.',
     )
   }
 
@@ -703,7 +787,9 @@ export default function SimuladoFormulario() {
         subtitulo={
           somenteLeitura ? (
             <SubtituloItem icon={<Lock />}>
-              Status: Simulado já lançado — o conteúdo não pode mais ser alterado
+              {podeEstenderDisponibilidade
+                ? 'Status: Simulado já lançado — só a disponibilidade pode ser alterada'
+                : 'Status: Simulado já lançado — o conteúdo não pode mais ser alterado'}
             </SubtituloItem>
           ) : (
             <SubtituloItem icon={<ClipboardCheck />}>Questões: {questoes.length} montada(s)</SubtituloItem>
@@ -720,6 +806,10 @@ export default function SimuladoFormulario() {
                 icon={<FolderInput />}
                 onClick={() => {
                   setFiltroImportarAplicado(false)
+                  setTurmaImportarId(null)
+                  setDisciplinaImportarId(null)
+                  setTurmaImportarIdAplicada(null)
+                  setDisciplinaImportarIdAplicada(null)
                   setSimuladoOrigemId(null)
                   setModalImportarSimulado(true)
                 }}
@@ -745,8 +835,8 @@ export default function SimuladoFormulario() {
               variant="success"
               icon={<Save />}
               loading={salvando}
-              disabled={somenteLeitura}
-              onClick={salvar}
+              disabled={somenteLeitura && !podeEstenderDisponibilidade}
+              onClick={podeEstenderDisponibilidade ? salvarDisponibilidade : salvar}
             >
               Salvar
             </Button>
@@ -874,7 +964,8 @@ export default function SimuladoFormulario() {
                   modo="dataHora"
                   value={dataFim}
                   error={erros.dataFim}
-                  disabled={somenteLeitura}
+                  hint={podeEstenderDisponibilidade ? 'Simulado já lançado — só este campo pode ser alterado.' : undefined}
+                  disabled={somenteLeitura && !podeEstenderDisponibilidade}
                   onChange={(evento) => setDataFim(evento.target.value)}
                 />
               </LinhaDatas>
@@ -976,7 +1067,7 @@ export default function SimuladoFormulario() {
                     </StatusBadge>
                   ))}
 
-                  {!somenteLeitura && (
+                  {!somenteLeitura && questoes.length < MAXIMO_QUESTOES && (
                     <Button variant="secondary" size="small" icon={<Plus />} onClick={adicionarQuestao}>
                       Nova questão
                     </Button>
@@ -1071,7 +1162,13 @@ export default function SimuladoFormulario() {
             onChange={setDisciplinaBancoId}
           />
 
-          <Button variant="secondary" onClick={() => setFiltroBancoAplicado(true)}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setDisciplinaBancoIdAplicada(disciplinaBancoId)
+              setFiltroBancoAplicado(true)
+            }}
+          >
             Buscar
           </Button>
 
@@ -1128,7 +1225,14 @@ export default function SimuladoFormulario() {
             />
           </Grade>
 
-          <Button variant="secondary" onClick={() => setFiltroImportarAplicado(true)}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setTurmaImportarIdAplicada(turmaImportarId)
+              setDisciplinaImportarIdAplicada(disciplinaImportarId)
+              setFiltroImportarAplicado(true)
+            }}
+          >
             Buscar
           </Button>
 

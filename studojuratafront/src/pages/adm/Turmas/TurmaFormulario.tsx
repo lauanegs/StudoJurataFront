@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { CalendarClock, Pencil, Plus, Save, Trash2, UserPlus, Users } from 'lucide-react'
+import { Archive, ArchiveRestore, CalendarClock, Pencil, Plus, Save, Trash2, UserPlus, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
@@ -21,6 +21,8 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
+import { useAvisosDispensados } from '../../../hooks/useAvisosDispensados'
+import { useCargaHorariaCursada } from '../../../hooks/useCargaHorariaCursada'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { useEscola } from '../../../hooks/useEscola'
 import { useHidratar } from '../../../hooks/useHidratar'
@@ -37,7 +39,7 @@ import {
   turmaDisciplinas,
   turmas as servicoTurmas,
 } from '../../../services/endpoints'
-import { formatarData, formatarHora, formatarIdade, normalizar } from '../../../utils/format'
+import { formatarCargaHoraria, formatarData, formatarHora, formatarIdade, normalizar } from '../../../utils/format'
 import {
   OPCOES_ATIVA_INATIVA,
   OPCOES_DIA_SEMANA,
@@ -112,6 +114,7 @@ type Aba = 'data' | 'horarios' | 'disciplinas' | 'alunos' | 'historico'
 export default function TurmaFormulario() {
   const { id } = useParams()
   const navegar = useNavigate()
+  const localizacao = useLocation()
   const toast = useToast()
   const confirmar = useConfirm()
   const { escola, loading: carregandoEscola } = useEscola()
@@ -119,7 +122,8 @@ export default function TurmaFormulario() {
   const edicao = Boolean(id)
   const turmaId = id ? Number(id) : null
 
-  const [aba, setAba] = useState<Aba>('data')
+  const abaInicial = (localizacao.state as { aba?: Aba } | null)?.aba
+  const [aba, setAba] = useState<Aba>(abaInicial ?? 'data')
 
   const [titulo, setTitulo] = useState('')
   const [cursoId, setCursoId] = useState<number | null>(null)
@@ -183,6 +187,18 @@ export default function TurmaFormulario() {
   const ativos = requisicaoAtivos.data ?? []
   const historico = requisicaoHistorico.data ?? []
 
+  const { dispensados: avisosDispensados, dispensar: dispensarAviso } = useAvisosDispensados()
+  /** Item pedido pelo usuário: aviso (só informativo, sem ação de reativar
+   * aqui) quando um aluno concluiu automaticamente a matrícula por ter
+   * atingido a carga horária do curso — ver FrequenciaService no back. */
+  const avisosCargaHoraria = useMemo(
+    () =>
+      (requisicaoHistorico.data ?? []).filter(
+        (matricula) => matricula.status === 'CONCLUIDA' && !avisosDispensados.includes(matricula.id),
+      ),
+    [requisicaoHistorico.data, avisosDispensados],
+  )
+
   const ativosFiltrados = useMemo(() => {
     const lista = requisicaoAtivos.data ?? []
     if (!buscaAtivosAtrasada.trim()) return lista
@@ -209,10 +225,23 @@ export default function TurmaFormulario() {
     setAtiva(turma.status !== 'INATIVA')
   })
 
+  /** turmaDisciplinas.excluir() é soft-delete (status vira INATIVO no back) —
+   * precisa filtrar por status aqui também, senão a disciplina "removida"
+   * continua aparecendo na tabela mesmo depois do toast de sucesso. */
   const vinculosDaTurma = useMemo(
-    () => (requisicaoVinculos.data ?? []).filter((vinculo) => vinculo.turma?.id === turmaId),
+    () =>
+      (requisicaoVinculos.data ?? []).filter(
+        (vinculo) => vinculo.turma?.id === turmaId && vinculo.status !== 'INATIVO',
+      ),
     [requisicaoVinculos.data, turmaId],
   )
+
+  const requisicaoCargaHoraria = useCargaHorariaCursada(
+    ativos,
+    vinculosDaTurma,
+    aba === 'alunos' && !requisicaoAtivos.loading && !requisicaoVinculos.loading,
+  )
+  const cargaHorariaPorAluno = requisicaoCargaHoraria.data?.cargaHoraria ?? new Map<number, number>()
 
   const opcoesCursos = useMemo(
     () =>
@@ -222,16 +251,30 @@ export default function TurmaFormulario() {
     [requisicaoCursos.data],
   )
 
+  const gradeCurricularAtiva = useMemo(
+    () => (requisicaoGradeCurricular.data ?? []).filter((item) => item.status !== 'INATIVO'),
+    [requisicaoGradeCurricular.data],
+  )
+
   const opcoesDisciplinas = useMemo(() => {
-    const idsDaGrade = new Set(
-      (requisicaoGradeCurricular.data ?? [])
-        .filter((item) => item.status !== 'INATIVO')
-        .map((item) => item.disciplina?.id),
-    )
+    const idsDaGrade = new Set(gradeCurricularAtiva.map((item) => item.disciplina?.id))
+    const idsJaVinculados = new Set(vinculosDaTurma.map((vinculo) => vinculo.disciplina?.id))
     return (requisicaoDisciplinas.data ?? [])
-      .filter((disciplina) => disciplina.status !== 'INATIVO' && idsDaGrade.has(disciplina.id))
+      .filter(
+        (disciplina) =>
+          disciplina.status !== 'INATIVO' &&
+          idsDaGrade.has(disciplina.id) &&
+          !idsJaVinculados.has(disciplina.id),
+      )
       .map((disciplina) => ({ value: disciplina.id, label: disciplina.titulo ?? '—' }))
-  }, [requisicaoDisciplinas.data, requisicaoGradeCurricular.data])
+  }, [requisicaoDisciplinas.data, gradeCurricularAtiva, vinculosDaTurma])
+
+  /** Grade toda vinculada: distinto de "curso sem disciplinas na grade" — ver Select abaixo. */
+  const gradeTotalmenteVinculada =
+    !requisicaoGradeCurricular.loading &&
+    !requisicaoDisciplinas.loading &&
+    gradeCurricularAtiva.length > 0 &&
+    opcoesDisciplinas.length === 0
 
   /** Visibilidade (pedido do usuário): disciplinas da grade curricular do curso ainda
    * sem vínculo nesta turma, ou vinculadas mas sem professor — não bloqueia o salvamento,
@@ -423,18 +466,19 @@ export default function TurmaFormulario() {
 
   async function removerVinculo(vinculo: TurmaDisciplina) {
     await confirmar({
-      titulo: 'Remover disciplina da turma?',
-      descricao: 'Planos de aula já criados para esta disciplina continuam existindo.',
-      rotuloConfirmar: 'Remover',
+      titulo: 'Inativar vínculo com a turma?',
+      descricao:
+        'O vínculo com esta disciplina será inativado (não é possível se houver plano de ensino ou plano de aula ativo — conclua-os primeiro).',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await turmaDisciplinas.excluir(vinculo.id)
-          toast.success('Disciplina removida da turma')
+          toast.success('Disciplina desvinculada da turma')
           await requisicaoVinculos.reload()
         } catch (erroRemover) {
           toast.error(
-            'Não foi possível remover',
+            'Não foi possível desvincular',
             erroRemover instanceof ApiError ? erroRemover.message : undefined,
           )
         }
@@ -446,19 +490,42 @@ export default function TurmaFormulario() {
     if (!turmaId) return
 
     await confirmar({
-      titulo: 'Excluir turma?',
-      descricao: 'O histórico de matrículas é preservado.',
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar turma?',
+      descricao:
+        'A turma será inativada. Só funciona se ela nunca teve aluno matriculado — se já teve, altere a Situação em "Dados da turma" para inativar preservando o histórico.',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoTurmas.excluir(turmaId)
-          toast.success('Turma excluída')
+          toast.success('Turma inativada')
           navegar('/adm/turmas')
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  }
+
+  async function ativarTurma() {
+    if (!turmaId) return
+
+    await confirmar({
+      titulo: 'Ativar turma?',
+      descricao: 'A turma voltará a ficar ativa.',
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoTurmas.ativar(turmaId)
+          toast.success('Turma ativada')
+          await requisicaoTurma.reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -485,15 +552,25 @@ export default function TurmaFormulario() {
         rotuloVoltar="Turmas"
         actions={
           <>
-            {edicao ? (
+            {edicao && requisicaoTurma.data?.status === 'INATIVA' ? (
+              <Button
+                variant="success"
+                size="large"
+                icon={<ArchiveRestore />}
+                onClick={ativarTurma}
+                disabled={salvando}
+              >
+                Ativar
+              </Button>
+            ) : edicao ? (
               <Button
                 variant="danger"
                 size="large"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 onClick={excluirTurma}
                 disabled={salvando}
               >
-                Excluir
+                Inativar
               </Button>
             ) : (
               <Button
@@ -561,6 +638,7 @@ export default function TurmaFormulario() {
                     loading={requisicaoCursos.loading}
                     error={erros.cursoId}
                     searchable
+                    clearable
                     placeholder="Selecionar curso..."
                     emptyText="Cadastre um curso primeiro"
                     onChange={setCursoId}
@@ -694,6 +772,14 @@ export default function TurmaFormulario() {
 
           {edicao && aba === 'disciplinas' && (
             <>
+              {gradeTotalmenteVinculada && (
+                <AlertaDesempenhoCard
+                  tom="success"
+                  titulo="Todas as disciplinas já estão vinculadas"
+                  descricao="A grade curricular do curso desta turma está totalmente vinculada. Para vincular outra disciplina, adicione-a primeiro à grade curricular do curso."
+                />
+              )}
+
               <Card titulo="Disciplinas e professores">
                 <LinhaVinculo>
                   <Select<number>
@@ -701,9 +787,14 @@ export default function TurmaFormulario() {
                     options={opcoesDisciplinas}
                     value={novoVinculo.disciplinaId}
                     loading={requisicaoDisciplinas.loading || requisicaoGradeCurricular.loading}
+                    disabled={gradeTotalmenteVinculada}
                     searchable
                     placeholder="Selecionar disciplina..."
-                    emptyText="O curso desta turma ainda não tem disciplinas na grade curricular"
+                    emptyText={
+                      gradeTotalmenteVinculada
+                        ? 'Todas as disciplinas da grade já foram vinculadas'
+                        : 'O curso desta turma ainda não tem disciplinas na grade curricular'
+                    }
                     onChange={(value) => setNovoVinculo((atual) => ({ ...atual, disciplinaId: value }))}
                   />
 
@@ -712,13 +803,19 @@ export default function TurmaFormulario() {
                     options={opcoesProfessores}
                     value={novoVinculo.professorId}
                     loading={requisicaoProfessores.loading}
+                    disabled={gradeTotalmenteVinculada}
                     searchable
                     clearable
                     placeholder="Selecionar professor..."
                     onChange={(value) => setNovoVinculo((atual) => ({ ...atual, professorId: value }))}
                   />
 
-                  <Button size="large" icon={<Plus />} onClick={adicionarVinculo}>
+                  <Button
+                    size="large"
+                    icon={<Plus />}
+                    disabled={gradeTotalmenteVinculada}
+                    onClick={adicionarVinculo}
+                  >
                     Vincular
                   </Button>
                 </LinhaVinculo>
@@ -767,8 +864,8 @@ export default function TurmaFormulario() {
                 }}
                 actions={(vinculo) => (
                   <IconButton
-                    label="Remover disciplina"
-                    icon={<Trash2 />}
+                    label="Inativar vínculo"
+                    icon={<Archive />}
                     variant="danger"
                     onClick={() => removerVinculo(vinculo)}
                   />
@@ -779,6 +876,20 @@ export default function TurmaFormulario() {
 
           {edicao && aba === 'alunos' && (
             <>
+              {avisosCargaHoraria.map((matricula) => (
+                <AlertaDesempenhoCard
+                  key={matricula.id}
+                  tom="success"
+                  titulo={`${matricula.aluno?.pessoa?.nome ?? 'Aluno'} concluiu a carga horária`}
+                  descricao={`Matrícula concluída automaticamente em ${formatarData(matricula.dataFim)}. Se for necessário reativar, entre em contato com a administração.`}
+                  acao={
+                    <Button variant="secondary" size="small" onClick={() => dispensarAviso(matricula.id)}>
+                      Ciente
+                    </Button>
+                  }
+                />
+              ))}
+
               <LinhaAcaoFlutuante>
                 <Button
                   size="large"
@@ -809,6 +920,12 @@ export default function TurmaFormulario() {
                     key: 'idade',
                     cabecalho: 'Idade',
                     render: (matricula) => formatarIdade(matricula.aluno?.pessoa?.dataNascimento),
+                  },
+                  {
+                    key: 'cargaHoraria',
+                    cabecalho: 'Carga horária',
+                    ocultarEmTelaPequena: true,
+                    render: (matricula) => formatarCargaHoraria(cargaHorariaPorAluno.get(matricula.aluno.id) ?? 0),
                   },
                   {
                     key: 'inicio',

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { ListTree, Save, Trash2 } from 'lucide-react'
+import { Archive, CalendarRange, ListTree, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -24,6 +24,7 @@ import {
   conteudosPlano as servicoConteudos,
   cursoDisciplinas as servicoCursoDisciplinas,
   cursos as servicoCursos,
+  planosAula,
   planosEnsino as servicoPlanos,
   professores as servicoProfessores,
 } from '../../../services/endpoints'
@@ -74,6 +75,16 @@ export default function PlanoEnsinoFormulario() {
   const requisicaoPlano = useRequisicao(() => servicoPlanos.buscar(planoId as number), [planoId], {
     ativo: Boolean(planoId),
   })
+  // Plano de aula nasce sozinho junto com o plano de ensino (ver
+  // PlanoAulaService.gerarSeNecessario), mas só quando o plano já tem
+  // turmaDisciplina — em planos sem turma/disciplina vinculada ainda não há
+  // nenhum. Buscado à parte pra alimentar o botão "Plano de aula" abaixo.
+  const requisicaoPlanoAula = useRequisicao(
+    () => planosAula.listarPorPlanoEnsino(planoId as number),
+    [planoId],
+    { ativo: Boolean(planoId) },
+  )
+  const planoAulaVinculado = requisicaoPlanoAula.data?.[0] ?? null
   const requisicaoCursos = useRequisicao(() => servicoCursos.listar(), [])
   const requisicaoVinculos = useRequisicao(
     () => servicoProfessores.turmasLecionadas(professorId as number),
@@ -198,6 +209,12 @@ export default function PlanoEnsinoFormulario() {
     // PlanoEnsino.curso é @ManyToOne(optional = false).
     if (!cursoId) encontrados.cursoId = 'Selecione o curso'
 
+    // Confirmado pelo usuário: turma e disciplina passam a ser obrigatórias
+    // — sem elas o plano de aula não é gerado automaticamente (ver
+    // PlanoAulaService.gerarSeNecessario, que depende de turmaDisciplina).
+    if (!turmaId) encontrados.turmaId = 'Selecione a turma'
+    if (!disciplinaId) encontrados.disciplinaId = 'Selecione a disciplina'
+
     if (cargaHoraria && (!Number.isFinite(Number(cargaHoraria)) || Number(cargaHoraria) <= 0)) {
       encontrados.cargaHoraria = 'Informe um número de horas maior que zero'
     }
@@ -253,18 +270,18 @@ export default function PlanoEnsinoFormulario() {
     if (!planoId) return
 
     await confirmar({
-      titulo: 'Excluir plano de ensino?',
-      descricao: 'Os conteúdos e planos de aula vinculados permanecem.',
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Encerrar plano de ensino?',
+      descricao: 'O plano será marcado como concluído. Os conteúdos e planos de aula vinculados permanecem.',
+      rotuloConfirmar: 'Encerrar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoPlanos.excluir(planoId)
-          toast.success('Plano excluído')
+          toast.success('Plano encerrado')
           navegar('/professor/plano-ensino')
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível encerrar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
           )
         }
@@ -302,18 +319,28 @@ export default function PlanoEnsinoFormulario() {
                 Conteúdos
               </Button>
             )}
+            {edicao && planoAulaVinculado && (
+              <Button
+                size="large"
+                variant="secondary"
+                icon={<CalendarRange />}
+                onClick={() => navegar(`/professor/plano-aula/${planoAulaVinculado.id}`)}
+              >
+                Plano de aula
+              </Button>
+            )}
             {/* Cancelar só existe enquanto o plano ainda não foi salvo — depois
-                de salvo, desfazer é Excluir (soft-delete), não Cancelar. */}
+                de salvo, desfazer é Encerrar (soft-delete), não Cancelar. */}
             {edicao ? (
               <Button
                 size="large"
                 variant="danger"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 loading={excluindo}
                 onClick={excluir}
                 disabled={salvando}
               >
-                Excluir
+                Encerrar
               </Button>
             ) : (
               <Button
@@ -374,6 +401,7 @@ export default function PlanoEnsinoFormulario() {
                   loading={requisicaoCursos.loading}
                   error={erros.cursoId}
                   searchable
+                  clearable
                   placeholder="Selecionar curso..."
                   onChange={(valor) => {
                     setCursoId(valor)
@@ -404,13 +432,14 @@ export default function PlanoEnsinoFormulario() {
               <Grade>
                 <Select<number>
                   label="Turma"
+                  required
                   options={opcoesTurmas}
                   value={turmaId}
                   loading={requisicaoVinculos.loading}
+                  error={erros.turmaId}
                   searchable
                   clearable
                   placeholder="Selecionar turma..."
-                  hint="Opcional: vincule para que o plano apareça na turma."
                   emptyText="Você ainda não leciona em nenhuma turma"
                   onChange={(valor) => {
                     setTurmaId(valor)
@@ -427,9 +456,11 @@ export default function PlanoEnsinoFormulario() {
 
                 <Select<number>
                   label="Disciplina"
+                  required
                   options={opcoesDisciplinas}
                   value={disciplinaId}
                   disabled={!turmaId}
+                  error={erros.disciplinaId}
                   searchable
                   clearable
                   placeholder="Selecionar disciplina..."

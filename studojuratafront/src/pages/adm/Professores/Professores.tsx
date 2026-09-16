@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Plus, Trash2, UserCog } from 'lucide-react'
+import { Archive, ArchiveRestore, Pencil, Plus, UserCog } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -48,19 +48,39 @@ export default function Professores() {
 
   const { executar: excluir, executando: excluindo } = useAcao(async (professor: Professor) => {
     await confirmar({
-      titulo: 'Excluir professor?',
-      descricao: `${professor.pessoa?.nome} será desativado. As turmas em que ele leciona precisarão de um novo responsável.`,
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar professor?',
+      descricao: `${professor.pessoa?.nome} será inativado. As turmas em que ele leciona precisarão de um novo responsável.`,
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoProfessores.excluir(professor.id)
-          toast.success('Professor excluído')
+          toast.success('Professor inativado')
           await reload()
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async (professor: Professor) => {
+    await confirmar({
+      titulo: 'Ativar professor?',
+      descricao: `${professor.pessoa?.nome} voltará a ficar ativo.`,
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoProfessores.ativar(professor.id)
+          toast.success('Professor ativado')
+          await reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -150,16 +170,26 @@ export default function Professores() {
             <IconButton
               label={`Editar ${professor.pessoa?.nome}`}
               icon={<Pencil />}
-              disabled={excluindo}
+              disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/professores/${professor.id}`)}
             />
-            <IconButton
-              label={`Excluir ${professor.pessoa?.nome}`}
-              icon={<Trash2 />}
-              variant="danger"
-              disabled={excluindo}
-              onClick={() => excluir(professor)}
-            />
+            {professor.status === 'INATIVO' ? (
+              <IconButton
+                label={`Ativar ${professor.pessoa?.nome}`}
+                icon={<ArchiveRestore />}
+                variant="success"
+                disabled={excluindo || ativando}
+                onClick={() => ativar(professor)}
+              />
+            ) : (
+              <IconButton
+                label={`Inativar ${professor.pessoa?.nome}`}
+                icon={<Archive />}
+                variant="danger"
+                disabled={excluindo || ativando}
+                onClick={() => excluir(professor)}
+              />
+            )}
           </>
         )}
       />

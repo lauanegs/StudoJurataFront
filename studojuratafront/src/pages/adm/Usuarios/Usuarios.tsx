@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { KeyRound, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, KeyRound, Pencil, Plus } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -48,19 +48,39 @@ export default function Usuarios() {
 
   const { executar: excluir, executando: excluindo } = useAcao(async (usuario: Usuario) => {
     await confirmar({
-      titulo: 'Excluir usuário?',
-      descricao: `O login de "${usuario.pessoa?.nome}" (${usuario.username}) será desativado.`,
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar usuário?',
+      descricao: `O login de "${usuario.pessoa?.nome}" (${usuario.username}) será inativado.`,
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoUsuarios.excluir(usuario.id)
-          toast.success('Usuário excluído')
+          toast.success('Usuário inativado')
           await reload()
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async (usuario: Usuario) => {
+    await confirmar({
+      titulo: 'Ativar usuário?',
+      descricao: `O login de "${usuario.pessoa?.nome}" (${usuario.username}) voltará a ficar ativo.`,
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoUsuarios.ativar(usuario.id)
+          toast.success('Usuário ativado')
+          await reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -149,16 +169,26 @@ export default function Usuarios() {
             <IconButton
               label={`Editar ${usuario.username}`}
               icon={<Pencil />}
-              disabled={excluindo}
+              disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/usuarios/${usuario.id}`)}
             />
-            <IconButton
-              label={`Excluir ${usuario.username}`}
-              icon={<Trash2 />}
-              variant="danger"
-              disabled={excluindo}
-              onClick={() => excluir(usuario)}
-            />
+            {usuario.status === 'INATIVO' ? (
+              <IconButton
+                label={`Ativar ${usuario.username}`}
+                icon={<ArchiveRestore />}
+                variant="success"
+                disabled={excluindo || ativando}
+                onClick={() => ativar(usuario)}
+              />
+            ) : (
+              <IconButton
+                label={`Inativar ${usuario.username}`}
+                icon={<Archive />}
+                variant="danger"
+                disabled={excluindo || ativando}
+                onClick={() => excluir(usuario)}
+              />
+            )}
           </>
         )}
       />

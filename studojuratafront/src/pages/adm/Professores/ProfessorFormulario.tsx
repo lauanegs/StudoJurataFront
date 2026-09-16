@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Save, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -24,7 +24,7 @@ import {
 } from '../../../services/endpoints'
 import { PessoaCampos } from '../_compartilhado/PessoaCampos'
 import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
-import { dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
+import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
 
 export default function ProfessorFormulario() {
   const { id } = useParams()
@@ -95,6 +95,8 @@ export default function ProfessorFormulario() {
     })()
 
     if (!enviado) {
+      const primeiroCampo = Object.keys(formulario.erros)[0] as keyof DadosPessoa | undefined
+      if (primeiroCampo) setAba(abaDoCampoPessoa(primeiroCampo))
       toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
     }
   })
@@ -103,19 +105,41 @@ export default function ProfessorFormulario() {
     if (!professorId) return
 
     await confirmar({
-      titulo: 'Excluir professor?',
+      titulo: 'Inativar professor?',
       descricao: 'As turmas em que ele leciona precisarão de um novo responsável.',
-      rotuloConfirmar: 'Excluir',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoProfessores.excluir(professorId)
-          toast.success('Professor excluído')
+          toast.success('Professor inativado')
           navegar('/adm/professores')
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async () => {
+    if (!professorId) return
+
+    await confirmar({
+      titulo: 'Ativar professor?',
+      descricao: 'O professor voltará a ficar ativo.',
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoProfessores.ativar(professorId)
+          toast.success('Professor ativado')
+          await requisicao.reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -139,16 +163,27 @@ export default function ProfessorFormulario() {
         rotuloVoltar="Professores"
         actions={
           <>
-            {edicao ? (
+            {edicao && requisicao.data?.status === 'INATIVO' ? (
+              <Button
+                variant="success"
+                size="large"
+                icon={<ArchiveRestore />}
+                loading={ativando}
+                onClick={ativar}
+                disabled={salvando}
+              >
+                Ativar
+              </Button>
+            ) : edicao ? (
               <Button
                 variant="danger"
                 size="large"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 loading={excluindo}
                 onClick={excluir}
                 disabled={salvando}
               >
-                Excluir
+                Inativar
               </Button>
             ) : (
               <Button

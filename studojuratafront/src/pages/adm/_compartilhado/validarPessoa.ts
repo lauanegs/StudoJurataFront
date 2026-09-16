@@ -39,16 +39,28 @@ export function validarPessoa(valores: DadosPessoa): Partial<Record<keyof DadosP
     erros.email = 'E-mail inválido'
   }
 
-  if (!valores.sexo) {
-    erros.sexo = 'Selecione o sexo'
-  }
-
   // Endereço é todo opcional (item 9.8) — só valida formato do que foi preenchido.
   if (valores.cep && apenasDigitos(valores.cep).length !== 8) {
     erros.cep = 'CEP incompleto'
   }
 
   return erros
+}
+
+const CAMPOS_ENDERECO = new Set<keyof DadosPessoa>([
+  'cep',
+  'logradouro',
+  'numero',
+  'complemento',
+  'bairro',
+  'cidade',
+  'estado',
+])
+
+/** Em qual aba (dados/endereço) um campo de DadosPessoa aparece — usado para levar
+ * o usuário até a aba com erro, em vez de só um toast genérico "faltam campos". */
+export function abaDoCampoPessoa(campo: keyof DadosPessoa): 'dados' | 'endereco' {
+  return CAMPOS_ENDERECO.has(campo) ? 'endereco' : 'dados'
 }
 
 export function paraPayloadPessoa(valores: DadosPessoa): Partial<Pessoa> {

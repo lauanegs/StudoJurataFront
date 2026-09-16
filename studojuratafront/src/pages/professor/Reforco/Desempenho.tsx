@@ -8,13 +8,16 @@ import {
   CalendarClock,
   CheckCircle2,
   ClipboardCheck,
+  Filter,
   FileDown,
   FileSpreadsheet,
   FileText,
   Rocket,
+  Search,
   Target,
   TrendingUp,
   Users,
+  X,
 } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
@@ -29,14 +32,17 @@ import { Header } from '../../../components/ui/Header'
 import { Histograma } from '../../../components/ui/Histograma'
 import { InfoCard } from '../../../components/ui/InfoCard'
 import { ListaInfo } from '../../../components/ui/ListaInfo'
-import { Select, type SelectOption } from '../../../components/ui/Select'
+import { Modal } from '../../../components/ui/Modal'
+import { Select } from '../../../components/ui/Select'
 import { Tag } from '../../../components/ui/Tag'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
+import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import {
   disciplinas as servicoDisciplinas,
+  professores as servicoProfessores,
   simuladoAlunos,
   simulados as servicoSimulados,
   turmas as servicoTurmas,
@@ -98,34 +104,18 @@ const Indicadores = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-const LarguraPeriodo = styled.div`
-  width: 200px;
+const ColunaFiltros = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
 `
-
-type PeriodoPreset = 'mes' | 'ano' | 'tudo'
-
-const OPCOES_PERIODO: SelectOption<PeriodoPreset>[] = [
-  { value: 'mes', label: 'Este mês' },
-  { value: 'ano', label: 'Este ano' },
-  { value: 'tudo', label: 'Todo o histórico' },
-]
-
-/** Simulado "no período" pela data em que foi aplicado (mesmo campo usado pra ordenar por realização). */
-function estaNoPeriodo(dataIso: string | undefined, preset: PeriodoPreset): boolean {
-  if (preset === 'tudo') return true
-  if (!dataIso) return false
-
-  const data = new Date(dataIso)
-  const agora = new Date()
-
-  if (preset === 'ano') return data.getFullYear() === agora.getFullYear()
-  return data.getFullYear() === agora.getFullYear() && data.getMonth() === agora.getMonth()
-}
 
 interface DesempenhoSimulado {
   simuladoId: number
   titulo: string
+  turmaId?: number | null
   turma: string
+  disciplinaId?: number | null
   disciplina: string
   percentual: number
   tentativas: number
@@ -148,16 +138,62 @@ interface DesempenhoSimulado {
 export default function Desempenho() {
   const navegar = useNavigate()
 
+  const { professorId } = useProfessorLogado()
+
   const [simuladoDetalhado, setSimuladoDetalhado] = useState<DesempenhoSimulado | null>(null)
-  // Pedido explícito: os gráficos que abrem a tela já vêm filtrados por um
-  // período (ano atual por padrão) — "Todo o histórico" continua disponível
-  // pra quem quiser o panorama completo.
-  const [periodo, setPeriodo] = useState<PeriodoPreset>('ano')
+
+  // Filtro de turma/disciplina (pedido explícito, mesmo padrão de botão
+  // "Filtros" das telas detalhadas — só turma+disciplina aqui, sem aluno,
+  // que não se encaixa nessa visão agregada por simulado). Só refiltra ao
+  // clicar "Buscar" dentro do modal, igual às outras telas de desempenho.
+  const [modalFiltrosAberto, setModalFiltrosAberto] = useState(false)
+  const [turmaIdForm, setTurmaIdForm] = useState<number | null>(null)
+  const [disciplinaIdForm, setDisciplinaIdForm] = useState<number | null>(null)
+  const [turmaIdAplicado, setTurmaIdAplicado] = useState<number | null>(null)
+  const [disciplinaIdAplicado, setDisciplinaIdAplicado] = useState<number | null>(null)
 
   const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
   const requisicaoTentativas = useRequisicao(() => simuladoAlunos.listar(), [])
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
   const requisicaoTurmas = useRequisicao(() => servicoTurmas.listar(), [])
+  const requisicaoVinculos = useRequisicao(
+    () => servicoProfessores.turmasLecionadas(professorId as number),
+    [professorId],
+    { ativo: Boolean(professorId) },
+  )
+
+  const opcoesTurmasFiltro = useMemo(() => {
+    const unicas = new Map<number, string>()
+    for (const vinculo of requisicaoVinculos.data ?? []) {
+      if (vinculo.turma && vinculo.status !== 'INATIVO') unicas.set(vinculo.turma.id, vinculo.turma.titulo)
+    }
+    return [...unicas.entries()].map(([value, label]) => ({ value, label }))
+  }, [requisicaoVinculos.data])
+
+  const opcoesDisciplinasFiltro = useMemo(() => {
+    const unicas = new Map<number, string>()
+    for (const vinculo of requisicaoVinculos.data ?? []) {
+      if (!vinculo.disciplina || vinculo.status === 'INATIVO') continue
+      if (turmaIdForm && vinculo.turma?.id !== turmaIdForm) continue
+      unicas.set(vinculo.disciplina.id, vinculo.disciplina.titulo)
+    }
+    return [...unicas.entries()].map(([value, label]) => ({ value, label }))
+  }, [requisicaoVinculos.data, turmaIdForm])
+
+  const quantidadeFiltrosAtivos = [turmaIdAplicado, disciplinaIdAplicado].filter(Boolean).length
+
+  function buscarFiltros() {
+    setTurmaIdAplicado(turmaIdForm)
+    setDisciplinaIdAplicado(disciplinaIdForm)
+    setModalFiltrosAberto(false)
+  }
+
+  function limparFiltros() {
+    setTurmaIdForm(null)
+    setDisciplinaIdForm(null)
+    setTurmaIdAplicado(null)
+    setDisciplinaIdAplicado(null)
+  }
 
   const desempenhosTotais = useMemo<DesempenhoSimulado[]>(() => {
     const simulados = requisicaoSimulados.data ?? []
@@ -185,7 +221,9 @@ export default function Desempenho() {
         return {
           simuladoId,
           titulo: simulado?.titulo ?? `Simulado ${simuladoId}`,
+          turmaId: simulado?.turmaId,
           turma: listaTurmas.find((turma) => turma.id === simulado?.turmaId)?.titulo ?? 'Sem turma',
+          disciplinaId: simulado?.disciplinaId,
           disciplina:
             listaDisciplinas.find((disciplina) => disciplina.id === simulado?.disciplinaId)?.titulo ??
             'Sem disciplina',
@@ -206,18 +244,31 @@ export default function Desempenho() {
       })
   }, [requisicaoSimulados.data, requisicaoTentativas.data, requisicaoDisciplinas.data, requisicaoTurmas.data])
 
-  // Recorte pelo período selecionado — só afeta os gráficos abaixo; os
-  // cards de números absolutos no topo continuam somando tudo (ver
-  // totais* mais abaixo, calculados a partir de desempenhosTotais).
+  // Recorte por turma/disciplina selecionados — só afeta os gráficos
+  // abaixo; os cards de números absolutos no topo continuam somando tudo
+  // (ver totais* mais abaixo, calculados a partir de desempenhosTotais).
   const desempenhos = useMemo(
-    () => desempenhosTotais.filter((item) => estaNoPeriodo(item.data, periodo)),
-    [desempenhosTotais, periodo],
+    () =>
+      desempenhosTotais.filter(
+        (item) =>
+          (!turmaIdAplicado || item.turmaId === turmaIdAplicado) &&
+          (!disciplinaIdAplicado || item.disciplinaId === disciplinaIdAplicado),
+      ),
+    [desempenhosTotais, turmaIdAplicado, disciplinaIdAplicado],
   )
 
-  const rotuloPeriodo = OPCOES_PERIODO.find((opcao) => opcao.value === periodo)?.label ?? ''
-  const contextoTextoPeriodo = [`Período: ${rotuloPeriodo}`]
+  const rotuloTurmaAplicada = opcoesTurmasFiltro.find((opcao) => opcao.value === turmaIdAplicado)?.label
+  const rotuloDisciplinaAplicada = opcoesDisciplinasFiltro.find(
+    (opcao) => opcao.value === disciplinaIdAplicado,
+  )?.label
+  const contextoTextoPeriodo = [
+    ...(rotuloTurmaAplicada ? [`Turma: ${rotuloTurmaAplicada}`] : []),
+    ...(rotuloDisciplinaAplicada ? [`Disciplina: ${rotuloDisciplinaAplicada}`] : []),
+  ]
   const contextoPeriodo = (
-    <ListaInfo itens={[{ icon: <CalendarClock />, texto: contextoTextoPeriodo[0] }]} />
+    <ListaInfo
+      itens={contextoTextoPeriodo.map((texto) => ({ icon: <CalendarClock />, texto }))}
+    />
   )
 
   const criticos = desempenhos.filter((item) => item.percentual < 50)
@@ -490,15 +541,69 @@ export default function Desempenho() {
           </>
         }
         filtros={
-          <LarguraPeriodo>
-            <Select<PeriodoPreset>
-              options={OPCOES_PERIODO}
-              value={periodo}
-              onChange={(valor) => setPeriodo(valor ?? 'ano')}
-            />
-          </LarguraPeriodo>
+          <>
+            <Button
+              size="large"
+              variant="primary"
+              icon={<Filter />}
+              onClick={() => {
+                setTurmaIdForm(turmaIdAplicado)
+                setDisciplinaIdForm(disciplinaIdAplicado)
+                setModalFiltrosAberto(true)
+              }}
+            >
+              Filtrar{quantidadeFiltrosAtivos > 0 ? ` (${quantidadeFiltrosAtivos})` : ''}
+            </Button>
+          </>
         }
       />
+
+      <Modal
+        aberto={modalFiltrosAberto}
+        onClose={() => setModalFiltrosAberto(false)}
+        titulo="Filtros"
+        descricao="Turma e disciplina consideradas nos gráficos."
+        largura="420px"
+        rodape={
+          <>
+            {quantidadeFiltrosAtivos > 0 && (
+              <Button variant="subtle" icon={<X />} onClick={limparFiltros}>
+                Limpar filtros
+              </Button>
+            )}
+            <Button icon={<Search />} onClick={buscarFiltros}>
+              Buscar
+            </Button>
+          </>
+        }
+      >
+        <ColunaFiltros>
+          <Select
+            label="Turma"
+            placeholder="Todas as turmas"
+            options={opcoesTurmasFiltro}
+            value={turmaIdForm}
+            clearable
+            loading={requisicaoVinculos.loading}
+            emptyText="Você não leciona em nenhuma turma"
+            onChange={(valor) => {
+              setTurmaIdForm(valor)
+              setDisciplinaIdForm(null)
+            }}
+          />
+
+          <Select
+            label="Disciplina"
+            placeholder="Todas as disciplinas"
+            options={opcoesDisciplinasFiltro}
+            value={disciplinaIdForm}
+            clearable
+            disabled={!turmaIdForm}
+            emptyText="Selecione uma turma primeiro"
+            onChange={setDisciplinaIdForm}
+          />
+        </ColunaFiltros>
+      </Modal>
 
       <Indicadores>
         <InfoCard
@@ -657,19 +762,19 @@ export default function Desempenho() {
           <EstadoVazio
             titulo={
               desempenhosTotais.length > 0
-                ? `Nenhum simulado concluído em "${rotuloPeriodo}"`
+                ? 'Nenhum simulado encontrado com esses filtros'
                 : 'Ainda não há simulados concluídos'
             }
             descricao={
               desempenhosTotais.length > 0
-                ? 'Troque o período no topo da tela pra ver um recorte maior.'
+                ? 'Ajuste ou limpe os filtros de turma/disciplina.'
                 : 'Assim que os alunos finalizarem os primeiros simulados, o desempenho aparece aqui.'
             }
             icon={<TrendingUp />}
             acao={
               desempenhosTotais.length > 0 ? (
-                <Button variant="secondary" onClick={() => setPeriodo('tudo')}>
-                  Ver todo o histórico
+                <Button variant="secondary" onClick={limparFiltros}>
+                  Limpar filtros
                 </Button>
               ) : (
                 <Button icon={<Rocket />} onClick={() => navegar('/professor/reforco/simulados/novo')}>

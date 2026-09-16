@@ -1,22 +1,19 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { CalendarPlus, Users } from 'lucide-react'
+import { CalendarPlus, Clock, GraduationCap, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
+import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Header } from '../../../components/ui/Header'
+import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
+import { useAvisosDispensados } from '../../../hooks/useAvisosDispensados'
+import { useCargaHorariaCursada } from '../../../hooks/useCargaHorariaCursada'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import {
-  frequencias as servicoFrequencias,
-  matriculas,
-  planosAula,
-  turmaDisciplinas,
-  turmas as servicoTurmas,
-} from '../../../services/endpoints'
+import { matriculas, turmaDisciplinas, turmas as servicoTurmas } from '../../../services/endpoints'
 import { formatarCargaHoraria, formatarData, formatarIdade, normalizar } from '../../../utils/format'
 import type { AlunoTurma } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
@@ -33,50 +30,36 @@ export default function TurmaDetalhada() {
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(idTurma), [idTurma])
   const requisicaoAlunos = useRequisicao(() => matriculas.ativosPorTurma(idTurma), [idTurma])
   const requisicaoVinculos = useRequisicao(() => turmaDisciplinas.listar(), [])
+  const requisicaoHistorico = useRequisicao(() => matriculas.historicoPorTurma(idTurma), [idTurma])
+
+  const { dispensados: avisosDispensados, dispensar: dispensarAviso } = useAvisosDispensados()
+  /** Aviso (só informativo) quando um aluno concluiu automaticamente a
+   * matrícula por ter atingido a carga horária do curso — ver
+   * FrequenciaService no back. */
+  const avisosCargaHoraria = useMemo(
+    () =>
+      (requisicaoHistorico.data ?? []).filter(
+        (matricula) => matricula.status === 'CONCLUIDA' && !avisosDispensados.includes(matricula.id),
+      ),
+    [requisicaoHistorico.data, avisosDispensados],
+  )
 
   const vinculosDaTurma = useMemo(
-    () => (requisicaoVinculos.data ?? []).filter((vinculo) => vinculo.turma?.id === idTurma),
+    () =>
+      (requisicaoVinculos.data ?? []).filter(
+        (vinculo) => vinculo.turma?.id === idTurma && vinculo.status !== 'INATIVO',
+      ),
     [requisicaoVinculos.data, idTurma],
   )
 
-  /**
-   * Carga horária já cursada por cada aluno nesta turma — soma das aulas já
-   * ministradas (com frequência marcada presente) em qualquer disciplina da
-   * turma. Mesmo cálculo usado na chamada do professor (RegistrarAulaTurma),
-   * só que somando todas as disciplinas em vez de uma só.
-   */
-  const requisicaoCargaHoraria = useRequisicao(
-    async () => {
-      const alunos = requisicaoAlunos.data ?? []
-      if (alunos.length === 0 || vinculosDaTurma.length === 0) return new Map<number, number>()
-
-      const planosDaTurma = await Promise.all(
-        vinculosDaTurma.map((vinculo) => planosAula.listarPorTurmaDisciplina(vinculo.id)),
-      )
-      const idsPlanosDaTurma = new Set(planosDaTurma.flat().map((plano) => plano.id))
-
-      const frequenciasPorAluno = await Promise.all(
-        alunos.map((matricula) => servicoFrequencias.listarPorAluno(matricula.aluno.id)),
-      )
-
-      return new Map(
-        alunos.map((matricula, indice) => {
-          const total = frequenciasPorAluno[indice]
-            .filter((frequencia) => {
-              const idPlanoAula = frequencia.aula?.planoAula?.id
-              return frequencia.presente && idPlanoAula !== undefined && idsPlanosDaTurma.has(idPlanoAula)
-            })
-            .reduce((soma, frequencia) => soma + (frequencia.aula?.cargaHoraria ?? 0), 0)
-
-          return [matricula.aluno.id, total]
-        }),
-      )
-    },
-    [requisicaoAlunos.data, vinculosDaTurma],
-    { ativo: !requisicaoAlunos.loading && !requisicaoVinculos.loading },
+  const requisicaoCargaHoraria = useCargaHorariaCursada(
+    requisicaoAlunos.data ?? [],
+    vinculosDaTurma,
+    !requisicaoAlunos.loading && !requisicaoVinculos.loading,
   )
 
-  const cargaHorariaPorAluno = requisicaoCargaHoraria.data ?? new Map<number, number>()
+  const cargaHorariaPorAluno = requisicaoCargaHoraria.data?.cargaHoraria ?? new Map<number, number>()
+  const faltasPorAluno = requisicaoCargaHoraria.data?.faltas ?? new Map<number, number>()
 
   const filtrados = useMemo(() => {
     const lista = requisicaoAlunos.data ?? []
@@ -101,9 +84,19 @@ export default function TurmaDetalhada() {
     },
     {
       key: 'cargaHoraria',
-      cabecalho: 'Carga horária',
+      // Soma todas as disciplinas ativas da turma (nível do curso) — não é
+      // por disciplina; ver a coluna equivalente em "Realizar chamada"
+      // (RegistrarAulaTurma), que é escopada só à disciplina da aula.
+      cabecalho: 'Carga horária atingida (curso)',
       ocultarEmTelaPequena: true,
       render: (matricula) => formatarCargaHoraria(cargaHorariaPorAluno.get(matricula.aluno.id) ?? 0),
+    },
+    {
+      key: 'faltas',
+      cabecalho: 'Nº de faltas',
+      alinhamento: 'center',
+      ocultarEmTelaPequena: true,
+      render: (matricula) => faltasPorAluno.get(matricula.aluno.id) ?? 0,
     },
     {
       key: 'matricula',
@@ -129,6 +122,16 @@ export default function TurmaDetalhada() {
     <Layout>
       <Header
         titulo={requisicaoTurma.data?.titulo ?? 'Turma'}
+        subtitulo={
+          requisicaoTurma.data?.curso && (
+            <>
+              <SubtituloItem icon={<GraduationCap />}>Curso: {requisicaoTurma.data.curso.nome}</SubtituloItem>
+              <SubtituloItem icon={<Clock />}>
+                Carga horária: {formatarCargaHoraria(requisicaoTurma.data.curso.cargaHorariaTotal)}
+              </SubtituloItem>
+            </>
+          )
+        }
         voltarPara="/professor/turmas"
         rotuloVoltar="Minhas turmas"
         actions={
@@ -142,6 +145,20 @@ export default function TurmaDetalhada() {
         }
         filtros={<BuscaInput value={busca} onChange={setBusca} placeholder="Buscar aluno..." />}
       />
+
+      {avisosCargaHoraria.map((matricula) => (
+        <AlertaDesempenhoCard
+          key={matricula.id}
+          tom="success"
+          titulo={`${matricula.aluno?.pessoa?.nome ?? 'Aluno'} concluiu a carga horária`}
+          descricao={`Matrícula concluída automaticamente em ${formatarData(matricula.dataFim)}. Se for necessário reativar, entre em contato com a administração.`}
+          acao={
+            <Button variant="secondary" size="small" onClick={() => dispensarAviso(matricula.id)}>
+              Ciente
+            </Button>
+          }
+        />
+      ))}
 
       <DataTable
         descricao="Alunos ativos na turma"

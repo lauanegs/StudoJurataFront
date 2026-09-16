@@ -32,7 +32,7 @@ import {
   simuladoQuestoes,
   simulados as servicoSimulados,
 } from '../../services/endpoints'
-import { formatarMoedas, formatarTempo, letraAlternativa, nomeCurto } from '../../utils/format'
+import { formatarMoedas, formatarNota, formatarTempo, letraAlternativa, nomeCurto } from '../../utils/format'
 import { resolverImagemSkin } from '../../utils/skins'
 import { animacaoFlutuar } from '../../styles/animations'
 import { theme } from '../../styles/theme'
@@ -259,6 +259,10 @@ export default function Simulado() {
   const [temposPorQuestao, setTemposPorQuestao] = useState<Record<number, number>>({})
   const [segundos, setSegundos] = useState(0)
   const [finalizando, setFinalizando] = useState(false)
+  // Só vem na resposta do próprio POST /finalizar (ver
+  // SimuladoAlunoController) — o GET de recarregamento normal não traz esse
+  // campo, por isso guardamos aqui em vez de ler de requisicaoTentativa.data.
+  const [diasProximaRevisao, setDiasProximaRevisao] = useState<number | null>(null)
 
   // Marca quando o aluno entrou na questão atual. Começa em 0 e é ajustado no
   // primeiro efeito, para não ler o relógio durante a renderização.
@@ -350,7 +354,7 @@ export default function Simulado() {
       setFinalizando(true)
 
       try {
-        await simuladoAlunos.finalizar(idTentativa, {
+        const resultado = await simuladoAlunos.finalizar(idTentativa, {
           respostas: questoes.map((questao) => ({
             questaoId: questao.questaoId,
             alternativaId: questao.tipo === 'VERDADEIRO_FALSO' ? null : (respostas[questao.questaoId] ?? null),
@@ -367,6 +371,8 @@ export default function Simulado() {
           tempoGastoTotal: segundos,
           finalizadoPorTempo: motivo === 'tempo',
         })
+
+        setDiasProximaRevisao(resultado.diasProximaRevisao ?? null)
 
         if (motivo === 'saida') {
           toast.error(
@@ -590,6 +596,9 @@ export default function Simulado() {
               <Etiquetas>
                 {/* Mesmo verde/vermelho das alternativas (LetterBadge correct/incorrect) —
                     tokens.gradients.success/danger, não um verde/vermelho à parte. */}
+                <Etiqueta $fundo="rgba(115, 115, 115, 0.15)" $claro>
+                  Nota: {formatarNota(tentativa?.nota)}/{formatarNota(simulado?.notaMaxima ?? 10)}
+                </Etiqueta>
                 <Etiqueta $fundo={theme.gradients.success}>{acertos} acerto(s)</Etiqueta>
                 <Etiqueta $fundo={theme.gradients.danger}>{erradas} erro(s)</Etiqueta>
                 <Etiqueta $fundo="rgba(115, 115, 115, 0.15)" $claro>
@@ -610,7 +619,11 @@ export default function Simulado() {
               </ValorMoedas>
 
               <TextoSecundario>
-                Este conteúdo voltará em 2 dias para sua revisão, então até logo!
+                {diasProximaRevisao === null
+                  ? 'Continue praticando os simulados disponíveis, até a próxima!'
+                  : diasProximaRevisao <= 0
+                    ? 'Este conteúdo já está disponível para revisão — até logo!'
+                    : `Este conteúdo voltará em ${diasProximaRevisao} dia${diasProximaRevisao === 1 ? '' : 's'} para sua revisão, então até logo!`}
               </TextoSecundario>
 
               <TextoSecundario>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookOpen, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, BookOpen, Pencil, Plus } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -46,19 +46,39 @@ export default function Disciplinas() {
 
   const { executar: excluir, executando: excluindo } = useAcao(async (disciplina: Disciplina) => {
     await confirmar({
-      titulo: 'Excluir disciplina?',
-      descricao: `"${disciplina.titulo}" será desativada. Notas e simulados já lançados são preservados.`,
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar disciplina?',
+      descricao: `"${disciplina.titulo}" será inativada. Notas e simulados já lançados são preservados.`,
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoDisciplinas.excluir(disciplina.id)
-          toast.success('Disciplina excluída')
+          toast.success('Disciplina inativada')
           await reload()
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async (disciplina: Disciplina) => {
+    await confirmar({
+      titulo: 'Ativar disciplina?',
+      descricao: `"${disciplina.titulo}" voltará a ficar ativa.`,
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoDisciplinas.ativar(disciplina.id)
+          toast.success('Disciplina ativada')
+          await reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -133,16 +153,26 @@ export default function Disciplinas() {
             <IconButton
               label={`Editar ${disciplina.titulo}`}
               icon={<Pencil />}
-              disabled={excluindo}
+              disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/disciplinas/${disciplina.id}`)}
             />
-            <IconButton
-              label={`Excluir ${disciplina.titulo}`}
-              icon={<Trash2 />}
-              variant="danger"
-              disabled={excluindo}
-              onClick={() => excluir(disciplina)}
-            />
+            {disciplina.status === 'INATIVO' ? (
+              <IconButton
+                label={`Ativar ${disciplina.titulo}`}
+                icon={<ArchiveRestore />}
+                variant="success"
+                disabled={excluindo || ativando}
+                onClick={() => ativar(disciplina)}
+              />
+            ) : (
+              <IconButton
+                label={`Inativar ${disciplina.titulo}`}
+                icon={<Archive />}
+                variant="danger"
+                disabled={excluindo || ativando}
+                onClick={() => excluir(disciplina)}
+              />
+            )}
           </>
         )}
       />

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { GraduationCap, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, GraduationCap, Pencil, Plus } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -48,19 +48,39 @@ export default function Alunos() {
 
   const { executar: excluir, executando: excluindo } = useAcao(async (aluno: Aluno) => {
     await confirmar({
-      titulo: 'Excluir aluno?',
-      descricao: `${aluno.pessoa?.nome} será desativado. As matrículas e o histórico de simulados continuam preservados.`,
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar aluno?',
+      descricao: `${aluno.pessoa?.nome} será inativado. Só funciona se ele nunca teve matrícula em turma — matrícula ativa ou histórico impede.`,
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoAlunos.excluir(aluno.id)
-          toast.success('Aluno excluído', `${aluno.pessoa?.nome} foi removido da listagem.`)
+          toast.success('Aluno inativado', `${aluno.pessoa?.nome} foi removido da listagem.`)
           await reload()
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async (aluno: Aluno) => {
+    await confirmar({
+      titulo: 'Ativar aluno?',
+      descricao: `${aluno.pessoa?.nome} voltará a ficar ativo.`,
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoAlunos.ativar(aluno.id)
+          toast.success('Aluno ativado')
+          await reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -145,16 +165,26 @@ export default function Alunos() {
             <IconButton
               label={`Editar ${aluno.pessoa?.nome}`}
               icon={<Pencil />}
-              disabled={excluindo}
+              disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/alunos/${aluno.id}`)}
             />
-            <IconButton
-              label={`Excluir ${aluno.pessoa?.nome}`}
-              icon={<Trash2 />}
-              variant="danger"
-              disabled={excluindo}
-              onClick={() => excluir(aluno)}
-            />
+            {aluno.pessoa?.status === 'INATIVO' ? (
+              <IconButton
+                label={`Ativar ${aluno.pessoa?.nome}`}
+                icon={<ArchiveRestore />}
+                variant="success"
+                disabled={excluindo || ativando}
+                onClick={() => ativar(aluno)}
+              />
+            ) : (
+              <IconButton
+                label={`Inativar ${aluno.pessoa?.nome}`}
+                icon={<Archive />}
+                variant="danger"
+                disabled={excluindo || ativando}
+                onClick={() => excluir(aluno)}
+              />
+            )}
           </>
         )}
       />

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Plus, Trash2, Users } from 'lucide-react'
+import { Archive, ArchiveRestore, Pencil, Plus, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -65,19 +65,39 @@ export default function Turmas() {
 
   const { executar: excluir, executando: excluindo } = useAcao(async (turma: Turma) => {
     await confirmar({
-      titulo: 'Excluir turma?',
-      descricao: `"${turma.titulo}" será desativada. O histórico de matrículas é preservado.`,
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar turma?',
+      descricao: `"${turma.titulo}" será inativada. Só funciona se ela nunca teve aluno matriculado — se já teve, altere a Situação dela para inativar preservando o histórico.`,
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoTurmas.excluir(turma.id)
-          toast.success('Turma excluída')
+          toast.success('Turma inativada')
           await reload()
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async (turma: Turma) => {
+    await confirmar({
+      titulo: 'Ativar turma?',
+      descricao: `"${turma.titulo}" voltará a ficar ativa.`,
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoTurmas.ativar(turma.id)
+          toast.success('Turma ativada')
+          await reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -175,16 +195,26 @@ export default function Turmas() {
             <IconButton
               label={`Editar ${turma.titulo}`}
               icon={<Pencil />}
-              disabled={excluindo}
+              disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/turmas/${turma.id}`)}
             />
-            <IconButton
-              label={`Excluir ${turma.titulo}`}
-              icon={<Trash2 />}
-              variant="danger"
-              disabled={excluindo}
-              onClick={() => excluir(turma)}
-            />
+            {turma.status === 'INATIVA' ? (
+              <IconButton
+                label={`Ativar ${turma.titulo}`}
+                icon={<ArchiveRestore />}
+                variant="success"
+                disabled={excluindo || ativando}
+                onClick={() => ativar(turma)}
+              />
+            ) : (
+              <IconButton
+                label={`Inativar ${turma.titulo}`}
+                icon={<Archive />}
+                variant="danger"
+                disabled={excluindo || ativando}
+                onClick={() => excluir(turma)}
+              />
+            )}
           </>
         )}
       />

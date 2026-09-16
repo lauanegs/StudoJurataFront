@@ -161,6 +161,9 @@ export const api = {
   put: <T>(caminho: string, body?: unknown, params?: Parametros) =>
     requisitar<T>(caminho, { method: 'PUT', body, params }),
 
+  patch: <T>(caminho: string, body?: unknown, params?: Parametros) =>
+    requisitar<T>(caminho, { method: 'PATCH', body, params }),
+
   delete: <T = void>(caminho: string, params?: Parametros) =>
     requisitar<T>(caminho, { method: 'DELETE', params }),
 }

@@ -176,12 +176,15 @@ export default function Notas() {
     return []
   }, [tipo, disciplinasDaTurma, requisicaoMatriculasTurma.data])
 
-  // Trocar de aba invalida a busca aplicada — evita continuar mostrando um
-  // resultado de "Ativos" com a aba "Histórico" selecionada (ou vice-versa).
+  // Trocar de aba limpa todos os filtros (pedido explícito) — evita
+  // continuar mostrando turma/tipo escolhidos pra "Ativos" ao entrar em
+  // "Histórico" (ou vice-versa), já que o próprio conjunto de alunos muda.
   function trocarVisao(nova: Visao) {
     setVisao(nova)
-    setFiltro(null)
+    setTurmaId(null)
+    setTipo(null)
     setEspecificoId(null)
+    setFiltro(null)
   }
 
   function buscar() {

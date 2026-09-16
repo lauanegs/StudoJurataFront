@@ -125,7 +125,14 @@ export function GraficoCard({
         <Card elevacao="none">{renderGrafico(alturaDetalhe, true)}</Card>
         {detalhe && (
           <SecaoDetalhe>
-            <Card elevacao="none">{detalhe}</Card>
+            {/* semPadding (item pedido pelo usuário): o conteúdo mais comum aqui é uma
+               DataTable, que já tem sua própria margem interna via linhas/bordas —
+               mesmo padrão do card "Desempenho por questão" em DetalheSimuladoModal.
+               Conteúdo que não é tabela (EstadoVazio, Skeleton) traz seu próprio
+               espaçamento. */}
+            <Card elevacao="none" semPadding>
+              {detalhe}
+            </Card>
           </SecaoDetalhe>
         )}
       </Modal>

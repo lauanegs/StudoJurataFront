@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Save, Trash2, Users } from 'lucide-react'
+import { Archive, Save, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -216,18 +216,18 @@ export default function AulaFormulario() {
     if (!idAula) return
 
     await confirmar({
-      titulo: 'Excluir aula?',
+      titulo: 'Inativar aula?',
       descricao: 'Frequências e conteúdos já registrados são preservados.',
-      rotuloConfirmar: 'Excluir',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoAulas.excluir(idAula)
-          toast.success('Aula excluída')
+          toast.success('Aula inativada')
           navegar(destinoPadrao)
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
           )
         }
@@ -264,12 +264,12 @@ export default function AulaFormulario() {
               <Button
                 size="large"
                 variant="danger"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 loading={excluindo}
                 onClick={excluir}
                 disabled={salvando}
               >
-                Excluir
+                Inativar
               </Button>
             ) : (
               <Button

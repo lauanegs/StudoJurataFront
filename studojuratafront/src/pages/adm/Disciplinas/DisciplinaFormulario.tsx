@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Save, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -106,19 +106,41 @@ export default function DisciplinaFormulario() {
     if (!disciplinaId) return
 
     await confirmar({
-      titulo: 'Excluir disciplina?',
+      titulo: 'Inativar disciplina?',
       descricao: 'Notas e simulados já lançados continuam existindo.',
-      rotuloConfirmar: 'Excluir',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoDisciplinas.excluir(disciplinaId)
-          toast.success('Disciplina excluída')
+          toast.success('Disciplina inativada')
           navegar('/adm/disciplinas')
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async () => {
+    if (!disciplinaId) return
+
+    await confirmar({
+      titulo: 'Ativar disciplina?',
+      descricao: 'A disciplina voltará a ficar ativa.',
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoDisciplinas.ativar(disciplinaId)
+          toast.success('Disciplina ativada')
+          await requisicao.reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -142,16 +164,27 @@ export default function DisciplinaFormulario() {
         rotuloVoltar="Disciplinas"
         actions={
           <>
-            {edicao ? (
+            {edicao && requisicao.data?.status === 'INATIVO' ? (
+              <Button
+                variant="success"
+                size="large"
+                icon={<ArchiveRestore />}
+                loading={ativando}
+                onClick={ativar}
+                disabled={salvando}
+              >
+                Ativar
+              </Button>
+            ) : edicao ? (
               <Button
                 variant="danger"
                 size="large"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 loading={excluindo}
                 onClick={excluir}
                 disabled={salvando}
               >
-                Excluir
+                Inativar
               </Button>
             ) : (
               <Button

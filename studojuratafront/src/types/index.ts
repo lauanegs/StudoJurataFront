@@ -16,7 +16,7 @@ export type StatusAtivoInativo = 'ATIVO' | 'INATIVO'
 /** Próprio de PlanoEnsino/PlanoAula — matrícula cíclica não tem "inativo", só "concluído" (ciclo fechado). */
 export type StatusPlano = 'ATIVO' | 'CONCLUIDO'
 export type StatusTurma = 'ATIVA' | 'INATIVA'
-export type StatusMatricula = 'ATIVA' | 'CONCLUIDA' | 'CANCELADA' | 'TRANSFERIDA'
+export type StatusMatricula = 'ATIVA' | 'CONCLUIDA' | 'CANCELADA'
 export type StatusQuestao = 'PENDENTE' | 'APROVADA' | 'REJEITADA'
 export type StatusSimulado = 'RASCUNHO' | 'PUBLICADO' | 'ENCERRADO'
 export type StatusSimuladoAluno = 'PENDENTE' | 'CONCLUIDO'
@@ -192,7 +192,6 @@ export interface AlunoTurma extends EntidadeBase {
   dataInicio?: string
   dataFim?: string
   status?: StatusMatricula
-  matriculaDestinoTransferencia?: AlunoTurma | null
 }
 
 export interface PlanoEnsino extends EntidadeBase {
@@ -410,6 +409,8 @@ export interface SimuladoAlunoResponse {
   tempoGasto?: number
   finalizadoPorTempo?: boolean
   status?: StatusSimuladoAluno
+  /** Só vem preenchido na resposta de finalizar() — dias até a próxima revisão por repetição espaçada (undefined se o simulado não cobre conteúdo rastreado, ou já dominado). */
+  diasProximaRevisao?: number
 }
 
 export interface QuestaoAlunoRequest {

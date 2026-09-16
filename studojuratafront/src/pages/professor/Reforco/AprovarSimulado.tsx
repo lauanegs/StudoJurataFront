@@ -302,13 +302,26 @@ export default function AprovarSimulado() {
   async function aprovarSimulado() {
     await confirmar({
       titulo: 'Aprovar todas as questões?',
-      descricao: `${questoes.length} questão(ões) pendente(s) serão aprovadas de uma vez.`,
+      descricao: `${questoes.length} questão(ões) pendente(s) serão aprovadas de uma vez, e o simulado será lançado automaticamente na data de início definida.`,
       rotuloConfirmar: 'Aprovar tudo',
       aoConfirmar: async () => {
         setProcessandoLote(true)
         try {
           await Promise.all(questoes.map((questao) => servicoQuestoes.aprovar(questao.id as number)))
-          toast.success('Simulado aprovado', 'Todas as questões pendentes foram aprovadas.')
+
+          try {
+            await servicoSimulados.lancar(idSimulado)
+            toast.success('Simulado aprovado e lançado', 'Os alunos já podem iniciar as tentativas.')
+          } catch (erroLancar) {
+            // Aprovar sempre vale mesmo se o lançamento falhar (ex.: falta
+            // turma, ou destinação ESPECIFICO exige escolher os alunos) —
+            // o professor lança manualmente depois, na tela de Simulados.
+            toast.warning(
+              'Questões aprovadas, mas não foi possível lançar automaticamente',
+              erroLancar instanceof ApiError ? erroLancar.message : 'Lance manualmente na tela de Simulados.',
+            )
+          }
+
           navegar('/professor/reforco/aprovacao')
         } catch (erro) {
           toast.error('Não foi possível aprovar tudo', erro instanceof ApiError ? erro.message : undefined)
@@ -322,7 +335,7 @@ export default function AprovarSimulado() {
   async function reprovarSimulado() {
     await confirmar({
       titulo: 'Reprovar todas as questões?',
-      descricao: `${questoes.length} questão(ões) pendente(s) serão rejeitadas de uma vez.`,
+      descricao: `${questoes.length} questão(ões) pendente(s) serão rejeitadas de uma vez e vão para a aba "Rejeitadas" do banco de questões. Sem questões aprovadas, este simulado não pode ser lançado.`,
       rotuloConfirmar: 'Reprovar tudo',
       tone: 'danger',
       aoConfirmar: async () => {

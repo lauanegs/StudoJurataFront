@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Library, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, Library, Pencil, Plus } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -43,19 +43,39 @@ export default function Cursos() {
 
   const { executar: excluir, executando: excluindo } = useAcao(async (curso: Curso) => {
     await confirmar({
-      titulo: 'Excluir curso?',
-      descricao: `"${curso.nome}" será desativado. Turmas e planos de ensino já vinculados são preservados.`,
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar curso?',
+      descricao: `"${curso.nome}" será inativado. Turmas e planos de ensino já vinculados são preservados.`,
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoCursos.excluir(curso.id)
-          toast.success('Curso excluído')
+          toast.success('Curso inativado')
           await reload()
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async (curso: Curso) => {
+    await confirmar({
+      titulo: 'Ativar curso?',
+      descricao: `"${curso.nome}" voltará a ficar ativo.`,
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoCursos.ativar(curso.id)
+          toast.success('Curso ativado')
+          await reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -143,16 +163,26 @@ export default function Cursos() {
             <IconButton
               label={`Editar ${curso.nome}`}
               icon={<Pencil />}
-              disabled={excluindo}
+              disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/cursos/${curso.id}`)}
             />
-            <IconButton
-              label={`Excluir ${curso.nome}`}
-              icon={<Trash2 />}
-              variant="danger"
-              disabled={excluindo}
-              onClick={() => excluir(curso)}
-            />
+            {curso.status === 'INATIVO' ? (
+              <IconButton
+                label={`Ativar ${curso.nome}`}
+                icon={<ArchiveRestore />}
+                variant="success"
+                disabled={excluindo || ativando}
+                onClick={() => ativar(curso)}
+              />
+            ) : (
+              <IconButton
+                label={`Inativar ${curso.nome}`}
+                icon={<Archive />}
+                variant="danger"
+                disabled={excluindo || ativando}
+                onClick={() => excluir(curso)}
+              />
+            )}
           </>
         )}
       />

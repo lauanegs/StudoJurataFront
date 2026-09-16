@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { BookOpen, ListTree, Pencil, Plus, Trash2, Upload } from 'lucide-react'
+import { Archive, BookOpen, ListTree, Pencil, Plus, Upload } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -192,19 +192,27 @@ export default function ConteudosPlano() {
   })
 
   const { executar: excluir, executando: excluindo } = useAcao(async (conteudo: ConteudoPlano) => {
+    if (datasMinistracaoPorConteudo.has(conteudo.id)) {
+      toast.warning(
+        'Conteúdo já ministrado',
+        'Este conteúdo já foi dado em aula e não pode ser inativado.',
+      )
+      return
+    }
+
     await confirmar({
-      titulo: 'Excluir conteúdo?',
-      descricao: `"${conteudo.titulo}" será desativado. Aulas que já o referenciam continuam válidas.`,
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar conteúdo?',
+      descricao: `"${conteudo.titulo}" será inativado. Aulas que já o referenciam continuam válidas.`,
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await conteudosPlano.excluir(conteudo.id)
-          toast.success('Conteúdo excluído')
+          toast.success('Conteúdo inativado')
           await requisicaoConteudos.reload()
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
           )
         }
@@ -359,11 +367,11 @@ export default function ConteudosPlano() {
               <Button
                 variant="subtle"
                 size="small"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 disabled={excluindo}
                 onClick={() => excluir(conteudo)}
               >
-                Excluir
+                Inativar
               </Button>
             </>
           )}

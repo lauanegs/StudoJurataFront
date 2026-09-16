@@ -26,7 +26,7 @@ const Icone = styled.div<{ $bg: string }>`
   width: 48px;
   height: 48px;
 
-  border-radius: ${({ theme }) => theme.radius.md};
+  border-radius: ${({ theme }) => theme.radius.sm};
   background: ${({ $bg }) => $bg};
   color: ${({ theme }) => theme.colors.white};
 `

@@ -89,7 +89,6 @@ export const ROTULO_STATUS_MATRICULA: Record<StatusMatricula, string> = {
   ATIVA: 'Ativa',
   CONCLUIDA: 'Concluída',
   CANCELADA: 'Cancelada',
-  TRANSFERIDA: 'Transferida',
 }
 
 export const ROTULO_STATUS_QUESTAO: Record<StatusQuestao, string> = {
@@ -176,7 +175,6 @@ export const STATUS_MATRICULA_VARIANT: Record<StatusMatricula, TagVariant> = {
   ATIVA: 'success',
   CONCLUIDA: 'info',
   CANCELADA: 'error',
-  TRANSFERIDA: 'warning',
 }
 
 export const STATUS_QUESTAO_VARIANT: Record<StatusQuestao, TagVariant> = {

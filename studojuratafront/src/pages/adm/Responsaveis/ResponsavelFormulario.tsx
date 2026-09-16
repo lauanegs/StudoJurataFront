@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Eye, Save, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, Eye, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -28,7 +28,7 @@ import { ROTULO_PARENTESCO } from '../../../utils/labels'
 import type { ResponsavelAluno } from '../../../types'
 import { PessoaCampos } from '../_compartilhado/PessoaCampos'
 import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
-import { dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
+import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
 
 export default function ResponsavelFormulario() {
   const { id } = useParams()
@@ -99,6 +99,8 @@ export default function ResponsavelFormulario() {
     })()
 
     if (!enviado) {
+      const primeiroCampo = Object.keys(formulario.erros)[0] as keyof DadosPessoa | undefined
+      if (primeiroCampo) setAba(abaDoCampoPessoa(primeiroCampo))
       toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
     }
   })
@@ -107,19 +109,41 @@ export default function ResponsavelFormulario() {
     if (!responsavelId) return
 
     await confirmar({
-      titulo: 'Excluir responsável?',
-      descricao: 'Os vínculos com os alunos serão removidos.',
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar responsável?',
+      descricao: 'Os vínculos com os alunos são preservados.',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoResponsaveis.excluir(responsavelId)
-          toast.success('Responsável excluído')
+          toast.success('Responsável inativado')
           navegar('/adm/responsaveis')
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async () => {
+    if (!responsavelId) return
+
+    await confirmar({
+      titulo: 'Ativar responsável?',
+      descricao: 'O responsável voltará a ficar ativo.',
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoResponsaveis.ativar(responsavelId)
+          toast.success('Responsável ativado')
+          await requisicao.reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -143,16 +167,27 @@ export default function ResponsavelFormulario() {
         rotuloVoltar="Responsáveis"
         actions={
           <>
-            {edicao ? (
+            {edicao && requisicao.data?.pessoa?.status === 'INATIVO' ? (
+              <Button
+                variant="success"
+                size="large"
+                icon={<ArchiveRestore />}
+                loading={ativando}
+                onClick={ativar}
+                disabled={salvando}
+              >
+                Ativar
+              </Button>
+            ) : edicao ? (
               <Button
                 variant="danger"
                 size="large"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 loading={excluindo}
                 onClick={excluir}
                 disabled={salvando}
               >
-                Excluir
+                Inativar
               </Button>
             ) : (
               <Button

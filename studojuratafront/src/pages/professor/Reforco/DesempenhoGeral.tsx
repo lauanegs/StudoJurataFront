@@ -4,11 +4,12 @@ import { BarChart3, MousePointerClick } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Card } from '../../../components/ui/Card'
+import { DataTable } from '../../../components/ui/DataTable'
+import type { Coluna } from '../../../components/ui/DataTable/types'
 import { GraficoBarras } from '../../../components/ui/GraficoBarras'
 import { GraficoCard } from '../../../components/ui/GraficoCard'
 import { Header } from '../../../components/ui/Header'
 import { Histograma } from '../../../components/ui/Histograma'
-import { TabelaResumo } from '../../../components/ui/TabelaResumo'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
@@ -29,38 +30,25 @@ const Grade = styled.div`
   gap: ${({ theme }) => theme.spacing.xl};
 `
 
+/* GraficoCard passa semPadding no card que envolve `detalhe` (a DataTable já
+   tem sua própria margem interna) — conteúdo que não é tabela precisa do
+   próprio espaçamento pra não colar nas bordas do card. */
+const PreenchidoDetalhe = styled.div`
+  padding: ${({ theme }) => theme.spacing.lg};
+`
+
+/* Mesmo padding/borda do cabeçalho do Card (titulo+actions) — pedido
+   explícito: a régua abaixo do título precisa aparecer aqui igual aparece
+   no card "Desempenho por questão" (que usa Card titulo=, não uma div solta). */
+const CabecalhoDetalhe = styled.div`
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+`
+
 const TituloDetalhe = styled.h3`
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
   font-size: ${({ theme }) => theme.typography.sizes.md};
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};
   color: ${({ theme }) => theme.colors.textStrong};
-`
-
-const Tabela = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-
-  th,
-  td {
-    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-    text-align: left;
-    font-size: ${({ theme }) => theme.typography.sizes.sm};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  }
-
-  th {
-    color: ${({ theme }) => theme.colors.textTertiary};
-    font-weight: ${({ theme }) => theme.typography.weights.medium};
-  }
-
-  td {
-    color: ${({ theme }) => theme.colors.textSecondary};
-  }
-
-  th:last-child,
-  td:last-child {
-    text-align: right;
-  }
 `
 
 /**
@@ -116,6 +104,17 @@ export default function DesempenhoGeral() {
       .sort((a, b) => a.alunoNome.localeCompare(b.alunoNome))
   }, [faixaSelecionada, notasDetalhadas, requisicaoAlunos.data])
 
+  const colunasDetalheFaixa: Coluna<(typeof detalheFaixa)[number]>[] = [
+    { key: 'aluno', cabecalho: 'Aluno', render: (item) => item.alunoNome },
+    { key: 'simulado', cabecalho: 'Simulado', render: (item) => item.simuladoTitulo },
+    {
+      key: 'nota',
+      cabecalho: 'Nota',
+      alinhamento: 'right',
+      render: (item) => formatarPorcentagem(item.percentual),
+    },
+  ]
+
   const tabelaDisciplina = useMemo(
     () =>
       desempenhoPorDisciplina.map((item) => ({
@@ -125,6 +124,11 @@ export default function DesempenhoGeral() {
       })),
     [desempenhoPorDisciplina],
   )
+
+  const colunasTabelaDisciplina: Coluna<(typeof tabelaDisciplina)[number]>[] = [
+    { key: 'rotulo', cabecalho: 'Disciplina', render: (item) => item.rotulo },
+    { key: 'valor', cabecalho: 'Desempenho médio', alinhamento: 'right', render: (item) => item.valor },
+  ]
 
   // Valores exatos por trás do histograma — vira a tabela mostrada na
   // impressão (no lugar do gráfico, que não imprime de forma confiável) e
@@ -222,43 +226,35 @@ export default function DesempenhoGeral() {
             colunaValor="Quantidade"
             detalhe={
               !faixaSelecionada ? (
-                <EstadoVazio
-                  titulo="Selecione uma coluna"
-                  descricao="Clique numa coluna do gráfico acima pra ver quem está naquela faixa de nota."
-                  icon={<MousePointerClick />}
-                />
+                <PreenchidoDetalhe>
+                  <EstadoVazio
+                    titulo="Selecione uma coluna"
+                    descricao="Clique numa coluna do gráfico acima pra ver quem está naquela faixa de nota."
+                    icon={<MousePointerClick />}
+                  />
+                </PreenchidoDetalhe>
               ) : requisicaoAlunos.loading ? (
-                <Skeleton $altura="120px" $raio="8px" />
+                <PreenchidoDetalhe>
+                  <Skeleton $altura="120px" $raio="8px" />
+                </PreenchidoDetalhe>
               ) : (
                 <>
-                  <TituloDetalhe>
-                    Notas na faixa {faixaSelecionada} ({detalheFaixa.length})
-                  </TituloDetalhe>
-                  {detalheFaixa.length === 0 ? (
-                    <EstadoVazio
-                      titulo="Ninguém nessa faixa"
-                      descricao="Nenhuma tentativa concluída caiu nesse intervalo."
-                    />
-                  ) : (
-                    <Tabela>
-                      <thead>
-                        <tr>
-                          <th>Aluno</th>
-                          <th>Simulado</th>
-                          <th>Nota</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {detalheFaixa.map((item) => (
-                          <tr key={item.tentativaId}>
-                            <td>{item.alunoNome}</td>
-                            <td>{item.simuladoTitulo}</td>
-                            <td>{formatarPorcentagem(item.percentual)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Tabela>
-                  )}
+                  <CabecalhoDetalhe>
+                    <TituloDetalhe>
+                      Notas na faixa {faixaSelecionada} ({detalheFaixa.length})
+                    </TituloDetalhe>
+                  </CabecalhoDetalhe>
+                  <DataTable
+                    descricao={`Notas na faixa ${faixaSelecionada}`}
+                    columns={colunasDetalheFaixa}
+                    data={detalheFaixa}
+                    rowKey={(item) => item.tentativaId}
+                    densidade="compacta"
+                    empty={{
+                      titulo: 'Ninguém nessa faixa',
+                      descricao: 'Nenhuma tentativa concluída caiu nesse intervalo.',
+                    }}
+                  />
                 </>
               )
             }
@@ -279,7 +275,16 @@ export default function DesempenhoGeral() {
             dados={tabelaDisciplina}
             colunaRotulo="Disciplina"
             colunaValor="Desempenho médio"
-            detalhe={<TabelaResumo colunaRotulo="Disciplina" colunaValor="Desempenho médio" itens={tabelaDisciplina} />}
+            detalhe={
+              <DataTable
+                descricao="Desempenho médio por disciplina"
+                columns={colunasTabelaDisciplina}
+                data={tabelaDisciplina}
+                rowKey={(item) => item.chave}
+                densidade="compacta"
+                empty={{ titulo: 'Nenhuma disciplina com simulado concluído' }}
+              />
+            }
           />
         </Grade>
       )}

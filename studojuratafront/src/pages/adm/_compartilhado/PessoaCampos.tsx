@@ -1,13 +1,24 @@
+import { useState } from 'react'
 import styled from 'styled-components'
 
 import { DatePicker } from '../../../components/ui/DatePicker'
 import { Input } from '../../../components/ui/Input'
 import { RadioGroup } from '../../../components/ui/RadioGroup'
 import { Select } from '../../../components/ui/Select'
+import { useToast } from '../../../contexts/toastContexto'
 import { formatarCep, formatarCpf, formatarTelefone } from '../../../utils/format'
 import { OPCOES_SEXO, OPCOES_UF } from '../../../utils/labels'
+import { apenasDigitos } from '../../../utils/validacao'
 import type { Sexo } from '../../../types'
 import type { DadosPessoa } from './dadosPessoa'
+
+interface EnderecoViaCep {
+  logradouro?: string
+  bairro?: string
+  localidade?: string
+  uf?: string
+  erro?: boolean
+}
 
 const Grade = styled.div`
   display: grid;
@@ -47,6 +58,36 @@ export function PessoaCampos({
   rotuloNome = 'Nome completo',
   secao = 'dados',
 }: PessoaCamposProps) {
+  const toast = useToast()
+  const [buscandoCep, setBuscandoCep] = useState(false)
+
+  /** Busca o endereço pelo CEP (ViaCEP) e preenche os demais campos —
+   * usuário ainda pode editar tudo depois, isso só evita digitação manual. */
+  async function buscarEnderecoPorCep() {
+    const digitos = apenasDigitos(valores.cep)
+    if (digitos.length !== 8) return
+
+    setBuscandoCep(true)
+    try {
+      const resposta = await fetch(`https://viacep.com.br/ws/${digitos}/json/`)
+      const dados = (await resposta.json()) as EnderecoViaCep
+
+      if (dados.erro) {
+        toast.warning('CEP não encontrado', 'Confira o CEP digitado.')
+        return
+      }
+
+      if (dados.logradouro) onChange('logradouro', dados.logradouro)
+      if (dados.bairro) onChange('bairro', dados.bairro)
+      if (dados.localidade) onChange('cidade', dados.localidade)
+      if (dados.uf) onChange('estado', dados.uf)
+    } catch {
+      toast.warning('Não foi possível buscar o CEP', 'Preencha o endereço manualmente.')
+    } finally {
+      setBuscandoCep(false)
+    }
+  }
+
   if (secao === 'endereco') {
     return (
       <Grade>
@@ -56,11 +97,15 @@ export function PessoaCampos({
           inputMode="numeric"
           value={valores.cep}
           error={erros.cep}
-          disabled={disabled}
+          disabled={disabled || buscandoCep}
           mask={formatarCep}
           maxLength={9}
+          hint="Preenchido automaticamente ao sair do campo."
           onChange={(evento) => onChange('cep', evento.target.value)}
-          onBlur={() => onExit('cep')}
+          onBlur={() => {
+            onExit('cep')
+            buscarEnderecoPorCep()
+          }}
         />
 
         <Input

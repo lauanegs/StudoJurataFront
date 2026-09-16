@@ -150,6 +150,20 @@ const Campos = styled.div`
   width: 100%;
 `
 
+/* Decorativo por enquanto (pedido do usuário) — sem lógica de recuperação
+   de senha implementada ainda. */
+const LinkEsqueciSenha = styled.a`
+  align-self: center;
+
+  font-size: ${({ theme }) => theme.typography.sizes.xs};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  text-decoration: underline;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.blue};
+  }
+`
+
 const Alerta = styled.p`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
@@ -266,6 +280,10 @@ export default function Login() {
             onChange={(evento) => setSenha(evento.target.value)}
           />
         </Campos>
+
+        <LinkEsqueciSenha href="#" onClick={(evento) => evento.preventDefault()}>
+          Esqueci minha senha
+        </LinkEsqueciSenha>
 
         {erroGeral && <Alerta role="alert">{erroGeral}</Alerta>}
 

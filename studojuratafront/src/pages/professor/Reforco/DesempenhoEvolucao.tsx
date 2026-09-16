@@ -3,10 +3,11 @@ import { TrendingUp } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Card } from '../../../components/ui/Card'
+import { DataTable } from '../../../components/ui/DataTable'
+import type { Coluna } from '../../../components/ui/DataTable/types'
 import { GraficoCard } from '../../../components/ui/GraficoCard'
 import { GraficoLinha } from '../../../components/ui/GraficoLinha'
 import { Header } from '../../../components/ui/Header'
-import { TabelaResumo } from '../../../components/ui/TabelaResumo'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
@@ -21,6 +22,17 @@ const Grade = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: ${({ theme }) => theme.spacing.xl};
 `
+
+interface PontoTabela {
+  chave: string
+  rotulo: string
+  valor: string
+}
+
+const colunasPontos: Coluna<PontoTabela>[] = [
+  { key: 'rotulo', cabecalho: 'Simulado', render: (item) => item.rotulo },
+  { key: 'valor', cabecalho: 'Nota', alinhamento: 'right', render: (item) => item.valor },
+]
 
 /**
  * Detalhamento de "Evolução ao longo do tempo" — versão filtrável por
@@ -138,14 +150,17 @@ export default function DesempenhoEvolucao() {
                 valor: formatarPorcentagem(ponto.valor),
               }))}
               detalhe={
-                <TabelaResumo
-                  colunaRotulo="Simulado"
-                  colunaValor="Nota"
-                  itens={item.pontos.map((ponto) => ({
+                <DataTable
+                  descricao={`Evolução — ${item.disciplina}`}
+                  columns={colunasPontos}
+                  data={item.pontos.map((ponto) => ({
                     chave: ponto.chave,
                     rotulo: ponto.rotulo,
                     valor: formatarPorcentagem(ponto.valor),
                   }))}
+                  rowKey={(ponto) => ponto.chave}
+                  densidade="compacta"
+                  empty={{ titulo: 'Nenhum simulado nesse recorte' }}
                 />
               }
             />

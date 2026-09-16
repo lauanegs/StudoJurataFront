@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { ClipboardList, Save, Trash2 } from 'lucide-react'
+import { Archive, ClipboardList, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -76,18 +76,18 @@ export default function PlanoAulaFormulario() {
 
   const { executar: excluir, executando: excluindo } = useAcao(async () => {
     await confirmar({
-      titulo: 'Excluir plano de aula?',
-      descricao: 'As aulas, frequências e conteúdos já registrados permanecem.',
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Encerrar plano de aula?',
+      descricao: 'O plano será marcado como concluído. As aulas, frequências e conteúdos já registrados permanecem.',
+      rotuloConfirmar: 'Encerrar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoPlanosAula.excluir(planoAulaId)
-          toast.success('Plano de aula excluído')
+          toast.success('Plano de aula encerrado')
           navegar('/professor/plano-aula')
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível encerrar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
           )
         }
@@ -130,12 +130,12 @@ export default function PlanoAulaFormulario() {
             <Button
               size="large"
               variant="danger"
-              icon={<Trash2 />}
+              icon={<Archive />}
               loading={excluindo}
               onClick={excluir}
               disabled={salvando}
             >
-              Excluir
+              Encerrar
             </Button>
             <Button
               size="large"

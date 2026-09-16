@@ -1,18 +1,18 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import styled from 'styled-components'
 import { BarChart3, BookOpen, ClipboardCheck, FileText, Pencil, Plus, Rocket, Square } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
-import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
+import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
-import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
@@ -27,13 +27,28 @@ import {
   simulados as servicoSimulados,
   turmas as servicoTurmas,
 } from '../../../services/endpoints'
-import { normalizar } from '../../../utils/format'
 import { ROTULO_STATUS_SIMULADO, STATUS_SIMULADO_VARIANT } from '../../../utils/labels'
 import { theme as tokens } from '../../../styles/theme'
 import type { SimuladoResponse, StatusSimulado } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 type Filtro = 'todos' | StatusSimulado
+
+/* Selects de Turma/Disciplina "flutuantes" abaixo das abas (pedido
+   explícito) — mesmo padrão de LinhaAcaoFlutuante usado em TurmaFormulario
+   (ADM): soltos no fundo cinza da página, à direita, fora do card branco da
+   tabela. */
+const LinhaFiltrosFlutuante = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: ${({ theme }) => theme.spacing.sm};
+  flex-wrap: wrap;
+`
+
+const CampoLargura = styled.div`
+  width: 211px;
+`
 
 export default function Simulados() {
   const navegar = useNavigate()
@@ -42,8 +57,8 @@ export default function Simulados() {
   const { professorId } = useProfessorLogado()
 
   const [filtro, setFiltro] = useState<Filtro>('todos')
-  const [busca, setBusca] = useState('')
-  const buscaAtrasada = useDebounce(busca)
+  const [turmaFiltroId, setTurmaFiltroId] = useState<number | null>(null)
+  const [disciplinaFiltroId, setDisciplinaFiltroId] = useState<number | null>(null)
   const [processando, setProcessando] = useState<number | null>(null)
 
   const { data, loading, error, reload } = useRequisicao(() => servicoSimulados.listar(), [])
@@ -62,6 +77,21 @@ export default function Simulados() {
   // (ver simuladosAtrasados). Detalhamento completo fica na tela de
   // aprovação (SimuladosAprovacao.tsx).
   const requisicaoVinculosIA = useRequisicao(() => servicoIa.listarSimuladosGerados(), [])
+
+  const turmasDoProfessor = useMemo(
+    () => new Set((requisicaoVinculos.data ?? []).map((vinculo) => vinculo.turma?.id)),
+    [requisicaoVinculos.data],
+  )
+
+  // Escopo por professor (pedido explícito): cada professor só vê/controla
+  // os simulados vinculados às turmas em que leciona — o banco de questões
+  // continua público (não tem esse filtro). Simulado.turma é opcional
+  // (rascunho ainda sem turma escolhida) — sem turma definida, fica visível
+  // até ele mesmo escolher a turma e virar "de alguém".
+  const simuladosDoProfessor = useMemo(
+    () => (data ?? []).filter((simulado) => !simulado.turmaId || turmasDoProfessor.has(simulado.turmaId)),
+    [data, turmasDoProfessor],
+  )
 
   // IDs de simulado com ao menos uma questão ainda PENDENTE — enquanto isso
   // for verdade, o simulado só pode ser mexido pela tela de aprovação
@@ -84,25 +114,22 @@ export default function Simulados() {
   // pode ter várias questões pendentes, inflando o número; e a contagem
   // também não é filtrada pelas turmas deste professor). Mesma lógica de
   // agrupamento da tela de aprovação, só que contando em vez de listar.
-  const pendentes = useMemo(() => {
-    const turmasDoProfessor = new Set((requisicaoVinculos.data ?? []).map((vinculo) => vinculo.turma?.id))
-
-    return (data ?? []).filter(
-      (simulado) => simuladosComPendencia.has(simulado.id) && turmasDoProfessor.has(simulado.turmaId ?? undefined),
-    ).length
-  }, [requisicaoVinculos.data, simuladosComPendencia, data])
+  const pendentes = useMemo(
+    () => simuladosDoProfessor.filter((simulado) => simuladosComPendencia.has(simulado.id)).length,
+    [simuladosDoProfessor, simuladosComPendencia],
+  )
 
   // Simulados gerados pela IA que passaram do prazo de revisão sem terem
   // sido lançados (Simulado.status ainda RASCUNHO).
   const simuladosAtrasados = useMemo(() => {
     const hojeISO = new Date().toISOString().slice(0, 10)
-    const simuladosPorId = new Map((data ?? []).map((simulado) => [simulado.id, simulado]))
+    const simuladosPorId = new Map(simuladosDoProfessor.map((simulado) => [simulado.id, simulado]))
 
     return (requisicaoVinculosIA.data ?? []).filter((vinculo) => {
       const simulado = simuladosPorId.get(vinculo.simuladoId)
       return simulado?.status === 'RASCUNHO' && vinculo.prazoLancamento < hojeISO
     })
-  }, [requisicaoVinculosIA.data, data])
+  }, [requisicaoVinculosIA.data, simuladosDoProfessor])
 
   const nomeDisciplina = (id?: number | null) =>
     (requisicaoDisciplinas.data ?? []).find((disciplina) => disciplina.id === id)?.titulo ?? '—'
@@ -127,7 +154,7 @@ export default function Simulados() {
   }, [requisicaoTentativas.data])
 
   const contadores = useMemo(() => {
-    const lista = data ?? []
+    const lista = simuladosDoProfessor
 
     return {
       todos: lista.length,
@@ -135,20 +162,30 @@ export default function Simulados() {
       PUBLICADO: lista.filter((simulado) => simulado.status === 'PUBLICADO').length,
       ENCERRADO: lista.filter((simulado) => simulado.status === 'ENCERRADO').length,
     }
-  }, [data])
+  }, [simuladosDoProfessor])
+
+  const opcoesTurmasFiltro = useMemo(
+    () =>
+      (requisicaoTurmas.data ?? [])
+        .filter((turma) => turmasDoProfessor.has(turma.id))
+        .map((turma) => ({ value: turma.id, label: turma.titulo })),
+    [requisicaoTurmas.data, turmasDoProfessor],
+  )
+
+  const opcoesDisciplinasFiltro = useMemo(
+    () => (requisicaoDisciplinas.data ?? []).map((disciplina) => ({ value: disciplina.id, label: disciplina.titulo })),
+    [requisicaoDisciplinas.data],
+  )
 
   const filtrados = useMemo(() => {
-    let lista = data ?? []
+    let lista = simuladosDoProfessor
 
     if (filtro !== 'todos') lista = lista.filter((simulado) => simulado.status === filtro)
-
-    if (buscaAtrasada.trim()) {
-      const termo = normalizar(buscaAtrasada)
-      lista = lista.filter((simulado) => normalizar(simulado.titulo).includes(termo))
-    }
+    if (turmaFiltroId) lista = lista.filter((simulado) => simulado.turmaId === turmaFiltroId)
+    if (disciplinaFiltroId) lista = lista.filter((simulado) => simulado.disciplinaId === disciplinaFiltroId)
 
     return [...lista].sort((a, b) => b.id - a.id)
-  }, [data, filtro, buscaAtrasada])
+  }, [simuladosDoProfessor, filtro, turmaFiltroId, disciplinaFiltroId])
 
   const paginacao = usePaginacao(filtrados)
 
@@ -286,7 +323,6 @@ export default function Simulados() {
             </Button>
           </>
         }
-        filtros={<BuscaInput value={busca} onChange={setBusca} placeholder="Buscar simulado..." />}
       />
 
       {simuladosAtrasados.length > 0 && (
@@ -319,6 +355,29 @@ export default function Simulados() {
         ]}
       />
 
+      <LinhaFiltrosFlutuante>
+        <CampoLargura>
+          <Select<number>
+            placeholder="Todas as turmas"
+            options={opcoesTurmasFiltro}
+            value={turmaFiltroId}
+            clearable
+            searchable
+            onChange={setTurmaFiltroId}
+          />
+        </CampoLargura>
+        <CampoLargura>
+          <Select<number>
+            placeholder="Todas as disciplinas"
+            options={opcoesDisciplinasFiltro}
+            value={disciplinaFiltroId}
+            clearable
+            searchable
+            onChange={setDisciplinaFiltroId}
+          />
+        </CampoLargura>
+      </LinhaFiltrosFlutuante>
+
       <DataTable
         descricao="Lista de simulados"
         columns={colunas}
@@ -337,13 +396,16 @@ export default function Simulados() {
           onNext: paginacao.proxima,
         }}
         empty={{
-          titulo: busca || filtro !== 'todos' ? 'Nenhum simulado encontrado' : 'Nenhum simulado criado',
+          titulo:
+            filtro !== 'todos' || turmaFiltroId || disciplinaFiltroId
+              ? 'Nenhum simulado encontrado'
+              : 'Nenhum simulado criado',
           descricao:
-            busca || filtro !== 'todos'
-              ? 'Ajuste o filtro ou limpe a busca.'
+            filtro !== 'todos' || turmaFiltroId || disciplinaFiltroId
+              ? 'Ajuste os filtros acima.'
               : 'Monte um simulado com questões próprias ou geradas pela IA.',
           icon: <FileText />,
-          acao: !busca && filtro === 'todos' && (
+          acao: filtro === 'todos' && !turmaFiltroId && !disciplinaFiltroId && (
             <Button icon={<Plus />} onClick={() => navegar('/professor/reforco/simulados/novo')}>
               Cadastrar simulado
             </Button>
@@ -381,28 +443,47 @@ export default function Simulados() {
                 >
                   Editar
                 </Button>
-                <Button
-                  variant="subtle"
-                  size="small"
-                  icon={<Rocket />}
-                  disabled={processando === simulado.id}
-                  onClick={() => lancar(simulado)}
-                >
-                  Lançar
-                </Button>
+                {/* Destinação ESPECIFICO precisa da lista de alunos escolhida
+                    no momento do lançamento — essa tela não tem esse seletor,
+                    só o editor completo tem (SimuladoFormulario). Lançar por
+                    aqui sem alunos sempre falhava com 400. */}
+                {simulado.tipoDestinacao === 'TODOS' && (
+                  <Button
+                    variant="subtle"
+                    size="small"
+                    icon={<Rocket />}
+                    disabled={processando === simulado.id}
+                    onClick={() => lancar(simulado)}
+                  >
+                    Lançar
+                  </Button>
+                )}
               </>
             )}
 
             {simulado.status === 'PUBLICADO' && (
-              <Button
-                variant="subtle"
-                size="small"
-                icon={<Square />}
-                disabled={processando === simulado.id}
-                onClick={() => encerrar(simulado)}
-              >
-                Encerrar
-              </Button>
+              <>
+                {/* Edição geral fica travada (SimuladoFormulario já trata isso),
+                    mas "Disponível até" continua editável mesmo lançado — sem
+                    este link não havia como chegar lá pela tela. */}
+                <Button
+                  variant="subtle"
+                  size="small"
+                  icon={<Pencil />}
+                  onClick={() => navegar(`/professor/reforco/simulados/${simulado.id}`)}
+                >
+                  Disponibilidade
+                </Button>
+                <Button
+                  variant="subtle"
+                  size="small"
+                  icon={<Square />}
+                  disabled={processando === simulado.id}
+                  onClick={() => encerrar(simulado)}
+                >
+                  Encerrar
+                </Button>
+              </>
             )}
           </>
         )}

@@ -37,10 +37,10 @@ import { PessoaCampos } from '../_compartilhado/PessoaCampos'
 import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
 import { paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
 
-/* Confirmado pelo usuário: por enquanto só estes três status ficam
- * editáveis aqui — TRANSFERIDA continua existindo no domínio (fluxo próprio
- * de transferência entre turmas), mas não é algo que se escolha à mão nesta
- * tela ainda. */
+/* Não existe transferência de aluno entre turmas nesta primeira versão da
+ * plataforma (confirmado pelo usuário) — só estes três status ficam
+ * editáveis aqui. Reativar uma matrícula CONCLUIDA (voltar para ATIVA)
+ * também é feito por aqui, a critério da organização. */
 const OPCOES_STATUS_MATRICULA_EDITAVEL: { value: StatusMatricula; label: string }[] = [
   { value: 'ATIVA', label: 'Ativa' },
   { value: 'CONCLUIDA', label: 'Concluída' },
@@ -289,7 +289,7 @@ export default function MatricularAluno() {
         status,
       })
       toast.success('Matrícula atualizada', aluno.pessoa?.nome)
-      navegar(`/adm/turmas/${idTurma}`)
+      navegar(`/adm/turmas/${idTurma}`, { state: { aba: 'alunos' } })
     } catch (erroSalvar) {
       toast.error('Não foi possível salvar', erroSalvar instanceof ApiError ? erroSalvar.message : undefined)
     }
@@ -354,7 +354,7 @@ export default function MatricularAluno() {
       })
 
       toast.success('Aluno matriculado', `${alunoFinal.pessoa?.nome} entrou em ${turma.titulo}.`)
-      navegar(`/adm/turmas/${idTurma}`)
+      navegar(`/adm/turmas/${idTurma}`, { state: { aba: 'alunos' } })
     } catch (erroSalvar) {
       toast.error('Não foi possível matricular', erroSalvar instanceof ApiError ? erroSalvar.message : undefined)
     }

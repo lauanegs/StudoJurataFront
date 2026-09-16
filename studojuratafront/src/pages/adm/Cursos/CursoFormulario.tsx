@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Plus, Save, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, Plus, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -160,19 +160,41 @@ export default function CursoFormulario() {
     if (!cursoId) return
 
     await confirmar({
-      titulo: 'Excluir curso?',
+      titulo: 'Inativar curso?',
       descricao: 'Turmas e planos de ensino já vinculados continuam existindo.',
-      rotuloConfirmar: 'Excluir',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoCursos.excluir(cursoId)
-          toast.success('Curso excluído')
+          toast.success('Curso inativado')
           navegar('/adm/cursos')
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async () => {
+    if (!cursoId) return
+
+    await confirmar({
+      titulo: 'Ativar curso?',
+      descricao: 'O curso voltará a ficar ativo.',
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoCursos.ativar(cursoId)
+          toast.success('Curso ativado')
+          await requisicao.reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -220,9 +242,9 @@ export default function CursoFormulario() {
 
   async function removerDisciplina(vinculo: CursoDisciplina) {
     await confirmar({
-      titulo: 'Remover disciplina da grade curricular?',
-      descricao: 'Turmas e planos de ensino já criados com esta disciplina continuam existindo.',
-      rotuloConfirmar: 'Remover',
+      titulo: 'Inativar disciplina na grade curricular?',
+      descricao: 'A disciplina será inativada na grade. Turmas e planos de ensino já criados com ela continuam existindo.',
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
@@ -256,16 +278,27 @@ export default function CursoFormulario() {
         rotuloVoltar="Cursos"
         actions={
           <>
-            {edicao ? (
+            {edicao && requisicao.data?.status === 'INATIVO' ? (
+              <Button
+                variant="success"
+                size="large"
+                icon={<ArchiveRestore />}
+                loading={ativando}
+                onClick={ativar}
+                disabled={salvando}
+              >
+                Ativar
+              </Button>
+            ) : edicao ? (
               <Button
                 variant="danger"
                 size="large"
-                icon={<Trash2 />}
+                icon={<Archive />}
                 loading={excluindo}
                 onClick={excluir}
                 disabled={salvando}
               >
-                Excluir
+                Inativar
               </Button>
             ) : (
               <Button
@@ -417,8 +450,8 @@ export default function CursoFormulario() {
                 }}
                 actions={(vinculo) => (
                   <IconButton
-                    label="Remover disciplina"
-                    icon={<Trash2 />}
+                    label="Inativar disciplina na grade"
+                    icon={<Archive />}
                     variant="danger"
                     onClick={() => removerDisciplina(vinculo)}
                   />

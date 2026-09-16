@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Pencil, Plus, Trash2, UserRound } from 'lucide-react'
+import { Archive, ArchiveRestore, Pencil, Plus, UserRound } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
@@ -49,19 +49,39 @@ export default function Responsaveis() {
 
   const { executar: excluir, executando: excluindo } = useAcao(async (responsavel: Responsavel) => {
     await confirmar({
-      titulo: 'Excluir responsável?',
-      descricao: `Os vínculos de ${responsavel.pessoa?.nome} com os alunos serão removidos.`,
-      rotuloConfirmar: 'Excluir',
+      titulo: 'Inativar responsável?',
+      descricao: `${responsavel.pessoa?.nome} será inativado. Os vínculos com os alunos são preservados.`,
+      rotuloConfirmar: 'Inativar',
       tone: 'danger',
       aoConfirmar: async () => {
         try {
           await servicoResponsaveis.excluir(responsavel.id)
-          toast.success('Responsável excluído')
+          toast.success('Responsável inativado')
           await reload()
         } catch (erroExclusao) {
           toast.error(
-            'Não foi possível excluir',
+            'Não foi possível inativar',
             erroExclusao instanceof ApiError ? erroExclusao.message : undefined,
+          )
+        }
+      },
+    })
+  })
+
+  const { executar: ativar, executando: ativando } = useAcao(async (responsavel: Responsavel) => {
+    await confirmar({
+      titulo: 'Ativar responsável?',
+      descricao: `${responsavel.pessoa?.nome} voltará a ficar ativo.`,
+      rotuloConfirmar: 'Ativar',
+      aoConfirmar: async () => {
+        try {
+          await servicoResponsaveis.ativar(responsavel.id)
+          toast.success('Responsável ativado')
+          await reload()
+        } catch (erroAtivacao) {
+          toast.error(
+            'Não foi possível ativar',
+            erroAtivacao instanceof ApiError ? erroAtivacao.message : undefined,
           )
         }
       },
@@ -141,16 +161,26 @@ export default function Responsaveis() {
             <IconButton
               label={`Editar ${responsavel.pessoa?.nome}`}
               icon={<Pencil />}
-              disabled={excluindo}
+              disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/responsaveis/${responsavel.id}`)}
             />
-            <IconButton
-              label={`Excluir ${responsavel.pessoa?.nome}`}
-              icon={<Trash2 />}
-              variant="danger"
-              disabled={excluindo}
-              onClick={() => excluir(responsavel)}
-            />
+            {responsavel.pessoa?.status === 'INATIVO' ? (
+              <IconButton
+                label={`Ativar ${responsavel.pessoa?.nome}`}
+                icon={<ArchiveRestore />}
+                variant="success"
+                disabled={excluindo || ativando}
+                onClick={() => ativar(responsavel)}
+              />
+            ) : (
+              <IconButton
+                label={`Inativar ${responsavel.pessoa?.nome}`}
+                icon={<Archive />}
+                variant="danger"
+                disabled={excluindo || ativando}
+                onClick={() => excluir(responsavel)}
+              />
+            )}
           </>
         )}
       />
