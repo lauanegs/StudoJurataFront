@@ -10,9 +10,7 @@ interface BuscaInputProps extends Omit<InputProps, 'icon' | 'onClear' | 'label' 
 
 export function BuscaInput({ value, onChange, placeholder = 'Buscar...', ...rest }: BuscaInputProps) {
   return (
-    // Largura concreta porque o <Field> ocupa 100% do pai. Fixa e não
-    // `min(320px, 100%)`: o pai (Header/Filtros) usa max-content, onde `%`
-    // resolve para 0. Menos que 320px corta placeholders longos.
+    // Largura fixa: o pai usa max-content, onde `%` resolve para 0.
     <div style={{ width: '320px', maxWidth: '100%' }}>
       <Input
         type="search"

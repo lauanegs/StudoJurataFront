@@ -66,9 +66,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     },
   }
 
-  // A Mantine calcula a largura da seção do ícone por --input-height, que
-  // ignora a `altura` customizada. leftSectionWidth/rightSectionWidth ajustam
-  // a seção e o padding do texto juntos; styles.section não.
+  // A Mantine mede a seção do ícone por --input-height, que ignora `altura`.
   const larguraSecao = altura
 
   // PasswordInput traz o botão de mostrar/esconder senha já acessível.
@@ -156,7 +154,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         }}
         styles={estiloCampo}
         onChange={(event) => {
-          if (mask) {
+          if (mask && event.target.value) {
             event.target.value = mask(event.target.value)
           }
           onChange?.(event)

@@ -7,9 +7,9 @@ TypeScript ~5.9.3, `strict: true` (mais `noUnusedLocals`, `noUnusedParameters`, 
 O projeto já pratica isso quase à risca: **um único `any` real em todo o código-fonte** (`Typography.tsx:102`, `component={(as ?? DEFAULT_TAG[variant]) as any}`), e ele vem com `eslint-disable-next-line` **e um comentário explicando por quê** (limitação de tipagem do prop `component` polimórfico do Mantine). Esse é o padrão a seguir: `any` só quando não há alternativa tipável razoável, sempre isolado, sempre com uma linha de justificativa — nunca como atalho para "resolver o erro do compilador rápido".
 
 Preferir, nesta ordem, antes de recorrer a `any`:
-1. Tipo específico já existente (`types/index.ts`, `types.ts` do componente).
+1. Tipo específico já existente (`types/<domínio>.ts`, `types.ts` do componente).
 2. `unknown` + narrowing, quando o tipo realmente não é conhecido de antemão (é o que `ApiError.corpo: unknown` faz).
-3. Generic (`<T>`), quando o mesmo código precisa funcionar para vários tipos de forma tipada (`useRequisicao<T>`, `useFormulario<T>`).
+3. Generic (`<T>`), quando o mesmo código precisa funcionar para vários tipos de forma tipada (`useRequisicao<T>`, `useForm<T>`).
 4. Union type explícito, quando o valor é um de um conjunto finito conhecido.
 
 ## Tipagem de props
@@ -20,15 +20,15 @@ Toda prop de componente em `components/ui/` é tipada em um `types.ts` próprio 
 
 ## Tipos de API
 
-`types/index.ts` espelha os DTOs do backend (`Simulado`, `SimuladoRequest`, `SimuladoResponse`, etc.) — o padrão Request/Response do backend (`docs/spring-boot-guidelines.md` do `StudoJurataApi`) se reflete aqui: tipos de entrada (`XRequest`) e saída (`XResponse`) separados quando o backend também os separa, porque os campos nem sempre coincidem (ex.: campo controlado só pelo servidor, como `status`). Ao adicionar um tipo novo para uma rota nova, seguir a nomenclatura e a forma já usada pelos tipos vizinhos no mesmo arquivo, e conferir contra o DTO real do backend (`StudoJurataApi/src/main/java/studojurata_api/dto/`) em vez de adivinhar a forma da resposta.
+`types/<domínio>.ts` espelha os DTOs do backend (`Simulado`, `SimuladoRequest`, `SimuladoResponse`, etc.) — o padrão Request/Response do backend (`docs/spring-boot-guidelines.md` do `StudoJurataApi`) se reflete aqui: tipos de entrada (`XRequest`) e saída (`XResponse`) separados quando o backend também os separa, porque os campos nem sempre coincidem (ex.: campo controlado só pelo servidor, como `status`). Ao adicionar um tipo novo para uma rota nova, seguir a nomenclatura e a forma já usada pelos tipos vizinhos no mesmo arquivo, e conferir contra o DTO real do backend (`StudoJurataApi/src/main/java/studojurata_api/dto/`) em vez de adivinhar a forma da resposta.
 
 ## Unions
 
-Enums do backend (`@Enumerated(EnumType.STRING)`) viram **union de string literal** no front (`type TipoDestinacaoSimulado = 'TODOS' | 'ESPECIFICO'`), não `enum` do TypeScript — é o padrão observado em todo `types/index.ts`. Vantagem já aproveitada pelo projeto: combina bem com objetos de lookup (`ROTULO_TIPO_USUARIO: Record<TipoUsuario, string>`) para tradução/rótulo, e o compilador cobra exaustividade em `switch`/lookup sem precisar de um valor `default` frágil.
+Enums do backend (`@Enumerated(EnumType.STRING)`) viram **union de string literal** no front (`type TipoDestinacaoSimulado = 'TODOS' | 'ESPECIFICO'`), não `enum` do TypeScript — é o padrão observado em todo `types/<domínio>.ts`. Vantagem já aproveitada pelo projeto: combina bem com objetos de lookup (`ROTULO_TIPO_USUARIO: Record<TipoUsuario, string>`) para tradução/rótulo, e o compilador cobra exaustividade em `switch`/lookup sem precisar de um valor `default` frágil.
 
 ## Generics
 
-Usados onde genuinamente há reuso por tipo variável: `useRequisicao<T>`, `useAcao<Args, Retorno>`, `useFormulario<T>`, `DataTable<T>` (`Coluna<T>`, `rowKey: (item: T) => ...`). **Não introduzir um generic para um componente/hook que só é (e só vai ser) usado com um tipo concreto** — isso é abstração sem benefício, adiciona uma letra `<T>` que ninguém instancia de forma diferente.
+Usados onde genuinamente há reuso por tipo variável: `useRequisicao<T>`, `useAcao<Args, Retorno>`, `useForm<T>`, `DataTable<T>` (`Coluna<T>`, `rowKey: (item: T) => ...`). **Não introduzir um generic para um componente/hook que só é (e só vai ser) usado com um tipo concreto** — isso é abstração sem benefício, adiciona uma letra `<T>` que ninguém instancia de forma diferente.
 
 ## Interfaces vs. types
 
@@ -36,7 +36,7 @@ O projeto usa `interface` para formas de objeto que representam props/estado/DTO
 
 ## Narrowing
 
-`instanceof` para distinguir `ApiError` de outro erro (`error instanceof ApiError`), optional chaining + nullish coalescing para navegar objeto potencialmente incompleto (`aluno.pessoa?.nome ?? '—'`), `typeof` para argumento de forma variável (`typeof evento === 'string' ? evento : evento.target.value` em `useFormulario`). Preferir narrowing nativo do TypeScript (esses três) a type guards customizados (`function isX(v): v is X`) **a não ser que a checagem seja complexa o bastante para justificar nomear e reusar** — nenhum type guard customizado existe no projeto hoje porque nenhum caso precisou disso ainda.
+`instanceof` para distinguir `ApiError` de outro erro (`error instanceof ApiError`), optional chaining + nullish coalescing para navegar objeto potencialmente incompleto (`aluno.pessoa?.nome ?? '—'`), `typeof` para argumento de forma variável (`typeof evento === 'string' ? evento : evento.target.value` em `@mantine/form` + schema yup (hooks em `formularios/`)). Preferir narrowing nativo do TypeScript (esses três) a type guards customizados (`function isX(v): v is X`) **a não ser que a checagem seja complexa o bastante para justificar nomear e reusar** — nenhum type guard customizado existe no projeto hoje porque nenhum caso precisou disso ainda.
 
 ## Null / undefined
 
@@ -48,7 +48,7 @@ Um `as` só é aceitável quando o TypeScript genuinamente não consegue inferir
 
 ## Evitar duplicação de tipos
 
-Um tipo de domínio (`Aluno`, `Simulado`) é definido **uma vez** em `types/index.ts` e importado onde precisar — não redeclarar um subconjunto de campos inline num componente ("`type AlunoResumo = { nome: string; cpf: string }`" replicando parte de `Aluno`) quando o tipo completo já existe e pode ser usado (ou `Pick<Aluno, 'nome' | 'cpf'>` se genuinamente só um subconjunto é relevante e vale a pena nomear).
+Um tipo de domínio (`Aluno`, `Simulado`) é definido **uma vez** em `types/<domínio>.ts` e importado onde precisar — não redeclarar um subconjunto de campos inline num componente ("`type AlunoResumo = { nome: string; cpf: string }`" replicando parte de `Aluno`) quando o tipo completo já existe e pode ser usado (ou `Pick<Aluno, 'nome' | 'cpf'>` se genuinamente só um subconjunto é relevante e vale a pena nomear).
 
 ## Inferência quando melhora a simplicidade
 

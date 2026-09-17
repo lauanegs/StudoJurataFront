@@ -21,15 +21,15 @@ import {
 } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
-import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
+import { AlertaDesempenhoCard } from '../../../components/desempenho/AlertaDesempenhoCard'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
-import { DesempenhoCard } from '../../../components/ui/DesempenhoCard'
-import { GraficoBarras, type ItemGraficoBarras } from '../../../components/ui/GraficoBarras'
-import { GraficoCard } from '../../../components/ui/GraficoCard'
-import { GraficoLinha, type PontoGraficoLinha } from '../../../components/ui/GraficoLinha'
+import { DesempenhoCard } from '../../../components/desempenho/DesempenhoCard'
+import { GraficoBarras, type ItemGraficoBarras } from '../../../components/graficos/GraficoBarras'
+import { GraficoCard } from '../../../components/graficos/GraficoCard'
+import { GraficoLinha, type PontoGraficoLinha } from '../../../components/graficos/GraficoLinha'
 import { Header } from '../../../components/ui/Header'
-import { Histograma } from '../../../components/ui/Histograma'
+import { Histograma } from '../../../components/graficos/Histograma'
 import { InfoCard } from '../../../components/ui/InfoCard'
 import { ListaInfo } from '../../../components/ui/ListaInfo'
 import { Modal } from '../../../components/ui/Modal'
@@ -42,19 +42,16 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import {
-  disciplinas as servicoDisciplinas,
-  professores as servicoProfessores,
-  simuladoAlunos,
-  simulados as servicoSimulados,
-  turmas as servicoTurmas,
-} from '../../../services/endpoints'
+import { disciplinas as servicoDisciplinas } from '../../../services/curriculo'
+import { professores as servicoProfessores } from '../../../services/pessoas'
+import { simuladoAlunos, simulados as servicoSimulados } from '../../../services/simulados'
+import { turmas as servicoTurmas } from '../../../services/turmas'
 import { calcularFaixasHistograma } from '../../../utils/desempenho'
-import { exportarExcelAbas } from '../../../utils/exportarPlanilha'
-import { exportarPdf } from '../../../utils/exportarPdf'
+import { exportarExcelAbas } from '../../../utils/exportacao/exportarPlanilha'
+import { exportarPdf } from '../../../utils/exportacao/exportarPdf'
 import { formatarData, formatarPorcentagem } from '../../../utils/format'
-import { renderizarGraficoComoImagem, type ImagemGrafico } from '../../../utils/renderizarGrafico'
-import type { TipoDestinacaoSimulado } from '../../../types'
+import { renderizarGraficoComoImagem, type ImagemGrafico } from '../../../utils/exportacao/renderizarGrafico'
+import type { TipoDestinacaoSimulado } from '../../../types/simulados'
 import { DetalheSimuladoModal } from './DetalheSimuladoModal'
 
 // Gap igual ao padding do Card. Sempre 4 colunas em telas largas (auto-fill
@@ -205,9 +202,7 @@ export default function Desempenho() {
       })
   }, [requisicaoSimulados.data, requisicaoTentativas.data, requisicaoDisciplinas.data, requisicaoTurmas.data])
 
-  // Recorte por turma/disciplina selecionados — só afeta os gráficos
-  // abaixo; os cards de números absolutos no topo continuam somando tudo
-  // (ver totais* mais abaixo, calculados a partir de desempenhosTotais).
+  // O recorte só afeta os gráficos; os cards do topo somam tudo.
   const desempenhos = useMemo(
     () =>
       desempenhosTotais.filter(
@@ -237,10 +232,6 @@ export default function Desempenho() {
   // O card mostra só os 4 mais recentes; a lista completa fica no detalhamento.
   const desempenhosRecentes = desempenhos.slice(0, 4)
 
-  // Distribuição geral: toda tentativa concluída de todo simulado deste
-  // professor no período selecionado, agregada — diferente do histograma
-  // por simulado (que só aparece dentro do detalhamento de UM simulado),
-  // este mostra o panorama da turma toda no recorte escolhido.
   const notasGeraisPercentuais = useMemo(() => {
     const idsNoPeriodo = new Set(desempenhos.map((item) => item.simuladoId))
     const simuladosDoProfessor = new Map((requisicaoSimulados.data ?? []).map((simulado) => [simulado.id, simulado]))
@@ -269,9 +260,6 @@ export default function Desempenho() {
     [notasGeraisPercentuais],
   )
 
-  // Desempenho médio por disciplina — média dos percentuais já calculados
-  // por simulado (não recalcula do zero), só reagrupando por disciplina em
-  // vez de por simulado individual.
   const desempenhoPorDisciplina = useMemo<ItemGraficoBarras[]>(() => {
     const acumulado = new Map<string, { soma: number; quantidade: number }>()
 
@@ -289,11 +277,7 @@ export default function Desempenho() {
       .sort((a, b) => a.valor - b.valor)
   }, [desempenhos])
 
-  // Evolução ao longo do tempo, por disciplina: os simulados já concluídos
-  // dessa disciplina no período selecionado, em ordem cronológica — mostra
-  // se a turma está melhorando ou piorando entre um simulado e outro, não
-  // só a média isolada de cada um. Só entram disciplinas com 2+ simulados
-  // (tendência não existe com um ponto só).
+  // Só disciplinas com 2+ simulados: tendência não existe com um ponto só.
   const tendenciaPorDisciplina = useMemo(() => {
     const porDisciplina = new Map<string, DesempenhoSimulado[]>()
 
@@ -409,11 +393,7 @@ export default function Desempenho() {
     ],
   )
 
-  // Pra "Exportar tudo": captura o desenho de cada gráfico da tela (os
-  // MESMOS componentes, renderizados fora da tela) e casa com a seção de
-  // mesmo título em secoesRelatorioCompleto acima — "Resumo geral" e
-  // "Desempenho por simulado" não têm gráfico correspondente, ficam só com
-  // a tabela.
+  // Casa o desenho de cada gráfico com a seção de mesmo título do relatório.
   const capturarImagensRelatorio = async (): Promise<Map<string, ImagemGrafico | null>> => {
     const alturaDisciplina = Math.max(120, desempenhoPorDisciplina.length * 44)
 

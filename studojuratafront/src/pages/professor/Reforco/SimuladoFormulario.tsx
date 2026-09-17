@@ -13,17 +13,17 @@ import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Modal } from '../../../components/ui/Modal'
-import { QuestaoEditor } from '../../../components/ui/QuestaoEditor'
-import { VinculoConteudoQuestao } from '../../../components/ui/VinculoConteudo'
-import * as SVinculo from '../../../components/ui/VinculoConteudo/styles'
+import { QuestaoEditor } from '../../../components/simulados/QuestaoEditor'
+import { VinculoConteudoQuestao } from '../../../components/planejamento/VinculoConteudo'
+import * as SVinculo from '../../../components/planejamento/VinculoConteudo/styles'
 import {
   questaoVazia,
   validarQuestao,
   type ErrosQuestao,
   type QuestaoEditavel,
-} from '../../../components/ui/QuestaoEditor/types'
+} from '../../../components/simulados/QuestaoEditor/types'
 import { Select } from '../../../components/ui/Select'
-import { StatusBadge } from '../../../components/ui/StatusBadge'
+import { StatusBadge } from '../../../components/simulados/StatusBadge'
 import { Tab } from '../../../components/ui/Tab'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
@@ -33,22 +33,22 @@ import { useToast } from '../../../contexts/toastContexto'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
+import { disciplinas as servicoDisciplinas } from '../../../services/curriculo'
+import { planosEnsino } from '../../../services/planejamento'
 import {
   alternativas as servicoAlternativas,
-  disciplinas as servicoDisciplinas,
-  matriculas,
-  planosEnsino,
   questoes as servicoQuestoes,
   simuladoQuestoes,
   simulados as servicoSimulados,
-  turmas as servicoTurmas,
-} from '../../../services/endpoints'
+} from '../../../services/simulados'
+import { matriculas, turmas as servicoTurmas } from '../../../services/turmas'
 import { deInputDataHora, paraInputDataHora } from '../../../utils/format'
 import { OPCOES_DESTINACAO, ROTULO_TIPO_QUESTAO } from '../../../utils/labels'
-import type { QuestaoResponse, SimuladoResponse, TipoDestinacaoSimulado } from '../../../types'
+import type { QuestaoResponse, SimuladoResponse, TipoDestinacaoSimulado } from '../../../types/simulados'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 import { Stack } from '../../../components/ui/Stack'
 import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
+import { dataFimSimuladoValida, MENSAGEM_DATA_FIM_SIMULADO, useFormularioSimulado } from '../../../formularios/simulados'
 
 /** Regra de negócio: um simulado nunca pode ter mais que 10 questões (ver SimuladoQuestaoService no back). */
 const MAXIMO_QUESTOES = 10
@@ -87,20 +87,13 @@ export default function SimuladoFormulario() {
   const edicao = Boolean(id)
   const simuladoId = id ? Number(id) : null
 
-  const [titulo, setTitulo] = useState('')
-  const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
-  const [turmaId, setTurmaId] = useState<number | null>(null)
-  const [planoEnsinoId, setPlanoEnsinoId] = useState<number | null>(null)
-  const [tipoDestinacao, setTipoDestinacao] = useState<TipoDestinacaoSimulado>('TODOS')
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim] = useState('')
-  const [tempoLimite, setTempoLimite] = useState('')
-  const [notaMaxima, setNotaMaxima] = useState('10')
+  const form = useFormularioSimulado()
+  const { titulo, disciplinaId, turmaId, planoEnsinoId, tipoDestinacao, dataInicio, dataFim, tempoLimite, notaMaxima } = form.values
+  const erros = form.errors as Record<string, string | undefined>
 
   const [questoes, setQuestoes] = useState<QuestaoEditavel[]>([questaoVazia()])
   const [questaoAtiva, setQuestaoAtiva] = useState(0)
   const [errosQuestoes, setErrosQuestoes] = useState<Record<number, ErrosQuestao>>({})
-  const [erros, setErros] = useState<Record<string, string | undefined>>({})
 
   const [modalAlunos, setModalAlunos] = useState(false)
   const [alunosSelecionados, setAlunosSelecionados] = useState<number[]>([])
@@ -113,9 +106,6 @@ export default function SimuladoFormulario() {
   const [filtroBancoAplicado, setFiltroBancoAplicado] = useState(false)
   const [questoesBancoSelecionadas, setQuestoesBancoSelecionadas] = useState<Set<number>>(new Set())
 
-  // Modal "Importar simulado": pega todas as questões de um simulado
-  // existente de uma vez (diferente do modal acima, que importa 1 questão
-  // por vez pro slot ativo).
   const [modalImportarSimulado, setModalImportarSimulado] = useState(false)
   const [turmaImportarId, setTurmaImportarId] = useState<number | null>(null)
   const [disciplinaImportarId, setDisciplinaImportarId] = useState<number | null>(null)
@@ -143,10 +133,7 @@ export default function SimuladoFormulario() {
     { ativo: Boolean(turmaId) },
   )
 
-  // `edicao` entra no `ativo` das duas de baixo (banco de questões/alternativas)
-  // além dos modais de importação: são as mesmas usadas pra resolver o
-  // enunciado/alternativas completos de cada questão já vinculada a este
-  // simulado, na hidratação logo abaixo (ver requisicaoVinculosSimulado).
+  // Na edição, o banco de questões resolve o conteúdo das questões já vinculadas.
   const requisicaoBancoQuestoes = useRequisicao(() => servicoQuestoes.listar(), [], {
     ativo: modalImportar || modalImportarSimulado || edicao,
   })
@@ -160,9 +147,6 @@ export default function SimuladoFormulario() {
     ativo: modalImportarSimulado,
   })
 
-  // Vínculos (SimuladoQuestao) DESTE simulado — separada da de cima
-  // (que é só pro modal "Importar simulado", de OUTRO simulado) pra não
-  // misturar as duas responsabilidades; ver hidratação de `questoes` abaixo.
   const requisicaoVinculosSimulado = useRequisicao(() => simuladoQuestoes.listar(), [], { ativo: edicao })
 
   // Com questão ATIVA ainda PENDENTE, o simulado só pode ser mexido na tela de
@@ -322,15 +306,15 @@ export default function SimuladoFormulario() {
   ]
 
   useHidratar(requisicaoSimulado.data, (simulado) => {
-    setTitulo(simulado.titulo)
-    setDisciplinaId(simulado.disciplinaId ?? null)
-    setTurmaId(simulado.turmaId ?? null)
-    setPlanoEnsinoId(simulado.planoEnsinoId ?? null)
-    setTipoDestinacao(simulado.tipoDestinacao)
-    setDataInicio(paraInputDataHora(simulado.dataInicio))
-    setDataFim(paraInputDataHora(simulado.dataFim))
-    setTempoLimite(simulado.tempoLimite?.toString() ?? '')
-    setNotaMaxima(simulado.notaMaxima?.toString() ?? '10')
+    form.setFieldValue('titulo', simulado.titulo)
+    form.setFieldValue('disciplinaId', simulado.disciplinaId ?? null)
+    form.setFieldValue('turmaId', simulado.turmaId ?? null)
+    form.setFieldValue('planoEnsinoId', simulado.planoEnsinoId ?? null)
+    form.setFieldValue('tipoDestinacao', simulado.tipoDestinacao)
+    form.setFieldValue('dataInicio', paraInputDataHora(simulado.dataInicio))
+    form.setFieldValue('dataFim', paraInputDataHora(simulado.dataFim))
+    form.setFieldValue('tempoLimite', simulado.tempoLimite?.toString() ?? '')
+    form.setFieldValue('notaMaxima', simulado.notaMaxima?.toString() ?? '10')
   })
 
   // Questões já salvas do simulado. As 3 requisições viram uma referência
@@ -413,32 +397,6 @@ export default function SimuladoFormulario() {
   // Mesmo em somenteLeitura, um simulado PUBLICADO pode ter a disponibilidade estendida.
   const podeEstenderDisponibilidade = requisicaoSimulado.data?.status === 'PUBLICADO'
 
-  function validarCabecalho() {
-    const encontrados: Record<string, string | undefined> = {}
-
-    // SimuladoRequestDTO: titulo @NotBlank, tipoDestinacao @NotNull.
-    if (!titulo.trim()) encontrados.titulo = 'Informe o título do simulado'
-
-    if (tipoDestinacao === 'ESPECIFICO' && !turmaId) {
-      encontrados.turmaId = 'Selecione a turma para escolher os alunos'
-    }
-
-    if (tempoLimite && (!Number.isInteger(Number(tempoLimite)) || Number(tempoLimite) <= 0)) {
-      encontrados.tempoLimite = 'Informe os minutos como número inteiro positivo'
-    }
-
-    if (notaMaxima && (!Number.isFinite(Number(notaMaxima)) || Number(notaMaxima) <= 0)) {
-      encontrados.notaMaxima = 'A nota máxima deve ser maior que zero'
-    }
-
-    if (dataInicio && dataFim && new Date(dataFim) <= new Date(dataInicio)) {
-      encontrados.dataFim = 'A data final deve ser posterior à inicial'
-    }
-
-    setErros(encontrados)
-    return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
-  }
-
   function validarQuestoes() {
     const encontrados: Record<number, ErrosQuestao> = {}
 
@@ -456,7 +414,7 @@ export default function SimuladoFormulario() {
   }
 
   async function salvar() {
-    const cabecalhoOk = validarCabecalho()
+    const cabecalhoOk = !(await form.validate()).hasErrors
     const questoesOk = validarQuestoes()
 
     if (!cabecalhoOk || !questoesOk) {
@@ -566,8 +524,8 @@ export default function SimuladoFormulario() {
   async function salvarDisponibilidade() {
     if (!simuladoId) return
 
-    if (dataInicio && dataFim && new Date(dataFim) <= new Date(dataInicio)) {
-      setErros((atuais) => ({ ...atuais, dataFim: 'A data final deve ser posterior à inicial' }))
+    if (!dataFimSimuladoValida(dataInicio, dataFim)) {
+      form.setFieldError('dataFim', MENSAGEM_DATA_FIM_SIMULADO)
       return
     }
 
@@ -693,9 +651,7 @@ export default function SimuladoFormulario() {
       }
     })
 
-    // A primeira questão, se vazia, é substituída. O índice final vem do array
-    // resultante: descartar a vazia deixa o array menor que
-    // questoes.length + importadas.length.
+    // Descartar a primeira questão vazia encurta o array; o índice vem do resultado.
     const questoesFinal = primeiraVaziaAntes ? importadas : [...questoes, ...importadas]
     const cortadasPeloLimite = todasEscolhidas.length - escolhidas.length
 
@@ -818,7 +774,7 @@ export default function SimuladoFormulario() {
                   error={erros.titulo}
                   disabled={somenteLeitura}
                   maxLength={150}
-                  onChange={(evento) => setTitulo(evento.target.value)}
+                  onChange={(evento) => form.setFieldValue('titulo', evento.target.value)}
                 />
 
                 <Select<number>
@@ -830,7 +786,7 @@ export default function SimuladoFormulario() {
                   searchable
                   clearable
                   placeholder="Selecionar disciplina..."
-                  onChange={setDisciplinaId}
+                  onChange={(valor) => form.setFieldValue('disciplinaId', valor)}
                 />
 
                 <Select<number>
@@ -844,7 +800,7 @@ export default function SimuladoFormulario() {
                   clearable
                   placeholder="Selecionar turma..."
                   onChange={(value) => {
-                    setTurmaId(value)
+                    form.setFieldValue('turmaId', value)
                     setAlunosSelecionados([])
                   }}
                 />
@@ -859,7 +815,7 @@ export default function SimuladoFormulario() {
                   clearable
                   placeholder="Selecionar plano..."
                   hint="Opcional."
-                  onChange={setPlanoEnsinoId}
+                  onChange={(valor) => form.setFieldValue('planoEnsinoId', valor)}
                 />
 
                 <Select<TipoDestinacaoSimulado>
@@ -871,7 +827,7 @@ export default function SimuladoFormulario() {
                   }))}
                   value={tipoDestinacao}
                   disabled={somenteLeitura}
-                  onChange={(value) => setTipoDestinacao(value ?? 'TODOS')}
+                  onChange={(value) => form.setFieldValue('tipoDestinacao', value ?? 'TODOS')}
                 />
 
                 <Input
@@ -883,7 +839,7 @@ export default function SimuladoFormulario() {
                   error={erros.tempoLimite}
                   disabled={somenteLeitura}
                   hint="Em minutos. Deixe vazio para sem limite."
-                  onChange={(evento) => setTempoLimite(evento.target.value)}
+                  onChange={(evento) => form.setFieldValue('tempoLimite', evento.target.value)}
                 />
 
                 <Input
@@ -895,7 +851,7 @@ export default function SimuladoFormulario() {
                   error={erros.notaMaxima}
                   disabled={somenteLeitura}
                   hint="Distribuída igualmente entre as questões."
-                  onChange={(evento) => setNotaMaxima(evento.target.value)}
+                  onChange={(evento) => form.setFieldValue('notaMaxima', evento.target.value)}
                 />
               </GradeAutoAjuste>
 
@@ -906,7 +862,7 @@ export default function SimuladoFormulario() {
                   modo="dataHora"
                   value={dataInicio}
                   disabled={somenteLeitura}
-                  onChange={(evento) => setDataInicio(evento.target.value)}
+                  onChange={(evento) => form.setFieldValue('dataInicio', evento.target.value)}
                 />
 
                 <DatePicker
@@ -916,7 +872,7 @@ export default function SimuladoFormulario() {
                   error={erros.dataFim}
                   hint={podeEstenderDisponibilidade ? 'Simulado já lançado — só este campo pode ser alterado.' : undefined}
                   disabled={somenteLeitura && !podeEstenderDisponibilidade}
-                  onChange={(evento) => setDataFim(evento.target.value)}
+                  onChange={(evento) => form.setFieldValue('dataFim', evento.target.value)}
                 />
               </GradeAutoAjuste>
 

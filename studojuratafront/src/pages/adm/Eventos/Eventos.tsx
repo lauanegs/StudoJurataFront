@@ -22,9 +22,10 @@ import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { eventos as servicoEventos } from '../../../services/endpoints'
-import { deInputDataHora, formatarDataHora, normalizar, paraInputDataHora } from '../../../utils/format'
-import type { Evento } from '../../../types'
+import { eventos as servicoEventos } from '../../../services/eventos'
+import { deInputDataHora, formatarDataHora, normalizar } from '../../../utils/format'
+import { deEvento, useFormularioEvento } from '../../../formularios/eventos'
+import type { Evento } from '../../../types/eventos'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 const CorpoModal = styled.div`
@@ -35,8 +36,6 @@ const CorpoModal = styled.div`
 `
 
 type Filtro = 'todos' | 'pendentes' | 'concluidos'
-
-const FORMULARIO_VAZIO = { dataHorario: '', titulo: '', descricao: '', concluido: false }
 
 export default function Eventos() {
   const toast = useToast()
@@ -50,8 +49,7 @@ export default function Eventos() {
 
   const [modalAberto, setModalAberto] = useState(false)
   const [emEdicao, setEmEdicao] = useState<Evento | null>(null)
-  const [formulario, setFormulario] = useState(FORMULARIO_VAZIO)
-  const [erros, setErros] = useState<{ titulo?: string; dataHorario?: string }>({})
+  const form = useFormularioEvento()
 
   const { data, loading, error, reload } = useRequisicao(() => servicoEventos.listar(), [])
 
@@ -91,10 +89,7 @@ export default function Eventos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtro, buscaAtrasada])
 
-  // Chegando aqui com state.abrirNovo (Home > "Adicionar evento") já abre o
-  // modal de criação direto, sem o usuário precisar clicar de novo aqui —
-  // replace:true limpa o state pra um "voltar" do navegador não reabrir o
-  // modal sozinho.
+  // replace limpa o state para o "voltar" não reabrir o modal.
   useEffect(() => {
     if ((localizacao.state as { abrirNovo?: boolean } | null)?.abrirNovo) {
       abrirNovo()
@@ -105,36 +100,20 @@ export default function Eventos() {
 
   function abrirNovo() {
     setEmEdicao(null)
-    setFormulario(FORMULARIO_VAZIO)
-    setErros({})
+    form.reset()
     setModalAberto(true)
   }
 
   function abrirEdicao(evento: Evento) {
     setEmEdicao(evento)
-    setFormulario({
-      dataHorario: paraInputDataHora(evento.dataHorario),
-      titulo: evento.titulo,
-      descricao: evento.descricao ?? '',
-      concluido: evento.concluido,
-    })
-    setErros({})
+    form.setValues(deEvento(evento))
+    form.clearErrors()
     setModalAberto(true)
   }
 
-  function validar() {
-    const encontrados: typeof erros = {}
-
-    // Evento.titulo e Evento.dataHorario são @Column(nullable = false).
-    if (!formulario.titulo.trim()) encontrados.titulo = 'Informe o título do evento'
-    if (!formulario.dataHorario) encontrados.dataHorario = 'Informe a data e o horário'
-
-    setErros(encontrados)
-    return Object.keys(encontrados).length === 0
-  }
-
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    if (!validar()) return
+    if ((await form.validate()).hasErrors) return
+    const formulario = form.getValues()
 
     try {
       const corpo = {
@@ -337,47 +316,36 @@ export default function Eventos() {
             label="Título"
             required
             placeholder="Ex.: Aula demonstrativa"
-            value={formulario.titulo}
-            error={erros.titulo}
+            {...form.getInputProps('titulo')}
             disabled={salvando}
             maxLength={120}
-            onChange={(evento) =>
-              setFormulario((atual) => ({ ...atual, titulo: evento.target.value }))
-            }
           />
 
           <DatePicker
             label="Data e horário"
             required
             modo="dataHora"
-            value={formulario.dataHorario}
-            error={erros.dataHorario}
+            value={form.values.dataHorario}
+            error={form.errors.dataHorario as string | undefined}
             disabled={salvando}
-            onChange={(evento) =>
-              setFormulario((atual) => ({ ...atual, dataHorario: evento.target.value }))
-            }
+            onChange={(evento) => form.setFieldValue('dataHorario', evento.target.value)}
           />
 
           <TextArea
             label="Descrição"
             placeholder="Detalhes do evento, contatos, observações..."
-            value={formulario.descricao}
+            {...form.getInputProps('descricao')}
             disabled={salvando}
             maxLength={2000}
             rows={4}
-            onChange={(evento) =>
-              setFormulario((atual) => ({ ...atual, descricao: evento.target.value }))
-            }
           />
 
           <CheckBox
             label="Concluído"
             description="Eventos concluídos saem da lista de pendentes da Home."
-            checked={formulario.concluido}
+            checked={form.values.concluido}
             disabled={salvando}
-            onChange={(evento) =>
-              setFormulario((atual) => ({ ...atual, concluido: evento.target.checked }))
-            }
+            onChange={(evento) => form.setFieldValue('concluido', evento.target.checked)}
           />
         </CorpoModal>
       </Modal>

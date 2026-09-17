@@ -8,7 +8,7 @@ import { Card } from '../../components/ui/Card'
 import { DataTable } from '../../components/ui/DataTable'
 import { Header, CamposFiltro, CampoFiltro } from '../../components/ui/Header'
 import { Select } from '../../components/ui/Select'
-import { SimuladoIniciarCard } from '../../components/ui/SimuladoIniciarCard'
+import { SimuladoIniciarCard } from '../../components/simulados/SimuladoIniciarCard'
 import { Tab } from '../../components/ui/Tab'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
@@ -16,13 +16,10 @@ import { Skeleton } from '../../components/feedback/Skeleton'
 import { useAlunoLogado } from '../../hooks/usePerfilLogado'
 import { usePaginacao } from '../../hooks/usePaginacao'
 import { useRequisicao } from '../../hooks/useRequisicao'
-import {
-  disciplinas as servicoDisciplinas,
-  simuladoAlunos,
-  simulados as servicoSimulados,
-} from '../../services/endpoints'
+import { disciplinas as servicoDisciplinas } from '../../services/curriculo'
+import { simuladoAlunos, simulados as servicoSimulados } from '../../services/simulados'
 import { formatarDataHora, formatarTempo } from '../../utils/format'
-import type { SimuladoAlunoResponse } from '../../types'
+import type { SimuladoAlunoResponse } from '../../types/simulados'
 import type { Coluna } from '../../components/ui/DataTable/types'
 import { Stack } from '../../components/ui/Stack'
 

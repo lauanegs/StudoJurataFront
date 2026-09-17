@@ -13,9 +13,7 @@ export function CheckBox({
   size: _size,
   ...rest
 }: CheckBoxProps) {
-  // `size` chega tipado como o atributo nativo de <input> (número) por herdar
-  // InputHTMLAttributes — não faz sentido pra checkbox, então é descartado
-  // aqui pra não colidir com o `size` (token de escala) da Mantine.
+  // Descarta o `size` nativo do <input> para não colidir com o token de escala da Mantine.
   return (
     <Checkbox
       checked={checked}

@@ -54,10 +54,7 @@ export default function DesempenhoSimulados() {
 
   const [simuladoDetalhado, setSimuladoDetalhado] = useState<DesempenhoSimulado | null>(null)
 
-  // Nome do aluno filtrado, pra deixar claro no modal que os dados ali
-  // (gráfico, alerta, tabela) são só daquele aluno, não da turma toda — usa
-  // o filtro APLICADO (não o formulário, que pode estar com um aluno
-  // diferente selecionado sem o professor ter clicado em "Buscar" ainda).
+  // Usa o filtro aplicado, não o formulário ainda não buscado.
   const alunoFiltrado = filtrosAplicados.alunoId
     ? opcoesAlunos.find((opcao) => opcao.value === filtrosAplicados.alunoId)?.label
     : undefined

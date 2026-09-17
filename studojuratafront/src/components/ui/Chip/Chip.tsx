@@ -29,10 +29,7 @@ export function Chip({
       onRemove={onRemove}
       disabled={disabled}
       removeButtonProps={{ 'aria-label': rotuloRemover ?? `Remover ${String(children)}` }}
-      // O botão de remover fica fora do fluxo (absolute) e o padding simétrico
-      // reserva o espaço dele sem descentralizar o texto. styles.label também
-      // centraliza porque o .mantine-Pill-label já vem com flex:1 e ocupa
-      // toda a largura.
+      // Padding simétrico reserva o espaço do botão de remover (absolute) sem descentralizar o texto.
       styles={{
         root: {
           position: 'relative',

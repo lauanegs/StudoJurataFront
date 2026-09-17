@@ -19,7 +19,6 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
-import { useFormulario } from '../../../hooks/useFormulario'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
@@ -28,13 +27,12 @@ import {
   pessoas as servicoPessoas,
   responsaveis as servicoResponsaveis,
   vinculosResponsavel,
-} from '../../../services/endpoints'
+} from '../../../services/pessoas'
 import { formatarData } from '../../../utils/format'
 import { OPCOES_PARENTESCO, TEXTO_VERSAO_LGPD } from '../../../utils/labels'
-import type { Parentesco } from '../../../types'
-import { PessoaCampos } from '../_compartilhado/PessoaCampos'
-import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
-import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
+import type { Parentesco } from '../../../types/pessoas'
+import { PessoaCampos } from '../../../components/pessoas/PessoaCampos'
+import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '../../../formularios/pessoas'
 
 /* Ação de destaque acima do conteúdo, à direita, como na aba "Alunos ativos" de Turmas. */
 const LinhaAcaoFlutuante = styled.div`
@@ -103,10 +101,7 @@ export default function AlunoFormulario() {
 
   const [aba, setAba] = useState<'dados' | 'endereco' | 'responsaveis'>('dados')
 
-  const formulario = useFormulario<DadosPessoa>({
-    valoresIniciais: PESSOA_VAZIA,
-    validarTudo: validarPessoa,
-  })
+  const form = useFormularioPessoa()
   const [matricula, setMatricula] = useState('')
   const [vinculos, setVinculos] = useState<VinculoForm[]>([])
   // Mostra o texto exato aceito (textoVersao); não registra nada novo.
@@ -127,7 +122,8 @@ export default function AlunoFormulario() {
   const requisicaoResponsaveis = useRequisicao(() => servicoResponsaveis.listar(), [])
 
   useHidratar(requisicaoAluno.data, (aluno) => {
-    formulario.reiniciar(dePessoa(aluno.pessoa))
+    form.setValues(dePessoa(aluno.pessoa))
+    form.resetDirty()
     setMatricula(aluno.matricula ?? '')
   })
 
@@ -154,19 +150,6 @@ export default function AlunoFormulario() {
       })),
     [requisicaoResponsaveis.data],
   )
-
-  // PessoaCampos espera um objeto de erros "só os visíveis" (campo tocado ou
-  // já tentou enviar) — useFormulario expõe isso por campo via erroDe().
-  const errosVisiveis = useMemo(() => {
-    const visiveis: Partial<Record<keyof DadosPessoa, string>> = {}
-
-    ;(Object.keys(formulario.erros) as (keyof DadosPessoa)[]).forEach((campo) => {
-      const erro = formulario.erroDe(campo)
-      if (erro) visiveis[campo] = erro
-    })
-
-    return visiveis
-  }, [formulario])
 
   function validarVinculos(): boolean {
     let valido = true
@@ -217,51 +200,50 @@ export default function AlunoFormulario() {
   }
 
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    const enviado = await formulario.aoEnviar(async (pessoa) => {
-      if (!validarVinculos()) {
-        setAba('responsaveis')
-        return
-      }
-
-      try {
-        const payloadPessoa = paraPayloadPessoa(pessoa)
-
-        // Aluno e Pessoa são entidades separadas no back (@OneToOne), então a
-        // Pessoa é gravada primeiro e o Aluno referencia o id retornado.
-        const pessoaSalva = edicao
-          ? await servicoPessoas.atualizar(requisicaoAluno.data!.pessoa.id, payloadPessoa)
-          : await servicoPessoas.criar(payloadPessoa)
-
-        const alunoSalvo = edicao
-          ? await servicoAlunos.atualizar(alunoId as number, {
-              pessoa: pessoaSalva,
-              matricula: matricula.trim() || undefined,
-            })
-          : await servicoAlunos.criar({
-              pessoa: pessoaSalva,
-              matricula: matricula.trim() || undefined,
-            })
-
-        await sincronizarVinculos(alunoSalvo.id)
-
-        toast.success(
-          edicao ? 'Aluno atualizado' : 'Aluno cadastrado',
-          `${pessoaSalva.nome} foi salvo com sucesso.`,
-        )
-
-        navegar('/adm/alunos')
-      } catch (erroSalvar) {
-        toast.error(
-          'Não foi possível salvar',
-          erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
-        )
-      }
-    })()
-
-    if (!enviado) {
-      const primeiroCampo = Object.keys(formulario.erros)[0] as keyof DadosPessoa | undefined
-      if (primeiroCampo) setAba(abaDoCampoPessoa(primeiroCampo))
+    const validacao = await form.validate()
+    if (validacao.hasErrors) {
+      setAba(abaDoCampoPessoa(Object.keys(validacao.errors)[0]))
       toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
+      return
+    }
+
+    if (!validarVinculos()) {
+      setAba('responsaveis')
+      return
+    }
+
+    try {
+      const payloadPessoa = paraPayloadPessoa(form.getValues())
+
+      // Aluno e Pessoa são entidades separadas no back (@OneToOne), então a
+      // Pessoa é gravada primeiro e o Aluno referencia o id retornado.
+      const pessoaSalva = edicao
+        ? await servicoPessoas.atualizar(requisicaoAluno.data!.pessoa.id, payloadPessoa)
+        : await servicoPessoas.criar(payloadPessoa)
+
+      const alunoSalvo = edicao
+        ? await servicoAlunos.atualizar(alunoId as number, {
+            pessoa: pessoaSalva,
+            matricula: matricula.trim() || undefined,
+          })
+        : await servicoAlunos.criar({
+            pessoa: pessoaSalva,
+            matricula: matricula.trim() || undefined,
+          })
+
+      await sincronizarVinculos(alunoSalvo.id)
+
+      toast.success(
+        edicao ? 'Aluno atualizado' : 'Aluno cadastrado',
+        `${pessoaSalva.nome} foi salvo com sucesso.`,
+      )
+
+      navegar('/adm/alunos')
+    } catch (erroSalvar) {
+      toast.error(
+        'Não foi possível salvar',
+        erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
+      )
     }
   })
 
@@ -424,10 +406,7 @@ export default function AlunoFormulario() {
               <Stack gap="md">
                 <PessoaCampos
                   secao={aba}
-                  valores={formulario.valores}
-                  erros={errosVisiveis}
-                  onChange={(campo, value) => formulario.definirCampo(campo, value)}
-                  onExit={(campo) => formulario.marcarTocado(campo)}
+                  form={form}
                   disabled={salvando}
                   rotuloNome="Nome do aluno"
                 />
@@ -437,10 +416,7 @@ export default function AlunoFormulario() {
                     label="Matrícula"
                     placeholder="Código interno da escola (opcional)"
                     value={matricula}
-                    // Depois de criado, a matrícula vira um identificador do
-                    // aluno — como um id, não deve mais ser alterada; só é
-                    // editável na criação, quando ainda pode ficar em branco
-                    // pra secretaria preencher depois.
+                    // A matrícula identifica o aluno: só é editável na criação.
                     disabled={salvando || edicao}
                     maxLength={30}
                     hint={

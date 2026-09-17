@@ -3,23 +3,19 @@
  * (ex.: "IRMAO_IRMA"), sempre o rótulo daqui.
  */
 
+import type { StatusAtivoInativo, TipoUsuario } from '../types/comum'
+import type { MotivoRecomendacao } from '../types/ia'
+import type { Parentesco, Sexo } from '../types/pessoas'
+import type { StatusPlano } from '../types/planejamento'
 import type {
-  DiaSemana,
-  MotivoRecomendacao,
   NivelDificuldade,
   OrigemQuestao,
-  Parentesco,
-  Sexo,
-  StatusAtivoInativo,
-  StatusMatricula,
-  StatusPlano,
   StatusQuestao,
   StatusSimulado,
-  StatusTurma,
   TipoDestinacaoSimulado,
   TipoQuestao,
-  TipoUsuario,
-} from '../types'
+} from '../types/simulados'
+import type { DiaSemana, StatusMatricula, StatusTurma } from '../types/turmas'
 import type { TagVariant } from '../components/ui/Tag/types'
 
 export type { TagVariant }

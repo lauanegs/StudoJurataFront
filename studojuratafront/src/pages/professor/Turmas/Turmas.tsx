@@ -11,9 +11,10 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import { professores as servicoProfessores, turmas as servicoTurmas } from '../../../services/endpoints'
+import { professores as servicoProfessores } from '../../../services/pessoas'
+import { turmas as servicoTurmas } from '../../../services/turmas'
 import { normalizar } from '../../../utils/format'
-import type { Turma } from '../../../types'
+import type { Turma } from '../../../types/turmas'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 interface LinhaTurma {

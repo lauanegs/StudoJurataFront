@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import { ApiError, aoExpirarSessao } from '../services/api'
-import { autenticacao } from '../services/endpoints'
+import { autenticacao } from '../services/autenticacao'
 import { ROTULO_TIPO_USUARIO } from '../utils/labels'
-import type { LoginResponse } from '../types'
+import type { LoginResponse } from '../types/autenticacao'
 import {
   AuthContexto,
   CHAVE_USUARIO,

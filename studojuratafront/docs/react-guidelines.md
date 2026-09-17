@@ -25,7 +25,7 @@ React 19, TypeScript strict, Vite 7. Estas regras descrevem o que o projeto **j�
 - `useState` local é o padrão para estado de UI (campo de busca, modal aberto, aba ativa). Não promover estado para Context "por via das dúvidas" — os três contextos do projeto (`Auth`, `Toast`, `Confirm`) existem porque são genuinamente globais, não porque estado local seria "menos elegante".
 - **Estado derivado não deve virar `useState` + `useEffect` sincronizando.** O projeto já segue isso: `filtrados` e `itensDaPagina` são `useMemo`, não `useState` atualizado por `useEffect` toda vez que `data`/`busca` mudam. Ao adicionar um valor que pode ser calculado a partir de outro estado/prop existente, calcule-o durante a renderização (direto ou via `useMemo`), não crie um estado novo para ele.
 - **Estado duplicado**: não guardar em `useState` um valor que já existe em outro lugar (prop, outro estado, contexto) só para "ter uma cópia local" — isso cria a possibilidade de dessincronia. Exemplo do próprio projeto fazendo certo: `AuthContext` guarda `usuario` uma vez; páginas que precisam dele usam `useAuth()`, não copiam para estado próprio.
-- Formulários: usar `useFormulario` (estado + validação + touched num único lugar) em vez de um `useState` por campo, **a não ser que o formulário seja trivial** (1-2 campos sem validação cruzada) — nesse caso `useState` direto é mais simples e não precisa do hook. Ver `docs/architecture.md` #1 para o caso onde isso não foi seguido (`SimuladoFormulario.tsx`, `TurmaFormulario.tsx`) — candidato a revisão, não a "correção automática".
+- Formulários: usar `@mantine/form` + schema yup (hooks em `formularios/`) (estado + validação + touched num único lugar) em vez de um `useState` por campo, **a não ser que o formulário seja trivial** (1-2 campos sem validação cruzada) — nesse caso `useState` direto é mais simples e não precisa do hook. Ver `docs/architecture.md` #1 para o caso onde isso não foi seguido (`SimuladoFormulario.tsx`, `TurmaFormulario.tsx`) — candidato a revisão, não a "correção automática".
 
 ## Hooks
 
@@ -46,7 +46,7 @@ O projeto já segue a orientação oficial de "[You Might Not Need an Effect](ht
 - resetar um estado quando uma prop muda, se isso puder ser expresso via `key` no componente pai forçando remontagem;
 - reagir a uma mudança de estado para disparar outra atualização de estado que poderia ter sido feita no mesmo handler que causou a primeira mudança.
 
-Quando o array de dependências do `useEffect`/`useMemo`/`useCallback` for propositalmente incompleto (como em `useRequisicao`, `useFormulario`), o projeto já documenta com `// eslint-disable-next-line react-hooks/exhaustive-deps` **acompanhado de comentário explicando por quê** (ex.: "o array `dependencias` funciona como no useEffect, mas por design não queremos re-executar quando `erros` muda"). Seguir esse padrão — nunca desabilitar a regra sem explicar o motivo.
+Quando o array de dependências do `useEffect`/`useMemo`/`useCallback` for propositalmente incompleto (como em `useRequisicao`), o projeto já documenta com `// eslint-disable-next-line react-hooks/exhaustive-deps` **acompanhado de comentário explicando por quê** (ex.: "o array `dependencias` funciona como no useEffect, mas por design não queremos re-executar quando `erros` muda"). Seguir esse padrão — nunca desabilitar a regra sem explicar o motivo.
 
 ## useMemo
 
@@ -54,7 +54,7 @@ Usar para (a) derivar dado de uma lista/objeto sem recalcular a cada render desn
 
 ## useCallback
 
-Mesma lógica do `useMemo`: usar quando a função é passada como dependência de outro hook (`useEffect`, `useMemo`) ou como prop para um componente memoizado (`React.memo`) onde a re-criação causaria re-render/re-execução desnecessária — como em `useFormulario` (`definirCampo`, `campo`, `aoEnviar` são estáveis porque outros hooks/efeitos dependem deles). **Não envolver todo handler de evento em `useCallback` "por hábito"** — um `onClick` inline passado para um `<button>`/Mantine comum não precisa disso; o projeto não faz isso em `Alunos.tsx`, por exemplo (`onClick={() => navegar(...)}` é inline, sem `useCallback`).
+Mesma lógica do `useMemo`: usar quando a função é passada como dependência de outro hook (`useEffect`, `useMemo`) ou como prop para um componente memoizado (`React.memo`) onde a re-criação causaria re-render/re-execução desnecessária — como em `@mantine/form` + schema yup (hooks em `formularios/`) (`definirCampo`, `campo`, `aoEnviar` são estáveis porque outros hooks/efeitos dependem deles). **Não envolver todo handler de evento em `useCallback` "por hábito"** — um `onClick` inline passado para um `<button>`/Mantine comum não precisa disso; o projeto não faz isso em `Alunos.tsx`, por exemplo (`onClick={() => navegar(...)}` é inline, sem `useCallback`).
 
 ## Custom hooks
 
@@ -63,7 +63,7 @@ Convenção do projeto: hook devolve um objeto nomeado (não array posicional, e
 ## Eventos
 
 - Handlers nomeados com prefixo `ao` (`aoEnviar`, `aoExpirarSessao`) para os que o projeto define, ou o nome padrão da prop (`onClick`, `onChange`, `onRowClick`) quando é a interface que um componente expõe para quem o usa. Não misturar os dois estilos na mesma API pública de um componente.
-- `useFormulario().campo(nome)` já resolve `onChange`/`onBlur`/`value`/`erro` de forma consistente para inputs controlados — usar em vez de escrever os três handlers na mão para cada campo de um formulário que já usa o hook.
+- `form.getInputProps(nome)` do `@mantine/form` já resolve `onChange`/`onBlur`/`value`/`erro` de forma consistente para inputs controlados — usar em vez de escrever os três handlers na mão para cada campo de um formulário que já usa o hook.
 
 ## Renderização
 

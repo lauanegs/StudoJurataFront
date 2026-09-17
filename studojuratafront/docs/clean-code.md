@@ -11,13 +11,13 @@ O projeto já é consistente: **vocabulário de domínio em português** (`Aluno
 
 ## Componentes pequenos (tamanho como sintoma, não meta)
 
-`Alunos.tsx` (166 linhas: hook de busca, filtro, paginação, colunas, render) é o tamanho saudável de uma página de listagem neste projeto. `SimuladoFormulario.tsx` (820 linhas, 15+ `useState`) é o outro extremo — não porque "mais de X linhas é proibido", mas porque o componente genuinamente acumula responsabilidades que já têm solução própria no projeto (`useFormulario` para o estado do formulário, e possivelmente componentes locais para o editor de questões / modais). Ver `docs/react-guidelines.md` para o critério de quando extrair.
+`Alunos.tsx` (166 linhas: hook de busca, filtro, paginação, colunas, render) é o tamanho saudável de uma página de listagem neste projeto. `SimuladoFormulario.tsx` (820 linhas, 15+ `useState`) é o outro extremo — não porque "mais de X linhas é proibido", mas porque o componente genuinamente acumula responsabilidades que já têm solução própria no projeto (`@mantine/form` + schema yup (hooks em `formularios/`) para o estado do formulário, e possivelmente componentes locais para o editor de questões / modais). Ver `docs/react-guidelines.md` para o critério de quando extrair.
 
 **Quando não extrair:** uma página de listagem com filtro + tabela (`Alunos.tsx`, `Turmas.tsx`, etc.) que já delega loading/erro/paginação para hooks não precisa ser fatiada em sub-componentes — ela já é enxuta porque a lógica pesada mora nos hooks, não porque foi fragmentada artificialmente.
 
 ## Responsabilidade única
 
-Um hook, uma responsabilidade: `useRequisicao` só busca; `useAcao` só controla estado de mutação; `usePaginacao` só pagina; `useDebounce` só atrasa um valor. Nenhum faz duas coisas. Ao adicionar lógica nova a um componente, primeiro perguntar se ela já é responsabilidade de um hook existente antes de reimplementar inline (ver o antipadrão real do projeto: formulários grandes que não usam `useFormulario`, apesar de ele existir e ser usado em outros formulários).
+Um hook, uma responsabilidade: `useRequisicao` só busca; `useAcao` só controla estado de mutação; `usePaginacao` só pagina; `useDebounce` só atrasa um valor. Nenhum faz duas coisas. Ao adicionar lógica nova a um componente, primeiro perguntar se ela já é responsabilidade de um hook existente antes de reimplementar inline (ver o antipadrão real do projeto: formulários grandes que não usam apesar de ele existir e ser usado em outros formulários).
 
 ## Redução de complexidade
 
@@ -41,7 +41,7 @@ O padrão do projeto é: hooks de dado (`useRequisicao`) capturam o erro e devol
 
 ## Validações
 
-Formato de campo → `utils/validacao.ts` (`Validador<T>`, composável via `combinar()`), plugado no `useFormulario`. Não reimplementar uma regex/checagem que já existe em `validacao.ts` dentro de uma página.
+Formato de campo → schema yup em `formularios/<domínio>.ts` (CPF/CEP/telefone via `@brazilian-utils/brazilian-utils`), plugado no `useForm` com `schemaResolver`. Não reimplementar uma regex/checagem que já existe em `validacao.ts` dentro de uma página.
 
 ## Comentários
 

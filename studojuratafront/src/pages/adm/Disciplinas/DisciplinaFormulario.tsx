@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { Archive, ArchiveRestore, Save } from 'lucide-react'
@@ -18,9 +17,10 @@ import { useEscola } from '../../../hooks/useEscola'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { disciplinas as servicoDisciplinas } from '../../../services/endpoints'
+import { disciplinas as servicoDisciplinas } from '../../../services/curriculo'
+import { useFormularioDisciplina } from '../../../formularios/curriculo'
 import { OPCOES_ATIVA_INATIVA } from '../../../utils/labels'
-import type { StatusAtivoInativo } from '../../../types'
+import type { StatusAtivoInativo } from '../../../types/comum'
 
 const Grade = styled.div`
   display: grid;
@@ -42,9 +42,7 @@ export default function DisciplinaFormulario() {
   const edicao = Boolean(id)
   const disciplinaId = id ? Number(id) : null
 
-  const [titulo, setTitulo] = useState('')
-  const [ativa, setAtiva] = useState(true)
-  const [erros, setErros] = useState<{ titulo?: string }>({})
+  const form = useFormularioDisciplina()
 
   const requisicao = useRequisicao(
     () => servicoDisciplinas.buscar(disciplinaId as number),
@@ -53,21 +51,13 @@ export default function DisciplinaFormulario() {
   )
 
   useHidratar(requisicao.data, (disciplina) => {
-    setTitulo(disciplina.titulo ?? '')
-    setAtiva(disciplina.status !== 'INATIVO')
+    form.setValues({ titulo: disciplina.titulo ?? '', ativa: disciplina.status !== 'INATIVO' })
+    form.resetDirty()
   })
 
-  function validar() {
-    const encontrados: typeof erros = {}
-
-    if (!titulo.trim()) encontrados.titulo = 'Informe o nome da disciplina'
-
-    setErros(encontrados)
-    return Object.keys(encontrados).length === 0
-  }
-
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    if (!validar()) return
+    if ((await form.validate()).hasErrors) return
+    const { titulo, ativa } = form.getValues()
 
     if (!escola) {
       toast.error('Escola não encontrada', 'Cadastre uma escola antes de criar disciplinas.')
@@ -215,19 +205,17 @@ export default function DisciplinaFormulario() {
                 label="Nome da disciplina"
                 required
                 placeholder="Ex.: Robótica"
-                value={titulo}
-                error={erros.titulo}
+                {...form.getInputProps('titulo')}
                 disabled={salvando}
                 maxLength={120}
-                onChange={(evento) => setTitulo(evento.target.value)}
               />
 
               <Select<StatusAtivoInativo>
                 label="Situação"
                 options={OPCOES_ATIVA_INATIVA}
-                value={ativa ? 'ATIVO' : 'INATIVO'}
+                value={form.values.ativa ? 'ATIVO' : 'INATIVO'}
                 disabled={salvando}
-                onChange={(valor) => setAtiva(valor !== 'INATIVO')}
+                onChange={(valor) => form.setFieldValue('ativa', valor !== 'INATIVO')}
               />
             </Grade>
           </Stack>

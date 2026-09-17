@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { CalendarPlus, Clock, GraduationCap, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
-import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
+import { AlertaDesempenhoCard } from '../../../components/desempenho/AlertaDesempenhoCard'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
@@ -12,9 +12,9 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { useAvisosDispensados } from '../../../hooks/useAvisosDispensados'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import { matriculas, turmas as servicoTurmas } from '../../../services/endpoints'
+import { matriculas, turmas as servicoTurmas } from '../../../services/turmas'
 import { formatarCargaHoraria, formatarData, formatarIdade, normalizar } from '../../../utils/format'
-import type { AlunoTurma } from '../../../types'
+import type { AlunoTurma } from '../../../types/turmas'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function TurmaDetalhada() {
@@ -69,9 +69,7 @@ export default function TurmaDetalhada() {
     },
     {
       key: 'cargaHoraria',
-      // Soma todas as disciplinas ativas da turma (nível do curso) — não é
-      // por disciplina; ver a coluna equivalente em "Realizar chamada"
-      // (RegistrarAulaTurma), que é escopada só à disciplina da aula.
+      // Soma todas as disciplinas da turma, não só uma.
       cabecalho: 'Carga horária atingida (curso)',
       ocultarEmTelaPequena: true,
       render: (matricula) => formatarCargaHoraria(frequenciaPorAluno.get(matricula.aluno.id)?.cargaHoraria ?? 0),

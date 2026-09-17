@@ -6,9 +6,9 @@ import { Sparkles, Target, Trophy } from 'lucide-react'
 import { Layout } from '../../components/layout'
 import { Banner } from '../../components/ui/Banner'
 import { Card } from '../../components/ui/Card'
-import { CircularProgress } from '../../components/ui/CircularProgress'
-import { SaldoMoedas } from '../../components/ui/SaldoMoedas'
-import { SimuladoIniciarCard } from '../../components/ui/SimuladoIniciarCard'
+import { CircularProgress } from '../../components/desempenho/CircularProgress'
+import { SaldoMoedas } from '../../components/gamificacao/SaldoMoedas'
+import { SimuladoIniciarCard } from '../../components/simulados/SimuladoIniciarCard'
 import { Stack } from '../../components/ui/Stack'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
@@ -16,12 +16,9 @@ import { Skeleton } from '../../components/feedback/Skeleton'
 import { useAuth } from '../../hooks/useAuth'
 import { useAlunoLogado, useSkinEquipadaDoAluno } from '../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../hooks/useRequisicao'
-import {
-  disciplinas as servicoDisciplinas,
-  gamificacao,
-  simuladoAlunos,
-  simulados as servicoSimulados,
-} from '../../services/endpoints'
+import { disciplinas as servicoDisciplinas } from '../../services/curriculo'
+import { gamificacao } from '../../services/gamificacao'
+import { simuladoAlunos, simulados as servicoSimulados } from '../../services/simulados'
 import { nomeCurto } from '../../utils/format'
 
 const Medidores = styled.div`

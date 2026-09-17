@@ -1,3 +1,5 @@
+import { formatCep, formatCpf } from '@brazilian-utils/brazilian-utils'
+
 const INVALIDO = '—'
 
 function paraData(valor?: string | Date | null): Date | null {
@@ -80,14 +82,7 @@ export function deInputDataHora(valor?: string | null): string | null {
 }
 
 export function formatarCpf(cpf?: string | null): string {
-  if (!cpf) return INVALIDO
-
-  const digitos = cpf.replace(/\D/g, '').slice(0, 11)
-
-  return digitos
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+  return cpf ? formatCpf(cpf) : INVALIDO
 }
 
 export function formatarTelefone(telefone?: string | null): string {
@@ -103,11 +98,7 @@ export function formatarTelefone(telefone?: string | null): string {
 }
 
 export function formatarCep(cep?: string | null): string {
-  if (!cep) return INVALIDO
-
-  const digitos = cep.replace(/\D/g, '').slice(0, 8)
-
-  return digitos.replace(/(\d{5})(\d)/, '$1-$2')
+  return cep ? formatCep(cep) : INVALIDO
 }
 
 export function calcularIdade(dataNascimento?: string | null): number | null {

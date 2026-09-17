@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react'
 
-import type { LoginResponse, TipoUsuario } from '../types'
+import type { LoginResponse } from '../types/autenticacao'
+import type { TipoUsuario } from '../types/comum'
 
 export interface ContextoAutenticacao {
   usuario: LoginResponse | null

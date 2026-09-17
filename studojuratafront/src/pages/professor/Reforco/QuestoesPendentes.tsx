@@ -15,7 +15,8 @@ import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { disciplinas as servicoDisciplinas, questoes as servicoQuestoes } from '../../../services/endpoints'
+import { disciplinas as servicoDisciplinas } from '../../../services/curriculo'
+import { questoes as servicoQuestoes } from '../../../services/simulados'
 import { normalizar } from '../../../utils/format'
 import {
   ROTULO_NIVEL_DIFICULDADE,
@@ -25,7 +26,7 @@ import {
   NIVEL_DIFICULDADE_VARIANT,
   STATUS_QUESTAO_VARIANT,
 } from '../../../utils/labels'
-import type { QuestaoResponse } from '../../../types'
+import type { QuestaoResponse } from '../../../types/simulados'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 type Aba = 'pendentes' | 'aprovadas' | 'rejeitadas' | 'todas'

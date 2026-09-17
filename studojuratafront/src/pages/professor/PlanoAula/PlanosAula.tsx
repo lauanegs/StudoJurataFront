@@ -11,10 +11,11 @@ import { Tag } from '../../../components/ui/Tag'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import { planosAula as servicoPlanos, professores } from '../../../services/endpoints'
+import { professores } from '../../../services/pessoas'
+import { planosAula as servicoPlanos } from '../../../services/planejamento'
 import { formatarPeriodo } from '../../../utils/format'
 import { ROTULO_STATUS_PLANO, STATUS_PLANO_VARIANT } from '../../../utils/labels'
-import type { PlanoAula } from '../../../types'
+import type { PlanoAula } from '../../../types/planejamento'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function PlanosAula() {

@@ -15,10 +15,10 @@ import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { cursos as servicoCursos } from '../../../services/endpoints'
+import { cursos as servicoCursos } from '../../../services/curriculo'
 import { formatarCargaHoraria, normalizar } from '../../../utils/format'
 import { ROTULO_ATIVO_INATIVO, ATIVO_INATIVO_VARIANT } from '../../../utils/labels'
-import type { Curso } from '../../../types'
+import type { Curso } from '../../../types/curriculo'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function Cursos() {

@@ -16,13 +16,10 @@ import { Skeleton } from '../../../components/feedback/Skeleton'
 import { useToast } from '../../../contexts/toastContexto'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import {
-  matriculas,
-  notas as servicoNotas,
-  professores as servicoProfessores,
-  simuladoAlunos,
-  simulados as servicoSimulados,
-} from '../../../services/endpoints'
+import { notas as servicoNotas } from '../../../services/notas'
+import { professores as servicoProfessores } from '../../../services/pessoas'
+import { simuladoAlunos, simulados as servicoSimulados } from '../../../services/simulados'
+import { matriculas } from '../../../services/turmas'
 import { nivelDesempenho } from '../../../utils/desempenho'
 import { formatarNota } from '../../../utils/format'
 import type { TagVariant } from '../../../components/ui/Tag'
@@ -33,7 +30,8 @@ const VARIANTE_POR_NIVEL: Record<'baixo' | 'medio' | 'alto', TagVariant> = {
   alto: 'success',
 }
 import { ROTULO_STATUS_MATRICULA } from '../../../utils/labels'
-import type { AlunoTurma, SimuladoAlunoResponse } from '../../../types'
+import type { SimuladoAlunoResponse } from '../../../types/simulados'
+import type { AlunoTurma } from '../../../types/turmas'
 
 type TipoFiltro = 'disciplina' | 'aluno'
 type Visao = 'ativos' | 'historico'

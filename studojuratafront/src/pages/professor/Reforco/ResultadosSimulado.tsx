@@ -9,13 +9,10 @@ import { DataTable } from '../../../components/ui/DataTable'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import {
-  alunos as servicoAlunos,
-  simuladoAlunos,
-  simulados as servicoSimulados,
-} from '../../../services/endpoints'
+import { alunos as servicoAlunos } from '../../../services/pessoas'
+import { simuladoAlunos, simulados as servicoSimulados } from '../../../services/simulados'
 import { formatarPorcentagem, formatarTempo } from '../../../utils/format'
-import type { SimuladoAlunoResponse } from '../../../types'
+import type { SimuladoAlunoResponse } from '../../../types/simulados'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function ResultadosSimulado() {

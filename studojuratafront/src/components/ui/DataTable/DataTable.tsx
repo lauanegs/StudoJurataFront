@@ -184,9 +184,7 @@ export function DataTable<T>({
                 <Table.Tr
                   key={rowKey(item)}
                   tabIndex={onRowClick ? 0 : undefined}
-                  // Última linha sem borda (o Paper já fecha o quadro). A chave só
-                  // entra na última linha: mesmo como `undefined`, o merge com
-                  // styles.tr apagaria a borda de todas.
+                  // A chave só entra na última linha: mesmo `undefined` apagaria a borda de todas no merge.
                   style={{
                     cursor: onRowClick ? 'pointer' : undefined,
                     ...(indice === dadosOrdenados.length - 1 ? { borderBottom: 'none' } : null),

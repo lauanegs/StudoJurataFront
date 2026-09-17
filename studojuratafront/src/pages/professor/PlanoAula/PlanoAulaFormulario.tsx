@@ -17,10 +17,10 @@ import { useToast } from '../../../contexts/toastContexto'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { planosAula as servicoPlanosAula } from '../../../services/endpoints'
+import { planosAula as servicoPlanosAula } from '../../../services/planejamento'
 import { formatarCargaHoraria } from '../../../utils/format'
 import { OPCOES_STATUS_PLANO } from '../../../utils/labels'
-import type { StatusPlano } from '../../../types'
+import type { StatusPlano } from '../../../types/planejamento'
 
 export default function PlanoAulaFormulario() {
   const { id } = useParams()

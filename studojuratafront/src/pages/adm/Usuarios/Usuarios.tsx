@@ -15,10 +15,10 @@ import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { usuarios as servicoUsuarios } from '../../../services/endpoints'
+import { usuarios as servicoUsuarios } from '../../../services/pessoas'
 import { normalizar } from '../../../utils/format'
 import { ROTULO_ATIVO_INATIVO, ATIVO_INATIVO_VARIANT, ROTULO_TIPO_USUARIO } from '../../../utils/labels'
-import type { Usuario } from '../../../types'
+import type { Usuario } from '../../../types/pessoas'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function Usuarios() {

@@ -15,25 +15,23 @@ import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { TextArea } from '../../../components/ui/TextArea'
 import { TimePicker } from '../../../components/ui/TimePicker'
-import { VinculoConteudoAula } from '../../../components/ui/VinculoConteudo'
+import { VinculoConteudoAula } from '../../../components/planejamento/VinculoConteudo'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { useToast } from '../../../contexts/toastContexto'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
+import { cursoDisciplinas } from '../../../services/curriculo'
+import { professores as servicoProfessores } from '../../../services/pessoas'
 import {
   aulas as servicoAulas,
-  cursoDisciplinas,
   frequencias as servicoFrequencias,
-  horariosTurma,
-  matriculas,
   planosAula,
-  professores as servicoProfessores,
-  turmas as servicoTurmas,
-} from '../../../services/endpoints'
+} from '../../../services/planejamento'
+import { horariosTurma, matriculas, turmas as servicoTurmas } from '../../../services/turmas'
 import { formatarCargaHoraria, formatarHora, horaParaMinutos, horasParaHHmm } from '../../../utils/format'
 import { ROTULO_DIA_SEMANA_CURTO } from '../../../utils/labels'
-import type { AlunoTurma } from '../../../types'
+import type { AlunoTurma } from '../../../types/turmas'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 import { Stack } from '../../../components/ui/Stack'
 import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
@@ -193,9 +191,7 @@ export default function RegistrarAulaTurma() {
     ? (aulasDoPlano.find((aula) => aula.id === aulaSelecionadaManualId) ?? null)
     : aulaSugerida
 
-  // Trocar de disciplina invalida a escolha manual. Compara valor em vez de
-  // usar flag porque o StrictMode roda o efeito duas vezes na montagem e
-  // descartaria a pré-seleção de ?aulaId=.
+  // Compara valor em vez de flag: o StrictMode roda o efeito duas vezes e perderia ?aulaId=.
   const disciplinaAnterior = useRef(disciplinaAtiva)
   useEffect(() => {
     if (disciplinaAnterior.current === disciplinaAtiva) return
@@ -227,9 +223,7 @@ export default function RegistrarAulaTurma() {
   // horária é digitada (TimePicker, HH:mm) em vez do Select.
   const semHorarioCadastrado = !requisicaoHorarios.loading && opcoesHorarios.length === 0
 
-  // A chamada depende dos horários da aula (cada aluno é avaliado contra a
-  // carga horária prevista) — só libera com um horário (ou carga horária
-  // digitada, na ausência de horário cadastrado) escolhido na aba de conteúdo.
+  // A chamada depende da carga horária da aula escolhida.
   const chamadaLiberada = semHorarioCadastrado
     ? horaParaMinutos(cargaHorariaManual || '00:00') > 0
     : Boolean(horarioTurmaId)
@@ -238,9 +232,6 @@ export default function RegistrarAulaTurma() {
     if (!chamadaLiberada && aba === 'chamada') setAba('conteudo')
   }, [chamadaLiberada, aba])
 
-  // Os campos de "criar/ajustar aula" seguem a aula-alvo atual (selecionada
-  // ou sugerida) — trocando de aula, os campos atualizam junto. Sem aula
-  // já publicada, a data de publicação sugerida é hoje.
   useEffect(() => {
     if (aulaAlvo?.horarioTurma?.id) {
       setHorarioTurmaId(aulaAlvo.horarioTurma.id)
@@ -347,9 +338,7 @@ export default function RegistrarAulaTurma() {
           ).id
 
       if (aulaAlvo) {
-        // AulaService.atualizar faz save() completo, não merge — reenviar só
-        // os campos desta tela apagaria ordem/planoAula/status. Parte do
-        // aulaAlvo já carregado (listarPorPlanoAula), não de um objeto vazio.
+        // AulaService.atualizar sobrescreve tudo: parte da aula carregada.
         await servicoAulas.atualizar(idAula, {
           ...aulaAlvo,
           titulo: titulo.trim() || aulaAlvo.titulo,

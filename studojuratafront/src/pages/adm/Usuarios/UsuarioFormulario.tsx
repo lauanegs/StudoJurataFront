@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { Archive, ArchiveRestore, Save } from 'lucide-react'
@@ -23,9 +23,10 @@ import {
   pessoas as servicoPessoas,
   professores as servicoProfessores,
   usuarios as servicoUsuarios,
-} from '../../../services/endpoints'
+} from '../../../services/pessoas'
+import { useFormularioUsuario } from '../../../formularios/pessoas'
 import { OPCOES_ATIVO_INATIVO, OPCOES_TIPO_USUARIO } from '../../../utils/labels'
-import type { StatusAtivoInativo, TipoUsuario } from '../../../types'
+import type { StatusAtivoInativo, TipoUsuario } from '../../../types/comum'
 
 const Grade = styled.div`
   display: grid;
@@ -52,12 +53,7 @@ export default function UsuarioFormulario() {
   const edicao = Boolean(id)
   const usuarioId = id ? Number(id) : null
 
-  const [pessoaId, setPessoaId] = useState<number | null>(null)
-  const [tipoUsuario, setTipoUsuario] = useState<TipoUsuario | null>(null)
-  const [username, setUsername] = useState('')
-  const [senha, setSenha] = useState('')
-  const [ativo, setAtivo] = useState(true)
-  const [erros, setErros] = useState<Record<string, string | undefined>>({})
+  const form = useFormularioUsuario(edicao)
 
   const requisicao = useRequisicao(
     () => servicoUsuarios.buscar(usuarioId as number),
@@ -70,10 +66,13 @@ export default function UsuarioFormulario() {
   const requisicaoProfessores = useRequisicao(() => servicoProfessores.listar(), [])
 
   useHidratar(requisicao.data, (usuario) => {
-    setPessoaId(usuario.pessoa?.id ?? null)
-    setTipoUsuario(usuario.tipoUsuario)
-    setUsername(usuario.username ?? '')
-    setAtivo(usuario.status !== 'INATIVO')
+    form.setValues({
+      pessoaId: usuario.pessoa?.id ?? null,
+      tipoUsuario: usuario.tipoUsuario,
+      username: usuario.username ?? '',
+      ativo: usuario.status !== 'INATIVO',
+    })
+    form.resetDirty()
   })
 
   // Só pessoas sem login ainda podem ser escolhidas — exceto a que já está
@@ -91,20 +90,9 @@ export default function UsuarioFormulario() {
       .map((pessoa) => ({ value: pessoa.id, label: pessoa.nome ?? `Pessoa ${pessoa.id}` }))
   }, [requisicaoPessoas.data, requisicaoUsuarios.data, usuarioId])
 
-  function validar() {
-    const encontrados: Record<string, string | undefined> = {}
-
-    if (!pessoaId) encontrados.pessoaId = 'Selecione a pessoa'
-    if (!tipoUsuario) encontrados.tipoUsuario = 'Selecione o tipo de usuário'
-    if (!username.trim()) encontrados.username = 'Informe o usuário'
-    if (!edicao && !senha.trim()) encontrados.senha = 'Informe a senha'
-
-    setErros(encontrados)
-    return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
-  }
-
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    if (!validar()) return
+    if ((await form.validate()).hasErrors) return
+    const { pessoaId, tipoUsuario, username, senha, ativo } = form.getValues()
 
     if (!escola) {
       toast.error('Escola não encontrada', 'Cadastre uma escola antes de criar usuários.')
@@ -269,37 +257,35 @@ export default function UsuarioFormulario() {
                 label="Pessoa"
                 required
                 options={opcoesPessoas}
-                value={pessoaId}
-                error={erros.pessoaId}
+                value={form.values.pessoaId}
+                error={form.errors.pessoaId as string | undefined}
                 loading={requisicaoPessoas.loading || requisicaoUsuarios.loading}
                 disabled={salvando}
                 searchable
                 clearable
                 placeholder="Selecionar pessoa..."
                 hint="Aluno, professor ou responsável já cadastrado, ainda sem login."
-                onChange={setPessoaId}
+                onChange={(valor) => form.setFieldValue('pessoaId', valor)}
               />
 
               <Select<TipoUsuario>
                 label="Tipo de usuário"
                 required
                 options={OPCOES_TIPO_USUARIO}
-                value={tipoUsuario}
-                error={erros.tipoUsuario}
+                value={form.values.tipoUsuario}
+                error={form.errors.tipoUsuario as string | undefined}
                 disabled={salvando}
                 placeholder="Selecionar tipo..."
-                onChange={setTipoUsuario}
+                onChange={(valor) => form.setFieldValue('tipoUsuario', valor)}
               />
 
               <Input
                 label="Usuário"
                 required
                 placeholder="Ex.: joao.silva"
-                value={username}
-                error={erros.username}
+                {...form.getInputProps('username')}
                 disabled={salvando}
                 maxLength={60}
-                onChange={(evento) => setUsername(evento.target.value)}
               />
 
               <Input
@@ -307,20 +293,18 @@ export default function UsuarioFormulario() {
                 type="password"
                 required={!edicao}
                 placeholder={edicao ? 'Deixe em branco para manter a atual' : 'Informe a senha'}
-                value={senha}
-                error={erros.senha}
+                {...form.getInputProps('senha')}
                 disabled={salvando}
                 hint={edicao ? 'Deixe vazio para não alterar a senha.' : undefined}
-                onChange={(evento) => setSenha(evento.target.value)}
               />
             </Grade>
 
             <Select<StatusAtivoInativo>
               label="Situação"
               options={OPCOES_ATIVO_INATIVO}
-              value={ativo ? 'ATIVO' : 'INATIVO'}
+              value={form.values.ativo ? 'ATIVO' : 'INATIVO'}
               disabled={salvando}
-              onChange={(valor) => setAtivo(valor !== 'INATIVO')}
+              onChange={(valor) => form.setFieldValue('ativo', valor !== 'INATIVO')}
             />
           </Stack>
         </Card>

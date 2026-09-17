@@ -15,10 +15,10 @@ import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { matriculas, turmas as servicoTurmas } from '../../../services/endpoints'
+import { matriculas, turmas as servicoTurmas } from '../../../services/turmas'
 import { normalizar } from '../../../utils/format'
 import { ROTULO_STATUS_TURMA } from '../../../utils/labels'
-import type { Turma } from '../../../types'
+import type { Turma } from '../../../types/turmas'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function Turmas() {

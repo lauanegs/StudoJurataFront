@@ -48,9 +48,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           try {
             await pedido.aoConfirmar()
           } catch {
-            // `aoConfirmar` já trata seu próprio erro com toast (padrão do
-            // projeto); isto é só uma rede de segurança para o modal nunca
-            // ficar preso aberto se algum erro escapar sem ser capturado.
+            // Rede de segurança para o modal não ficar preso aberto.
           } finally {
             fechar()
           }

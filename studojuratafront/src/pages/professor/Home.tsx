@@ -3,16 +3,17 @@ import styled from 'styled-components'
 import { Cake, CalendarDays } from 'lucide-react'
 
 import { Layout } from '../../components/layout'
-import { AniversarianteCard } from '../../components/ui/AniversarianteCard'
+import { AniversarianteCard } from '../../components/pessoas/AniversarianteCard'
 import { Banner } from '../../components/ui/Banner'
 import { Card } from '../../components/ui/Card'
-import { EventoCard } from '../../components/ui/EventoCard'
+import { EventoCard } from '../../components/eventos/EventoCard'
 import { SeparadorCard } from '../../components/ui/SeparadorCard'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton, SkeletonCartao } from '../../components/feedback/Skeleton'
 import { useRequisicao } from '../../hooks/useRequisicao'
-import { eventos as servicoEventos, pessoas as servicoPessoas } from '../../services/endpoints'
-import { aniversariantesDaSemana } from '../_compartilhado/aniversariantes'
+import { eventos as servicoEventos } from '../../services/eventos'
+import { pessoas as servicoPessoas } from '../../services/pessoas'
+import { aniversariantesDaSemana } from '../../utils/aniversariantes'
 
 /** Altura fixa do Figma; a largura vem da grade do SeparadorCard. */
 const ItemEvento = styled.div`

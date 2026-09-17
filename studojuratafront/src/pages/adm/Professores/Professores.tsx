@@ -15,10 +15,10 @@ import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { professores as servicoProfessores } from '../../../services/endpoints'
+import { professores as servicoProfessores } from '../../../services/pessoas'
 import { formatarCpf, formatarTelefone, normalizar } from '../../../utils/format'
 import { ROTULO_ATIVO_INATIVO, ATIVO_INATIVO_VARIANT } from '../../../utils/labels'
-import type { Professor } from '../../../types'
+import type { Professor } from '../../../types/pessoas'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function Professores() {

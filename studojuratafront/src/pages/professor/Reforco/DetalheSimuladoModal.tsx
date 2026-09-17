@@ -2,30 +2,26 @@ import { useMemo, type ReactNode } from 'react'
 import styled from 'styled-components'
 import { BookOpen, CalendarClock, FileDown, FileSpreadsheet, GraduationCap, Target, Users } from 'lucide-react'
 
-import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
+import { AlertaDesempenhoCard } from '../../../components/desempenho/AlertaDesempenhoCard'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Histograma } from '../../../components/ui/Histograma'
+import { Histograma } from '../../../components/graficos/Histograma'
 import { ListaInfo } from '../../../components/ui/ListaInfo'
 import { Modal } from '../../../components/ui/Modal'
 import { Tag } from '../../../components/ui/Tag'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../../components/feedback/Skeleton'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import {
-  alunos as servicoAlunos,
-  questaoAlunos,
-  questoes as servicoQuestoes,
-  simuladoQuestoes,
-} from '../../../services/endpoints'
+import { alunos as servicoAlunos } from '../../../services/pessoas'
+import { questaoAlunos, questoes as servicoQuestoes, simuladoQuestoes } from '../../../services/simulados'
 import { calcularFaixasHistograma, LIMIAR_BAIXO_DESEMPENHO } from '../../../utils/desempenho'
-import { exportarExcelAbas } from '../../../utils/exportarPlanilha'
-import { exportarPdf } from '../../../utils/exportarPdf'
+import { exportarExcelAbas } from '../../../utils/exportacao/exportarPlanilha'
+import { exportarPdf } from '../../../utils/exportacao/exportarPdf'
 import { formatarData, formatarPorcentagem } from '../../../utils/format'
-import { renderizarGraficoComoImagem } from '../../../utils/renderizarGrafico'
+import { renderizarGraficoComoImagem } from '../../../utils/exportacao/renderizarGrafico'
 import { ROTULO_DESTINACAO } from '../../../utils/labels'
-import type { SimuladoAlunoResponse, TipoDestinacaoSimulado } from '../../../types'
+import type { SimuladoAlunoResponse, TipoDestinacaoSimulado } from '../../../types/simulados'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 const Coluna = styled.div`
@@ -156,18 +152,13 @@ export function DetalheSimuladoModal({
   const percentualTurmaAbaixo =
     notasPercentuais.length > 0 ? (alunosAbaixoDoLimiar.length / notasPercentuais.length) * 100 : 0
 
-  // Turma com >= 60% dos alunos abaixo do limiar pede reforço MANUAL; a IA
-  // fica para casos individuais. Com aluno filtrado, vale só a média dele,
-  // como candidato a reforço individual.
+  // Turma com >= 60% abaixo do limiar pede reforço manual; a IA fica para casos individuais.
   const pedeReforcoManual = percentualTurmaAbaixo >= LIMIAR_BAIXO_DESEMPENHO
 
   const mediaAluno =
     notasPercentuais.length > 0 ? notasPercentuais.reduce((soma, valor) => soma + valor, 0) / notasPercentuais.length : 0
   const alunoAbaixoDoLimiar = mediaAluno < LIMIAR_BAIXO_DESEMPENHO
 
-  // Campo inicial do modal — turma, disciplina, data, destinação e, quando
-  // houver, o aluno filtrado. Cada linha descreve um dado diferente, no
-  // mesmo padrão ícone + texto do subtítulo do Header (SubtituloItem).
   const rotuloDestinacao = tipoDestinacao
     ? tipoDestinacao === 'ESPECIFICO'
       ? `${ROTULO_DESTINACAO[tipoDestinacao]} (${tentativas.length})`
@@ -243,12 +234,7 @@ export function DetalheSimuladoModal({
     [desempenhoPorQuestao],
   )
 
-  // As mesmas 3 seções da tela (histograma / alunos abaixo / por questão) —
-  // "alunos abaixo" só entra quando não há um aluno já filtrado (a lista de
-  // 1 nome não faz sentido nesse caso, mesma regra da tela).
-  // Só o histograma (Distribuição de notas) tem um desenho pra capturar —
-  // "Alunos abaixo" e "Desempenho por questão" são listas/tabelas na tela,
-  // sem gráfico correspondente.
+  // Só o histograma tem desenho para capturar; "alunos abaixo" some com aluno filtrado.
   const capturarImagemHistograma = () =>
     renderizarGraficoComoImagem(
       <Histograma valores={notasPercentuais} rotuloAcessivel={`Distribuição de notas de ${titulo}`} />,

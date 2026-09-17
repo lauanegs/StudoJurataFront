@@ -13,12 +13,9 @@ import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../components/feedback/Skeleton'
 import { useAlunoLogado } from '../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../hooks/useRequisicao'
-import {
-  disciplinas as servicoDisciplinas,
-  notas as servicoNotas,
-  simuladoAlunos,
-  simulados as servicoSimulados,
-} from '../../services/endpoints'
+import { notas as servicoNotas } from '../../services/notas'
+import { disciplinas as servicoDisciplinas } from '../../services/curriculo'
+import { simuladoAlunos, simulados as servicoSimulados } from '../../services/simulados'
 import { nivelDesempenho } from '../../utils/desempenho'
 import { formatarNota } from '../../utils/format'
 
@@ -103,10 +100,7 @@ export default function AlunoNotas() {
     }))
   }
 
-  // Quantos pontos (de 100) a disciplina já distribuiu até agora: só os
-  // simulados com notaMaxima concluídos contam — o restante dos 100 pontos
-  // da disciplina ainda não foi "colocado em jogo". nota.total é sempre
-  // sobre essa base, nunca sobre os 100 pontos totais do curso inteiro.
+  // Pontos já distribuídos (simulados concluídos); nota.total é sobre essa base.
   function pontosDistribuidos(disciplinaFiltroId?: number, turmaFiltroId?: number) {
     return tentativasDaDisciplina(disciplinaFiltroId, turmaFiltroId).reduce(
       (soma, { simulado }) => soma + (simulado?.notaMaxima ?? 0),

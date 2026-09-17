@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Archive, ArchiveRestore, Eye, Save } from 'lucide-react'
 
@@ -14,7 +14,6 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
-import { useFormulario } from '../../../hooks/useFormulario'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
@@ -22,13 +21,12 @@ import {
   pessoas as servicoPessoas,
   responsaveis as servicoResponsaveis,
   vinculosResponsavel,
-} from '../../../services/endpoints'
+} from '../../../services/pessoas'
 import { formatarData } from '../../../utils/format'
 import { ROTULO_PARENTESCO } from '../../../utils/labels'
-import type { ResponsavelAluno } from '../../../types'
-import { PessoaCampos } from '../_compartilhado/PessoaCampos'
-import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
-import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
+import type { ResponsavelAluno } from '../../../types/pessoas'
+import { PessoaCampos } from '../../../components/pessoas/PessoaCampos'
+import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '../../../formularios/pessoas'
 
 export default function ResponsavelFormulario() {
   const { id } = useParams()
@@ -41,10 +39,7 @@ export default function ResponsavelFormulario() {
 
   const [aba, setAba] = useState<'dados' | 'endereco' | 'alunos'>('dados')
 
-  const formulario = useFormulario<DadosPessoa>({
-    valoresIniciais: PESSOA_VAZIA,
-    validarTudo: validarPessoa,
-  })
+  const form = useFormularioPessoa()
 
   const requisicao = useRequisicao(
     () => servicoResponsaveis.buscar(responsavelId as number),
@@ -58,50 +53,39 @@ export default function ResponsavelFormulario() {
     { ativo: Boolean(responsavelId) },
   )
 
-  useHidratar(requisicao.data, (responsavel) => formulario.reiniciar(dePessoa(responsavel.pessoa)))
-
-  // PessoaCampos espera um objeto de erros "só os visíveis" (campo tocado ou
-  // já tentou enviar) — useFormulario expõe isso por campo via erroDe().
-  const errosVisiveis = useMemo(() => {
-    const visiveis: Partial<Record<keyof DadosPessoa, string>> = {}
-
-    ;(Object.keys(formulario.erros) as (keyof DadosPessoa)[]).forEach((campo) => {
-      const erro = formulario.erroDe(campo)
-      if (erro) visiveis[campo] = erro
-    })
-
-    return visiveis
-  }, [formulario])
+  useHidratar(requisicao.data, (responsavel) => {
+    form.setValues(dePessoa(responsavel.pessoa))
+    form.resetDirty()
+  })
 
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    const enviado = await formulario.aoEnviar(async (pessoa) => {
-      try {
-        const payloadPessoa = paraPayloadPessoa(pessoa)
-
-        const pessoaSalva = edicao
-          ? await servicoPessoas.atualizar(requisicao.data!.pessoa.id, payloadPessoa)
-          : await servicoPessoas.criar(payloadPessoa)
-
-        if (edicao) {
-          await servicoResponsaveis.atualizar(responsavelId as number, { pessoa: pessoaSalva })
-        } else {
-          await servicoResponsaveis.criar({ pessoa: pessoaSalva })
-        }
-
-        toast.success(edicao ? 'Responsável atualizado' : 'Responsável cadastrado', pessoaSalva.nome)
-        navegar('/adm/responsaveis')
-      } catch (erroSalvar) {
-        toast.error(
-          'Não foi possível salvar',
-          erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
-        )
-      }
-    })()
-
-    if (!enviado) {
-      const primeiroCampo = Object.keys(formulario.erros)[0] as keyof DadosPessoa | undefined
-      if (primeiroCampo) setAba(abaDoCampoPessoa(primeiroCampo))
+    const validacao = await form.validate()
+    if (validacao.hasErrors) {
+      setAba(abaDoCampoPessoa(Object.keys(validacao.errors)[0]))
       toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
+      return
+    }
+
+    try {
+      const payloadPessoa = paraPayloadPessoa(form.getValues())
+
+      const pessoaSalva = edicao
+        ? await servicoPessoas.atualizar(requisicao.data!.pessoa.id, payloadPessoa)
+        : await servicoPessoas.criar(payloadPessoa)
+
+      if (edicao) {
+        await servicoResponsaveis.atualizar(responsavelId as number, { pessoa: pessoaSalva })
+      } else {
+        await servicoResponsaveis.criar({ pessoa: pessoaSalva })
+      }
+
+      toast.success(edicao ? 'Responsável atualizado' : 'Responsável cadastrado', pessoaSalva.nome)
+      navegar('/adm/responsaveis')
+    } catch (erroSalvar) {
+      toast.error(
+        'Não foi possível salvar',
+        erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
+      )
     }
   })
 
@@ -240,10 +224,7 @@ export default function ResponsavelFormulario() {
             <Card titulo={aba === 'dados' ? 'Dados do responsável' : 'Endereço'}>
               <PessoaCampos
                 secao={aba}
-                valores={formulario.valores}
-                erros={errosVisiveis}
-                onChange={(campo, valor) => formulario.definirCampo(campo, valor)}
-                onExit={(campo) => formulario.marcarTocado(campo)}
+                form={form}
                 disabled={salvando}
                 rotuloNome="Nome do responsável"
               />

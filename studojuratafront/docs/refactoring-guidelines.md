@@ -20,7 +20,7 @@ Se, ao investigar, uma dessas tentações parecer genuinamente justificada, trat
 ## Ordem do processo
 
 ### 1. Entender o código
-Ler o componente/hook inteiro, não só o trecho aparentemente problemático, e os arquivos diretamente relacionados: o `types.ts` de um componente de `components/ui/`, o hook que uma página usa, o endpoint em `services/endpoints.ts` que alimenta os dados. Ler os comentários — este projeto os usa para explicar decisões não óbvias (por que um `ref` existe, por que uma migração está em andamento), e ignorá-los é o erro mais caro aqui.
+Ler o componente/hook inteiro, não só o trecho aparentemente problemático, e os arquivos diretamente relacionados: o `types.ts` de um componente de `components/ui/`, o hook que uma página usa, o endpoint em `services/<domínio>.ts` que alimenta os dados. Ler os comentários — este projeto os usa para explicar decisões não óbvias (por que um `ref` existe, por que uma migração está em andamento), e ignorá-los é o erro mais caro aqui.
 
 ### 2. Identificar o comportamento atual
 Antes de mudar qualquer linha: o que o componente renderiza em cada estado (loading, erro, vazio, com dados)? O que acontece com uma lista vazia, um campo opcional ausente (`aluno.pessoa?.nome`), um usuário sem permissão para a tela? Se houver dúvida sobre o comportamento real, verificar no navegador antes de mexer (ver skill/processo `run` do projeto) — não presumir pelo nome do componente.
@@ -45,7 +45,7 @@ Priorizar Crítico e Alto. Não misturar uma correção Crítica com uma limpeza
 Definir o menor conjunto de mudanças que resolve o problema classificado, respeitando `docs/architecture.md` (onde cada tipo de lógica deve morar) e os padrões já existentes (`docs/react-guidelines.md`/`docs/typescript-guidelines.md`/`docs/mantine-guidelines.md`). Se a alteração:
 - muda layout ou aparência visual observável,
 - muda responsividade (breakpoint, comportamento em tela pequena),
-- muda o contrato com a API (`types/index.ts`, `services/endpoints.ts`),
+- muda o contrato com a API (`types/<domínio>.ts`, `services/<domínio>.ts`),
 - muda uma regra de negócio/validação existente,
 - remove uma funcionalidade,
 
@@ -80,9 +80,9 @@ Se a solução final tem mais componentes, mais props, mais hooks, ou mais linha
 - **Preservar layout** — mesma aparência visual, a não ser que a mudança de aparência seja o próprio objetivo pedido.
 - **Preservar fidelidade ao Figma** — se a tela/componente já batia com o protótipo antes da refatoração, continua batendo depois (ver `docs/figma-fidelity.md`). Refatoração de código nunca é desculpa para uma mudança visual acidental.
 - **Preservar responsividade** — mesmo comportamento em tela pequena/grande, e mesma correspondência com as versões do Figma por breakpoint quando existirem.
-- **Preservar contratos de API** — `types/index.ts`/`services/endpoints.ts` continuam batendo com o que o backend real espera e devolve.
+- **Preservar contratos de API** — `types/<domínio>.ts`/`services/<domínio>.ts` continuam batendo com o que o backend real espera e devolve.
 - **Preservar regras de negócio** — validação, formatação, permissão de tela continuam as mesmas.
-- **Não substituir uma solução funcional só por preferência pessoal** (ex.: trocar `useState` múltiplo por `useFormulario`, ou styled-components por Mantine) sem que isso resolva um problema real identificado nos passos 3-4. Isso vale tanto para código quanto para design — não simplificar um elemento visual do Figma só porque uma versão mais simples de implementá-lo existe (ver `docs/figma-fidelity.md`).
+- **Não substituir uma solução funcional só por preferência pessoal** (ex.: trocar `useState` múltiplo por `@mantine/form`, ou styled-components por Mantine) sem que isso resolva um problema real identificado nos passos 3-4. Isso vale tanto para código quanto para design — não simplificar um elemento visual do Figma só porque uma versão mais simples de implementá-lo existe (ver `docs/figma-fidelity.md`).
 
 **Qualquer mudança funcional ou visual deve ser explicitamente identificada e comunicada antes de ser aplicada** — isso vale mesmo dentro de uma tarefa de refatoração "puramente técnica".
 

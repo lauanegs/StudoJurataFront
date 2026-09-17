@@ -6,16 +6,16 @@ import { Layout } from '../../../components/layout'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
 import type { Coluna } from '../../../components/ui/DataTable/types'
-import { GraficoBarras } from '../../../components/ui/GraficoBarras'
-import { GraficoCard } from '../../../components/ui/GraficoCard'
+import { GraficoBarras } from '../../../components/graficos/GraficoBarras'
+import { GraficoCard } from '../../../components/graficos/GraficoCard'
 import { Header } from '../../../components/ui/Header'
-import { Histograma } from '../../../components/ui/Histograma'
+import { Histograma } from '../../../components/graficos/Histograma'
 import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import { alunos as servicoAlunos } from '../../../services/endpoints'
+import { alunos as servicoAlunos } from '../../../services/pessoas'
 import { calcularFaixasHistograma, estaNaFaixaHistograma } from '../../../utils/desempenho'
 import { formatarPorcentagem } from '../../../utils/format'
 import { FiltrosDesempenho } from './FiltrosDesempenho'
@@ -71,9 +71,6 @@ export default function DesempenhoGeral() {
     reload,
   } = useDesempenhoDados()
 
-  // Faixa clicada no histograma de distribuição — mostra, logo abaixo do
-  // gráfico (dentro do modal "Detalhar"), quem está nela: aluno, simulado e
-  // nota. Sem faixa selecionada, um aviso pede pra clicar numa coluna.
   const [faixaSelecionada, setFaixaSelecionada] = useState<string | null>(null)
   const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [])
 

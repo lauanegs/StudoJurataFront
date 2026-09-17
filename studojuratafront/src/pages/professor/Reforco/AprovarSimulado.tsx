@@ -9,13 +9,13 @@ import { Chip } from '../../../components/ui/Chip'
 import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
-import { QuestaoEditor } from '../../../components/ui/QuestaoEditor'
-import { validarQuestao, type ErrosQuestao, type QuestaoEditavel } from '../../../components/ui/QuestaoEditor/types'
+import { QuestaoEditor } from '../../../components/simulados/QuestaoEditor'
+import { validarQuestao, type ErrosQuestao, type QuestaoEditavel } from '../../../components/simulados/QuestaoEditor/types'
 import { Select } from '../../../components/ui/Select'
-import { StatusBadge } from '../../../components/ui/StatusBadge'
+import { StatusBadge } from '../../../components/simulados/StatusBadge'
 import { Tab } from '../../../components/ui/Tab'
-import { VinculoConteudoQuestao } from '../../../components/ui/VinculoConteudo'
-import * as SVinculo from '../../../components/ui/VinculoConteudo/styles'
+import { VinculoConteudoQuestao } from '../../../components/planejamento/VinculoConteudo'
+import * as SVinculo from '../../../components/planejamento/VinculoConteudo/styles'
 import { Stack } from '../../../components/ui/Stack'
 import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
@@ -26,17 +26,17 @@ import { useToast } from '../../../contexts/toastContexto'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
+import { disciplinas as servicoDisciplinas } from '../../../services/curriculo'
+import { ia as servicoIa } from '../../../services/ia'
+import { alunos as servicoAlunos } from '../../../services/pessoas'
+import { planosEnsino } from '../../../services/planejamento'
 import {
   alternativas as servicoAlternativas,
-  alunos as servicoAlunos,
-  disciplinas as servicoDisciplinas,
-  ia as servicoIa,
-  planosEnsino,
   questoes as servicoQuestoes,
   simuladoQuestoes,
   simulados as servicoSimulados,
-  turmas as servicoTurmas,
-} from '../../../services/endpoints'
+} from '../../../services/simulados'
+import { turmas as servicoTurmas } from '../../../services/turmas'
 import { formatarData, paraInputDataHora } from '../../../utils/format'
 import { OPCOES_DESTINACAO, ROTULO_MOTIVO_RECOMENDACAO } from '../../../utils/labels'
 
@@ -141,9 +141,7 @@ export default function AprovarSimulado() {
     setNotaMaxima(simulado.notaMaxima?.toString() ?? '10')
   })
 
-  // Sugere a "Disponível a partir de" pelo prazo de revisão (prazoLancamento)
-  // quando o simulado ainda não tem uma data própria — só preenche, nunca
-  // sobrescreve o que já foi definido (nem o que o professor já digitou).
+  // Sugere o prazo de revisão sem sobrescrever uma data já definida.
   useEffect(() => {
     if (!vinculoIA) return
     setDataInicio((atual) => atual || `${vinculoIA.prazoLancamento}T08:00`)
@@ -285,9 +283,7 @@ export default function AprovarSimulado() {
             await servicoSimulados.lancar(idSimulado)
             toast.success('Simulado aprovado e lançado', 'Os alunos já podem iniciar as tentativas.')
           } catch (erroLancar) {
-            // Aprovar sempre vale mesmo se o lançamento falhar (ex.: falta
-            // turma, ou destinação ESPECIFICO exige escolher os alunos) —
-            // o professor lança manualmente depois, na tela de Simulados.
+            // A aprovação vale mesmo se o lançamento falhar; o professor lança depois.
             toast.warning(
               'Questões aprovadas, mas não foi possível lançar automaticamente',
               erroLancar instanceof ApiError ? erroLancar.message : 'Lance manualmente na tela de Simulados.',

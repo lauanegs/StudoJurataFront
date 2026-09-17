@@ -19,25 +19,23 @@ import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useToast } from '../../../contexts/toastContexto'
-import { useFormulario } from '../../../hooks/useFormulario'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
   alunos as servicoAlunos,
-  matriculas,
   pessoas as servicoPessoas,
   responsaveis as servicoResponsaveis,
-  turmas as servicoTurmas,
   vinculosResponsavel,
-} from '../../../services/endpoints'
+} from '../../../services/pessoas'
+import { matriculas, turmas as servicoTurmas } from '../../../services/turmas'
 import { formatarCpf } from '../../../utils/format'
 import { OPCOES_PARENTESCO, TEXTO_VERSAO_LGPD } from '../../../utils/labels'
-import { intervaloDeDatas } from '../../../utils/validacao'
-import type { Parentesco, StatusMatricula } from '../../../types'
-import { PessoaCampos } from '../_compartilhado/PessoaCampos'
-import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
-import { paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
+import type { Parentesco } from '../../../types/pessoas'
+import type { StatusMatricula } from '../../../types/turmas'
+import { PessoaCampos } from '../../../components/pessoas/PessoaCampos'
+import { paraPayloadPessoa, useFormularioPessoa } from '../../../formularios/pessoas'
+import { useFormularioMatricula } from '../../../formularios/turmas'
 
 /* Não há transferência entre turmas. Reativar uma matrícula CONCLUIDA também é feito aqui. */
 const OPCOES_STATUS_MATRICULA_EDITAVEL: { value: StatusMatricula; label: string }[] = [
@@ -92,10 +90,7 @@ export default function MatricularAluno() {
   // --- Passo 1: aluno -------------------------------------------------------
   const [modoAluno, setModoAluno] = useState<'existente' | 'novo'>('existente')
   const [alunoIdExistente, setAlunoIdExistente] = useState<number | null>(null)
-  const formularioAluno = useFormulario<DadosPessoa>({
-    valoresIniciais: PESSOA_VAZIA,
-    validarTudo: validarPessoa,
-  })
+  const formularioAluno = useFormularioPessoa()
   const [matriculaCodigo, setMatriculaCodigo] = useState('')
 
   // --- Passo 2: responsável ---------------------------------------------------
@@ -103,16 +98,10 @@ export default function MatricularAluno() {
   const [responsavelIdExistente, setResponsavelIdExistente] = useState<number | null>(null)
   const [parentesco, setParentesco] = useState<Parentesco | null>(null)
   const [aceitouTermos, setAceitouTermos] = useState(false)
-  const formularioResponsavel = useFormulario<DadosPessoa>({
-    valoresIniciais: PESSOA_VAZIA,
-    validarTudo: validarPessoa,
-  })
+  const formularioResponsavel = useFormularioPessoa()
 
   // --- Passo 3: matrícula ------------------------------------------------------
-  const [dataInicio, setDataInicio] = useState(() => new Date().toISOString().slice(0, 10))
-  const [dataFim, setDataFim] = useState('')
-  const [status, setStatus] = useState<StatusMatricula>('ATIVA')
-  const [erros, setErros] = useState<Record<string, string | undefined>>({})
+  const formularioMatricula = useFormularioMatricula()
 
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(idTurma), [idTurma])
   const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [])
@@ -134,9 +123,11 @@ export default function MatricularAluno() {
 
   useHidratar(requisicaoMatricula.data, (matricula) => {
     setAlunoIdExistente(matricula.aluno?.id ?? null)
-    setDataInicio(matricula.dataInicio?.slice(0, 10) ?? '')
-    setDataFim(matricula.dataFim?.slice(0, 10) ?? '')
-    setStatus(matricula.status ?? 'ATIVA')
+    formularioMatricula.setValues({
+      dataInicio: matricula.dataInicio?.slice(0, 10) ?? '',
+      dataFim: matricula.dataFim?.slice(0, 10) ?? '',
+      status: matricula.status ?? 'ATIVA',
+    })
   })
 
   const opcoesAlunos = useMemo(() => {
@@ -175,28 +166,6 @@ export default function MatricularAluno() {
   const responsavelObrigatorio =
     !edicao && (modoAluno === 'novo' || (modoAluno === 'existente' && responsaveisDoAlunoExistente.length === 0))
 
-  const errosAluno = useMemo(() => {
-    const visiveis: Partial<Record<keyof DadosPessoa, string>> = {}
-    ;(Object.keys(formularioAluno.erros) as (keyof DadosPessoa)[]).forEach((campo) => {
-      const erro = formularioAluno.erroDe(campo)
-      if (erro) visiveis[campo] = erro
-    })
-    return visiveis
-  }, [formularioAluno])
-
-  const errosResponsavel = useMemo(() => {
-    const visiveis: Partial<Record<keyof DadosPessoa, string>> = {}
-    ;(Object.keys(formularioResponsavel.erros) as (keyof DadosPessoa)[]).forEach((campo) => {
-      const erro = formularioResponsavel.erroDe(campo)
-      if (erro) visiveis[campo] = erro
-    })
-    return visiveis
-  }, [formularioResponsavel])
-
-  // aoEnviar() marca tentouEnviar=true (o que faz erroDe() passar a mostrar
-  // os erros de validação já calculados) e só chama o callback quando o
-  // formulário está válido — reaproveitado aqui só como "valide e avance",
-  // sem de fato enviar nada pro back nesse momento.
   async function avancar() {
     if (passo === 'aluno') {
       if (modoAluno === 'existente') {
@@ -205,8 +174,8 @@ export default function MatricularAluno() {
           return
         }
       } else {
-        const valido = await formularioAluno.aoEnviar(async () => {})()
-        if (!valido) {
+        const { hasErrors } = await formularioAluno.validate()
+        if (hasErrors) {
           toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
           return
         }
@@ -234,8 +203,8 @@ export default function MatricularAluno() {
             return
           }
         } else {
-          const valido = await formularioResponsavel.aoEnviar(async () => {})()
-          if (!valido) {
+          const { hasErrors } = await formularioResponsavel.validate()
+          if (hasErrors) {
             toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
             return
           }
@@ -246,17 +215,9 @@ export default function MatricularAluno() {
     }
   }
 
-  function validarMatricula() {
-    const encontrados: Record<string, string | undefined> = {}
-    if (!dataInicio) encontrados.dataInicio = 'Informe a data de início'
-    const erroPeriodo = intervaloDeDatas(dataInicio, dataFim)
-    if (erroPeriodo) encontrados.dataFim = erroPeriodo
-    setErros(encontrados)
-    return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
-  }
-
   const { executar: salvarEdicao, executando: salvandoEdicao } = useAcao(async () => {
-    if (!validarMatricula() || !turma) return
+    if ((await formularioMatricula.validate()).hasErrors || !turma) return
+    const { dataInicio, dataFim, status } = formularioMatricula.getValues()
     const aluno = (requisicaoAlunos.data ?? []).find((item) => item.id === alunoIdExistente)
     if (!aluno) return
 
@@ -276,14 +237,15 @@ export default function MatricularAluno() {
   })
 
   const { executar: concluirMatricula, executando: concluindo } = useAcao(async () => {
-    if (!validarMatricula() || !turma) return
+    if ((await formularioMatricula.validate()).hasErrors || !turma) return
+    const { dataInicio, dataFim } = formularioMatricula.getValues()
 
     try {
       // 1) Aluno — usa o existente ou cria Pessoa + Aluno.
       let alunoFinal = (requisicaoAlunos.data ?? []).find((item) => item.id === alunoIdExistente)
 
       if (modoAluno === 'novo') {
-        const payloadPessoa = paraPayloadPessoa(formularioAluno.valores)
+        const payloadPessoa = paraPayloadPessoa(formularioAluno.getValues())
         const pessoaSalva = await servicoPessoas.criar(payloadPessoa)
         alunoFinal = await servicoAlunos.criar({
           pessoa: pessoaSalva,
@@ -303,7 +265,7 @@ export default function MatricularAluno() {
         )
 
         if (modoResponsavel === 'novo') {
-          const payloadPessoa = paraPayloadPessoa(formularioResponsavel.valores)
+          const payloadPessoa = paraPayloadPessoa(formularioResponsavel.getValues())
           const pessoaSalva = await servicoPessoas.criar(payloadPessoa)
           responsavelFinal = await servicoResponsaveis.criar({ pessoa: pessoaSalva })
         }
@@ -398,25 +360,25 @@ export default function MatricularAluno() {
                 <DatePicker
                   label="Início da matrícula"
                   required
-                  value={dataInicio}
-                  error={erros.dataInicio}
-                  onChange={(evento) => setDataInicio(evento.target.value)}
+                  value={formularioMatricula.values.dataInicio}
+                  error={formularioMatricula.errors.dataInicio as string | undefined}
+                  onChange={(evento) => formularioMatricula.setFieldValue('dataInicio', evento.target.value)}
                 />
 
                 <DatePicker
                   label="Término previsto"
-                  value={dataFim}
-                  error={erros.dataFim}
+                  value={formularioMatricula.values.dataFim}
+                  error={formularioMatricula.errors.dataFim as string | undefined}
                   hint="Opcional. Deixe em branco para matrícula em aberto."
-                  onChange={(evento) => setDataFim(evento.target.value)}
+                  onChange={(evento) => formularioMatricula.setFieldValue('dataFim', evento.target.value)}
                 />
               </GradeAutoAjuste>
 
               <Select<StatusMatricula>
                 label="Situação da matrícula"
                 options={OPCOES_STATUS_MATRICULA_EDITAVEL}
-                value={status}
-                onChange={(valor) => valor && setStatus(valor)}
+                value={formularioMatricula.values.status}
+                onChange={(valor) => valor && formularioMatricula.setFieldValue('status', valor)}
               />
             </Stack>
           </Card>
@@ -481,10 +443,7 @@ export default function MatricularAluno() {
               ) : (
                 <>
                   <PessoaCampos
-                    valores={formularioAluno.valores}
-                    erros={errosAluno}
-                    onChange={(campo, value) => formularioAluno.definirCampo(campo, value)}
-                    onExit={(campo) => formularioAluno.marcarTocado(campo)}
+                    form={formularioAluno}
                     rotuloNome="Nome do aluno"
                   />
 
@@ -557,10 +516,7 @@ export default function MatricularAluno() {
                     />
                   ) : (
                     <PessoaCampos
-                      valores={formularioResponsavel.valores}
-                      erros={errosResponsavel}
-                      onChange={(campo, value) => formularioResponsavel.definirCampo(campo, value)}
-                      onExit={(campo) => formularioResponsavel.marcarTocado(campo)}
+                      form={formularioResponsavel}
                       rotuloNome="Nome do responsável"
                     />
                   )}
@@ -605,19 +561,19 @@ export default function MatricularAluno() {
                 <DatePicker
                   label="Início da matrícula"
                   required
-                  value={dataInicio}
-                  error={erros.dataInicio}
+                  value={formularioMatricula.values.dataInicio}
+                  error={formularioMatricula.errors.dataInicio as string | undefined}
                   disabled={concluindo}
-                  onChange={(evento) => setDataInicio(evento.target.value)}
+                  onChange={(evento) => formularioMatricula.setFieldValue('dataInicio', evento.target.value)}
                 />
 
                 <DatePicker
                   label="Término previsto"
-                  value={dataFim}
-                  error={erros.dataFim}
+                  value={formularioMatricula.values.dataFim}
+                  error={formularioMatricula.errors.dataFim as string | undefined}
                   disabled={concluindo}
                   hint="Opcional. Deixe em branco para matrícula em aberto."
-                  onChange={(evento) => setDataFim(evento.target.value)}
+                  onChange={(evento) => formularioMatricula.setFieldValue('dataFim', evento.target.value)}
                 />
               </GradeAutoAjuste>
             </Stack>

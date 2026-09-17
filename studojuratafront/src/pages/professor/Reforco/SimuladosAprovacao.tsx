@@ -16,19 +16,18 @@ import { useToast } from '../../../contexts/toastContexto'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
+import { ia as servicoIa } from '../../../services/ia'
+import { alunos as servicoAlunos, professores as servicoProfessores } from '../../../services/pessoas'
+import { conteudosPlano } from '../../../services/planejamento'
 import {
-  alunos as servicoAlunos,
-  conteudosPlano,
-  ia as servicoIa,
-  matriculas,
-  professores as servicoProfessores,
   questoes as servicoQuestoes,
   simuladoQuestoes,
   simulados as servicoSimulados,
-} from '../../../services/endpoints'
+} from '../../../services/simulados'
+import { matriculas } from '../../../services/turmas'
 import { formatarData, formatarPorcentagem } from '../../../utils/format'
 import { ROTULO_MOTIVO_RECOMENDACAO } from '../../../utils/labels'
-import type { MotivoRecomendacao } from '../../../types'
+import type { MotivoRecomendacao } from '../../../types/ia'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 type TipoFiltro = 'disciplina' | 'aluno'
@@ -162,10 +161,7 @@ export default function SimuladosAprovacao() {
   const requisicaoPendentes = useRequisicao(() => servicoQuestoes.listarPendentes(), [])
   const requisicaoSimuladoQuestoes = useRequisicao(() => simuladoQuestoes.listar(), [])
   const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [])
-  // Vínculo aluno/conteúdo/motivo de cada simulado gerado pela IA — enquanto
-  // pendente de aprovação o Simulado ainda não tem SimuladoAluno (só é
-  // criado no lançamento), então esta é a única fonte confiável pra saber
-  // de quem é cada simulado nesta tela (ver SimuladoGeradoIA no back).
+  // Pendente, o simulado ainda não tem SimuladoAluno: esta é a única fonte do aluno.
   const requisicaoVinculosIA = useRequisicao(() => servicoIa.listarSimuladosGerados(), [])
 
   const linhas = useMemo<LinhaAprovacao[]>(() => {
@@ -228,9 +224,7 @@ export default function SimuladosAprovacao() {
     requisicaoVinculos.data,
   ])
 
-  // --- Aba "Próximas gerações da IA" -----------------------------------------
-  // Só existem endpoints por aluno, então busca para cada aluno ativo das
-  // turmas deste professor.
+  // Só existem endpoints por aluno.
   const requisicaoMatriculasGerais = useRequisicao(() => matriculas.listar(), [])
   const requisicaoConteudos = useRequisicao(() => conteudosPlano.listar(), [])
 
@@ -270,9 +264,7 @@ export default function SimuladosAprovacao() {
       const porChave = new Map<string, ProximaGeracaoIA>()
 
       entradas.forEach(([alunoId, alunoNome], indice) => {
-        // Repetição espaçada: TODAS as revisões com data agendada (passada
-        // ou futura) — dominadas (dataProximoReforco null) não entram, a
-        // repetição parou pra elas.
+        // Revisões dominadas (dataProximoReforco null) não entram.
         revisoesPorAluno[indice]
           .filter((revisao) => revisao.dataProximoReforco && !jaGerado.has(`${alunoId}-${revisao.conteudoPlanoId}-${revisao.dataProximoReforco}`))
           .forEach((revisao) => {
@@ -286,9 +278,7 @@ export default function SimuladosAprovacao() {
             })
           })
 
-        // Baixo aproveitamento: sem agenda própria (é um limiar de nota já
-        // atingido agora) — entra pra "hoje", ou se junta ao motivo acima
-        // quando o mesmo conteúdo já tem repetição espaçada marcada.
+        // Baixo aproveitamento não tem agenda: entra para hoje.
         recomendacoesPorAluno[indice].forEach((recomendacao) => {
           const dataPrevista = recomendacao.dataProximoReforco ?? hoje
           if (jaGerado.has(`${alunoId}-${recomendacao.conteudoPlanoId}-${dataPrevista}`)) return

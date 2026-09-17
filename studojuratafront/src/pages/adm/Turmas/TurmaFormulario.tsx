@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { Archive, ArchiveRestore, CalendarClock, Pencil, Plus, Save, Trash2, UserPlus, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
-import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
+import { AlertaDesempenhoCard } from '../../../components/desempenho/AlertaDesempenhoCard'
 import { BuscaInput } from '../../../components/ui/BuscaInput'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
@@ -33,12 +33,14 @@ import {
   cursoDisciplinas as servicoCursoDisciplinas,
   cursos as servicoCursos,
   disciplinas as servicoDisciplinas,
+} from '../../../services/curriculo'
+import { professores as servicoProfessores } from '../../../services/pessoas'
+import {
   horariosTurma,
   matriculas,
-  professores as servicoProfessores,
   turmaDisciplinas,
   turmas as servicoTurmas,
-} from '../../../services/endpoints'
+} from '../../../services/turmas'
 import { formatarCargaHoraria, formatarData, formatarHora, formatarIdade, normalizar } from '../../../utils/format'
 import {
   OPCOES_ATIVA_INATIVA,
@@ -47,15 +49,10 @@ import {
   ROTULO_STATUS_MATRICULA,
   STATUS_MATRICULA_VARIANT,
 } from '../../../utils/labels'
-import { intervaloDeDatas } from '../../../utils/validacao'
-import type {
-  AlunoTurma,
-  DiaSemana,
-  Disciplina,
-  HorarioTurma,
-  StatusAtivoInativo,
-  TurmaDisciplina,
-} from '../../../types'
+import type { StatusAtivoInativo } from '../../../types/comum'
+import type { Disciplina } from '../../../types/curriculo'
+import type { AlunoTurma, DiaSemana, HorarioTurma, TurmaDisciplina } from '../../../types/turmas'
+import { useFormularioTurma } from '../../../formularios/turmas'
 
 /* Três campos por linha fixos: com auto-fit o número de colunas variaria com a tela. */
 const Grade = styled.div`
@@ -116,13 +113,9 @@ export default function TurmaFormulario() {
   const abaInicial = (localizacao.state as { aba?: Aba } | null)?.aba
   const [aba, setAba] = useState<Aba>(abaInicial ?? 'data')
 
-  const [titulo, setTitulo] = useState('')
-  const [cursoId, setCursoId] = useState<number | null>(null)
-  const [capacidadeMaxima, setCapacidadeMaxima] = useState('')
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim] = useState('')
-  const [ativa, setAtiva] = useState(true)
-  const [erros, setErros] = useState<Record<string, string | undefined>>({})
+  const form = useFormularioTurma()
+  const { titulo, cursoId, capacidadeMaxima, dataInicio, dataFim, ativa } = form.values
+  const erros = form.errors as Record<string, string | undefined>
   const [salvando, setSalvando] = useState(false)
 
   const [novoHorario, setNovoHorario] = useState<{
@@ -204,12 +197,12 @@ export default function TurmaFormulario() {
   const paginacaoHistorico = usePaginacao(historicoFiltrado)
 
   useHidratar(requisicaoTurma.data, (turma) => {
-    setTitulo(turma.titulo ?? '')
-    setCursoId(turma.curso?.id ?? null)
-    setCapacidadeMaxima(turma.capacidadeMaxima?.toString() ?? '')
-    setDataInicio(turma.dataInicio?.slice(0, 10) ?? '')
-    setDataFim(turma.dataFim?.slice(0, 10) ?? '')
-    setAtiva(turma.status !== 'INATIVA')
+    form.setFieldValue('titulo', turma.titulo ?? '')
+    form.setFieldValue('cursoId', turma.curso?.id ?? null)
+    form.setFieldValue('capacidadeMaxima', turma.capacidadeMaxima?.toString() ?? '')
+    form.setFieldValue('dataInicio', turma.dataInicio?.slice(0, 10) ?? '')
+    form.setFieldValue('dataFim', turma.dataFim?.slice(0, 10) ?? '')
+    form.setFieldValue('ativa', turma.status !== 'INATIVA')
   })
 
   /** turmaDisciplinas.excluir() é soft-delete, então o vínculo inativo precisa ser filtrado. */
@@ -291,30 +284,8 @@ export default function TurmaFormulario() {
     [requisicaoProfessores.data],
   )
 
-  function validar() {
-    const encontrados: Record<string, string | undefined> = {}
-
-    if (!titulo.trim()) encontrados.titulo = 'Informe o nome da turma'
-
-    // Turma.curso é @ManyToOne(optional = false).
-    if (!cursoId) encontrados.cursoId = 'Selecione o curso'
-
-    if (
-      capacidadeMaxima &&
-      (!Number.isInteger(Number(capacidadeMaxima)) || Number(capacidadeMaxima) <= 0)
-    ) {
-      encontrados.capacidadeMaxima = 'Informe um número inteiro maior que zero'
-    }
-
-    const erroPeriodo = intervaloDeDatas(dataInicio, dataFim)
-    if (erroPeriodo) encontrados.dataFim = erroPeriodo
-
-    setErros(encontrados)
-    return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
-  }
-
   async function salvar() {
-    if (!validar()) {
+    if ((await form.validate()).hasErrors) {
       setAba('data')
       return
     }
@@ -614,7 +585,7 @@ export default function TurmaFormulario() {
                     error={erros.titulo}
                     disabled={salvando}
                     maxLength={120}
-                    onChange={(evento) => setTitulo(evento.target.value)}
+                    onChange={(evento) => form.setFieldValue('titulo', evento.target.value)}
                   />
 
                   <Select<number>
@@ -628,7 +599,7 @@ export default function TurmaFormulario() {
                     clearable
                     placeholder="Selecionar curso..."
                     emptyText="Cadastre um curso primeiro"
-                    onChange={setCursoId}
+                    onChange={(valor) => form.setFieldValue('cursoId', valor)}
                   />
 
                   <Input
@@ -640,14 +611,14 @@ export default function TurmaFormulario() {
                     error={erros.capacidadeMaxima}
                     disabled={salvando}
                     hint="Usada para alertar quando a turma lota."
-                    onChange={(evento) => setCapacidadeMaxima(evento.target.value)}
+                    onChange={(evento) => form.setFieldValue('capacidadeMaxima', evento.target.value)}
                   />
 
                   <DatePicker
                     label="Data de início"
                     value={dataInicio}
                     disabled={salvando}
-                    onChange={(evento) => setDataInicio(evento.target.value)}
+                    onChange={(evento) => form.setFieldValue('dataInicio', evento.target.value)}
                   />
 
                   <DatePicker
@@ -657,7 +628,7 @@ export default function TurmaFormulario() {
                     // Turma ativa não tem data de término; só ganha uma ao ser encerrada.
                     disabled={salvando || ativa}
                     hint={ativa ? 'Só é definida ao encerrar a turma (Situação: Inativa).' : undefined}
-                    onChange={(evento) => setDataFim(evento.target.value)}
+                    onChange={(evento) => form.setFieldValue('dataFim', evento.target.value)}
                   />
 
                   <Select<StatusAtivoInativo>
@@ -668,8 +639,8 @@ export default function TurmaFormulario() {
                     disabled={salvando}
                     onChange={(valor) => {
                       const novoAtiva = valor !== 'INATIVO'
-                      setAtiva(novoAtiva)
-                      if (novoAtiva) setDataFim('')
+                      form.setFieldValue('ativa', novoAtiva)
+                      if (novoAtiva) form.setFieldValue('dataFim', '')
                     }}
                   />
                 </Grade>

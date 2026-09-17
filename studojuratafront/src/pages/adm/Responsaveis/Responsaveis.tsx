@@ -14,9 +14,9 @@ import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { responsaveis as servicoResponsaveis } from '../../../services/endpoints'
+import { responsaveis as servicoResponsaveis } from '../../../services/pessoas'
 import { formatarCpf, formatarTelefone, normalizar } from '../../../utils/format'
-import type { Responsavel } from '../../../types'
+import type { Responsavel } from '../../../types/pessoas'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function Responsaveis() {

@@ -4,8 +4,8 @@ import styled from 'styled-components'
 import { Clock, GraduationCap, Target } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
-import { AlternativaCard } from '../../../components/ui/AlternativaCard'
-import { AlternativaVerdadeiroFalso } from '../../../components/ui/AlternativaVerdadeiroFalso'
+import { AlternativaCard } from '../../../components/simulados/AlternativaCard'
+import { AlternativaVerdadeiroFalso } from '../../../components/simulados/AlternativaVerdadeiroFalso'
 import { Card } from '../../../components/ui/Card'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Tag } from '../../../components/ui/Tag'
@@ -14,14 +14,14 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useRequisicao } from '../../../hooks/useRequisicao'
+import { alunos as servicoAlunos } from '../../../services/pessoas'
 import {
   alternativas as servicoAlternativas,
-  alunos as servicoAlunos,
   questaoAlunos,
   questoes as servicoQuestoes,
   simuladoAlunos,
   simulados as servicoSimulados,
-} from '../../../services/endpoints'
+} from '../../../services/simulados'
 import { formatarTempo, letraAlternativa } from '../../../utils/format'
 
 const Alternativas = styled.div`

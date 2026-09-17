@@ -8,13 +8,13 @@
 
 ## Responsabilidades
 - [ ] Um componente de `components/ui/` está fazendo chamada de API diretamente (deveria estar em `pages/` orquestrando, com o dado vindo via prop)?
-- [ ] Uma página está montando URL/`fetch` na mão em vez de usar `services/endpoints.ts`?
+- [ ] Uma página está montando URL/`fetch` na mão em vez de usar `services/<domínio>.ts`?
 - [ ] Lógica de formatação/validação foi escrita inline numa página em vez de estar (ou ir para) `utils/`?
 
 ## Duplicação
 - [ ] A mesma regra de formatação/validação está reimplementada em mais de um arquivo em vez de importada de `utils/`?
 - [ ] Um padrão de busca+filtro+paginação foi reimplementado manualmente em vez de `useRequisicao`/`useDebounce`/`usePaginacao`?
-- [ ] Um tipo foi redeclarado (mesmo que parcialmente) em vez de reusar/`Pick` de um tipo já existente em `types/index.ts`?
+- [ ] Um tipo foi redeclarado (mesmo que parcialmente) em vez de reusar/`Pick` de um tipo já existente em `types/<domínio>.ts`?
 
 ## Props excessivas
 - [ ] Um componente novo tem props demais para o que faz, sinalizando que deveria ser dividido — ou (caso contrário) as props fazem sentido porque o componente concentra deliberadamente um comportamento (como `DataTable`)?
@@ -23,7 +23,7 @@
 ## Estado desnecessário
 - [ ] Existe um `useState` guardando um valor que poderia ser derivado via `useMemo` ou calculado direto no corpo do componente?
 - [ ] Existe estado duplicado (uma cópia local de algo que já está em prop/contexto/outro estado)?
-- [ ] Um formulário novo com mais de 2-3 campos evita `useFormulario` sem justificativa?
+- [ ] Um formulário novo com mais de 2-3 campos evita `@mantine/form` + schema yup (hooks em `formularios/`) sem justificativa?
 
 ## useEffect
 - [ ] Um `useEffect` novo calcula algo a partir de state/props já disponíveis, quando `useMemo` ou cálculo direto resolveria?
@@ -34,7 +34,7 @@
 ## Hooks
 - [ ] Um hook é chamado condicionalmente ou depois de um `return` antecipado?
 - [ ] Um custom hook novo foi criado para algo sem estado/efeito (deveria ser função em `utils/`)?
-- [ ] Um custom hook existente (`useRequisicao`, `useAcao`, `useFormulario`, `usePaginacao`, `useDebounce`, `useHidratar`) foi reimplementado manualmente em vez de reusado?
+- [ ] Um custom hook existente (`useRequisicao`, `useAcao`, `usePaginacao`, `useDebounce`, `useHidratar`) foi reimplementado manualmente em vez de reusado?
 
 ## `any` / casts
 - [ ] Foi introduzido `any` sem comentário explicando por que não há alternativa tipável (padrão do único caso aceito, `Typography.tsx`)?
@@ -42,7 +42,7 @@
 - [ ] `unknown` + narrowing seria mais seguro que o cast usado?
 
 ## Tipos duplicados
-- [ ] Um tipo de domínio novo diverge, sem necessidade, de um tipo já existente para a mesma entidade (`Aluno`, `Simulado`, etc.) em `types/index.ts`?
+- [ ] Um tipo de domínio novo diverge, sem necessidade, de um tipo já existente para a mesma entidade (`Aluno`, `Simulado`, etc.) em `types/<domínio>.ts`?
 - [ ] O tipo novo confere com a forma real do DTO do backend correspondente (`StudoJurataApi/src/main/java/studojurata_api/dto/`), ou foi adivinhado?
 
 ## CSS
@@ -94,9 +94,9 @@ Ver `docs/figma-fidelity.md` para a regra completa — o Figma é a fonte de ver
 - [ ] `null`/`undefined` acessado sem optional chaining onde o TypeScript permitiu por erro de tipagem em vez de por garantia real de que o valor existe?
 
 ## Possíveis regressões
-- [ ] A mudança altera o formato de dado esperado de `services/endpoints.ts`/`types/index.ts` de um jeito que não bate mais com o backend real (`StudoJurataApi`)?
+- [ ] A mudança altera o formato de dado esperado de `services/<domínio>.ts`/`types/<domínio>.ts` de um jeito que não bate mais com o backend real (`StudoJurataApi`)?
 - [ ] A mudança altera layout/comportamento visual de um componente de `components/ui/` usado em várias telas, sem confirmar visualmente em todas (ou ao menos sinalizar o risco)?
-- [ ] A mudança altera uma regra de validação (`utils/validacao.ts`) sem confirmar que ainda bate com a regra do backend?
+- [ ] A mudança altera uma regra de validação (schemas yup em `formularios/`) sem confirmar que ainda bate com a regra do backend?
 - [ ] `npx tsc -b --noEmit` e `npm run lint` foram executados após a mudança, sem novos erros?
 
 ## Referências

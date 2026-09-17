@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@brazilian-utils/brazilian-utils": "^2.3.0",
     "@mantine/charts": "^9.6.0",
     "@mantine/core": "^9.6.0",
     "@mantine/dates": "^9.6.0",
+    "@mantine/form": "^9.6.0",
     "@mantine/hooks": "^9.6.0",
     "dayjs": "^1.11.21",
     "exceljs": "^4.4.0",
@@ -23,7 +25,8 @@
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.1",
     "recharts": "^3.10.1",
-    "styled-components": "^6.3.11"
+    "styled-components": "^6.3.11",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

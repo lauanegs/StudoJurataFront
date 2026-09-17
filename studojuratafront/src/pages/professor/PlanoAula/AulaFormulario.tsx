@@ -11,7 +11,7 @@ import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
 import { TextArea } from '../../../components/ui/TextArea'
 import { TimePicker } from '../../../components/ui/TimePicker'
-import { VinculoConteudoAula } from '../../../components/ui/VinculoConteudo'
+import { VinculoConteudoAula } from '../../../components/planejamento/VinculoConteudo'
 import { Stack } from '../../../components/ui/Stack'
 import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
@@ -21,9 +21,11 @@ import { useToast } from '../../../contexts/toastContexto'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { aulas as servicoAulas, horariosTurma, planosAula } from '../../../services/endpoints'
+import { aulas as servicoAulas, planosAula } from '../../../services/planejamento'
+import { horariosTurma } from '../../../services/turmas'
 import { formatarCargaHoraria, formatarHora, horaParaMinutos, horasParaHHmm } from '../../../utils/format'
 import { ROTULO_DIA_SEMANA_CURTO } from '../../../utils/labels'
+import { useFormularioAula } from '../../../formularios/planejamento'
 
 export default function AulaFormulario() {
   const { planoAulaId, aulaId } = useParams()
@@ -40,18 +42,6 @@ export default function AulaFormulario() {
   const retornarPara = searchParams.get('retornarPara')
   const destinoPadrao = retornarPara || `/professor/plano-aula/${idPlano}/aulas`
 
-  const [ordem, setOrdem] = useState('')
-  const [titulo, setTitulo] = useState('')
-  const [dataPrevista, setDataPrevista] = useState('')
-  // Sem campo na tela, mas reenviado no PUT: AulaService.atualizar faz save()
-  // completo e apagaria a data de uma aula já ministrada.
-  const [dataPublicacao, setDataPublicacao] = useState('')
-  // A carga horária vem do horário escolhido; cargaHorariaManual (HH:mm) só
-  // quando a turma não tem nenhum horário cadastrado.
-  const [horarioTurmaId, setHorarioTurmaId] = useState<number | null>(null)
-  const [cargaHorariaManual, setCargaHorariaManual] = useState('')
-  const [observacoes, setObservacoes] = useState('')
-  const [erros, setErros] = useState<Record<string, string | undefined>>({})
   // Conteúdos escolhidos antes de a aula existir, vinculados em salvar().
   const [conteudoPlanoIdsPendentes, setConteudoPlanoIdsPendentes] = useState<number[]>([])
 
@@ -68,19 +58,6 @@ export default function AulaFormulario() {
     { ativo: Boolean(turmaId) },
   )
 
-  useHidratar(requisicaoAula.data, (aula) => {
-    setOrdem(aula.ordem?.toString() ?? '')
-    setTitulo(aula.titulo ?? '')
-    setDataPrevista(aula.dataPrevista?.slice(0, 10) ?? '')
-    setDataPublicacao(aula.dataPublicacao?.slice(0, 10) ?? '')
-    if (aula.horarioTurma?.id) {
-      setHorarioTurmaId(aula.horarioTurma.id)
-    } else if (aula.cargaHoraria) {
-      setCargaHorariaManual(horasParaHHmm(aula.cargaHoraria))
-    }
-    setObservacoes(aula.observacoes ?? '')
-  })
-
   const opcoesHorarios = useMemo(
     () =>
       (requisicaoHorarios.data ?? []).map((horario) => {
@@ -93,13 +70,7 @@ export default function AulaFormulario() {
     [requisicaoHorarios.data],
   )
 
-  const horarioSelecionado = (requisicaoHorarios.data ?? []).find((horario) => horario.id === horarioTurmaId)
-  const cargaHorariaCalculada = horarioSelecionado
-    ? (horaParaMinutos(horarioSelecionado.horaFim) - horaParaMinutos(horarioSelecionado.horaInicio)) / 60
-    : null
-
-  // Turma sem NENHUM horário cadastrado: não há o que selecionar, então a
-  // carga horária é digitada (TimePicker, HH:mm) em vez do Select.
+  // Turma sem nenhum horário cadastrado: a carga horária é digitada (HH:mm) em vez de escolhida.
   const semHorarioCadastrado = !requisicaoHorarios.loading && opcoesHorarios.length === 0
 
   const proximaOrdem = useMemo(() => {
@@ -107,40 +78,43 @@ export default function AulaFormulario() {
     return existentes.length === 0 ? 1 : Math.max(...existentes) + 1
   }, [requisicaoAulas.data])
 
-  // Em uma aula nova o campo aparece já preenchido com a próxima ordem livre,
-  // sem precisar de estado extra: a sugestão só vale enquanto nada foi digitado.
-  const ordemExibida = ordem || (edicao ? '' : String(proximaOrdem))
+  const ordensOcupadas = useMemo(
+    () =>
+      (requisicaoAulas.data ?? [])
+        .filter((aula) => aula.id !== idAula && aula.status !== 'INATIVO' && aula.ordem !== undefined)
+        .map((aula) => aula.ordem as number),
+    [requisicaoAulas.data, idAula],
+  )
 
-  function validar() {
-    const encontrados: Record<string, string | undefined> = {}
+  const form = useFormularioAula({
+    semHorarioCadastrado,
+    ordensOcupadas,
+    ordemSugerida: edicao ? '' : String(proximaOrdem),
+  })
 
-    if (!titulo.trim()) encontrados.titulo = 'Informe o título da aula'
+  useHidratar(requisicaoAula.data, (aula) => {
+    form.setValues({
+      ordem: aula.ordem?.toString() ?? '',
+      titulo: aula.titulo ?? '',
+      dataPrevista: aula.dataPrevista?.slice(0, 10) ?? '',
+      dataPublicacao: aula.dataPublicacao?.slice(0, 10) ?? '',
+      horarioTurmaId: aula.horarioTurma?.id ?? null,
+      cargaHorariaManual: !aula.horarioTurma?.id && aula.cargaHoraria ? horasParaHHmm(aula.cargaHoraria) : '',
+      observacoes: aula.observacoes ?? '',
+    })
+    form.resetDirty()
+  })
 
-    if (ordemExibida && (!Number.isInteger(Number(ordemExibida)) || Number(ordemExibida) <= 0)) {
-      encontrados.ordem = 'A ordem deve ser um número inteiro positivo'
-    }
+  const horarioSelecionado = (requisicaoHorarios.data ?? []).find((horario) => horario.id === form.values.horarioTurmaId)
+  const cargaHorariaCalculada = horarioSelecionado
+    ? (horaParaMinutos(horarioSelecionado.horaFim) - horaParaMinutos(horarioSelecionado.horaInicio)) / 60
+    : null
 
-    if (semHorarioCadastrado) {
-      if (!cargaHorariaManual || horaParaMinutos(cargaHorariaManual) <= 0) {
-        encontrados.cargaHoraria = 'Informe a carga horária da aula'
-      }
-    } else if (!horarioTurmaId) {
-      encontrados.horario = 'Selecione o horário da turma'
-    }
-
-    // Ordem duplicada confunde a sequência exibida na listagem.
-    const duplicada = (requisicaoAulas.data ?? []).some(
-      (aula) => aula.ordem === Number(ordemExibida) && aula.id !== idAula && aula.status !== 'INATIVO',
-    )
-
-    if (ordemExibida && duplicada) encontrados.ordem = 'Já existe uma aula com esta ordem'
-
-    setErros(encontrados)
-    return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
-  }
+  const ordemExibida = form.values.ordem || (edicao ? '' : String(proximaOrdem))
 
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    if (!validar() || !requisicaoPlano.data) return
+    if ((await form.validate()).hasErrors || !requisicaoPlano.data) return
+    const { titulo, dataPrevista, dataPublicacao, cargaHorariaManual, observacoes } = form.getValues()
 
     try {
       const corpo = {
@@ -277,11 +251,9 @@ export default function AulaFormulario() {
               label="Título da aula"
               required
               placeholder="Ex.: Aula 1 — Primeiros comandos"
-              value={titulo}
-              error={erros.titulo}
+              {...form.getInputProps('titulo')}
               disabled={salvando}
               maxLength={150}
-              onChange={(evento) => setTitulo(evento.target.value)}
             />
 
             <GradeAutoAjuste $larguraMinima="200px">
@@ -289,55 +261,53 @@ export default function AulaFormulario() {
                 label="Ordem"
                 type="number"
                 min={1}
+                {...form.getInputProps('ordem')}
                 value={ordemExibida}
-                error={erros.ordem}
                 disabled={salvando}
                 hint="Sequência da aula no plano."
-                onChange={(evento) => setOrdem(evento.target.value)}
               />
 
               {semHorarioCadastrado ? (
                 <TimePicker
                   label="Carga horária"
                   required
-                  value={cargaHorariaManual}
-                  error={erros.cargaHoraria}
+                  value={form.values.cargaHorariaManual}
+                  error={form.errors.cargaHorariaManual as string | undefined}
                   disabled={salvando}
                   hint="Esta turma ainda não tem horário cadastrado (Turmas, aba Horários) — digite a duração desta aula."
-                  onChange={(evento) => setCargaHorariaManual(evento.target.value)}
+                  onChange={(evento) => form.setFieldValue('cargaHorariaManual', evento.target.value)}
                 />
               ) : (
                 <Select<number>
                   label="Horário"
                   required
                   options={opcoesHorarios}
-                  value={horarioTurmaId}
+                  value={form.values.horarioTurmaId}
                   loading={requisicaoHorarios.loading}
-                  error={erros.horario}
+                  error={form.errors.horarioTurmaId as string | undefined}
                   disabled={salvando}
                   hint="A carga horária vem do horário escolhido."
                   placeholder="Selecionar horário..."
-                  onChange={setHorarioTurmaId}
+                  onChange={(valor) => form.setFieldValue('horarioTurmaId', valor)}
                 />
               )}
 
               <DatePicker
                 label="Data prevista"
-                value={dataPrevista}
+                value={form.values.dataPrevista}
                 disabled={salvando}
-                onChange={(evento) => setDataPrevista(evento.target.value)}
+                onChange={(evento) => form.setFieldValue('dataPrevista', evento.target.value)}
               />
             </GradeAutoAjuste>
 
             <TextArea
               label="Observações"
               placeholder="Materiais necessários, combinados com a turma, adaptações..."
-              value={observacoes}
+              {...form.getInputProps('observacoes')}
               disabled={salvando}
               maxLength={2000}
               rows={4}
               autoAltura
-              onChange={(evento) => setObservacoes(evento.target.value)}
             />
 
             <VinculoConteudoAula

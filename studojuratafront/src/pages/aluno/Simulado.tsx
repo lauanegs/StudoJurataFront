@@ -3,18 +3,18 @@ import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Flag } from 'lucide-react'
 
-import { AlternativaButton } from '../../components/ui/AlternativaButton'
-import { AlternativaCard } from '../../components/ui/AlternativaCard'
-import { AlternativaVerdadeiroFalso } from '../../components/ui/AlternativaVerdadeiroFalso'
+import { AlternativaButton } from '../../components/simulados/AlternativaButton'
+import { AlternativaCard } from '../../components/simulados/AlternativaCard'
+import { AlternativaVerdadeiroFalso } from '../../components/simulados/AlternativaVerdadeiroFalso'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
-import { EnunciadoSimuladoCard } from '../../components/ui/EnunciadoSimuladoCard'
-import { MoedaIcone } from '../../components/ui/MoedaIcone'
+import { EnunciadoSimuladoCard } from '../../components/simulados/EnunciadoSimuladoCard'
+import { MoedaIcone } from '../../components/gamificacao/MoedaIcone'
 import {
   ProgressoSimuladoCard,
   type QuestionProgressStatus,
-} from '../../components/ui/ProgressoSimuladoCard'
-import { SimuladoHeader } from '../../components/ui/SimuladoHeader'
+} from '../../components/simulados/ProgressoSimuladoCard'
+import { SimuladoHeader } from '../../components/simulados/SimuladoHeader'
 import { Tag } from '../../components/ui/Tag'
 import { Stack } from '../../components/ui/Stack'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
@@ -32,12 +32,12 @@ import {
   simuladoAlunos,
   simuladoQuestoes,
   simulados as servicoSimulados,
-} from '../../services/endpoints'
+} from '../../services/simulados'
 import { formatarMoedas, formatarNota, formatarTempo, letraAlternativa, nomeCurto } from '../../utils/format'
 import { resolverImagemSkin } from '../../utils/skins'
 import { animacaoFlutuar } from '../../styles/animations'
 import { theme } from '../../styles/theme'
-import type { AlternativaResponse, TipoQuestao } from '../../types'
+import type { AlternativaResponse, TipoQuestao } from '../../types/simulados'
 
 /* Só o conteúdo abaixo do SimuladoHeader tem padding e largura limitada. */
 const Tela = styled.div`
@@ -233,20 +233,14 @@ export default function Simulado() {
 
   const [indiceAtual, setIndiceAtual] = useState(0)
   const [respostas, setRespostas] = useState<Record<number, number | null>>({})
-  // Questão VERDADEIRO_FALSO: cada afirmação (alternativaId) é julgada à parte
-  // (true = aluno marcou Verdadeiro, false = Falso) — por isso não cabe no
-  // mesmo formato de `respostas` (uma única alternativa escolhida por questão).
+  // V/F: cada afirmação é julgada à parte (true = Verdadeiro).
   const [respostasVF, setRespostasVF] = useState<Record<number, Record<number, boolean>>>({})
-  // Marca em quais questões o aluno já clicou em "Confirmar resposta" — até lá,
-  // a seleção pode ser trocada livremente e nada é revelado (evita que um
-  // toque sem querer numa alternativa já feche a questão como respondida).
+  // Até confirmar, a seleção pode ser trocada e nada é revelado.
   const [confirmadas, setConfirmadas] = useState<Record<number, boolean>>({})
   const [temposPorQuestao, setTemposPorQuestao] = useState<Record<number, number>>({})
   const [segundos, setSegundos] = useState(0)
   const [finalizando, setFinalizando] = useState(false)
-  // Só vem na resposta do próprio POST /finalizar (ver
-  // SimuladoAlunoController) — o GET de recarregamento normal não traz esse
-  // campo, por isso guardamos aqui em vez de ler de requisicaoTentativa.data.
+  // Só vem no POST /finalizar; o GET de recarregamento não traz.
   const [diasProximaRevisao, setDiasProximaRevisao] = useState<number | null>(null)
 
   // Marca quando o aluno entrou na questão atual. Começa em 0 e é ajustado no
@@ -304,9 +298,7 @@ export default function Simulado() {
   const tempoLimiteSegundos = simulado?.tempoLimite ? simulado.tempoLimite * 60 : null
   const restante = tempoLimiteSegundos !== null ? Math.max(0, tempoLimiteSegundos - segundos) : null
 
-  // Uma questão VERDADEIRO_FALSO só conta como respondida quando TODAS as
-  // afirmações foram julgadas — julgar só parte delas equivale a deixar em
-  // branco (nenhuma afirmação sem marcação vira "Falso" por omissão).
+  // V/F só conta como respondida com todas as afirmações julgadas.
   function estaRespondida(questao: QuestaoDaProva) {
     if (questao.tipo === 'VERDADEIRO_FALSO') {
       const marcadas = respostasVF[questao.questaoId] ?? {}
@@ -325,12 +317,7 @@ export default function Simulado() {
     return Boolean(escolhida?.correta)
   }
 
-  // 'manual' = o próprio aluno clicou em "Finalizar simulado"; 'tempo' = tempo
-  // esgotado (auto-envio); 'saida' = o aluno saiu no meio da prova — igual a
-  // uma finalização manual pro back (mesmas questões em branco contam como
-  // erro), só muda o aviso mostrado e não fica esperando o aluno ver a
-  // correção: uma vez iniciado, sair conta como tentativa encerrada, sem
-  // conceder nova chance depois.
+  // 'saida' finaliza como 'manual' no back; só muda o aviso e não mostra a correção.
   const finalizar = useCallback(
     async (motivo: 'manual' | 'tempo' | 'saida') => {
       if (finalizando) return
@@ -421,10 +408,7 @@ export default function Simulado() {
   const respostasVFAtual = questaoAtual ? (respostasVF[questaoAtual.questaoId] ?? {}) : {}
   const temSelecao = questaoAtual ? estaRespondida(questaoAtual) : false
   const revelada = questaoAtual ? Boolean(confirmadas[questaoAtual.questaoId]) : false
-  // V/F pode ter mais de uma alternativa `correta` (cada afirmação julgada à
-  // parte) — "acertou" não é "escolheu a mesma id que uma correta fixa", é
-  // "a alternativa que o aluno escolheu é, ela mesma, uma correta" (ou, em
-  // V/F, todas as afirmações julgadas corretamente).
+  // Em V/F há várias corretas: acerta se a escolhida for uma delas.
   const alternativaEscolhidaAtual = questaoAtual?.alternativas.find(
     (item) => item.id === respostaAtualId,
   )
@@ -432,13 +416,7 @@ export default function Simulado() {
     revelada && questaoAtual && (ehVerdadeiroFalso ? acertouQuestao(questaoAtual) : alternativaEscolhidaAtual?.correta),
   )
 
-  // Já dá pra saber se acertou assim que o aluno responde: as alternativas
-  // (com `correta`) já estão todas carregadas no cliente antes mesmo da
-  // primeira resposta — o back só calcula é a NOTA final, em /finalizar.
-  // Por isso o balão do mascote pode trocar de frase na hora, sem precisar
-  // de nenhum card novo. Só troca depois de "Confirmar resposta" — clicar
-  // numa alternativa sozinho ainda não revela nada, pra dar chance de trocar
-  // se foi sem querer.
+  // O gabarito já está no cliente, então o mascote reage ao confirmar a resposta.
   const textoBalao = !revelada
     ? questaoAtual?.enunciado
     : acertouAtual

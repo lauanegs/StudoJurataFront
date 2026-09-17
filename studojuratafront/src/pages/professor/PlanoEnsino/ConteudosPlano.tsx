@@ -19,9 +19,14 @@ import { useToast } from '../../../contexts/toastContexto'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { aulas as servicoAulas, conteudosPlano, planosAula, planosEnsino } from '../../../services/endpoints'
+import {
+  aulas as servicoAulas,
+  conteudosPlano,
+  planosAula,
+  planosEnsino,
+} from '../../../services/planejamento'
 import { formatarData, normalizar } from '../../../utils/format'
-import type { ConteudoPlano } from '../../../types'
+import type { ConteudoPlano } from '../../../types/planejamento'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 /* flex-shrink:0 nos botões para o texto não cortar quando a linha aperta. */
@@ -57,9 +62,7 @@ export default function ConteudosPlano() {
     [requisicaoConteudos.data, idPlano],
   )
 
-  // Um plano de ensino pode ter mais de um plano de aula ao longo do tempo
-  // (ex.: plano anterior encerrado + um novo criado) — todos contam para
-  // saber o que já foi ministrado, não só o ativo.
+  // Todos os planos de aula contam, não só o ativo.
   const planosAulaDoEnsino = useMemo(
     () => (requisicaoPlanosAula.data ?? []).filter((plano) => plano.planoEnsino?.id === idPlano),
     [requisicaoPlanosAula.data, idPlano],
@@ -76,9 +79,7 @@ export default function ConteudosPlano() {
     { ativo: planosAulaDoEnsino.length > 0 },
   )
 
-  // "Conteúdo já ministrado" = tem pelo menos um vínculo com uma aula que já
-  // aconteceu (dataPublicacao preenchida) — permite acompanhar o avanço do
-  // plano de ensino independente de quantas aulas/planos de aula existirem.
+  // Ministrado = vinculado a uma aula já publicada.
   const requisicaoVinculosConteudo = useRequisicao(
     async () => {
       const todasAulas = requisicaoAulasDosPlanos.data ?? []
@@ -89,9 +90,7 @@ export default function ConteudosPlano() {
     { ativo: Boolean(requisicaoAulasDosPlanos.data) },
   )
 
-  // Um mesmo conteúdo pode ser retomado em várias aulas (reforço, conteúdo
-  // extenso dividido em mais de um encontro) — guarda todas as datas em que
-  // apareceu, não só a mais recente, para não esconder esse histórico.
+  // Guarda todas as datas: um conteúdo pode ser retomado em várias aulas.
   const datasMinistracaoPorConteudo = useMemo(() => {
     const mapa = new Map<number, string[]>()
     for (const vinculo of requisicaoVinculosConteudo.data ?? []) {
@@ -117,9 +116,7 @@ export default function ConteudosPlano() {
     )
   }, [conteudos, buscaAtrasada])
 
-  // Importar conteúdo: reaproveita conteúdos de outros planos de ensino do
-  // MESMO CURSO (ex.: turmas/ciclos anteriores da mesma disciplina), pra não
-  // reescrever do zero um conteúdo que já existe em outro lugar.
+  // Importa conteúdos de outros planos do mesmo curso.
   const conteudosImportaveis = useMemo(() => {
     const cursoId = requisicaoPlano.data?.curso?.id
     if (!cursoId) return []
@@ -251,10 +248,6 @@ export default function ConteudosPlano() {
           )
         }
 
-        // Uma tag por dia, não uma só resumida — o professor precisa ver
-        // exatamente quais dias esse conteúdo foi retomado (reforço,
-        // conteúdo extenso dividido em mais de um encontro), sem precisar
-        // passar o mouse em cima pra descobrir.
         return (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
             {datas.map((data) => (

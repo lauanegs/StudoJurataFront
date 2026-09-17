@@ -15,9 +15,9 @@ import { useDebounce } from '../../../hooks/useDebounce'
 import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { alunos as servicoAlunos } from '../../../services/endpoints'
+import { alunos as servicoAlunos } from '../../../services/pessoas'
 import { formatarCpf, formatarIdade, normalizar } from '../../../utils/format'
-import type { Aluno } from '../../../types'
+import type { Aluno } from '../../../types/pessoas'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 export default function Alunos() {

@@ -1,19 +1,15 @@
 import { useMemo, useState } from 'react'
 
-import type { ItemGraficoBarras } from '../../../components/ui/GraficoBarras'
-import type { PontoGraficoLinha } from '../../../components/ui/GraficoLinha'
+import type { ItemGraficoBarras } from '../../../components/graficos/GraficoBarras'
+import type { PontoGraficoLinha } from '../../../components/graficos/GraficoLinha'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import {
-  disciplinas as servicoDisciplinas,
-  matriculas,
-  professores as servicoProfessores,
-  simuladoAlunos,
-  simulados as servicoSimulados,
-  turmas as servicoTurmas,
-} from '../../../services/endpoints'
+import { disciplinas as servicoDisciplinas } from '../../../services/curriculo'
+import { professores as servicoProfessores } from '../../../services/pessoas'
+import { simuladoAlunos, simulados as servicoSimulados } from '../../../services/simulados'
+import { matriculas, turmas as servicoTurmas } from '../../../services/turmas'
 import { formatarData } from '../../../utils/format'
-import type { TipoDestinacaoSimulado } from '../../../types'
+import type { TipoDestinacaoSimulado } from '../../../types/simulados'
 
 export interface NotaDetalhada {
   tentativaId: number
@@ -105,9 +101,7 @@ export function useDesempenhoDados() {
     return [...unicas.entries()].map(([value, label]) => ({ value, label }))
   }, [requisicaoVinculos.data, turmaId])
 
-  // Sem turma selecionada não dá pra saber quais alunos oferecer (matrícula
-  // é sempre por turma) — o Select de aluno fica desabilitado até então (ver
-  // FiltrosDesempenho).
+  // Matrícula é por turma: sem turma não há alunos a oferecer.
   const opcoesAlunos = useMemo(() => {
     if (!turmaId) return []
     return (requisicaoMatriculas.data ?? []).map((matricula) => ({
@@ -116,9 +110,7 @@ export function useDesempenhoDados() {
     }))
   }, [requisicaoMatriculas.data, turmaId])
 
-  // Tentativas concluídas que sobrevivem aos filtros — base única pra tudo
-  // abaixo (histograma geral, agregação por simulado, por disciplina e ao
-  // longo do tempo), pra não repetir o mesmo filtro 4 vezes.
+  // Base única já filtrada para todas as agregações abaixo.
   const tentativasFiltradas = useMemo(() => {
     const { turmaId: turmaAplicada, disciplinaId: disciplinaAplicada, alunoId: alunoAplicado, dataInicio: deAplicado, dataFim: ateAplicado } =
       filtrosAplicados
@@ -148,10 +140,7 @@ export function useDesempenhoDados() {
       .map((tentativa) => ({ tentativa, simulado: mapaSimulados.get(tentativa.simuladoId) }))
   }, [requisicaoSimulados.data, requisicaoTentativas.data, turmasDoProfessor, filtrosAplicados])
 
-  // Uma nota (0-100) por tentativa, sem agrupar por simulado — base do
-  // histograma de distribuição geral. Cada item guarda também aluno/simulado
-  // pra permitir detalhar de onde vem cada nota (ex.: clique numa coluna do
-  // histograma), sem precisar refazer o cálculo em outro lugar.
+  // Guarda aluno/simulado para detalhar a faixa clicada no histograma.
   const notasDetalhadas = useMemo<NotaDetalhada[]>(
     () =>
       tentativasFiltradas.map(({ tentativa, simulado }) => ({
@@ -215,10 +204,7 @@ export function useDesempenhoDados() {
       .sort((a, b) => a.valor - b.valor)
   }, [desempenhos])
 
-  // Evolução ao longo do tempo, por disciplina — só entram disciplinas com
-  // 2+ simulados com data (tendência não existe com um ponto só). Filtrando
-  // por aluno, cada ponto passa a ser a nota daquele aluno, não a média da
-  // turma — mesma base de `desempenhos`, então o filtro já se propaga.
+  // Só disciplinas com 2+ simulados; com aluno filtrado, cada ponto é a nota dele.
   const tendenciaPorDisciplina = useMemo(() => {
     const porDisciplina = new Map<string, DesempenhoSimulado[]>()
 

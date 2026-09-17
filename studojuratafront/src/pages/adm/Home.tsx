@@ -4,11 +4,11 @@ import styled from 'styled-components'
 import { BookOpen, Cake, CalendarDays, GraduationCap, Plus, School, Users } from 'lucide-react'
 
 import { Layout } from '../../components/layout'
-import { AniversarianteCard } from '../../components/ui/AniversarianteCard'
+import { AniversarianteCard } from '../../components/pessoas/AniversarianteCard'
 import { Banner } from '../../components/ui/Banner'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
-import { EventoCard } from '../../components/ui/EventoCard'
+import { EventoCard } from '../../components/eventos/EventoCard'
 import { InfoCard } from '../../components/ui/InfoCard'
 import { SeparadorCard } from '../../components/ui/SeparadorCard'
 import { GradeAutoAjuste } from '../../components/ui/GradeAutoAjuste'
@@ -17,16 +17,16 @@ import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton, SkeletonCartao } from '../../components/feedback/Skeleton'
 import { useAuth } from '../../hooks/useAuth'
 import { useRequisicao } from '../../hooks/useRequisicao'
+import { eventos as servicoEventos } from '../../services/eventos'
+import { disciplinas as servicoDisciplinas } from '../../services/curriculo'
 import {
   alunos as servicoAlunos,
-  disciplinas as servicoDisciplinas,
-  eventos as servicoEventos,
   pessoas as servicoPessoas,
   professores as servicoProfessores,
-  turmas as servicoTurmas,
-} from '../../services/endpoints'
+} from '../../services/pessoas'
+import { turmas as servicoTurmas } from '../../services/turmas'
 import { nomeCurto } from '../../utils/format'
-import { aniversariantesDaSemana } from '../_compartilhado/aniversariantes'
+import { aniversariantesDaSemana } from '../../utils/aniversariantes'
 
 const GradeEventos = styled.div`
   display: grid;

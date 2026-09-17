@@ -22,17 +22,20 @@ import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
-  conteudosPlano as servicoConteudos,
   cursoDisciplinas as servicoCursoDisciplinas,
   cursos as servicoCursos,
+} from '../../../services/curriculo'
+import { professores as servicoProfessores } from '../../../services/pessoas'
+import {
+  conteudosPlano as servicoConteudos,
   planosAula,
   planosEnsino as servicoPlanos,
-  professores as servicoProfessores,
-} from '../../../services/endpoints'
+} from '../../../services/planejamento'
 import { formatarData } from '../../../utils/format'
 import { OPCOES_STATUS_PLANO } from '../../../utils/labels'
-import { intervaloDeDatas } from '../../../utils/validacao'
-import type { CursoDisciplina, StatusPlano } from '../../../types'
+import type { CursoDisciplina } from '../../../types/curriculo'
+import type { StatusPlano } from '../../../types/planejamento'
+import { useFormularioPlanoEnsino } from '../../../formularios/planejamento'
 
 type Aba = 'identificacao' | 'proposta'
 
@@ -46,26 +49,15 @@ export default function PlanoEnsinoFormulario() {
   const edicao = Boolean(id)
   const planoId = id ? Number(id) : null
 
-  const [cursoId, setCursoId] = useState<number | null>(null)
-  const [turmaId, setTurmaId] = useState<number | null>(null)
-  const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
-  const [cargaHoraria, setCargaHoraria] = useState('')
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim] = useState('')
-  const [ementa, setEmenta] = useState('')
-  const [objetivoGeral, setObjetivoGeral] = useState('')
-  const [metodologia, setMetodologia] = useState('')
-  const [status, setStatus] = useState<StatusPlano>('ATIVO')
-  const [erros, setErros] = useState<Record<string, string | undefined>>({})
+  const form = useFormularioPlanoEnsino()
+  const { cursoId, turmaId, disciplinaId, cargaHoraria, dataInicio, dataFim, ementa, objetivoGeral, metodologia, status } = form.values
+  const erros = form.errors as Record<string, string | undefined>
   const [aba, setAba] = useState<Aba>('identificacao')
 
   const requisicaoPlano = useRequisicao(() => servicoPlanos.buscar(planoId as number), [planoId], {
     ativo: Boolean(planoId),
   })
-  // Plano de aula nasce sozinho junto com o plano de ensino (ver
-  // PlanoAulaService.gerarSeNecessario), mas só quando o plano já tem
-  // turmaDisciplina — em planos sem turma/disciplina vinculada ainda não há
-  // nenhum. Buscado à parte pra alimentar o botão "Plano de aula" abaixo.
+  // O back gera o plano de aula junto (PlanoAulaService.gerarSeNecessario) quando há turmaDisciplina.
   const requisicaoPlanoAula = useRequisicao(
     () => planosAula.listarPorPlanoEnsino(planoId as number),
     [planoId],
@@ -86,16 +78,16 @@ export default function PlanoEnsinoFormulario() {
   )
 
   useHidratar(requisicaoPlano.data, (plano) => {
-    setCursoId(plano.curso?.id ?? null)
-    setTurmaId(plano.turmaDisciplina?.turma?.id ?? null)
-    setDisciplinaId(plano.turmaDisciplina?.disciplina?.id ?? null)
-    setCargaHoraria(plano.cargaHoraria?.toString() ?? '')
-    setDataInicio(plano.dataInicio?.slice(0, 10) ?? '')
-    setDataFim(plano.dataFim?.slice(0, 10) ?? '')
-    setEmenta(plano.ementa ?? '')
-    setObjetivoGeral(plano.objetivoGeral ?? '')
-    setMetodologia(plano.metodologia ?? '')
-    setStatus(plano.status ?? 'ATIVO')
+    form.setFieldValue('cursoId', plano.curso?.id ?? null)
+    form.setFieldValue('turmaId', plano.turmaDisciplina?.turma?.id ?? null)
+    form.setFieldValue('disciplinaId', plano.turmaDisciplina?.disciplina?.id ?? null)
+    form.setFieldValue('cargaHoraria', plano.cargaHoraria?.toString() ?? '')
+    form.setFieldValue('dataInicio', plano.dataInicio?.slice(0, 10) ?? '')
+    form.setFieldValue('dataFim', plano.dataFim?.slice(0, 10) ?? '')
+    form.setFieldValue('ementa', plano.ementa ?? '')
+    form.setFieldValue('objetivoGeral', plano.objetivoGeral ?? '')
+    form.setFieldValue('metodologia', plano.metodologia ?? '')
+    form.setFieldValue('status', plano.status ?? 'ATIVO')
   })
 
   // Curso e turma se filtram mutuamente, para não salvar turma de outro curso.
@@ -112,9 +104,7 @@ export default function PlanoEnsinoFormulario() {
       .map((curso) => ({ value: curso.id, label: curso.nome }))
   }, [requisicaoCursos.data, requisicaoVinculos.data, turmaId])
 
-  // Turma e disciplina — dois selects (Figma), não um combinado: escolhe a
-  // turma primeiro, a disciplina é filtrada pelas que o professor leciona
-  // nela (mesmo padrão já usado em Notas).
+  // Dois selects (Figma): a disciplina é filtrada pela turma escolhida.
   const opcoesTurmas = useMemo(() => {
     const unicas = new Map<number, string>()
     for (const vinculo of requisicaoVinculos.data ?? []) {
@@ -181,32 +171,11 @@ export default function PlanoEnsinoFormulario() {
     const encontrado = grade.find(
       (item) => item.disciplina?.id === disciplinaSelecionada && item.status !== 'INATIVO',
     )
-    if (encontrado?.cargaHoraria) setCargaHoraria(String(encontrado.cargaHoraria))
-  }
-
-  function validar() {
-    const encontrados: Record<string, string | undefined> = {}
-
-    // PlanoEnsino.curso é @ManyToOne(optional = false).
-    if (!cursoId) encontrados.cursoId = 'Selecione o curso'
-
-    // Obrigatórias: sem turma e disciplina o plano de aula não é gerado.
-    if (!turmaId) encontrados.turmaId = 'Selecione a turma'
-    if (!disciplinaId) encontrados.disciplinaId = 'Selecione a disciplina'
-
-    if (cargaHoraria && (!Number.isFinite(Number(cargaHoraria)) || Number(cargaHoraria) <= 0)) {
-      encontrados.cargaHoraria = 'Informe um número de horas maior que zero'
-    }
-
-    const erroDatas = intervaloDeDatas(dataInicio, dataFim)
-    if (erroDatas) encontrados.dataFim = erroDatas
-
-    setErros(encontrados)
-    return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
+    if (encontrado?.cargaHoraria) form.setFieldValue('cargaHoraria', String(encontrado.cargaHoraria))
   }
 
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    if (!validar()) return
+    if ((await form.validate()).hasErrors) return
 
     const curso = (requisicaoCursos.data ?? []).find((item) => item.id === cursoId)
     if (!curso) return
@@ -381,7 +350,7 @@ export default function PlanoEnsinoFormulario() {
                   clearable
                   placeholder="Selecionar curso..."
                   onChange={(valor) => {
-                    setCursoId(valor)
+                    form.setFieldValue('cursoId', valor)
                     // A turma escolhida pode não pertencer mais ao curso novo —
                     // limpa em vez de deixar uma combinação inconsistente.
                     if (
@@ -390,8 +359,8 @@ export default function PlanoEnsinoFormulario() {
                       (requisicaoVinculos.data ?? []).find((vinculo) => vinculo.turma?.id === turmaId)?.turma?.curso
                         ?.id !== valor
                     ) {
-                      setTurmaId(null)
-                      setDisciplinaId(null)
+                      form.setFieldValue('turmaId', null)
+                      form.setFieldValue('disciplinaId', null)
                     }
                   }}
                 />
@@ -419,15 +388,15 @@ export default function PlanoEnsinoFormulario() {
                   placeholder="Selecionar turma..."
                   emptyText="Você ainda não leciona em nenhuma turma"
                   onChange={(valor) => {
-                    setTurmaId(valor)
-                    setDisciplinaId(null)
+                    form.setFieldValue('turmaId', valor)
+                    form.setFieldValue('disciplinaId', null)
                     // A turma só pertence a um curso — escolher a turma já
                     // resolve o curso, sem exigir escolher os dois à parte.
                     const cursoDaTurma = valor
                       ? (requisicaoVinculos.data ?? []).find((vinculo) => vinculo.turma?.id === valor)?.turma?.curso
                           ?.id
                       : undefined
-                    if (cursoDaTurma) setCursoId(cursoDaTurma)
+                    if (cursoDaTurma) form.setFieldValue('cursoId', cursoDaTurma)
                   }}
                 />
 
@@ -444,7 +413,7 @@ export default function PlanoEnsinoFormulario() {
                   emptyText={turmaId ? 'Sem disciplinas nessa turma' : 'Selecione a turma primeiro'}
                   hint={avisoContinuidade}
                   onChange={(valor) => {
-                    setDisciplinaId(valor)
+                    form.setFieldValue('disciplinaId', valor)
                     sugerirCargaHoraria(valor, requisicaoGradeCurricular.data ?? [])
                   }}
                 />
@@ -460,7 +429,7 @@ export default function PlanoEnsinoFormulario() {
                   error={erros.cargaHoraria}
                   disabled={salvando}
                   hint="Em horas."
-                  onChange={(evento) => setCargaHoraria(evento.target.value)}
+                  onChange={(evento) => form.setFieldValue('cargaHoraria', evento.target.value)}
                 />
 
                 <Select<StatusPlano>
@@ -468,7 +437,7 @@ export default function PlanoEnsinoFormulario() {
                   options={OPCOES_STATUS_PLANO}
                   value={status}
                   disabled={salvando}
-                  onChange={(valor) => setStatus(valor ?? 'ATIVO')}
+                  onChange={(valor) => form.setFieldValue('status', valor ?? 'ATIVO')}
                 />
               </GradeAutoAjuste>
 
@@ -477,7 +446,7 @@ export default function PlanoEnsinoFormulario() {
                   label="Início"
                   value={dataInicio}
                   disabled={salvando}
-                  onChange={(evento) => setDataInicio(evento.target.value)}
+                  onChange={(evento) => form.setFieldValue('dataInicio', evento.target.value)}
                 />
 
                 <DatePicker
@@ -485,7 +454,7 @@ export default function PlanoEnsinoFormulario() {
                   value={dataFim}
                   error={erros.dataFim}
                   disabled={salvando}
-                  onChange={(evento) => setDataFim(evento.target.value)}
+                  onChange={(evento) => form.setFieldValue('dataFim', evento.target.value)}
                 />
               </GradeAutoAjuste>
             </Stack>
@@ -503,7 +472,7 @@ export default function PlanoEnsinoFormulario() {
                 maxLength={2000}
                 rows={4}
                 autoAltura
-                onChange={(evento) => setEmenta(evento.target.value)}
+                onChange={(evento) => form.setFieldValue('ementa', evento.target.value)}
               />
 
               <TextArea
@@ -514,7 +483,7 @@ export default function PlanoEnsinoFormulario() {
                 maxLength={2000}
                 rows={3}
                 autoAltura
-                onChange={(evento) => setObjetivoGeral(evento.target.value)}
+                onChange={(evento) => form.setFieldValue('objetivoGeral', evento.target.value)}
               />
 
               <TextArea
@@ -525,7 +494,7 @@ export default function PlanoEnsinoFormulario() {
                 maxLength={2000}
                 rows={3}
                 autoAltura
-                onChange={(evento) => setMetodologia(evento.target.value)}
+                onChange={(evento) => form.setFieldValue('metodologia', evento.target.value)}
               />
             </Stack>
           </Card>

@@ -26,10 +26,12 @@ import {
   cursoDisciplinas as servicoCursoDisciplinas,
   cursos as servicoCursos,
   disciplinas as servicoDisciplinas,
-} from '../../../services/endpoints'
+} from '../../../services/curriculo'
 import { formatarCargaHoraria } from '../../../utils/format'
+import { useFormularioCurso } from '../../../formularios/curriculo'
 import { OPCOES_ATIVO_INATIVO } from '../../../utils/labels'
-import type { CursoDisciplina, StatusAtivoInativo } from '../../../types'
+import type { StatusAtivoInativo } from '../../../types/comum'
+import type { CursoDisciplina } from '../../../types/curriculo'
 
 const Grade = styled.div`
   display: grid;
@@ -71,10 +73,7 @@ export default function CursoFormulario() {
   const cursoId = id ? Number(id) : null
 
   const [aba, setAba] = useState<Aba>('dados')
-  const [nome, setNome] = useState('')
-  const [descricao, setDescricao] = useState('')
-  const [ativo, setAtivo] = useState(true)
-  const [erros, setErros] = useState<{ nome?: string }>({})
+  const form = useFormularioCurso()
 
   const [novaGrade, setNovaGrade] = useState<{ disciplinaId: number | null; cargaHoraria: string }>({
     disciplinaId: null,
@@ -100,23 +99,13 @@ export default function CursoFormulario() {
     .map((disciplina) => ({ value: disciplina.id, label: disciplina.titulo ?? '—' }))
 
   useHidratar(requisicao.data, (curso) => {
-    setNome(curso.nome ?? '')
-    setDescricao(curso.descricao ?? '')
-    setAtivo(curso.status !== 'INATIVO')
+    form.setValues({ nome: curso.nome ?? '', descricao: curso.descricao ?? '', ativo: curso.status !== 'INATIVO' })
+    form.resetDirty()
   })
 
-  function validar() {
-    const encontrados: typeof erros = {}
-
-    // Curso.nome é @Column(nullable = false).
-    if (!nome.trim()) encontrados.nome = 'Informe o nome do curso'
-
-    setErros(encontrados)
-    return Object.keys(encontrados).length === 0
-  }
-
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    if (!validar()) return
+    if ((await form.validate()).hasErrors) return
+    const { nome, descricao, ativo } = form.getValues()
 
     if (!escola) {
       toast.error('Escola não encontrada', 'Cadastre uma escola antes de criar cursos.')
@@ -340,11 +329,9 @@ export default function CursoFormulario() {
                   label="Nome do curso"
                   required
                   placeholder="Ex.: Geek Júnior"
-                  value={nome}
-                  error={erros.nome}
+                  {...form.getInputProps('nome')}
                   disabled={salvando}
                   maxLength={120}
-                  onChange={(evento) => setNome(evento.target.value)}
                 />
 
                 <Input
@@ -358,20 +345,19 @@ export default function CursoFormulario() {
               <TextArea
                 label="Descrição"
                 placeholder="Descreva o objetivo e o público do curso..."
-                value={descricao}
+                {...form.getInputProps('descricao')}
                 disabled={salvando}
                 maxLength={500}
                 rows={4}
-                onChange={(evento) => setDescricao(evento.target.value)}
               />
 
               <Select<StatusAtivoInativo>
                 label="Situação"
                 options={OPCOES_ATIVO_INATIVO}
-                value={ativo ? 'ATIVO' : 'INATIVO'}
+                value={form.values.ativo ? 'ATIVO' : 'INATIVO'}
                 hint="Cursos inativos não aparecem na criação de novas turmas."
                 disabled={salvando}
-                onChange={(valor) => setAtivo(valor !== 'INATIVO')}
+                onChange={(valor) => form.setFieldValue('ativo', valor !== 'INATIVO')}
               />
             </Stack>
           </Card>

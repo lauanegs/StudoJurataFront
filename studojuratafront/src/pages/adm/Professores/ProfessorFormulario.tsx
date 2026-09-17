@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Archive, ArchiveRestore, Save } from 'lucide-react'
 
@@ -12,19 +12,14 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
-import { useFormulario } from '../../../hooks/useFormulario'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { OPCOES_ATIVO_INATIVO } from '../../../utils/labels'
-import type { StatusAtivoInativo } from '../../../types'
-import {
-  pessoas as servicoPessoas,
-  professores as servicoProfessores,
-} from '../../../services/endpoints'
-import { PessoaCampos } from '../_compartilhado/PessoaCampos'
-import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
-import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
+import type { StatusAtivoInativo } from '../../../types/comum'
+import { pessoas as servicoPessoas, professores as servicoProfessores } from '../../../services/pessoas'
+import { PessoaCampos } from '../../../components/pessoas/PessoaCampos'
+import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '../../../formularios/pessoas'
 
 export default function ProfessorFormulario() {
   const { id } = useParams()
@@ -37,10 +32,7 @@ export default function ProfessorFormulario() {
 
   const [aba, setAba] = useState<'dados' | 'endereco'>('dados')
 
-  const formulario = useFormulario<DadosPessoa>({
-    valoresIniciais: PESSOA_VAZIA,
-    validarTudo: validarPessoa,
-  })
+  const form = useFormularioPessoa()
   const [ativo, setAtivo] = useState(true)
 
   const requisicao = useRequisicao(
@@ -50,54 +42,41 @@ export default function ProfessorFormulario() {
   )
 
   useHidratar(requisicao.data, (professor) => {
-    formulario.reiniciar(dePessoa(professor.pessoa))
+    form.setValues(dePessoa(professor.pessoa))
+    form.resetDirty()
     setAtivo(professor.status !== 'INATIVO')
   })
 
-  // PessoaCampos espera um objeto de erros "só os visíveis" (campo tocado ou
-  // já tentou enviar) — useFormulario expõe isso por campo via erroDe().
-  const errosVisiveis = useMemo(() => {
-    const visiveis: Partial<Record<keyof DadosPessoa, string>> = {}
-
-    ;(Object.keys(formulario.erros) as (keyof DadosPessoa)[]).forEach((campo) => {
-      const erro = formulario.erroDe(campo)
-      if (erro) visiveis[campo] = erro
-    })
-
-    return visiveis
-  }, [formulario])
-
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    const enviado = await formulario.aoEnviar(async (pessoa) => {
-      try {
-        const payloadPessoa = paraPayloadPessoa(pessoa)
-
-        const pessoaSalva = edicao
-          ? await servicoPessoas.atualizar(requisicao.data!.pessoa.id, payloadPessoa)
-          : await servicoPessoas.criar(payloadPessoa)
-
-        const corpo = { pessoa: pessoaSalva, status: ativo ? ('ATIVO' as const) : ('INATIVO' as const) }
-
-        if (edicao) {
-          await servicoProfessores.atualizar(professorId as number, corpo)
-        } else {
-          await servicoProfessores.criar(corpo)
-        }
-
-        toast.success(edicao ? 'Professor atualizado' : 'Professor cadastrado', pessoaSalva.nome)
-        navegar('/adm/professores')
-      } catch (erroSalvar) {
-        toast.error(
-          'Não foi possível salvar',
-          erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
-        )
-      }
-    })()
-
-    if (!enviado) {
-      const primeiroCampo = Object.keys(formulario.erros)[0] as keyof DadosPessoa | undefined
-      if (primeiroCampo) setAba(abaDoCampoPessoa(primeiroCampo))
+    const validacao = await form.validate()
+    if (validacao.hasErrors) {
+      setAba(abaDoCampoPessoa(Object.keys(validacao.errors)[0]))
       toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
+      return
+    }
+
+    try {
+      const payloadPessoa = paraPayloadPessoa(form.getValues())
+
+      const pessoaSalva = edicao
+        ? await servicoPessoas.atualizar(requisicao.data!.pessoa.id, payloadPessoa)
+        : await servicoPessoas.criar(payloadPessoa)
+
+      const corpo = { pessoa: pessoaSalva, status: ativo ? ('ATIVO' as const) : ('INATIVO' as const) }
+
+      if (edicao) {
+        await servicoProfessores.atualizar(professorId as number, corpo)
+      } else {
+        await servicoProfessores.criar(corpo)
+      }
+
+      toast.success(edicao ? 'Professor atualizado' : 'Professor cadastrado', pessoaSalva.nome)
+      navegar('/adm/professores')
+    } catch (erroSalvar) {
+      toast.error(
+        'Não foi possível salvar',
+        erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
+      )
     }
   })
 
@@ -226,10 +205,7 @@ export default function ProfessorFormulario() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <PessoaCampos
               secao={aba}
-              valores={formulario.valores}
-              erros={errosVisiveis}
-              onChange={(campo, valor) => formulario.definirCampo(campo, valor)}
-              onExit={(campo) => formulario.marcarTocado(campo)}
+              form={form}
               disabled={salvando}
               rotuloNome="Nome do professor"
             />

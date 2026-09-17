@@ -9,6 +9,7 @@ import { ROTA_INICIAL_POR_PERFIL } from '../../contexts/authContexto'
 import { useAuth } from '../../hooks/useAuth'
 import { ApiError } from '../../services/api'
 import { theme as tokens } from '../../styles/theme'
+import { useFormularioLogin } from '../../formularios/autenticacao'
 
 const bannerLogin = '/images/bannerLogin.png'
 
@@ -174,9 +175,7 @@ export default function Login() {
   const localizacao = useLocation()
   const { entrar, usuario, loading } = useAuth()
 
-  const [username, setUsername] = useState('')
-  const [senha, setSenha] = useState('')
-  const [erroCampo, setErroCampo] = useState<{ username?: string; senha?: string }>({})
+  const form = useFormularioLogin()
   const [erroGeral, setErroGeral] = useState('')
   const [enviando, setEnviando] = useState(false)
 
@@ -187,22 +186,8 @@ export default function Login() {
     }
   }, [usuario, loading, navegar])
 
-  function validar() {
-    const erros: typeof erroCampo = {}
-
-    if (!username.trim()) erros.username = 'Informe seu usuário'
-    if (!senha) erros.senha = 'Informe sua senha'
-
-    setErroCampo(erros)
-    return Object.keys(erros).length === 0
-  }
-
-  async function aoEnviar(evento: React.FormEvent) {
-    evento.preventDefault()
+  async function entrarComCredenciais({ username, senha }: { username: string; senha: string }) {
     setErroGeral('')
-
-    if (!validar()) return
-
     setEnviando(true)
 
     try {
@@ -236,60 +221,56 @@ export default function Login() {
       </Banner>
 
       <Conteudo>
-      <Cartao onSubmit={aoEnviar} noValidate>
-        <Logo src="/images/logo.png" alt="Studo Jurata" />
+        <Cartao onSubmit={form.onSubmit(entrarComCredenciais, () => setErroGeral(''))} noValidate>
+          <Logo src="/images/logo.png" alt="Studo Jurata" />
 
-        <Titulos>
-          <Titulo>Studo Jurata</Titulo>
-          <Subtitulo>Seja Bem-vindo!</Subtitulo>
-        </Titulos>
+          <Titulos>
+            <Titulo>Studo Jurata</Titulo>
+            <Subtitulo>Seja Bem-vindo!</Subtitulo>
+          </Titulos>
 
-        <Campos>
-          <Input
-            aria-label="Usuário"
-            corDestaque={tokens.colors.blue}
-            altura="52px"
-            bordaSolida
-            placeholder="usuário"
-            autoComplete="username"
-            autoFocus
-            value={username}
-            error={erroCampo.username}
-            onChange={(evento) => setUsername(evento.target.value)}
-          />
+          <Campos>
+            <Input
+              aria-label="Usuário"
+              corDestaque={tokens.colors.blue}
+              altura="52px"
+              bordaSolida
+              placeholder="usuário"
+              autoComplete="username"
+              autoFocus
+              {...form.getInputProps('username')}
+            />
 
-          <Input
-            aria-label="Senha"
-            type="password"
-            alternarVisibilidade
-            corDestaque={tokens.colors.blue}
-            altura="52px"
-            bordaSolida
-            placeholder="senha"
-            autoComplete="current-password"
-            value={senha}
-            error={erroCampo.senha}
-            onChange={(evento) => setSenha(evento.target.value)}
-          />
-        </Campos>
+            <Input
+              aria-label="Senha"
+              type="password"
+              alternarVisibilidade
+              corDestaque={tokens.colors.blue}
+              altura="52px"
+              bordaSolida
+              placeholder="senha"
+              autoComplete="current-password"
+              {...form.getInputProps('senha')}
+            />
+          </Campos>
 
-        <LinkEsqueciSenha href="#" onClick={(evento) => evento.preventDefault()}>
-          Esqueci minha senha
-        </LinkEsqueciSenha>
+          <LinkEsqueciSenha href="#" onClick={(evento) => evento.preventDefault()}>
+            Esqueci minha senha
+          </LinkEsqueciSenha>
 
-        {erroGeral && <Alerta role="alert">{erroGeral}</Alerta>}
+          {erroGeral && <Alerta role="alert">{erroGeral}</Alerta>}
 
-        <Button
-          type="submit"
-          fullWidth
-          size="large"
-          icon={<LogIn />}
-          loading={enviando}
-          style={{ background: tokens.gradients.sidebar, borderColor: tokens.colors.blue }}
-        >
-          Entrar
-        </Button>
-      </Cartao>
+          <Button
+            type="submit"
+            fullWidth
+            size="large"
+            icon={<LogIn />}
+            loading={enviando}
+            style={{ background: tokens.gradients.sidebar, borderColor: tokens.colors.blue }}
+          >
+            Entrar
+          </Button>
+        </Cartao>
       </Conteudo>
     </Tela>
   )

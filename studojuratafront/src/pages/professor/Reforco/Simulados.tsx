@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { BarChart3, BookOpen, ClipboardCheck, FileText, Pencil, Plus, Rocket, Square } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
-import { AlertaDesempenhoCard } from '../../../components/ui/AlertaDesempenhoCard'
+import { AlertaDesempenhoCard } from '../../../components/desempenho/AlertaDesempenhoCard'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
@@ -17,19 +17,19 @@ import { usePaginacao } from '../../../hooks/usePaginacao'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
+import { disciplinas as servicoDisciplinas } from '../../../services/curriculo'
+import { ia as servicoIa } from '../../../services/ia'
+import { professores as servicoProfessores } from '../../../services/pessoas'
 import {
-  disciplinas as servicoDisciplinas,
-  ia as servicoIa,
-  professores as servicoProfessores,
   questoes as servicoQuestoes,
   simuladoAlunos,
   simuladoQuestoes,
   simulados as servicoSimulados,
-  turmas as servicoTurmas,
-} from '../../../services/endpoints'
+} from '../../../services/simulados'
+import { turmas as servicoTurmas } from '../../../services/turmas'
 import { ROTULO_STATUS_SIMULADO, STATUS_SIMULADO_VARIANT } from '../../../utils/labels'
 import { theme as tokens } from '../../../styles/theme'
-import type { SimuladoResponse, StatusSimulado } from '../../../types'
+import type { SimuladoResponse, StatusSimulado } from '../../../types/simulados'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 type Filtro = 'todos' | StatusSimulado
@@ -69,10 +69,7 @@ export default function Simulados() {
     [professorId],
     { ativo: Boolean(professorId) },
   )
-  // Vínculo aluno/conteúdo/motivo/prazo de cada simulado gerado pela IA —
-  // usado só pra detectar os que passaram do prazo sem ter sido lançados
-  // (ver simuladosAtrasados). Detalhamento completo fica na tela de
-  // aprovação (SimuladosAprovacao.tsx).
+  // Usado só para detectar simulados da IA atrasados.
   const requisicaoVinculosIA = useRequisicao(() => servicoIa.listarSimuladosGerados(), [])
 
   const turmasDoProfessor = useMemo(
@@ -87,11 +84,7 @@ export default function Simulados() {
     [data, turmasDoProfessor],
   )
 
-  // IDs de simulado com ao menos uma questão ainda PENDENTE — enquanto isso
-  // for verdade, o simulado só pode ser mexido pela tela de aprovação
-  // (SimuladosAprovacao.tsx/AprovarSimulado.tsx), nunca por Editar/Lançar
-  // aqui: editar/lançar direto puxaria pra revisão um simulado que ainda não
-  // passou pela aprovação questão por questão.
+  // Com questão pendente, o simulado só pode ser mexido pela tela de aprovação.
   const simuladosComPendencia = useMemo(() => {
     const idsQuestoesPendentes = new Set((requisicaoQuestoesPendentes.data ?? []).map((questao) => questao.id))
 
@@ -102,12 +95,7 @@ export default function Simulados() {
     )
   }, [requisicaoQuestoesPendentes.data, requisicaoSimuladoQuestoes.data])
 
-  // O botão "Simulados para aprovação" leva pra SimuladosAprovacao.tsx, que
-  // lista SIMULADOS, não questões — contar questoesPendentes.length aqui
-  // direto não bate com o total real de simulados naquela tela (um simulado
-  // pode ter várias questões pendentes, inflando o número; e a contagem
-  // também não é filtrada pelas turmas deste professor). Mesma lógica de
-  // agrupamento da tela de aprovação, só que contando em vez de listar.
+  // Conta simulados (não questões), com o mesmo agrupamento da tela de aprovação.
   const pendentes = useMemo(
     () => simuladosDoProfessor.filter((simulado) => simuladosComPendencia.has(simulado.id)).length,
     [simuladosDoProfessor, simuladosComPendencia],

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { Save } from 'lucide-react'
@@ -17,8 +17,9 @@ import { useToast } from '../../../contexts/toastContexto'
 import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
-import { conteudosPlano, planosEnsino } from '../../../services/endpoints'
+import { conteudosPlano, planosEnsino } from '../../../services/planejamento'
 import { theme as tokens } from '../../../styles/theme'
+import { useFormularioConteudo } from '../../../formularios/planejamento'
 
 const Ajuda = styled.div`
   display: flex;
@@ -39,10 +40,7 @@ export default function ConteudoFormulario() {
   const edicao = Boolean(conteudoId)
   const idConteudo = conteudoId ? Number(conteudoId) : null
 
-  const [ordem, setOrdem] = useState('')
-  const [titulo, setTitulo] = useState('')
-  const [descricao, setDescricao] = useState('')
-  const [erros, setErros] = useState<Record<string, string | undefined>>({})
+  const form = useFormularioConteudo()
 
   const requisicaoPlano = useRequisicao(() => planosEnsino.buscar(idPlano), [idPlano])
   const requisicaoConteudos = useRequisicao(() => conteudosPlano.listar(), [])
@@ -62,39 +60,22 @@ export default function ConteudoFormulario() {
   })
 
   useHidratar(requisicaoConteudo.data, (conteudo) => {
-    setOrdem(conteudo.ordem?.toString() ?? '')
-    setTitulo(conteudo.titulo ?? '')
-    setDescricao(conteudo.descricao ?? '')
+    form.setValues({
+      ordem: conteudo.ordem?.toString() ?? '',
+      titulo: conteudo.titulo ?? '',
+      descricao: conteudo.descricao ?? '',
+    })
+    form.resetDirty()
   })
 
-  // Só sugere a próxima ordem em modo de criação, depois que a lista de
-  // conteúdos carregou — useHidratar aplica uma única vez por resposta
-  // (por referência), então não sobrescreve o que o usuário já digitou.
+  // useHidratar aplica uma vez por resposta, sem sobrescrever o que foi digitado.
   useHidratar(!edicao ? requisicaoConteudos.data : null, () => {
-    setOrdem((atual) => atual || String(proximaOrdem))
+    if (!form.getValues().ordem) form.setFieldValue('ordem', String(proximaOrdem))
   })
-
-  function validar() {
-    const encontrados: Record<string, string | undefined> = {}
-
-    if (!titulo.trim()) encontrados.titulo = 'Informe o título do conteúdo'
-
-    if (!descricao.trim()) {
-      encontrados.descricao = 'Descreva o conteúdo — a IA usa este texto para gerar as questões'
-    } else if (descricao.trim().length < 30) {
-      encontrados.descricao = 'Descreva com mais detalhe (mínimo de 30 caracteres)'
-    }
-
-    if (ordem && (!Number.isInteger(Number(ordem)) || Number(ordem) <= 0)) {
-      encontrados.ordem = 'A ordem deve ser um número inteiro positivo'
-    }
-
-    setErros(encontrados)
-    return Object.keys(encontrados).filter((chave) => encontrados[chave]).length === 0
-  }
 
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    if (!validar() || !requisicaoPlano.data) return
+    if ((await form.validate()).hasErrors || !requisicaoPlano.data) return
+    const { ordem, titulo, descricao } = form.getValues()
 
     try {
       const corpo = {
@@ -170,22 +151,18 @@ export default function ConteudoFormulario() {
                 label="Ordem"
                 type="number"
                 min={1}
-                value={ordem}
-                error={erros.ordem}
+                {...form.getInputProps('ordem')}
                 disabled={salvando}
                 hint="Define a sequência das unidades."
-                onChange={(evento) => setOrdem(evento.target.value)}
               />
 
               <Input
                 label="Título"
                 required
                 placeholder="Ex.: Unidade 1 — Introdução à lógica"
-                value={titulo}
-                error={erros.titulo}
+                {...form.getInputProps('titulo')}
                 disabled={salvando}
                 maxLength={150}
-                onChange={(evento) => setTitulo(evento.target.value)}
               />
             </GradeAutoAjuste>
 
@@ -203,13 +180,11 @@ export default function ConteudoFormulario() {
               label="Conteúdo"
               required
               placeholder="Descreva os tópicos trabalhados, exemplos e o nível esperado..."
-              value={descricao}
-              error={erros.descricao}
+              {...form.getInputProps('descricao')}
               disabled={salvando}
               maxLength={2000}
               rows={8}
               autoAltura
-              onChange={(evento) => setDescricao(evento.target.value)}
             />
           </Stack>
         </Card>
