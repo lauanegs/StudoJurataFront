@@ -62,7 +62,7 @@ npm run lint
 Uma refatoração que introduz erro de tipo ou de lint não está pronta, independente de quão pequena pareça. `npm run build` (`tsc -b && vite build`) é o check mais completo antes de considerar a mudança finalizada em algo que toque múltiplos arquivos.
 
 ### 8. Verificar regressões
-Não há testes automatizados neste projeto (`docs/architecture.md` #4) — a verificação é manual:
+Os testes automatizados (`npm test`) cobrem só a lógica pura (`docs/architecture.md` #4) — rodar sempre, mas o restante da verificação é manual:
 - Abrir a tela alterada no navegador (dev server) e conferir visualmente contra o que existia antes (layout, responsividade — testar em pelo menos uma largura pequena se o componente for usado em tabela/lista) **e contra o Figma**, não só contra o estado anterior do código — o estado anterior também pode ter divergido do protótipo.
 - Se a refatoração alterou espaçamento, tamanho, alinhamento, cores, tipografia, responsividade, posicionamento ou aparência de componentes (mesmo como efeito colateral de uma mudança "só de código"), reconferir especificamente contra o Figma antes de seguir — ver `docs/figma-fidelity.md`, seção "Durante refatorações".
 - Testar o fluxo funcional afetado de ponta a ponta (preencher formulário e salvar, filtrar lista, abrir modal) — não só que a tela renderiza sem erro no console.

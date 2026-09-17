@@ -75,7 +75,7 @@ Um componente de página deve se ler de cima para baixo como: hooks de dado → 
 
 ## Testabilidade
 
-Não há testes automatizados hoje (ver `docs/architecture.md` #4). Isso não isenta o código de ser escrito de forma testável: hooks que não dependem de módulo global mutável, componentes que recebem dados via props em vez de acessar contexto direto quando não precisam do contexto inteiro, funções puras em `utils/` sem efeito colateral — tudo isso já é seguido e deve continuar sendo, mesmo sem um `describe()` cobrando.
+Os testes automatizados cobrem só a lógica pura (ver `docs/architecture.md` #4). Isso não isenta o código de ser escrito de forma testável: hooks que não dependem de módulo global mutável, componentes que recebem dados via props em vez de acessar contexto direto quando não precisam do contexto inteiro, funções puras em `utils/` sem efeito colateral — tudo isso já é seguido e deve continuar sendo, mesmo sem um `describe()` cobrando.
 
 ## Referências
 - Robert C. Martin, *Clean Code* — síntese de nomes, funções, comentários.

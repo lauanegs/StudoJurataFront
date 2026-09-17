@@ -29,7 +29,7 @@ Backend irmão: `../StudoJurataApi` (ver o `CLAUDE.md`/`docs/` dele para a API c
 - **lucide-react** para ícones
 - Sem axios — cliente HTTP próprio sobre `fetch` (`services/api.ts`)
 - Sem Redux/Zustand/Jotai/React Query/SWR — estado local + Context API + hooks próprios de busca de dados
-- Sem framework de teste configurado (`vitest`/`jest`) e **zero arquivos de teste** hoje
+- **Vitest** para testes unitários da lógica pura (`npm test`): schemas yup, formatação e helpers. Arquivos `*.test.ts` ao lado do código testado; sem testes de componente/tela
 - ESLint (`js` recommended + `typescript-eslint` recommended + `react-hooks` flat recommended + `react-refresh` vite) — sem Prettier configurado
 
 ## Arquitetura atual
@@ -98,7 +98,7 @@ Ver [`docs/mantine-guidelines.md`](docs/mantine-guidelines.md). Resumo: verifica
 Ver [`docs/code-review.md`](docs/code-review.md) — checklist cobrindo componentes grandes, responsabilidades, duplicação, props excessivas, estado desnecessário, `useEffect`, hooks, `any`/casts, tipos duplicados, CSS, Mantine, **fidelidade ao Figma**, acessibilidade, responsividade, performance, imports, código morto, possíveis bugs e regressões.
 
 ## Processo de refatoração
-Ver [`docs/refactoring-guidelines.md`](docs/refactoring-guidelines.md): entender → identificar comportamento atual → identificar problemas → classificar por gravidade → planejar a menor mudança → aplicar → `tsc -b --noEmit` + `npm run lint` (+ `npm run build` quando a mudança for ampla) → verificar regressão manualmente no navegador (sem testes automatizados) → revisar de novo → simplificar se necessário.
+Ver [`docs/refactoring-guidelines.md`](docs/refactoring-guidelines.md): entender → identificar comportamento atual → identificar problemas → classificar por gravidade → planejar a menor mudança → aplicar → `tsc -b --noEmit` + `npm run lint` + `npm test` (+ `npm run build` quando a mudança for ampla) → verificar regressão manualmente no navegador (sem testes automatizados) → revisar de novo → simplificar se necessário.
 
 ## Preservação de comportamento
 

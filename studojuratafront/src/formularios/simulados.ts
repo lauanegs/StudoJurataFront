@@ -23,7 +23,7 @@ export interface DadosSimulado {
   notaMaxima: string
 }
 
-const simuladoSchema = yup.object({
+export const simuladoSchema = yup.object({
   titulo: yup.string().trim().required('Informe o título do simulado'),
   turmaId: yup
     .number()

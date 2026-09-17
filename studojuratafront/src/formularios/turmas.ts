@@ -31,7 +31,7 @@ export interface DadosTurma {
   ativa: boolean
 }
 
-const turmaSchema = yup.object({
+export const turmaSchema = yup.object({
   titulo: yup.string().trim().required('Informe o nome da turma'),
   cursoId: yup.number().nullable().required('Selecione o curso'),
   capacidadeMaxima: inteiroPositivoOpcional('Informe um número inteiro maior que zero'),
