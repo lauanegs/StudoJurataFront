@@ -20,7 +20,7 @@ const NaoEncontrada = lazy(() => import('../pages/auth/NaoEncontrada'))
 // --- Administrador ---------------------------------------------------------
 const AdmHome = lazy(() => import('../pages/adm/Home'))
 const AdmTurmas = lazy(() => import('../pages/adm/Turmas/Turmas'))
-const AdmTurmaFormulario = lazy(() => import('../pages/adm/Turmas/TurmaFormulario'))
+const AdmTurmaFormulario = lazy(() => import('../pages/adm/Turmas/TurmaFormulario/TurmaFormulario'))
 const AdmMatricularAluno = lazy(() => import('../pages/adm/Turmas/MatricularAluno'))
 const AdmAlunos = lazy(() => import('../pages/adm/Alunos/Alunos'))
 const AdmAlunoFormulario = lazy(() => import('../pages/adm/Alunos/AlunoFormulario'))
@@ -69,7 +69,7 @@ const ProfessorDesempenhoSimulados = lazy(
 )
 const ProfessorSimulados = lazy(() => import('../pages/professor/Reforco/Simulados'))
 const ProfessorSimuladoFormulario = lazy(
-  () => import('../pages/professor/Reforco/SimuladoFormulario'),
+  () => import('../pages/professor/Reforco/SimuladoFormulario/SimuladoFormulario'),
 )
 const ProfessorResultadosSimulado = lazy(
   () => import('../pages/professor/Reforco/ResultadosSimulado'),

@@ -55,3 +55,5 @@ export function useFormularioSimulado() {
     validate: schemaResolver(simuladoSchema),
   })
 }
+
+export type FormularioSimulado = ReturnType<typeof useFormularioSimulado>

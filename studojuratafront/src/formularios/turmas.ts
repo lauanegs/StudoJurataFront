@@ -44,3 +44,5 @@ export function useFormularioTurma() {
     validate: schemaResolver(turmaSchema),
   })
 }
+
+export type FormularioTurma = ReturnType<typeof useFormularioTurma>

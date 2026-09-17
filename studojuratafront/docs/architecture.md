@@ -94,7 +94,7 @@ O projeto está **no meio de uma migração de `styled-components` para Mantine*
 
 Registrados para orientar revisões futuras — **não devem ser corrigidos automaticamente** sem avaliação caso a caso.
 
-1. **Componentes de formulário muito grandes.** `SimuladoFormulario.tsx` e `TurmaFormulario.tsx` concentram várias responsabilidades (cabeçalho, editor de questões, modais). O estado dos campos já foi padronizado com `@mantine/form`; dividir os componentes muda a árvore de estado e merece planejamento antes.
+1. ~~Componentes de formulário muito grandes.~~ **Resolvido:** `SimuladoFormulario` e `TurmaFormulario` ficam cada um em sua pasta, divididos em cartão de configuração/dados, modais e abas.
 2. **Migração `styled-components` → Mantine incompleta** (seção 4). Não é, por si, um "bug", mas gera dois jeitos de estilizar coexistindo — uma revisão precisa saber distinguir "componente ainda não migrado" de "componente com CSS desnecessário que o Mantine já resolveria".
 3. ~~`types/index.ts` e `services/endpoints.ts` num único arquivo.~~ **Resolvido:** divididos por domínio.
 4. **Sem nenhum teste automatizado.** Nenhum arquivo `.test.ts(x)`/`.spec.ts(x)` no projeto, e nenhuma dependência de teste (`vitest`, `@testing-library/react`, etc.) no `package.json`. Qualquer refatoração precisa ser verificada manualmente no navegador (ver skill/processo `run` do projeto) e reportada como tal.

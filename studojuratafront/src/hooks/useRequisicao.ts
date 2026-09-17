@@ -8,7 +8,7 @@ interface RequestState<T> {
   error: string | null
 }
 
-interface RequestResult<T> extends RequestState<T> {
+export interface RequestResult<T> extends RequestState<T> {
   /** Recarrega mantendo a tela montada (mostra o estado de carregamento). */
   reload: () => Promise<void>
   /** Atualiza os dados em memória sem ir ao servidor (updates otimistas). */
