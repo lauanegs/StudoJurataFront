@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
-import styled from 'styled-components'
 
 import { Layout } from '../../components/layout'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { DropDown } from '../../components/ui/DropDown'
-import { Header } from '../../components/ui/Header'
+import { Header, CamposFiltro, CampoFiltro } from '../../components/ui/Header'
 import { Select } from '../../components/ui/Select'
+import { Stack } from '../../components/ui/Stack'
 import { Tag } from '../../components/ui/Tag'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
@@ -24,49 +24,19 @@ import { formatarNota } from '../../utils/format'
 
 const VARIANTE_POR_NIVEL = { baixo: 'error', medio: 'warning', alto: 'success' } as const
 
-const Lista = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-`
-
-/* Confirmado no Figma: select de disciplina + botão "Buscar" colados, na
-   mesma linha, igual ao padrão já usado nas telas do professor (sem label
-   flutuante acima do campo). */
-const CamposCabecalho = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* O <Field> por baixo do Select pede width:100% do pai — dentro de um flex
-   item sem largura própria isso força o cálculo de shrink-to-fit e o campo
-   acaba quebrando de linha mesmo sobrando espaço. Uma largura fixa aqui
-   (mesmo padrão já usado nos headers do professor) resolve. */
-const CampoLargura = styled.div`
-  width: 280px;
-`
-
 /**
- * Notas do aluno logado.
- *
- * O back devolve a Nota consolidada por disciplina/período; os simulados que a
+ * O back devolve a Nota consolidada por disciplina e turma; os simulados que a
  * compõem são reconstruídos aqui a partir das tentativas concluídas.
  */
 export default function AlunoNotas() {
   const { alunoId, loading: carregandoAluno, error: erroAluno } = useAlunoLogado()
 
-  // Confirmado no Figma: o filtro é por disciplina e só se aplica ao clicar
-  // em "Buscar" — a lista começa completa, sem filtro.
+  // O filtro só se aplica ao clicar em "Buscar"; a lista começa completa.
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
 
-  // Com matrícula cíclica o aluno pode ter Nota em mais de uma turma da mesma
-  // disciplina (repetência) ou cursar mais de um curso — a lista mostra só
-  // uma turma por vez. null = "ainda não escolheu": usa a turma da Nota mais
-  // recente (o histórico já vem do back ordenado do mais novo pro mais
-  // antigo) como padrão, sem precisar de estado sincronizado por efeito.
+  // O aluno pode ter nota em mais de uma turma; a lista mostra uma por vez.
+  // null = usa a turma da nota mais recente (o back já ordena do mais novo).
   const [turmaSelecionada, setTurmaSelecionada] = useState<number | null>(null)
 
   const requisicaoNotas = useRequisicao(
@@ -115,9 +85,7 @@ export default function AlunoNotas() {
     )
   }, [requisicaoNotas.data, disciplinaId, turmaId])
 
-  // Filtra também por turma: com matrícula cíclica o aluno pode ter mais de
-  // uma Nota da mesma disciplina (repetência em outra turma) — sem a turma,
-  // os dois acordeões mostrariam os mesmos simulados duplicados.
+  // Filtra também por turma: com repetência, a mesma disciplina teria simulados duplicados.
   function tentativasDaDisciplina(disciplinaFiltroId?: number, turmaFiltroId?: number) {
     return (requisicaoTentativas.data ?? [])
       .filter((tentativa) => {
@@ -160,9 +128,9 @@ export default function AlunoNotas() {
       <Header
         titulo="Notas"
         filtros={
-          <CamposCabecalho>
+          <CamposFiltro>
             {opcoesTurmas.length > 1 && (
-              <CampoLargura>
+              <CampoFiltro $largura="280px">
                 <Select<number>
                   options={opcoesTurmas}
                   value={turmaId}
@@ -174,10 +142,10 @@ export default function AlunoNotas() {
                     setDisciplinaId(null)
                   }}
                 />
-              </CampoLargura>
+              </CampoFiltro>
             )}
 
-            <CampoLargura>
+            <CampoFiltro $largura="280px">
               <Select<number>
                 options={opcoesDisciplinas}
                 value={disciplinaSelecionada}
@@ -187,12 +155,12 @@ export default function AlunoNotas() {
                 emptyText="Nenhuma disciplina com notas"
                 onChange={setDisciplinaSelecionada}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
             <Button size="large" onClick={() => setDisciplinaId(disciplinaSelecionada)}>
               Buscar
             </Button>
-          </CamposCabecalho>
+          </CamposFiltro>
         }
       />
 
@@ -210,7 +178,7 @@ export default function AlunoNotas() {
             descricao="As notas são calculadas automaticamente a partir dos simulados concluídos."
           />
         ) : (
-          <Lista>
+          <Stack gap="xs">
             {notas.map((nota, indice) => {
               const distribuido = pontosDistribuidos(nota.disciplina?.id, nota.turma?.id)
               const percentual = distribuido > 0 ? ((nota.total ?? 0) / distribuido) * 100 : 0
@@ -230,7 +198,7 @@ export default function AlunoNotas() {
                 />
               )
             })}
-          </Lista>
+          </Stack>
         )}
       </Card>
     </Layout>

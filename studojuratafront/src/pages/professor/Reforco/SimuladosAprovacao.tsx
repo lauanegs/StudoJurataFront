@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import { ClipboardCheck, ClipboardList, Search, Sparkles, Zap } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Header } from '../../../components/ui/Header'
+import { Header, CamposFiltro, CampoFiltro, BotaoFiltro } from '../../../components/ui/Header'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
@@ -35,28 +34,6 @@ import type { Coluna } from '../../../components/ui/DataTable/types'
 type TipoFiltro = 'disciplina' | 'aluno'
 type Aba = 'aprovacao' | 'proximas'
 
-/* Confirmado no Figma: 3 selects + botão Buscar numa linha só, sem rótulo
-   separado — mesmo padrão do header de Notas / Simulados realizados. */
-const CamposCabecalho = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const CampoLargura = styled.div`
-  width: 211px;
-`
-
-const LarguraBotao = styled.div`
-  width: 150px;
-  flex-shrink: 0;
-
-  button {
-    width: 100%;
-  }
-`
-
 interface FiltroAplicado {
   turmaId: number
   tipo: TipoFiltro
@@ -75,9 +52,8 @@ interface LinhaAprovacao {
 }
 
 /**
- * Um item da fila real de geração automática — não é "recomendação" (algo
- * que o professor decidiria acionar): confirmado pelo usuário que a IA gera
- * sozinha, no prazo calculado, sem intervenção. `dataGeracaoPrevista` vem:
+ * Item da fila de geração automática: a IA gera sozinha, no prazo calculado.
+ * `dataGeracaoPrevista` vem:
  * - de RevisaoConteudo.dataProximoReforco (repetição espaçada) quando existe
  *   — pode ser uma data futura, não só "devida hoje";
  * - de hoje, pra baixo aproveitamento (não tem agenda própria: é um limiar
@@ -253,11 +229,8 @@ export default function SimuladosAprovacao() {
   ])
 
   // --- Aba "Próximas gerações da IA" -----------------------------------------
-  // Fila real (não "sugestão"): cada item é um conteúdo que a IA vai gerar
-  // sozinha na dataGeracaoPrevista, sem aprovação prévia do professor pra
-  // ISSO acontecer (só as questões resultantes passam por aprovação, como
-  // na aba anterior). Só existem endpoints por aluno — busca-se pra cada
-  // aluno ativo das turmas deste professor.
+  // Só existem endpoints por aluno, então busca para cada aluno ativo das
+  // turmas deste professor.
   const requisicaoMatriculasGerais = useRequisicao(() => matriculas.listar(), [])
   const requisicaoConteudos = useRequisicao(() => conteudosPlano.listar(), [])
 
@@ -287,11 +260,8 @@ export default function SimuladosAprovacao() {
       const tituloConteudo = (conteudoPlanoId: number) =>
         conteudos.find((conteudo) => conteudo.id === conteudoPlanoId)?.titulo ?? `Conteúdo ${conteudoPlanoId}`
 
-      // Já gerado pra este mesmo ciclo (aluno+conteúdo+prazo — mesma chave
-      // usada pelos jobs automáticos no back pra não duplicar) — sem isso, um
-      // item continua aparecendo aqui pra sempre depois de gerado, porque
-      // RevisaoConteudo.dataProximoReforco só muda quando o professor de fato
-      // revisa (não acontece ainda no lançamento, é uma lacuna à parte).
+      // Mesma chave dos jobs do back (aluno+conteúdo+prazo): dataProximoReforco
+      // só muda quando o professor revisa, então sem isto o item nunca sairia da lista.
       const jaGerado = new Set(
         (requisicaoVinculosIA.data ?? []).map((vinculo) => `${vinculo.alunoId}-${vinculo.conteudoPlanoId}-${vinculo.prazoLancamento}`),
       )
@@ -392,14 +362,7 @@ export default function SimuladosAprovacao() {
     },
   ]
 
-  /**
-   * A geração automática roda sozinha no prazo calculado (ver comentário de
-   * `ProximaGeracaoIA` acima) — este botão só adianta manualmente esse
-   * mesmo job pra um item específico, pra quando o professor não quiser
-   * esperar a data prevista. Reaproveita o mesmo endpoint que o job usa
-   * (`ia.gerarSimulado`); o resultado cai direto na aba "Aguardando
-   * aprovação", como qualquer simulado gerado pela IA.
-   */
+  /** Adianta a geração de um item sem esperar a data prevista; o resultado vai para "Aguardando aprovação". */
   async function gerarAgora(item: ProximaGeracaoIA) {
     const chave = `${item.alunoId}-${item.conteudoPlanoId}`
 
@@ -464,8 +427,8 @@ export default function SimuladosAprovacao() {
         voltarPara="/professor/reforco"
         rotuloVoltar="Módulo de reforço"
         filtros={
-          <CamposCabecalho>
-            <CampoLargura>
+          <CamposFiltro>
+            <CampoFiltro $largura="211px">
               <Select
                 placeholder="Turma"
                 options={opcoesTurmas}
@@ -477,9 +440,9 @@ export default function SimuladosAprovacao() {
                   setEspecificoId(null)
                 }}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <CampoLargura>
+            <CampoFiltro $largura="211px">
               <Select<TipoFiltro>
                 placeholder="Disciplina / Aluno"
                 options={opcoesTipo}
@@ -490,9 +453,9 @@ export default function SimuladosAprovacao() {
                   setEspecificoId(null)
                 }}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <CampoLargura>
+            <CampoFiltro $largura="211px">
               <Select
                 placeholder="Disc/Aluno (Específico)"
                 options={opcoesEspecifico}
@@ -502,14 +465,14 @@ export default function SimuladosAprovacao() {
                 emptyText="Selecione turma e tipo primeiro"
                 onChange={setEspecificoId}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <LarguraBotao>
+            <BotaoFiltro>
               <Button size="large" icon={<Search />} onClick={buscar}>
                 Buscar
               </Button>
-            </LarguraBotao>
-          </CamposCabecalho>
+            </BotaoFiltro>
+          </CamposFiltro>
         }
       />
 

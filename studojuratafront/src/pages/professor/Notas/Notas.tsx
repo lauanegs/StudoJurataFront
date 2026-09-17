@@ -6,7 +6,7 @@ import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DropDown } from '../../../components/ui/DropDown'
-import { Header } from '../../../components/ui/Header'
+import { Header, CamposFiltro, CampoFiltro, BotaoFiltro } from '../../../components/ui/Header'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
@@ -38,38 +38,7 @@ import type { AlunoTurma, SimuladoAlunoResponse } from '../../../types'
 type TipoFiltro = 'disciplina' | 'aluno'
 type Visao = 'ativos' | 'historico'
 
-/* Confirmado no Figma: os 3 selects + botão Buscar dividem uma linha só,
-   sem rótulo separado acima de cada campo (o texto do campo é o rótulo,
-   mostrado como placeholder dentro da própria caixa). */
-const CamposCabecalho = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* Largura fixa (não flex: 1): o slot de filtros do Header (S.Filtros) é
-   width:fit-content — um filho em flex:1 não tem contra o que crescer
-   dentro de um pai que só se ajusta ao próprio conteúdo, e os campos
-   colapsavam pro min-width. 211px vem do Figma: 830px de linha inteira
-   (3 campos + botão) menos os 150px do botão e os 3 gaps de 16px,
-   dividido por 3. */
-const CampoLargura = styled.div`
-  width: 211px;
-`
-
-const LarguraBotao = styled.div`
-  width: 150px;
-  flex-shrink: 0;
-
-  button {
-    width: 100%;
-  }
-`
-
-/* Confirmado no Figma: 32px de padding ao redor da lista de acordeões e
-   16px de gap entre eles — por isso o Card usa semPadding (o padding padrão
-   dele é 24px, não bate) e este wrapper aplica os valores certos. */
+/* 32px de padding (o padrão do Card é 24px, por isso semPadding) e 16px de gap. */
 const Lista = styled.div`
   display: flex;
   flex-direction: column;
@@ -92,22 +61,11 @@ interface LinhaAcordeao {
 }
 
 /**
- * Notas por turma, filtradas por disciplina OU por aluno (o professor
- * escolhe o tipo). O resultado é um acordeão: filtrando por aluno, uma linha
- * por disciplina que o professor leciona nessa turma; filtrando por
- * disciplina, uma linha por aluno matriculado. Cada linha expande pra
- * mostrar os simulados individuais que compõem a nota.
- *
- * Nota é sempre derivada dos simulados concluídos — não há lançamento nem
- * recálculo manual nesta tela. O escopo da nota é a turma (matrícula
- * cíclica não tem período letivo fixo — ver types/index.ts Nota), então
- * cada linha do acordeão já carrega sua própria turma para casar com a nota
- * certa, sem depender de nenhum filtro global de período.
- *
- * Ativos e Histórico são visões separadas (aba), não misturadas na mesma
- * lista — a tela abre em "Ativos" (o caso comum: aluno cursando agora) e o
- * professor troca pra "Histórico" só quando precisa consultar a nota de
- * quem já encerrou a matrícula (concluída/cancelada/transferida) na turma.
+ * Notas por turma, filtradas por disciplina ou por aluno, em acordeão: cada
+ * linha expande os simulados que compõem a nota. A nota é sempre derivada,
+ * sem lançamento manual. Como o escopo da nota é a turma, cada linha carrega a
+ * própria turma. "Histórico" mostra só matrículas encerradas (concluídas ou
+ * canceladas).
  */
 export default function Notas() {
   const toast = useToast()
@@ -148,8 +106,7 @@ export default function Notas() {
     [requisicaoVinculos.data, turmaId],
   )
 
-  // Histórico só traz quem já encerrou a matrícula (concluída/cancelada/
-  // transferida) — quem está ATIVA pertence à outra aba, não aparece nas duas.
+  // Matrículas ATIVAS ficam só na outra aba.
   async function matriculasDaVisao(idTurma: number, visaoAtual: Visao): Promise<AlunoTurma[]> {
     if (visaoAtual === 'ativos') return matriculas.ativosPorTurma(idTurma)
 
@@ -176,9 +133,7 @@ export default function Notas() {
     return []
   }, [tipo, disciplinasDaTurma, requisicaoMatriculasTurma.data])
 
-  // Trocar de aba limpa todos os filtros (pedido explícito) — evita
-  // continuar mostrando turma/tipo escolhidos pra "Ativos" ao entrar em
-  // "Histórico" (ou vice-versa), já que o próprio conjunto de alunos muda.
+  // Trocar de aba limpa os filtros, já que o conjunto de alunos muda.
   function trocarVisao(nova: Visao) {
     setVisao(nova)
     setTurmaId(null)
@@ -196,10 +151,8 @@ export default function Notas() {
     setFiltro({ turmaId, tipo, especificoId })
   }
 
-  // A tela só monta os acordeões depois que o professor aplica um filtro
-  // (Buscar) — antes disso mostra um empty state pedindo pra filtrar (ver
-  // render abaixo). Sem filtro nenhum, a lista completa (todas as
-  // turmas/disciplinas/alunos do professor) ficava grande e desorganizada.
+  // Só monta os acordeões depois de um filtro aplicado: sem filtro a lista
+  // completa fica grande demais.
   const requisicaoMatriculasResultado = useRequisicao(
     () => matriculasDaVisao(filtro?.turmaId as number, visao),
     [filtro?.turmaId, visao],
@@ -288,10 +241,8 @@ export default function Notas() {
     }))
   }
 
-  // Quantos pontos a disciplina já distribuiu pra esse aluno/turma até agora
-  // — só os simulados concluídos contam. nota.total é sempre sobre essa
-  // base, nunca sobre o total de pontos do curso inteiro (mesma regra da
-  // tela de Notas do aluno — ver pontosDistribuidos em pages/aluno/Notas.tsx).
+  // Pontos já distribuídos pela disciplina nos simulados concluídos: nota.total
+  // é sobre essa base (mesma regra de pages/aluno/Notas.tsx).
   function pontosDistribuidosDaLinha(alunoId: number, disciplinaId: number, turmaId: number) {
     return tentativasDaLinha(alunoId, disciplinaId, turmaId).reduce(
       (soma, { simulado }) => soma + (simulado?.notaMaxima ?? 0),
@@ -316,8 +267,10 @@ export default function Notas() {
       <Header
         titulo="Notas"
         filtros={
-          <CamposCabecalho>
-            <CampoLargura>
+          // 211px vem do Figma: 830px de linha inteira (3 campos + botão)
+          // menos os 150px do botão e os 3 gaps de 16px, dividido por 3.
+          <CamposFiltro>
+            <CampoFiltro $largura="211px">
               <Select
                 placeholder="Turma"
                 options={opcoesTurmas}
@@ -329,9 +282,9 @@ export default function Notas() {
                   setEspecificoId(null)
                 }}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <CampoLargura>
+            <CampoFiltro $largura="211px">
               <Select<TipoFiltro>
                 placeholder="Disciplina / Aluno"
                 options={opcoesTipo}
@@ -342,9 +295,9 @@ export default function Notas() {
                   setEspecificoId(null)
                 }}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <CampoLargura>
+            <CampoFiltro $largura="211px">
               <Select
                 placeholder="Disc/Aluno (Específico)"
                 options={opcoesEspecifico}
@@ -354,14 +307,14 @@ export default function Notas() {
                 emptyText="Selecione turma e tipo primeiro"
                 onChange={setEspecificoId}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <LarguraBotao>
+            <BotaoFiltro>
               <Button size="large" icon={<Search />} onClick={buscar}>
                 Buscar
               </Button>
-            </LarguraBotao>
-          </CamposCabecalho>
+            </BotaoFiltro>
+          </CamposFiltro>
         }
       />
 

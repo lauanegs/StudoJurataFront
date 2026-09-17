@@ -48,8 +48,7 @@ export const theme = {
     sidebar: 'linear-gradient(180deg, #049DBF 0%, rgba(4, 157, 191, 0.8) 100%), #662E9B',
     banner: 'linear-gradient(180deg, #8148B7 0%, #9256CC 100%)',
     danger: 'linear-gradient(180deg, #DB5461 0%, #CF505C 100%)',
-    // Mesmo verde dos DesempenhoCard (colors.success, #34C759) — antes era
-    // um verde diferente (#0CCA4A/#18CB53), gerando dois "verdes" na UI.
+    // Mesmo verde de colors.success, para não haver dois verdes na UI.
     success: 'linear-gradient(180deg, #3DCB63 0%, #34C759 100%)',
     border: 'linear-gradient(135deg, #662E9B 0%, #049DBF 100%)',
   },
@@ -98,9 +97,7 @@ export const theme = {
   },
 
   shadow: {
-    // Suavizada a pedido do usuário — a sombra padrão de card/input estava
-    // forçando demais a vista em telas com muitos cards juntos (blur/opacidade
-    // menores, mesmo deslocamento vertical).
+    // Suave de propósito: telas com muitos cards cansavam a vista com sombra mais forte.
     base: '0 2px 10px rgba(0, 0, 0, 0.05)',
     light: '0 2px 4px rgba(0, 0, 0, 0.08)',
     medium: '0 4px 8px rgba(0, 0, 0, 0.08)',

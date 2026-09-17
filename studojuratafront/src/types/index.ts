@@ -109,7 +109,7 @@ export interface Usuario extends EntidadeBase {
   escola: Escola
   pessoa: Pessoa
   username: string
-  /** O back nunca devolve a senha (@JsonIgnore); só é enviada na criação. */
+  /** Só de escrita: o back nunca devolve a senha (@JsonProperty WRITE_ONLY). */
   senha?: string
   tipoUsuario: TipoUsuario
   status?: StatusAtivoInativo
@@ -154,12 +154,7 @@ export interface HorarioTurma extends EntidadeBase {
   horaFim: string
 }
 
-/**
- * Grade curricular: quais disciplinas compõem um Curso, cada uma com sua
- * própria carga horária — reaproveitada pelo seletor de disciplina na
- * Turma (restringe às da grade do curso) e pelo Plano de Ensino (pré-preenche
- * a carga horária).
- */
+/** Grade curricular: disciplinas do curso com a carga horária de cada uma. */
 export interface CursoDisciplina extends EntidadeBase {
   curso: Curso
   disciplina: Disciplina
@@ -174,18 +169,6 @@ export interface TurmaDisciplina extends EntidadeBase {
   status?: StatusAtivoInativo
 }
 
-/**
- * Professor(es) que também podem ministrar/registrar aula nesta
- * turma+disciplina, além do titular (TurmaDisciplina.professor) — cobre
- * substituição/co-lecionamento sem duplicar Plano de Ensino/Plano de Aula,
- * que continuam únicos por TurmaDisciplina.
- */
-export interface TurmaDisciplinaSubstituto extends EntidadeBase {
-  turmaDisciplina?: TurmaDisciplina
-  professor?: Professor
-  status?: StatusAtivoInativo
-}
-
 export interface AlunoTurma extends EntidadeBase {
   aluno: Aluno
   turma: Turma
@@ -196,7 +179,7 @@ export interface AlunoTurma extends EntidadeBase {
 
 export interface PlanoEnsino extends EntidadeBase {
   turmaDisciplina?: TurmaDisciplina | null
-  /** Professor responsável pelo plano — indireto até então (só via turmaDisciplina, que é opcional). */
+  /** Professor responsável pelo plano (turmaDisciplina é opcional). */
   professor?: Professor | null
   curso: Curso
   cargaHoraria?: number
@@ -278,6 +261,13 @@ export interface Frequencia extends EntidadeBase {
   justificativa?: string
 }
 
+/** Resposta de GET /turmas/{id}/frequencia-alunos (FrequenciaService.ResumoFrequenciaAluno). */
+export interface ResumoFrequenciaAluno {
+  alunoId: number
+  cargaHoraria: number
+  faltas: number
+}
+
 /** Corpo de POST /aulas/{id}/frequencias/chamada (dto/ChamadaRequest.java). */
 export interface ChamadaRequest {
   alunos: {
@@ -297,11 +287,8 @@ export interface EstatisticasPlanoAula {
 // ---------------------------------------------------------------------------
 
 /**
- * Escopo mudou de periodoLetivo (calendário fixo) para turma — matrícula
- * cíclica não tem "período letivo" fixo; a turma já carrega o ciclo do
- * aluno (AlunoTurma.dataInicio). total é sempre 0-100: soma das notaMaxima
- * dos simulados com notaMaxima > 0 daquela disciplina (notaMaxima = 0 é só
- * reforço/repetição espaçada, não conta).
+ * Escopo por turma, não por período letivo. total vai de 0 a 100: soma das
+ * notas dos simulados com notaMaxima > 0 (os de notaMaxima = 0 são só reforço).
  */
 export interface Nota extends EntidadeBase {
   aluno: Aluno
@@ -394,11 +381,6 @@ export interface SimuladoQuestaoResponse {
   status?: StatusSimuladoQuestao
 }
 
-export interface SimuladoAlunoRequest {
-  simuladoId: number
-  alunoId: number
-}
-
 export interface SimuladoAlunoResponse {
   id: number
   simuladoId: number
@@ -411,18 +393,6 @@ export interface SimuladoAlunoResponse {
   status?: StatusSimuladoAluno
   /** Só vem preenchido na resposta de finalizar() — dias até a próxima revisão por repetição espaçada (undefined se o simulado não cobre conteúdo rastreado, ou já dominado). */
   diasProximaRevisao?: number
-}
-
-export interface QuestaoAlunoRequest {
-  simuladoAlunoId: number
-  questaoId: number
-  /** Usado quando a questão é do tipo ALTERNATIVAS. */
-  alternativaId?: number | null
-  /** Usado quando a questão é do tipo VERDADEIRO_FALSO: ids das afirmações marcadas Verdadeiras. */
-  alternativasVerdadeirasIds?: number[]
-  respondida?: boolean
-  acertou?: boolean
-  tempoResposta?: number
 }
 
 export interface QuestaoAlunoResponse {
@@ -529,12 +499,6 @@ export interface SimuladoGeradoIAResponse {
   prazoLancamento: string
 }
 
-export interface RegistrarReforcoRequest {
-  alunoId: number
-  conteudoPlanoId: number
-  nivelDominio?: NivelDominio
-}
-
 // ---------------------------------------------------------------------------
 // Autenticação (dto/LoginRequest, dto/LoginResponse)
 // ---------------------------------------------------------------------------
@@ -552,14 +516,3 @@ export interface LoginResponse {
   nomePessoa: string | null
 }
 
-// ---------------------------------------------------------------------------
-// Auditoria
-// ---------------------------------------------------------------------------
-
-export interface AuditLog extends EntidadeBase {
-  entidade?: string
-  entidadeId?: number
-  acao?: string
-  usuario?: string
-  detalhe?: string
-}

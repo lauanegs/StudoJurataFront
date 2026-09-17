@@ -142,9 +142,8 @@ export const Navegacao = styled.nav`
 `
 
 /**
- * Doc §9.5: o Figma não definia estilo para o item ativo. Aqui ele ganhou
- * fundo branco translúcido, texto em peso maior e um indicador na lateral
- * esquerda — suficiente para leitura rápida sem depender só da cor.
+ * Item ativo: além da cor, texto em peso maior e indicador na lateral, para
+ * não depender só da cor.
  */
 export const ItemNav = styled.button<{ $ativo: boolean; $colapsada: boolean }>`
   position: relative;
@@ -164,8 +163,7 @@ export const ItemNav = styled.button<{ $ativo: boolean; $colapsada: boolean }>`
   font-weight: ${({ theme, $ativo }) =>
     $ativo ? theme.typography.weights.semiBold : theme.typography.weights.regular};
 
-  /* Confirmado no Figma: item ativo tem fundo azul-claro sólido, não branco translúcido. */
-  background: ${({ theme, $ativo }) => ($ativo ? theme.colors.blueLight : 'transparent')};
+    background: ${({ theme, $ativo }) => ($ativo ? theme.colors.blueLight : 'transparent')};
 
   transition:
     background ${({ theme }) => theme.transition.fast},
@@ -282,9 +280,7 @@ export const TextoMarca = styled.div`
   strong {
     font-size: ${({ theme }) => theme.typography.sizes.sm};
     font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-    /* Confirmado pelo usuário: roxo sobrecarregava o olho, mas textStrong
-       (cinza quase preto) ficou pesado demais — textSecondary é o mesmo
-       cinza mais leve já usado no "Portal Escolar" logo abaixo. */
+    /* Mesmo cinza do "Portal Escolar": roxo e textStrong pesavam demais. */
     color: ${({ theme }) => theme.colors.textSecondary};
     line-height: 1.2;
   }

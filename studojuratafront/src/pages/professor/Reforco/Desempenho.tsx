@@ -35,6 +35,8 @@ import { ListaInfo } from '../../../components/ui/ListaInfo'
 import { Modal } from '../../../components/ui/Modal'
 import { Select } from '../../../components/ui/Select'
 import { Tag } from '../../../components/ui/Tag'
+import { Stack } from '../../../components/ui/Stack'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
@@ -55,14 +57,8 @@ import { renderizarGraficoComoImagem, type ImagemGrafico } from '../../../utils/
 import type { TipoDestinacaoSimulado } from '../../../types'
 import { DetalheSimuladoModal } from './DetalheSimuladoModal'
 
-// Mesma medida do padding do Card que envolve a lista (tokens.spacing.lg em
-// Card.tsx) — antes o espaçamento entre os cards era bem menor que a
-// distância deles até a borda do Card, parecendo desproporcional.
-// Cards de desempenho ficaram verticais (bloco colorido em cima, texto
-// embaixo) especificamente pra caber 4 por linha aqui. Confirmado pelo
-// usuário: sempre 4 colunas em telas largas (não auto-fill, que deixava
-// entrar uma 5ª/6ª coluna em telas muito largas) — colapsa pra 2 e depois 1
-// só pra não espremer o card em telas estreitas.
+// Gap igual ao padding do Card. Sempre 4 colunas em telas largas (auto-fill
+// colocaria uma 5ª/6ª), colapsando para 2 e 1 em telas estreitas.
 const GradeDesempenho = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -77,37 +73,11 @@ const GradeDesempenho = styled.div`
   }
 `
 
-/* Confirmado no Figma (padrão já usado em outras telas de resumo): duas
-   colunas lado a lado em telas largas, empilhando em telas estreitas — os
-   dois gráficos de visão geral não competem por espaço com o histograma. */
-const GradeVisaoGeral = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: ${({ theme }) => theme.spacing.xl};
-`
-
-/* Confirmado pelo usuário: no card, turma e disciplina viram tags com ícone
-   (mesmo padrão do subtítulo do header) — o texto "Turma: X"/"Disciplina: Y"
-   por extenso fica só no modal de detalhamento (DetalheSimuladoModal). */
+/* No card, turma e disciplina são tags com ícone; o texto por extenso fica no modal. */
 const InfoSimulado = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.xs};
-`
-
-/* Pedido explícito: cards de números absolutos no topo, mesmo padrão da
-   Home do admin (Indicadores em Home.tsx) — visão geral "de sempre",
-   independente do período selecionado pros gráficos abaixo. */
-const Indicadores = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const ColunaFiltros = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
 `
 
 interface DesempenhoSimulado {
@@ -126,14 +96,8 @@ interface DesempenhoSimulado {
 }
 
 /**
- * Painel de Desempenho (pedido explícito: aba própria na sidebar, separada
- * do módulo de Reforço, pra não misturar "gerenciar simulados" com "ver
- * indicadores").
- *
  * Não há endpoint agregado no back, então o desempenho por simulado é
- * calculado aqui: para cada simulado com tentativas concluídas, a nota
- * média dos alunos é comparada com a notaMaxima do simulado (confirmado no
- * Figma: um card por simulado, não por disciplina).
+ * calculado aqui: a nota média das tentativas concluídas sobre a notaMaxima.
  */
 export default function Desempenho() {
   const navegar = useNavigate()
@@ -142,10 +106,8 @@ export default function Desempenho() {
 
   const [simuladoDetalhado, setSimuladoDetalhado] = useState<DesempenhoSimulado | null>(null)
 
-  // Filtro de turma/disciplina (pedido explícito, mesmo padrão de botão
-  // "Filtros" das telas detalhadas — só turma+disciplina aqui, sem aluno,
-  // que não se encaixa nessa visão agregada por simulado). Só refiltra ao
-  // clicar "Buscar" dentro do modal, igual às outras telas de desempenho.
+  // Sem filtro de aluno, que não cabe na visão agregada por simulado. Só
+  // refiltra ao clicar "Buscar".
   const [modalFiltrosAberto, setModalFiltrosAberto] = useState(false)
   const [turmaIdForm, setTurmaIdForm] = useState<number | null>(null)
   const [disciplinaIdForm, setDisciplinaIdForm] = useState<number | null>(null)
@@ -235,8 +197,7 @@ export default function Desempenho() {
         }
       })
       .sort((a, b) => {
-        // Confirmado pelo usuário: por realização, mais recente primeiro —
-        // não mais pelo pior desempenho. Sem data, o item fica no fim.
+        // Mais recente primeiro; sem data, o item fica no fim.
         if (!a.data && !b.data) return 0
         if (!a.data) return 1
         if (!b.data) return -1
@@ -273,9 +234,7 @@ export default function Desempenho() {
 
   const criticos = desempenhos.filter((item) => item.percentual < 50)
 
-  // O card "Desempenho por simulado" do painel mostra só uma amostra — os 4
-  // mais recentes; a lista completa (com todos os simulados, também
-  // ordenada por realização) fica na tela de detalhamento.
+  // O card mostra só os 4 mais recentes; a lista completa fica no detalhamento.
   const desempenhosRecentes = desempenhos.slice(0, 4)
 
   // Distribuição geral: toda tentativa concluída de todo simulado deste
@@ -299,9 +258,7 @@ export default function Desempenho() {
       })
   }, [desempenhos, requisicaoSimulados.data, requisicaoTentativas.data])
 
-  // Valores exatos por trás do histograma acima — vira a tabela mostrada na
-  // impressão (no lugar do gráfico, que não imprime de forma confiável) e o
-  // conteúdo exportado pro Excel.
+  // Valores exatos do histograma, exportados junto com o gráfico no PDF e no Excel.
   const tabelaDistribuicaoGeral = useMemo(
     () =>
       calcularFaixasHistograma(notasGeraisPercentuais).map((faixa) => ({
@@ -374,9 +331,7 @@ export default function Desempenho() {
     [desempenhoPorDisciplina],
   )
 
-  // Cards de números absolutos no topo (pedido explícito, mesmo padrão da
-  // Home do admin) — sempre o total geral, independente do período
-  // selecionado pros gráficos abaixo.
+  // Cards do topo: sempre o total geral, independente do filtro dos gráficos.
   const totalTentativasConcluidas = useMemo(
     () => (requisicaoTentativas.data ?? []).filter((tentativa) => tentativa.status === 'CONCLUIDO').length,
     [requisicaoTentativas.data],
@@ -394,9 +349,8 @@ export default function Desempenho() {
     [desempenhosTotais],
   )
 
-  // Pedido explícito: exportar TUDO — todas as seções da tela, num arquivo
-  // só, organizadas (uma aba por seção no Excel, uma tabela por seção no
-  // PDF) — não só o gráfico que estiver aberto no momento.
+  // Exporta todas as seções num arquivo só: uma aba por seção no Excel, uma
+  // tabela por seção no PDF.
   const secoesRelatorioCompleto = useMemo(
     () => [
       {
@@ -577,7 +531,7 @@ export default function Desempenho() {
           </>
         }
       >
-        <ColunaFiltros>
+        <Stack gap="md">
           <Select
             label="Turma"
             placeholder="Todas as turmas"
@@ -602,10 +556,10 @@ export default function Desempenho() {
             emptyText="Selecione uma turma primeiro"
             onChange={setDisciplinaIdForm}
           />
-        </ColunaFiltros>
+        </Stack>
       </Modal>
 
-      <Indicadores>
+      <GradeAutoAjuste $larguraMinima="220px">
         <InfoCard
           value={desempenhosTotais.length}
           label="simulados aplicados"
@@ -625,7 +579,7 @@ export default function Desempenho() {
           icon={<BookOpen />}
           tom="orange"
         />
-      </Indicadores>
+      </GradeAutoAjuste>
 
       {criticos.length > 0 && (
         <AlertaDesempenhoCard
@@ -657,7 +611,7 @@ export default function Desempenho() {
             </Button>
           }
         >
-          <GradeVisaoGeral>
+          <GradeAutoAjuste $larguraMinima="280px" $espaco="xl">
             <GraficoCard
               titulo="Distribuição geral das notas"
               descricao="Todas as tentativas concluídas de todos os simulados, agrupadas em faixas de 20 pontos."
@@ -691,7 +645,7 @@ export default function Desempenho() {
               colunaRotulo="Disciplina"
               colunaValor="Desempenho médio"
             />
-          </GradeVisaoGeral>
+          </GradeAutoAjuste>
         </Card>
       )}
 
@@ -711,7 +665,7 @@ export default function Desempenho() {
             </Button>
           }
         >
-          <GradeVisaoGeral>
+          <GradeAutoAjuste $larguraMinima="280px" $espaco="xl">
             {tendenciaPorDisciplina.map((item) => (
               <GraficoCard
                 key={item.disciplina}
@@ -735,7 +689,7 @@ export default function Desempenho() {
                 }))}
               />
             ))}
-          </GradeVisaoGeral>
+          </GradeAutoAjuste>
         </Card>
       )}
 

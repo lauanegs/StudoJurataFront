@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Archive, CalendarRange, ListTree, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
@@ -12,6 +11,8 @@ import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { TextArea } from '../../../components/ui/TextArea'
+import { Stack } from '../../../components/ui/Stack'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -32,20 +33,6 @@ import { formatarData } from '../../../utils/format'
 import { OPCOES_STATUS_PLANO } from '../../../utils/labels'
 import { intervaloDeDatas } from '../../../utils/validacao'
 import type { CursoDisciplina, StatusPlano } from '../../../types'
-
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* 2 campos por linha (pedido explícito) — auto-fit com minmax largo o
-   suficiente pra nunca refluir 3 numa linha só. */
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
 
 type Aba = 'identificacao' | 'proposta'
 
@@ -91,8 +78,7 @@ export default function PlanoEnsinoFormulario() {
     [professorId],
     { ativo: Boolean(professorId) },
   )
-  // Grade curricular do curso escolhido (pedido explícito): só usada pra
-  // sugerir a carga horária ao criar — não sobrescreve edição existente.
+  // Grade do curso: só sugere a carga horária ao criar.
   const requisicaoGradeCurricular = useRequisicao(
     () => servicoCursoDisciplinas.listarPorCurso(cursoId as number),
     [cursoId],
@@ -112,10 +98,7 @@ export default function PlanoEnsinoFormulario() {
     setStatus(plano.status ?? 'ATIVO')
   })
 
-  // Pedido explícito: curso e turma se filtram mutuamente — escolher um
-  // restringe as opções do outro ao mesmo curso (a turma só pertence a UM
-  // curso; forçar as duas escolhas a baterem evita salvar um plano com
-  // turma de um curso diferente do informado).
+  // Curso e turma se filtram mutuamente, para não salvar turma de outro curso.
   const opcoesCursos = useMemo(() => {
     const cursos = requisicaoCursos.data ?? []
     if (!turmaId) return cursos.map((curso) => ({ value: curso.id, label: curso.nome }))
@@ -158,10 +141,8 @@ export default function PlanoEnsinoFormulario() {
     [requisicaoVinculos.data, turmaId, disciplinaId],
   )
 
-  // Continuidade pedagógica (pedido explícito): cursos costumam durar mais
-  // que um ciclo de plano de ensino — quando a turma/disciplina escolhida já
-  // teve um plano CONCLUIDO antes, avisa o professor de onde parou, só como
-  // informação (não pré-preenche nada, ele decide os conteúdos do novo ciclo).
+  // Se a turma/disciplina já teve um plano CONCLUIDO, avisa de onde o ciclo
+  // anterior parou, sem pré-preencher nada.
   const requisicaoPlanosExistentes = useRequisicao(() => servicoPlanos.listar(), [], {
     ativo: !edicao,
   })
@@ -209,9 +190,7 @@ export default function PlanoEnsinoFormulario() {
     // PlanoEnsino.curso é @ManyToOne(optional = false).
     if (!cursoId) encontrados.cursoId = 'Selecione o curso'
 
-    // Confirmado pelo usuário: turma e disciplina passam a ser obrigatórias
-    // — sem elas o plano de aula não é gerado automaticamente (ver
-    // PlanoAulaService.gerarSeNecessario, que depende de turmaDisciplina).
+    // Obrigatórias: sem turma e disciplina o plano de aula não é gerado.
     if (!turmaId) encontrados.turmaId = 'Selecione a turma'
     if (!disciplinaId) encontrados.disciplinaId = 'Selecione a disciplina'
 
@@ -235,9 +214,8 @@ export default function PlanoEnsinoFormulario() {
     try {
       const corpo = {
         curso,
-        // Vínculo pedido explicitamente: quem cria/edita o plano é sempre o
-        // professor responsável por ele — sem select à parte, pra não abrir
-        // brecha de um professor "assinar" um plano de outro sem querer.
+        // O responsável é sempre quem cria/edita, sem seleção, para ninguém
+        // assinar o plano de outro professor.
         professor: professor ?? undefined,
         turmaDisciplina: vinculoSelecionado ?? undefined,
         cargaHoraria: cargaHoraria ? Number(cargaHoraria) : undefined,
@@ -382,11 +360,10 @@ export default function PlanoEnsinoFormulario() {
         <>
           {aba === 'identificacao' && (
           <Card titulo="Identificação">
-            <Coluna>
-              <Grade>
-                {/* Pedido explícito: título era texto livre e não aparecia em
-                    nenhuma listagem — a identificação do plano é o próprio
-                    id, só leitura. Não existe ainda ao criar. */}
+            <Stack gap="md">
+              {/* 280px garante no máximo 2 campos por linha, como no restante do formulário. */}
+              <GradeAutoAjuste $larguraMinima="280px">
+                {/* A identificação do plano é o próprio id; não existe ainda ao criar. */}
                 <Input
                   label="Número do plano"
                   value={edicao && requisicaoPlano.data ? `Nº ${requisicaoPlano.data.id}` : 'Gerado automaticamente ao salvar'}
@@ -418,7 +395,7 @@ export default function PlanoEnsinoFormulario() {
                     }
                   }}
                 />
-              </Grade>
+              </GradeAutoAjuste>
 
               <Input
                 label="Professor responsável"
@@ -429,7 +406,7 @@ export default function PlanoEnsinoFormulario() {
                 hint="Sempre quem está logado ao criar o plano."
               />
 
-              <Grade>
+              <GradeAutoAjuste $larguraMinima="280px">
                 <Select<number>
                   label="Turma"
                   required
@@ -471,9 +448,9 @@ export default function PlanoEnsinoFormulario() {
                     sugerirCargaHoraria(valor, requisicaoGradeCurricular.data ?? [])
                   }}
                 />
-              </Grade>
+              </GradeAutoAjuste>
 
-              <Grade>
+              <GradeAutoAjuste $larguraMinima="280px">
                 <Input
                   label="Carga horária"
                   type="number"
@@ -493,9 +470,9 @@ export default function PlanoEnsinoFormulario() {
                   disabled={salvando}
                   onChange={(valor) => setStatus(valor ?? 'ATIVO')}
                 />
-              </Grade>
+              </GradeAutoAjuste>
 
-              <Grade>
+              <GradeAutoAjuste $larguraMinima="280px">
                 <DatePicker
                   label="Início"
                   value={dataInicio}
@@ -510,14 +487,14 @@ export default function PlanoEnsinoFormulario() {
                   disabled={salvando}
                   onChange={(evento) => setDataFim(evento.target.value)}
                 />
-              </Grade>
-            </Coluna>
+              </GradeAutoAjuste>
+            </Stack>
           </Card>
           )}
 
           {aba === 'proposta' && (
           <Card titulo="Proposta pedagógica">
-            <Coluna>
+            <Stack gap="md">
               <TextArea
                 label="Ementa"
                 placeholder="Resumo dos temas abordados no período..."
@@ -550,7 +527,7 @@ export default function PlanoEnsinoFormulario() {
                 autoAltura
                 onChange={(evento) => setMetodologia(evento.target.value)}
               />
-            </Coluna>
+            </Stack>
           </Card>
           )}
         </>

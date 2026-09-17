@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import { ClipboardList, ListTree, Plus } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Header } from '../../../components/ui/Header'
+import { Header, CamposFiltro, CampoFiltro } from '../../../components/ui/Header'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
@@ -18,17 +17,6 @@ import { formatarCargaHoraria, formatarPeriodo } from '../../../utils/format'
 import { ROTULO_STATUS_PLANO, STATUS_PLANO_VARIANT } from '../../../utils/labels'
 import type { PlanoEnsino } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
-
-const CamposCabecalho = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const LarguraFiltro = styled.div`
-  width: 220px;
-`
 
 type Visao = 'meus' | 'outros'
 
@@ -52,12 +40,7 @@ export default function PlanosEnsino() {
     return [...unicas.entries()].map(([value, label]) => ({ value, label }))
   }, [data])
 
-  // Separado em abas (pedido explícito): "Meus planos" primeiro (o caso
-  // comum — o professor cuidando do que é dele), "Outros planos" só pra
-  // consulta/referência do que os colegas já montaram pro mesmo curso.
-  // Planos antigos sem professor vinculado (dado migrado antes desse campo
-  // existir) caem em "Outros", nunca em "Meus" — evita atribuir autoria
-  // errada por omissão.
+  // Planos sem professor vinculado caem em "Outros", para não atribuir autoria errada.
   const meus = useMemo(
     () => (data ?? []).filter((plano) => plano.professor?.id === professorId),
     [data, professorId],
@@ -142,12 +125,12 @@ export default function PlanosEnsino() {
       <Header
         titulo="Planos de Ensino"
         filtros={
-          <CamposCabecalho>
+          <CamposFiltro>
             <Button icon={<Plus />} size="large" onClick={() => navegar('/professor/plano-ensino/novo')}>
               Adicionar plano
             </Button>
 
-            <LarguraFiltro>
+            <CampoFiltro $largura="220px">
               <Select<number>
                 placeholder="Filtrar por turma"
                 options={opcoesTurmas}
@@ -156,8 +139,8 @@ export default function PlanosEnsino() {
                 searchable
                 onChange={setTurmaId}
               />
-            </LarguraFiltro>
-          </CamposCabecalho>
+            </CampoFiltro>
+          </CamposFiltro>
         }
       />
 
@@ -179,9 +162,7 @@ export default function PlanosEnsino() {
         loading={loading}
         error={error}
         onReload={reload}
-        // Muitas colunas (até 8 + Ações, "Outros planos" ainda soma "Professor")
-        // — sem isso, "Detalhar"/"Conteúdo" numa linha só empurravam a tabela
-        // pro scroll horizontal desnecessariamente.
+        // Muitas colunas: sem quebra, as ações empurram a tabela para o scroll horizontal.
         quebrarAcoes
         paginacao={{
           pagina: paginacao.pagina,

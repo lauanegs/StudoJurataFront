@@ -5,9 +5,8 @@ import { LetterBadge } from '../LetterBadge'
 export type AlternativeStatus = 'neutral' | 'correct' | 'incorrect'
 
 /**
- * Confirmado no Figma (nós 1:996-1005): a letra é um bloco fundido à borda
- * esquerda (mesmo padrão do AlternativaButton) — o card em si permanece
- * branco com borda neutra fina, sem tingir o fundo de verde/vermelho.
+ * Letra fundida à borda esquerda, como no AlternativaButton; o card fica
+ * branco, sem tingir o fundo de verde/vermelho.
  */
 const Container = styled.div`
   display: flex;

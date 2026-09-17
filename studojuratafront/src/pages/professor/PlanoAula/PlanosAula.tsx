@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import { CalendarDays, ClipboardList, Layers } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Header } from '../../../components/ui/Header'
+import { Header, CamposFiltro, CampoFiltro } from '../../../components/ui/Header'
 import { Select } from '../../../components/ui/Select'
 import { Tag } from '../../../components/ui/Tag'
 import { usePaginacao } from '../../../hooks/usePaginacao'
@@ -17,17 +16,6 @@ import { formatarPeriodo } from '../../../utils/format'
 import { ROTULO_STATUS_PLANO, STATUS_PLANO_VARIANT } from '../../../utils/labels'
 import type { PlanoAula } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
-
-const CamposCabecalho = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const LarguraFiltro = styled.div`
-  width: 220px;
-`
 
 export default function PlanosAula() {
   const navegar = useNavigate()
@@ -84,8 +72,7 @@ export default function PlanosAula() {
       render: (plano) => plano.turmaDisciplina?.disciplina?.titulo ?? '—',
     },
     {
-      // Pedido explícito: referência ao plano de ensino de origem (quem
-      // menciona quem é o plano de aula, não o contrário).
+      // O plano de aula referencia o plano de ensino de origem.
       key: 'planoEnsino',
       cabecalho: 'Plano de ensino',
       ocultarEmTelaPequena: true,
@@ -115,8 +102,8 @@ export default function PlanosAula() {
       <Header
         titulo="Planos de Aula"
         filtros={
-          <CamposCabecalho>
-            <LarguraFiltro>
+          <CamposFiltro>
+            <CampoFiltro $largura="220px">
               <Select<number>
                 placeholder="Filtrar por turma"
                 options={opcoesTurmas}
@@ -127,8 +114,8 @@ export default function PlanosAula() {
                 emptyText="Você ainda não leciona em nenhuma turma"
                 onChange={setTurmaId}
               />
-            </LarguraFiltro>
-          </CamposCabecalho>
+            </CampoFiltro>
+          </CamposFiltro>
         }
       />
 

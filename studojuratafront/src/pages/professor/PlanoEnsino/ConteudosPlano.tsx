@@ -9,7 +9,7 @@ import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { CheckBox } from '../../../components/ui/CheckBox'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Header, SubtituloItem } from '../../../components/ui/Header'
+import { Header, SubtituloItem, CamposFiltro, CampoFiltro } from '../../../components/ui/Header'
 import { Modal } from '../../../components/ui/Modal'
 import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
@@ -24,23 +24,11 @@ import { formatarData, normalizar } from '../../../utils/format'
 import type { ConteudoPlano } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
-/* "Adicionar conteúdo" + "Importar conteúdo" + busca na mesma linha —
-   flex-shrink:0 nos botões pra não cortar o texto quando a linha aperta
-   (mesmo problema já visto em Registrar Aula). */
-const CamposCabecalho = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-
+/* flex-shrink:0 nos botões para o texto não cortar quando a linha aperta. */
+const CamposCabecalho = styled(CamposFiltro)`
   > button {
     flex-shrink: 0;
   }
-`
-
-const LarguraBusca = styled.div`
-  width: 250px;
-  flex-shrink: 0;
 `
 
 export default function ConteudosPlano() {
@@ -325,9 +313,9 @@ export default function ConteudosPlano() {
               Importar conteúdo
             </Button>
 
-            <LarguraBusca>
+            <CampoFiltro $largura="250px" $encolher>
               <BuscaInput value={busca} onChange={setBusca} placeholder="Buscar conteúdo..." />
-            </LarguraBusca>
+            </CampoFiltro>
           </CamposCabecalho>
         }
       />

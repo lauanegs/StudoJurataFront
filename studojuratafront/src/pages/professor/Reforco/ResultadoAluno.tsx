@@ -9,6 +9,7 @@ import { AlternativaVerdadeiroFalso } from '../../../components/ui/AlternativaVe
 import { Card } from '../../../components/ui/Card'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Tag } from '../../../components/ui/Tag'
+import { Stack } from '../../../components/ui/Stack'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -22,12 +23,6 @@ import {
   simulados as servicoSimulados,
 } from '../../../services/endpoints'
 import { formatarTempo, letraAlternativa } from '../../../utils/format'
-
-const Lista = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
 
 const Alternativas = styled.div`
   display: flex;
@@ -99,9 +94,7 @@ export default function ResultadoAluno() {
         .filter((alternativa) => alternativa.questaoId === resposta.questaoId)
         .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
 
-      // `respondida` é novo — registros de simulados concluídos antes dessa
-      // mudança não têm esse campo preenchido (null); mesmo fallback usado na
-      // revisão do lado aluno (Simulado.tsx).
+      // Tentativas antigas têm `respondida` nulo (mesmo fallback de Simulado.tsx).
       const respondida =
         resposta.respondida ??
         (ehVF ? (resposta.alternativasVerdadeirasIds?.length ?? 0) > 0 : resposta.alternativaId != null)
@@ -164,7 +157,7 @@ export default function ResultadoAluno() {
           icon={<Target />}
         />
       ) : (
-        <Lista>
+        <Stack gap="md">
           {correcao.map((item, indice) => (
             <Card key={item.respostaId}>
               <QuestaoCabecalho>
@@ -213,7 +206,7 @@ export default function ResultadoAluno() {
               </Alternativas>
             </Card>
           ))}
-        </Lista>
+        </Stack>
       )}
     </Layout>
   )

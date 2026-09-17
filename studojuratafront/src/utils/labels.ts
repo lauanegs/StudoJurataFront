@@ -7,7 +7,6 @@ import type {
   DiaSemana,
   MotivoRecomendacao,
   NivelDificuldade,
-  NivelDominio,
   OrigemQuestao,
   Parentesco,
   Sexo,
@@ -16,8 +15,6 @@ import type {
   StatusPlano,
   StatusQuestao,
   StatusSimulado,
-  StatusSimuladoAluno,
-  StatusSimuladoQuestao,
   StatusTurma,
   TipoDestinacaoSimulado,
   TipoQuestao,
@@ -103,16 +100,6 @@ export const ROTULO_STATUS_SIMULADO: Record<StatusSimulado, string> = {
   ENCERRADO: 'Encerrado',
 }
 
-export const ROTULO_STATUS_SIMULADO_ALUNO: Record<StatusSimuladoAluno, string> = {
-  PENDENTE: 'Pendente',
-  CONCLUIDO: 'Concluído',
-}
-
-export const ROTULO_STATUS_SIMULADO_QUESTAO: Record<StatusSimuladoQuestao, string> = {
-  ATIVA: 'Ativa',
-  REMOVIDA: 'Removida',
-}
-
 // --- Simulado / questão ----------------------------------------------------
 
 export const ROTULO_TIPO_QUESTAO: Record<TipoQuestao, string> = {
@@ -158,12 +145,6 @@ export const ROTULO_DIA_SEMANA_CURTO: Record<DiaSemana, string> = {
   DOMINGO: 'Dom',
 }
 
-export const ROTULO_NIVEL_DOMINIO: Record<NivelDominio, string> = {
-  BAIXO: 'Domínio baixo',
-  MEDIO: 'Domínio médio',
-  ALTO: 'Domínio alto',
-}
-
 export const ROTULO_MOTIVO_RECOMENDACAO: Record<MotivoRecomendacao, string> = {
   REPETICAO_ESPACADA: 'Repetição espaçada',
   BAIXO_APROVEITAMENTO: 'Baixo aproveitamento',
@@ -189,11 +170,6 @@ export const STATUS_SIMULADO_VARIANT: Record<StatusSimulado, TagVariant> = {
   ENCERRADO: 'info',
 }
 
-export const STATUS_SIMULADO_ALUNO_VARIANT: Record<StatusSimuladoAluno, TagVariant> = {
-  PENDENTE: 'warning',
-  CONCLUIDO: 'success',
-}
-
 export const ATIVO_INATIVO_VARIANT: Record<StatusAtivoInativo, TagVariant> = {
   ATIVO: 'success',
   INATIVO: 'neutral',
@@ -205,12 +181,6 @@ export const NIVEL_DIFICULDADE_VARIANT: Record<NivelDificuldade, TagVariant> = {
   DIFICIL: 'error',
 }
 
-export const NIVEL_DOMINIO_VARIANT: Record<NivelDominio, TagVariant> = {
-  BAIXO: 'error',
-  MEDIO: 'warning',
-  ALTO: 'success',
-}
-
 // --- Listas prontas para <Select /> ---------------------------------------
 
 export const OPCOES_SEXO = opcoes(ROTULO_SEXO)
@@ -218,18 +188,14 @@ export const OPCOES_PARENTESCO = opcoes(ROTULO_PARENTESCO)
 export const OPCOES_ATIVO_INATIVO = opcoes(ROTULO_ATIVO_INATIVO)
 export const OPCOES_ATIVA_INATIVA = opcoes(ROTULO_ATIVA_INATIVA)
 export const OPCOES_STATUS_PLANO = opcoes(ROTULO_STATUS_PLANO)
-export const OPCOES_STATUS_TURMA = opcoes(ROTULO_STATUS_TURMA)
-export const OPCOES_STATUS_MATRICULA = opcoes(ROTULO_STATUS_MATRICULA)
-export const OPCOES_TIPO_QUESTAO = opcoes(ROTULO_TIPO_QUESTAO)
 export const OPCOES_NIVEL_DIFICULDADE = opcoes(ROTULO_NIVEL_DIFICULDADE)
 export const OPCOES_DESTINACAO = opcoes(ROTULO_DESTINACAO)
 export const OPCOES_DIA_SEMANA = opcoes(ROTULO_DIA_SEMANA)
-export const OPCOES_NIVEL_DOMINIO = opcoes(ROTULO_NIVEL_DOMINIO)
 export const OPCOES_TIPO_USUARIO = opcoes(ROTULO_TIPO_USUARIO)
 
 // --- Endereço ----------------------------------------------------------------
 
-/** As 27 UFs do Brasil, para o Select do bloco de Endereço (item 9.8). */
+/** As 27 UFs do Brasil, para o Select do bloco de Endereço. */
 export const OPCOES_UF = [
   { value: 'AC', label: 'AC' },
   { value: 'AL', label: 'AL' },
@@ -262,6 +228,6 @@ export const OPCOES_UF = [
 
 // --- LGPD / consentimento -----------------------------------------------------
 
-/** Texto curto exibido junto ao checkbox de aceite (item 10.3 — sem versionamento formal). */
+/** Texto exibido junto ao checkbox de aceite (sem versionamento formal de termos). */
 export const TEXTO_VERSAO_LGPD =
   'Autorizo o uso dos dados do aluno na plataforma StudoJurata, conforme a Lei Geral de Proteção de Dados (LGPD).'

@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import styled from 'styled-components'
 
 import { RotaProtegida } from './RotaProtegida'
+import { CarregandoTela } from '../components/feedback/CarregandoTela'
 
 /**
  * Rotas da aplicação.
@@ -96,21 +96,9 @@ const AlunoSimulado = lazy(() => import('../pages/aluno/Simulado'))
 const AlunoNotas = lazy(() => import('../pages/aluno/Notas'))
 const AlunoPerfil = lazy(() => import('../pages/aluno/Perfil'))
 
-const Carregando = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 100%;
-  min-height: 100vh;
-
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
 export function AppRoutes() {
   return (
-    <Suspense fallback={<Carregando role="status">Carregando...</Carregando>}>
+    <Suspense fallback={<CarregandoTela />}>
       <Routes>
         {/* Autenticação */}
         <Route path="/" element={<Login />} />
@@ -406,8 +394,7 @@ export function AppRoutes() {
             </RotaProtegida>
           }
         />
-        {/* Sem rota "/novo": pedido explícito — plano de aula não é mais
-            criado na mão, nasce sozinho junto com o plano de ensino. */}
+        {/* Sem rota "/novo": o plano de aula nasce junto com o plano de ensino. */}
         <Route
           path="/professor/plano-aula/:id"
           element={

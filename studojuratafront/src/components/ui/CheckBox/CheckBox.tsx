@@ -2,11 +2,6 @@ import { Checkbox } from '@mantine/core'
 
 import type { CheckBoxProps } from './types'
 
-/**
- * O estado indeterminado (usado na seleção em massa de linhas de tabela) era
- * um useEffect setando `inputRef.current.indeterminate` na mão — a Mantine
- * já aceita `indeterminate` como prop.
- */
 export function CheckBox({
   label,
   description,

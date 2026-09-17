@@ -6,10 +6,6 @@ import { theme as tokens } from '../../../styles/theme'
 import { corComOpacidade } from '../../../utils/corComOpacidade'
 import type { TextAreaProps } from './types'
 
-/**
- * O crescimento automático (`autoAltura`) era um useLayoutEffect ajustando
- * scrollHeight na mão — a Mantine já resolve isso nativamente via `autosize`.
- */
 export function TextArea({
   label,
   required,

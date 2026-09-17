@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Archive, ClipboardList, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
@@ -9,6 +8,8 @@ import { Card } from '../../../components/ui/Card'
 import { Input } from '../../../components/ui/Input'
 import { Header } from '../../../components/ui/Header'
 import { Select } from '../../../components/ui/Select'
+import { Stack } from '../../../components/ui/Stack'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -20,23 +21,6 @@ import { planosAula as servicoPlanosAula } from '../../../services/endpoints'
 import { formatarCargaHoraria } from '../../../utils/format'
 import { OPCOES_STATUS_PLANO } from '../../../utils/labels'
 import type { StatusPlano } from '../../../types'
-
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* Pedido explícito: plano de aula não é mais criado/editado na mão — nasce
-   sozinho junto com o plano de ensino (ver PlanoEnsinoService no back), e
-   esta tela vira só leitura do vínculo + o único campo que ainda faz
-   sentido editar aqui (Situação). 2 campos por linha, como no resto do
-   sistema. */
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
 
 export default function PlanoAulaFormulario() {
   const { id } = useParams()
@@ -115,8 +99,7 @@ export default function PlanoAulaFormulario() {
         rotuloVoltar="Planos de aula"
         actions={
           <>
-            {/* Pedido explícito: quem menciona quem é o plano de aula — daqui
-                dá pra voltar pro plano de ensino de origem. */}
+            {/* O plano de aula referencia o plano de ensino de origem, não o contrário. */}
             {plano?.planoEnsino && (
               <Button
                 size="large"
@@ -155,8 +138,8 @@ export default function PlanoAulaFormulario() {
         <SkeletonCartao />
       ) : (
         <Card titulo="Vínculo do plano">
-          <Coluna>
-            <Grade>
+          <Stack gap="md">
+            <GradeAutoAjuste $larguraMinima="280px">
               <Input
                 label="Plano de ensino"
                 value={
@@ -172,14 +155,14 @@ export default function PlanoAulaFormulario() {
                 value={formatarCargaHoraria(plano?.planoEnsino?.cargaHoraria)}
                 disabled
               />
-            </Grade>
+            </GradeAutoAjuste>
 
-            <Grade>
+            <GradeAutoAjuste $larguraMinima="280px">
               <Input label="Turma" value={plano?.turmaDisciplina?.turma?.titulo ?? '—'} disabled />
               <Input label="Disciplina" value={plano?.turmaDisciplina?.disciplina?.titulo ?? '—'} disabled />
-            </Grade>
+            </GradeAutoAjuste>
 
-            <Grade>
+            <GradeAutoAjuste $larguraMinima="280px">
               <Select<StatusPlano>
                 label="Situação"
                 options={OPCOES_STATUS_PLANO}
@@ -187,8 +170,8 @@ export default function PlanoAulaFormulario() {
                 disabled={salvando}
                 onChange={(valor) => setStatus(valor ?? 'ATIVO')}
               />
-            </Grade>
-          </Coluna>
+            </GradeAutoAjuste>
+          </Stack>
         </Card>
       )}
     </Layout>

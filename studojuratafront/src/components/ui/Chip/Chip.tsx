@@ -29,21 +29,10 @@ export function Chip({
       onRemove={onRemove}
       disabled={disabled}
       removeButtonProps={{ 'aria-label': rotuloRemover ?? `Remover ${String(children)}` }}
-      // 56px de altura, ícone de remover em 24px — bem maior e mais
-      // espaçoso do que o tamanho padrão de Pill da Mantine.
-      //
-      // O botão de remover fica fora do fluxo do flex (position: absolute),
-      // não conta mais como um "irmão" do texto disputando espaço. Padding
-      // simétrico dos dois lados (mesmo valor, spacing.xl) reserva à direita
-      // exatamente o espaço que o botão precisa pra caber sem sobrepor o
-      // texto, sem puxar o centro pra nenhum lado.
-      // `justifyContent: center` no root sozinho NÃO bastava: o
-      // `.mantine-Pill-label` (elemento interno da Mantine, não o nosso
-      // <span>) já vem esticado (flex:1) pelo CSS da própria lib — ele
-      // ocupava 100% da caixa de conteúdo, deixando o `justifyContent` do
-      // root sem espaço sobrando pra centralizar. É por isso que era preciso
-      // sobrescrever também `styles.label`, centralizando o conteúdo dentro
-      // dele mesmo.
+      // O botão de remover fica fora do fluxo (absolute) e o padding simétrico
+      // reserva o espaço dele sem descentralizar o texto. styles.label também
+      // centraliza porque o .mantine-Pill-label já vem com flex:1 e ocupa
+      // toda a largura.
       styles={{
         root: {
           position: 'relative',

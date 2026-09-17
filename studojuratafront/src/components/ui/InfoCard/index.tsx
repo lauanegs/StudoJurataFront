@@ -47,10 +47,7 @@ const Valor = styled.strong`
   font-variant-numeric: tabular-nums;
 `
 
-/* Selo abaixo do número: cinza neutro, não verde — confirmado pelo usuário
-   que o verde (usado antes) sugeria "acerto"/sucesso, o que não faz sentido
-   pra um indicador absoluto (contagem, não taxa). Mesmo tom neutro do Chip
-   variant="neutral". */
+/* Cinza neutro: verde sugeriria "acerto" num indicador que é contagem, não taxa. */
 const Selo = styled.span`
   display: inline-flex;
   align-items: center;
@@ -63,10 +60,7 @@ const Selo = styled.span`
 
 type Tom = 'purple' | 'blue' | 'success' | 'orange'
 
-// Cor sólida (não tingida) por trás do ícone branco — confirmado pelo
-// usuário: nem tom único (ficava monótono) nem cor de fundo suave a 15%
-// (não destacava o suficiente) funcionaram; badge cheio na cor + ícone
-// branco é o que ficou melhor. Sempre uma cor já existente no sistema.
+// Badge em cor sólida com ícone branco: fundo suave não destacava o suficiente.
 const CORES: Record<Tom, string> = {
   purple: tokens.colors.purple,
   blue: tokens.colors.blue,

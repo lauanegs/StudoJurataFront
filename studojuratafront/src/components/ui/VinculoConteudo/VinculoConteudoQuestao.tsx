@@ -12,6 +12,7 @@ import { ApiError } from '../../../services/api'
 import { conteudosPlano, questoes as servicoQuestoes } from '../../../services/endpoints'
 import type { ConteudoPlano } from '../../../types'
 import * as S from './styles'
+import { Stack } from '../Stack'
 
 interface VinculoConteudoQuestaoProps {
   /** Ausente quando a questão ainda não foi salva — nesse caso o componente entra em modo local, ver conteudoPlanoIdsPendentes/onChangePendentes. */
@@ -25,20 +26,11 @@ interface VinculoConteudoQuestaoProps {
 }
 
 /**
- * Vincula/desvincula a questão a conteúdo(s) do plano de ensino — mesma
- * "seção" (título + botão + chips, ver ./styles) usada por
- * VinculoConteudoAula, mesmo par de entidades (X vinculado a ConteudoPlano).
+ * Sem o vínculo, a questão fica fora do cálculo de desempenho por conteúdo que
+ * decide o reforço; só questões da IA já nascem vinculadas.
  *
- * Sem esse vínculo a questão fica invisível pro cálculo de desempenho por
- * conteúdo/nível que decide o reforço (back: RecomendacaoService) — hoje só
- * questões geradas pela IA ganham esse vínculo automaticamente na criação;
- * questões feitas pelo professor (a maioria) precisam dele aqui.
- *
- * Sem `questaoId` (questão nova, ainda não salva) o componente não bloqueia
- * a escolha de conteúdo esperando o professor salvar antes — isso era um
- * impedimento real (confirmado pelo usuário): escolher fica só no estado
- * local (`conteudoPlanoIdsPendentes`/`onChangePendentes`, controlado pelo
- * formulário pai) até a questão existir de verdade.
+ * Sem `questaoId` (questão ainda não salva), a escolha fica no estado local do
+ * formulário pai até a questão existir.
  */
 export function VinculoConteudoQuestao({
   questaoId,
@@ -199,7 +191,7 @@ export function VinculoConteudoQuestao({
             icon={<ListTree />}
           />
         ) : (
-          <S.Coluna>
+          <Stack gap="md">
             {conteudosDisponiveis.map((conteudo) => (
               <CheckBox
                 key={conteudo.id}
@@ -208,7 +200,7 @@ export function VinculoConteudoQuestao({
                 onChange={() => alternarSelecionado(conteudo.id)}
               />
             ))}
-          </S.Coluna>
+          </Stack>
         )}
       </Modal>
     </S.SecaoVinculo>

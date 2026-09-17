@@ -14,7 +14,7 @@ import { useRequisicao } from '../../hooks/useRequisicao'
 import { eventos as servicoEventos, pessoas as servicoPessoas } from '../../services/endpoints'
 import { aniversariantesDaSemana } from '../_compartilhado/aniversariantes'
 
-/** Altura fixa confirmada no Figma; a largura é definida pela grade de colunas do SeparadorCard. */
+/** Altura fixa do Figma; a largura vem da grade do SeparadorCard. */
 const ItemEvento = styled.div`
   width: 100%;
   min-width: 0;

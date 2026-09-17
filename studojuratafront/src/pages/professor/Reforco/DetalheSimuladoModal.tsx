@@ -19,7 +19,7 @@ import {
   questoes as servicoQuestoes,
   simuladoQuestoes,
 } from '../../../services/endpoints'
-import { calcularFaixasHistograma } from '../../../utils/desempenho'
+import { calcularFaixasHistograma, LIMIAR_BAIXO_DESEMPENHO } from '../../../utils/desempenho'
 import { exportarExcelAbas } from '../../../utils/exportarPlanilha'
 import { exportarPdf } from '../../../utils/exportarPdf'
 import { formatarData, formatarPorcentagem } from '../../../utils/format'
@@ -28,18 +28,13 @@ import { ROTULO_DESTINACAO } from '../../../utils/labels'
 import type { SimuladoAlunoResponse, TipoDestinacaoSimulado } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
-/** Limiar da tese: turma com essa % de alunos abaixo dessa nota pede reforço manual do professor. */
-export const LIMIAR_DESEMPENHO = 60
-
 const Coluna = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.lg};
 `
 
-/* Espaço entre o campo inicial (ListaInfo, componente compartilhado) e o
-   resto do conteúdo — ListaInfo em si não tem margem própria, cada tela que
-   a usa define o espaçamento conforme o próprio layout. */
+/* ListaInfo não tem margem própria; cada tela define o espaçamento. */
 const EnvolveContexto = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `
@@ -77,11 +72,9 @@ interface DetalheSimuladoModalProps {
 }
 
 /**
- * Detalhamento de um simulado, aberto ao clicar no DesempenhoCard: histograma
- * de notas, alunos abaixo do limiar (o gatilho da tese pra reforço manual do
- * professor — não IA) e desempenho por questão. Some dado é buscado só
- * quando o modal abre (não no Dashboard inteiro), pra não pesar a tela que
- * lista todos os simulados só por causa do detalhamento de um.
+ * Histograma de notas, alunos abaixo do limiar (gatilho de reforço manual) e
+ * desempenho por questão. Os dados só são buscados quando o modal abre, para
+ * não pesar a tela que lista todos os simulados.
  *
  * Com `alunoFiltrado` definido, `tentativas` já vem filtrada só daquele
  * aluno (ver DesempenhoSimulados.tsx) — todo o conteúdo abaixo reflete isso
@@ -134,7 +127,7 @@ export function DetalheSimuladoModal({
         percentual: Math.min(100, ((tentativa.nota as number) / notaMaxima) * 100),
         nome: mapaAlunos.get(tentativa.alunoId)?.pessoa?.nome ?? `Aluno ${tentativa.alunoId}`,
       }))
-      .filter((item) => item.percentual < LIMIAR_DESEMPENHO)
+      .filter((item) => item.percentual < LIMIAR_BAIXO_DESEMPENHO)
       .sort((a, b) => a.percentual - b.percentual)
   }, [tentativas, notaMaxima, requisicaoAlunos.data])
 
@@ -163,17 +156,14 @@ export function DetalheSimuladoModal({
   const percentualTurmaAbaixo =
     notasPercentuais.length > 0 ? (alunosAbaixoDoLimiar.length / notasPercentuais.length) * 100 : 0
 
-  // Regra da tese: turma com >= 60% dos alunos abaixo de 60% pede reforço
-  // MANUAL do professor — a IA fica reservada pra casos individuais. Com um
-  // aluno filtrado, essa estatística de turma não faz sentido: o que importa
-  // ali é só a média do próprio aluno (mediaAluno), comparada ao mesmo
-  // limiar — mas como candidato a reforço INDIVIDUAL (motivo
-  // BAIXO_APROVEITAMENTO do RecomendacaoService), não manual.
-  const pedeReforcoManual = percentualTurmaAbaixo >= LIMIAR_DESEMPENHO
+  // Turma com >= 60% dos alunos abaixo do limiar pede reforço MANUAL; a IA
+  // fica para casos individuais. Com aluno filtrado, vale só a média dele,
+  // como candidato a reforço individual.
+  const pedeReforcoManual = percentualTurmaAbaixo >= LIMIAR_BAIXO_DESEMPENHO
 
   const mediaAluno =
     notasPercentuais.length > 0 ? notasPercentuais.reduce((soma, valor) => soma + valor, 0) / notasPercentuais.length : 0
-  const alunoAbaixoDoLimiar = mediaAluno < LIMIAR_DESEMPENHO
+  const alunoAbaixoDoLimiar = mediaAluno < LIMIAR_BAIXO_DESEMPENHO
 
   // Campo inicial do modal — turma, disciplina, data, destinação e, quando
   // houver, o aluno filtrado. Cada linha descreve um dado diferente, no
@@ -220,9 +210,6 @@ export function DetalheSimuladoModal({
       })
   }, [simuladoId, tentativas, requisicaoQuestoes.data, requisicaoVinculos.data, requisicaoRespostas.data])
 
-  // Colunas do DataTable padrão (trocado no lugar da <table> própria que
-  // existia aqui — confirmado pelo usuário: usar o mesmo componente das
-  // demais listagens do sistema, pra comparar visualmente).
   const colunasDesempenhoQuestao: Coluna<(typeof desempenhoPorQuestao)[number]>[] = [
     {
       key: 'questao',
@@ -274,7 +261,7 @@ export function DetalheSimuladoModal({
     ...(!alunoFiltrado
       ? [
           {
-            titulo: `Alunos abaixo de ${LIMIAR_DESEMPENHO}%`,
+            titulo: `Alunos abaixo de ${LIMIAR_BAIXO_DESEMPENHO}%`,
             colunaRotulo: 'Aluno',
             colunaValor: 'Nota',
             linhas: tabelaAlunosAbaixo,
@@ -348,19 +335,19 @@ export function DetalheSimuladoModal({
               }`}
               descricao={
                 alunoAbaixoDoLimiar
-                  ? `${alunoFiltrado} está abaixo de ${LIMIAR_DESEMPENHO}% neste simulado — candidato a reforço individual (a IA pode gerar automaticamente, pela regra de baixo aproveitamento).`
+                  ? `${alunoFiltrado} está abaixo de ${LIMIAR_BAIXO_DESEMPENHO}% neste simulado — candidato a reforço individual (a IA pode gerar automaticamente, pela regra de baixo aproveitamento).`
                   : `${alunoFiltrado} está dentro do esperado neste simulado — sem gatilho de reforço.`
               }
             />
           ) : pedeReforcoManual ? (
             <AlertaDesempenhoCard
-              titulo={`${formatarPorcentagem(percentualTurmaAbaixo)} da turma abaixo de ${LIMIAR_DESEMPENHO}%`}
+              titulo={`${formatarPorcentagem(percentualTurmaAbaixo)} da turma abaixo de ${LIMIAR_BAIXO_DESEMPENHO}%`}
               descricao="Pela regra de acompanhamento, isso pede um reforço lançado manualmente pelo professor — a IA fica reservada a casos individuais."
             />
           ) : (
             <AlertaDesempenhoCard
               tom="success"
-              titulo={`Só ${formatarPorcentagem(percentualTurmaAbaixo)} da turma abaixo de ${LIMIAR_DESEMPENHO}%`}
+              titulo={`Só ${formatarPorcentagem(percentualTurmaAbaixo)} da turma abaixo de ${LIMIAR_BAIXO_DESEMPENHO}%`}
               descricao="Dentro do esperado — sem gatilho de reforço geral pra esta turma."
             />
           )}
@@ -375,7 +362,7 @@ export function DetalheSimuladoModal({
           {!alunoFiltrado && (
             <Card
               elevacao="none"
-              titulo={`Alunos abaixo de ${LIMIAR_DESEMPENHO}% (${alunosAbaixoDoLimiar.length})`}
+              titulo={`Alunos abaixo de ${LIMIAR_BAIXO_DESEMPENHO}% (${alunosAbaixoDoLimiar.length})`}
             >
               {alunosAbaixoDoLimiar.length === 0 ? (
                 <EstadoVazio titulo="Ninguém abaixo do limiar" descricao="Todos os alunos foram bem neste simulado." />

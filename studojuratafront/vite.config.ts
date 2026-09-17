@@ -9,7 +9,7 @@ import react from '@vitejs/plugin-react'
  * O proxy abaixo evita esse problema no desenvolvimento: o navegador enxerga
  * tudo como mesma origem (`/api/...`) e o Vite encaminha para o back. Em
  * produção, aponte `VITE_API_BASE_URL` para a URL real da API — aí o CORS
- * precisa estar habilitado no back (ver `config/CorsConfig.java`).
+ * precisa estar habilitado no back (ver `config/SecurityConfig.java`).
  */
 const ALVO_API = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8080'
 

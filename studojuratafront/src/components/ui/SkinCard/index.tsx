@@ -22,9 +22,7 @@ const Container = styled.article<{ $ativa: boolean }>`
   transition: border-color ${({ theme }) => theme.transition.base};
 `
 
-/* Confirmado pelo usuário: só nesta tela de compra/equipação o personagem
-   fica parado (sem a animação de flutuar) e sem moldura de fundo atrás —
-   nos outros lugares do sistema ele continua flutuando normalmente. */
+/* Só na compra/equipação o personagem fica parado e sem moldura; nas demais telas ele flutua. */
 const Moldura = styled.div<{ $bloqueada: boolean }>`
   display: flex;
   align-items: center;

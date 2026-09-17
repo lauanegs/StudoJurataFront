@@ -1,13 +1,8 @@
 import styled from 'styled-components'
 
 /**
- * "Seção" de vínculo: título + botão de ação alinhados numa linha,
- * chips/dica embaixo — separada do resto do formulário por uma borda
- * superior. Nasceu do vínculo questão/aula↔conteúdo (VinculoConteudoQuestao/
- * VinculoConteudoAula), mas o padrão é genérico o bastante pra qualquer
- * "escolher um ou mais itens existentes" (ex.: alunos de um simulado em
- * SimuladoFormulario) — confirmado pelo usuário: mesma seção em todo botão
- * de vincular, não só conteúdo.
+ * Seção de vínculo (título + botão, chips embaixo), usada em todo "escolher
+ * itens existentes", não só conteúdos.
  */
 export const SecaoVinculo = styled.div`
   display: flex;
@@ -44,8 +39,3 @@ export const ChipsVinculo = styled.div`
   gap: ${({ theme }) => theme.spacing.xs};
 `
 
-export const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`

@@ -11,7 +11,7 @@ import type { LayoutProps } from './types'
 const CHAVE_COLAPSO = '@studojurata:sidebarColapsada'
 
 /**
- * Shell das telas autenticadas: sidebar + área de conteúdo (doc §3).
+ * Shell das telas autenticadas: sidebar + área de conteúdo.
  *
  * O perfil vem do usuário logado — nenhuma página passa `perfil` na mão, o que
  * elimina a chance de uma tela do professor renderizar o menu do admin.

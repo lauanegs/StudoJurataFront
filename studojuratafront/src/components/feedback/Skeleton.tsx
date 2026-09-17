@@ -20,16 +20,6 @@ export const Skeleton = styled.div<{ $largura?: string; $altura?: string; $raio?
   animation: ${brilhar} 1.4s ease infinite;
 `
 
-export const SkeletonTexto = styled(Skeleton)`
-  height: 12px;
-  margin-bottom: 8px;
-
-  &:last-child {
-    margin-bottom: 0;
-    width: 60%;
-  }
-`
-
 export const SkeletonCartao = styled(Skeleton)`
   height: 120px;
   border-radius: ${({ theme }) => theme.radius.md};

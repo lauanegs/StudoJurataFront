@@ -8,12 +8,6 @@ import { corComOpacidade } from '../../../utils/corComOpacidade'
 import { comTamanho } from '../../../utils/redimensionarIcone'
 import type { SelectOption, SelectProps } from './types'
 
-/**
- * Delega a lógica de abrir/fechar, busca, navegação por teclado e clique
- * fora pro Combobox da Mantine — o Select caseiro reimplementava tudo isso
- * na mão. O <Field> continua sendo o mesmo, pra bater visualmente com Input,
- * TextArea e DatePicker enquanto eles ainda não migraram.
- */
 export function Select<V extends string | number = string | number>({
   options,
   value,
@@ -91,10 +85,8 @@ export function Select<V extends string | number = string | number>({
         onDropdownClose={() => setEmFoco(false)}
         styles={{
           input: {
-            // height (não só minHeight): a Mantine fixa a altura interna do
-            // texto pelo tamanho padrão do input — só esticar a caixa com
-            // minHeight deixava o texto cortado (metade escondida atrás do
-            // overflow do input real, menor por dentro).
+            // height, não só minHeight: com minHeight a Mantine mantém a altura
+            // interna padrão e o texto fica cortado.
             height: '56px',
             minHeight: '56px',
             borderWidth: '2px',

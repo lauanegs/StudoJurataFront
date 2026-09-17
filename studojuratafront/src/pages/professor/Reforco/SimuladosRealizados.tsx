@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import { ClipboardList, FileText, Search } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
-import { Header } from '../../../components/ui/Header'
+import { Header, CamposFiltro, CampoFiltro, BotaoFiltro } from '../../../components/ui/Header'
 import { Select } from '../../../components/ui/Select'
 import { Tag } from '../../../components/ui/Tag'
 import { Skeleton } from '../../../components/feedback/Skeleton'
@@ -19,28 +18,6 @@ import { formatarPorcentagem } from '../../../utils/format'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
 type TipoFiltro = 'disciplina' | 'aluno'
-
-/* Confirmado no Figma: 3 selects + botão Buscar numa linha só, sem rótulo
-   separado — mesmo padrão do header de Notas. */
-const CamposCabecalho = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const CampoLargura = styled.div`
-  width: 211px;
-`
-
-const LarguraBotao = styled.div`
-  width: 150px;
-  flex-shrink: 0;
-
-  button {
-    width: 100%;
-  }
-`
 
 interface FiltroAplicado {
   turmaId: number
@@ -237,8 +214,7 @@ export default function SimuladosRealizados() {
         ),
     },
     {
-      // Confirmado no Figma: o cabeçalho é sempre "Participação/Acertos" —
-      // não troca de texto conforme o filtro, só o conteúdo da célula muda.
+      // O cabeçalho não muda com o filtro; só o conteúdo da célula.
       key: 'participacaoAcertos',
       cabecalho: 'Participação/Acertos',
       alinhamento: 'center',
@@ -266,8 +242,8 @@ export default function SimuladosRealizados() {
         voltarPara="/professor/reforco"
         rotuloVoltar="Módulo de reforço"
         filtros={
-          <CamposCabecalho>
-            <CampoLargura>
+          <CamposFiltro>
+            <CampoFiltro $largura="211px">
               <Select
                 placeholder="Turma"
                 options={opcoesTurmas}
@@ -279,9 +255,9 @@ export default function SimuladosRealizados() {
                   setEspecificoId(null)
                 }}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <CampoLargura>
+            <CampoFiltro $largura="211px">
               <Select<TipoFiltro>
                 placeholder="Disciplina / Aluno"
                 options={opcoesTipo}
@@ -292,9 +268,9 @@ export default function SimuladosRealizados() {
                   setEspecificoId(null)
                 }}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <CampoLargura>
+            <CampoFiltro $largura="211px">
               <Select
                 placeholder="Disc/Aluno (Específico)"
                 options={opcoesEspecifico}
@@ -304,14 +280,14 @@ export default function SimuladosRealizados() {
                 emptyText="Selecione turma e tipo primeiro"
                 onChange={setEspecificoId}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <LarguraBotao>
+            <BotaoFiltro>
               <Button size="large" icon={<Search />} onClick={buscar}>
                 Buscar
               </Button>
-            </LarguraBotao>
-          </CamposCabecalho>
+            </BotaoFiltro>
+          </CamposFiltro>
         }
       />
 

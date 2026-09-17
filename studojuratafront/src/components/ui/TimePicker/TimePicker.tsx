@@ -7,7 +7,7 @@ import { theme as tokens } from '../../../styles/theme'
 import { comTamanho } from '../../../utils/redimensionarIcone'
 import type { TimePickerProps } from './types'
 
-/** Seletor de hora (HH:mm) com dropdown de rolagem — antes era `<input type="time">` nativo. */
+/** Seletor de hora (HH:mm) com dropdown de rolagem. */
 export function TimePicker({
   label,
   required,
@@ -19,12 +19,8 @@ export function TimePicker({
   id,
   maxWidth,
 }: TimePickerProps) {
-  // O dropdown do TimePicker abre quando o campo de horas ganha foco (não
-  // tem um "abrir" imperativo próprio) — o ícone decorativo (leftSection)
-  // não reage a clique por padrão (pointer-events desligado), quebrando o
-  // hábito de "clicar no ícone pra abrir" que outros seletores já têm.
-  // Focando o campo de horas na mão a partir do clique no ícone reproduz o
-  // mesmo efeito.
+  // O dropdown só abre com foco no campo de horas e o ícone não recebe
+  // clique; focar o campo pelo ícone mantém o "clicar no ícone para abrir".
   const horasRef = useRef<HTMLInputElement>(null)
 
   function disparar(novoValor: string) {

@@ -13,6 +13,7 @@ import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { TextArea } from '../../../components/ui/TextArea'
+import { Stack } from '../../../components/ui/Stack'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -30,12 +31,6 @@ import { formatarCargaHoraria } from '../../../utils/format'
 import { OPCOES_ATIVO_INATIVO } from '../../../utils/labels'
 import type { CursoDisciplina, StatusAtivoInativo } from '../../../types'
 
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
 const Grade = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -46,8 +41,7 @@ const Grade = styled.div`
   }
 `
 
-/* Mesmo padrão de linha de vínculo já usado em TurmaFormulario (aba
-   "Disciplinas e professores"): Select + Input + botão numa linha só. */
+/* Select + Input + botão numa linha, como em TurmaFormulario. */
 const LinhaVinculo = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr auto;
@@ -91,10 +85,8 @@ export default function CursoFormulario() {
     ativo: Boolean(cursoId),
   })
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
-  // Grade curricular (pedido explícito): quais disciplinas compõem este
-  // curso e a carga horária de cada uma — reaproveitada pela tela de Turma
-  // (restringe o seletor às disciplinas daqui) e pelo Plano de Ensino
-  // (pré-preenche a carga horária).
+  // A grade restringe as disciplinas das turmas do curso e pré-preenche a
+  // carga horária do plano de ensino.
   const requisicaoGrade = useRequisicao(
     () => servicoCursoDisciplinas.listarPorCurso(cursoId as number),
     [cursoId],
@@ -342,7 +334,7 @@ export default function CursoFormulario() {
         <>
           {(!edicao || aba === 'dados') && (
           <Card titulo="Dados do curso">
-            <Coluna>
+            <Stack gap="md">
               <Grade>
                 <Input
                   label="Nome do curso"
@@ -381,14 +373,14 @@ export default function CursoFormulario() {
                 disabled={salvando}
                 onChange={(valor) => setAtivo(valor !== 'INATIVO')}
               />
-            </Coluna>
+            </Stack>
           </Card>
           )}
 
           {edicao && aba === 'grade' && (
             <>
               <Card titulo="Grade curricular">
-                <Coluna>
+                <Stack gap="md">
                   <DescricaoGrade>
                     Disciplinas que compõem este curso — usadas para restringir o
                     seletor de disciplina ao vincular uma turma e para pré-preencher
@@ -421,7 +413,7 @@ export default function CursoFormulario() {
                       Adicionar
                     </Button>
                   </LinhaVinculo>
-                </Coluna>
+                </Stack>
               </Card>
 
               <DataTable<CursoDisciplina>

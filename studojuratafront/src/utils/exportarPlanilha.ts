@@ -121,11 +121,7 @@ export function exportarExcel(
   return exportarExcelAbas(nomeArquivo, [{ nome: 'Dados', colunaRotulo, colunaValor, linhas, imagem }])
 }
 
-/**
- * Exporta várias tabelas num único .xlsx, uma aba por seção — usado no
- * relatório completo (pedido explícito: "exportar todos os dados, todas as
- * seções, em arquivos organizados").
- */
+/** Várias tabelas num único .xlsx, uma aba por seção (relatório completo). */
 export async function exportarExcelAbas(nomeArquivo: string, abas: AbaPlanilha[]) {
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'StudoJurata'

@@ -1,8 +1,6 @@
 /**
- * Confirmado no Figma: a borda dos campos de formulário é mais suave no
- * estado normal (o traço tem opacidade reduzida) e só fica sólida quando o
- * campo está em foco. Como as cores em `theme.ts` são hex sólido, esta
- * função converte pra rgba com o alpha desejado.
+ * As cores de `theme.ts` são hex sólido; converte para rgba, usado na borda
+ * esmaecida dos campos fora do foco.
  */
 export function corComOpacidade(hex: string, alpha: number): string {
   const valor = hex.replace('#', '')

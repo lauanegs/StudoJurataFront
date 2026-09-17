@@ -10,19 +10,13 @@ const CORES_NIVEL: Record<NivelDesempenho, string> = {
   alto: '#34C759',
 }
 
-/* Vertical (cabeçalho em cima, barra embaixo) — usado na grade de 4 por
-   linha do Dashboard. Horizontal (cabeçalho à esquerda, porcentagem à
-   direita) — confirmado pelo usuário para a lista de "Desempenho por
-   simulado", onde os cards ocupam a largura toda, um por linha. */
+/* Vertical: grade compacta. Horizontal: lista de largura total, um card por linha. */
 const Container = styled.article<{ $clicavel: boolean; $horizontal: boolean }>`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
 
-  /* Confirmado pelo usuário: numa grade (GradeDesempenho), todo card tem a
-     mesma altura — height:100% reforça o stretch que o grid já aplica por
-     padrão, garantindo que funcione mesmo fora de um grid (ex.: dentro de
-     um flex). */
+  /* Mesma altura entre cards também fora de um grid (ex.: dentro de flex). */
   width: 100%;
   height: 100%;
   padding: ${({ theme }) => theme.spacing.md};
@@ -70,8 +64,7 @@ const Cabecalho = styled.div<{ $horizontal: boolean }>`
   ${({ $horizontal }) => $horizontal && `flex: 1;`}
 `
 
-/* Pedido do usuário: sem fundo, ícone em cinza claro — deixa de competir
-   visualmente com a barra de porcentagem, que é o dado principal do card. */
+/* Sem fundo e em cinza claro para não competir com a barra de porcentagem. */
 const IconeSelo = styled.span`
   display: flex;
   align-items: center;
@@ -118,12 +111,8 @@ const BarraPorcentagem = styled.div<{ $cor: string; $horizontal: boolean }>`
   border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ $cor }) => $cor};
 
-  /* Confirmado pelo usuário: a barra fica sempre na extrema inferior do
-     card, mesmo quando a descrição de outro card na mesma linha ocupa mais
-     linhas — margin-top:auto empurra a barra pro fim do container flex
-     (coluna), independente da altura do cabeçalho acima dela. Só faz
-     sentido no layout vertical: no horizontal a barra já é um bloco à
-     direita, alinhado ao centro da linha. */
+  /* margin-top:auto mantém a barra na base mesmo quando o cabeçalho de outro
+     card da linha é mais alto. */
   ${({ $horizontal }) =>
     $horizontal
       ? `

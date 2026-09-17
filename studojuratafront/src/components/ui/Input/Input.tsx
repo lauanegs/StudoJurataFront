@@ -9,13 +9,9 @@ import { comTamanho } from '../../../utils/redimensionarIcone'
 import type { InputProps } from './types'
 
 /**
- * A moldura de rótulo/erro/contador continua sendo o <Field> compartilhado
- * com Select, TextArea e DatePicker — só a caixa de digitação em si passou a
- * ser o Input da Mantine, pra manter os campos visualmente iguais enquanto
- * os outros ainda não foram migrados.
- *
- * Confirmado no Figma: a borda fica em opacidade reduzida parada e só fica
- * sólida quando o campo ganha foco — por isso o `useState` de foco aqui.
+ * A moldura (rótulo/erro/contador) é o <Field> compartilhado com os demais
+ * campos. A borda fica esmaecida em repouso e sólida no foco, por isso o
+ * estado de foco.
  */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   {
@@ -70,20 +66,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     },
   }
 
-  // A largura da área do ícone (leftSection/rightSection) da Mantine, por
-  // padrão, é calculada a partir do `--input-height` interno — que segue o
-  // `size` do input, não a `altura` sobrescrita na mão aqui (pra bater com
-  // Select/DatePicker). Tentar sobrescrever isso via `styles.section` perde
-  // pra essa variável CSS (ela também controla o padding do texto, então só
-  // mudar a largura visual da seção deixava ícone e texto ainda calculados
-  // pro tamanho antigo). `leftSectionWidth`/`rightSectionWidth` são a prop
-  // oficial da Mantine pra isso — ajustam a seção E o padding do texto juntos.
+  // A Mantine calcula a largura da seção do ícone por --input-height, que
+  // ignora a `altura` customizada. leftSectionWidth/rightSectionWidth ajustam
+  // a seção e o padding do texto juntos; styles.section não.
   const larguraSecao = altura
 
-  // type="password" + alternarVisibilidade usa o PasswordInput da Mantine
-  // por baixo — é o único jeito de ter o botão de mostrar/esconder senha já
-  // acessível (foco, aria) sem reimplementar à mão. Mantém a mesma moldura
-  // (Field) e a mesma borda em opacidade reduzida fora do foco do Input comum.
+  // PasswordInput traz o botão de mostrar/esconder senha já acessível.
   if (type === 'password' && alternarVisibilidade) {
     return (
       <Field

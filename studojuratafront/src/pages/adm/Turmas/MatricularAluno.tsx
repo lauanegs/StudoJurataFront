@@ -14,6 +14,8 @@ import { Select } from '../../../components/ui/Select'
 import { Stepper } from '../../../components/ui/Stepper'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
+import { Stack } from '../../../components/ui/Stack'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useToast } from '../../../contexts/toastContexto'
@@ -37,27 +39,12 @@ import { PessoaCampos } from '../_compartilhado/PessoaCampos'
 import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
 import { paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
 
-/* Não existe transferência de aluno entre turmas nesta primeira versão da
- * plataforma (confirmado pelo usuário) — só estes três status ficam
- * editáveis aqui. Reativar uma matrícula CONCLUIDA (voltar para ATIVA)
- * também é feito por aqui, a critério da organização. */
+/* Não há transferência entre turmas. Reativar uma matrícula CONCLUIDA também é feito aqui. */
 const OPCOES_STATUS_MATRICULA_EDITAVEL: { value: StatusMatricula; label: string }[] = [
   { value: 'ATIVA', label: 'Ativa' },
   { value: 'CONCLUIDA', label: 'Concluída' },
   { value: 'CANCELADA', label: 'Cancelada' },
 ]
-
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
 
 const Aviso = styled.p`
   padding: ${({ theme }) => theme.spacing.sm};
@@ -87,16 +74,9 @@ const LinhaRodape = styled.div`
 type Passo = 'aluno' | 'responsavel' | 'matricula'
 
 /**
- * Fluxo passo a passo pra matricular um aluno numa turma (confirmado pelo
- * usuário): nada é gravado até o "Concluir matrícula" do último passo — só
- * então Pessoa/Aluno (se novo), Pessoa/Responsável + vínculo (se precisar) e
- * a Matrícula em si são criados em sequência. Isso evita registro órfão se o
- * admin abandonar o fluxo no meio (ex.: fechar a aba no passo 2).
- *
- * Editar uma matrícula existente continua sendo o formulário simples de
- * antes — só a criação de uma matrícula nova ganhou os passos, porque é aí
- * que faz sentido "ajudar a cadastrar o aluno se não tiver, um responsável
- * no mínimo, etc.".
+ * Nada é gravado até "Concluir matrícula": só então aluno, responsável e
+ * matrícula são criados em sequência, evitando registro órfão se o fluxo for
+ * abandonado. Editar uma matrícula existente usa um formulário simples.
  */
 export default function MatricularAluno() {
   const { turmaId, matriculaId } = useParams()
@@ -383,8 +363,7 @@ export default function MatricularAluno() {
     </>
   )
 
-  // Editar matrícula existente: formulário simples de sempre, sem os passos
-  // (o aluno já existe e já tem cadastro — não há o que "auxiliar" aqui).
+  // Editar matrícula existente: formulário simples, sem os passos.
   if (edicao) {
     return (
       <Layout>
@@ -404,7 +383,7 @@ export default function MatricularAluno() {
           <SkeletonCartao />
         ) : (
           <Card titulo="Dados da matrícula">
-            <Coluna>
+            <Stack gap="md">
               <Select<number>
                 label="Aluno"
                 required
@@ -415,7 +394,7 @@ export default function MatricularAluno() {
                 onChange={setAlunoIdExistente}
               />
 
-              <Grade>
+              <GradeAutoAjuste $larguraMinima="220px">
                 <DatePicker
                   label="Início da matrícula"
                   required
@@ -431,7 +410,7 @@ export default function MatricularAluno() {
                   hint="Opcional. Deixe em branco para matrícula em aberto."
                   onChange={(evento) => setDataFim(evento.target.value)}
                 />
-              </Grade>
+              </GradeAutoAjuste>
 
               <Select<StatusMatricula>
                 label="Situação da matrícula"
@@ -439,7 +418,7 @@ export default function MatricularAluno() {
                 value={status}
                 onChange={(valor) => valor && setStatus(valor)}
               />
-            </Coluna>
+            </Stack>
           </Card>
         )}
       </Layout>
@@ -479,7 +458,7 @@ export default function MatricularAluno() {
           />
 
           <Card titulo="Quem vai ser matriculado?">
-            <Coluna>
+            <Stack gap="md">
               {lotada && (
                 <Aviso role="status">
                   A turma atingiu a capacidade máxima informada. A matrícula ainda é possível, mas
@@ -519,7 +498,7 @@ export default function MatricularAluno() {
                   />
                 </>
               )}
-            </Coluna>
+            </Stack>
           </Card>
 
           <LinhaRodape>
@@ -546,7 +525,7 @@ export default function MatricularAluno() {
           )}
 
           <Card titulo="Responsável pelo aluno">
-            <Coluna>
+            <Stack gap="md">
               {!responsavelObrigatorio ? (
                 <>
                   <Aviso role="status">
@@ -604,7 +583,7 @@ export default function MatricularAluno() {
                   />
                 </>
               )}
-            </Coluna>
+            </Stack>
           </Card>
 
           <LinhaRodape>
@@ -621,8 +600,8 @@ export default function MatricularAluno() {
       {passo === 'matricula' && (
         <>
           <Card titulo="Dados da matrícula">
-            <Coluna>
-              <Grade>
+            <Stack gap="md">
+              <GradeAutoAjuste $larguraMinima="220px">
                 <DatePicker
                   label="Início da matrícula"
                   required
@@ -640,8 +619,8 @@ export default function MatricularAluno() {
                   hint="Opcional. Deixe em branco para matrícula em aberto."
                   onChange={(evento) => setDataFim(evento.target.value)}
                 />
-              </Grade>
-            </Coluna>
+              </GradeAutoAjuste>
+            </Stack>
           </Card>
 
           <LinhaRodape>

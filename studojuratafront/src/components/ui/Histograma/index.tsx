@@ -56,8 +56,7 @@ export function Histograma({
       }}
       withBarValueLabel
       maxBarWidth={64}
-      // Margem direita padrão da Mantine é maior que a esquerda — o
-      // gráfico inteiro ficava puxado pra direita dentro do card.
+      // A margem direita padrão da Mantine é maior e descentraliza o gráfico.
       barChartProps={{ margin: { left: 0, right: 8, top: 8, bottom: 0 } }}
       aria-label={rotuloAcessivel}
     />

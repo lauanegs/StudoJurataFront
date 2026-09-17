@@ -1,9 +1,8 @@
 import { LineChart } from '@mantine/charts'
 
 import { theme as tokens } from '../../../styles/theme'
+import { LIMIAR_BAIXO_DESEMPENHO } from '../../../utils/desempenho'
 import { formatarPorcentagem } from '../../../utils/format'
-
-const LIMIAR = 60
 
 export interface PontoGraficoLinha {
   chave: string
@@ -19,12 +18,7 @@ interface GraficoLinhaProps {
   altura?: number
 }
 
-/**
- * Evolução ao longo do tempo (ex.: média da turma entre simulados
- * sucessivos da mesma disciplina) — @mantine/charts. A linha de referência
- * em 60% marca o mesmo limiar do gatilho de reforço manual usado no
- * detalhamento por simulado.
- */
+/** Evolução ao longo do tempo, com linha de referência no limiar de baixo desempenho. */
 export function GraficoLinha({ pontos, rotuloAcessivel = 'Evolução ao longo do tempo', altura = 220 }: GraficoLinhaProps) {
   if (pontos.length < 2) return null
 
@@ -36,12 +30,11 @@ export function GraficoLinha({ pontos, rotuloAcessivel = 'Evolução ao longo do
       data={data}
       dataKey="rotulo"
       series={[{ name: 'valor', color: tokens.colors.blue }]}
-      referenceLines={[{ y: LIMIAR, label: `${LIMIAR}%`, color: tokens.colors.textTertiary }]}
+      referenceLines={[{ y: LIMIAR_BAIXO_DESEMPENHO, label: `${LIMIAR_BAIXO_DESEMPENHO}%`, color: tokens.colors.textTertiary }]}
       yAxisProps={{ domain: [0, 100] }}
       valueFormatter={(valor) => formatarPorcentagem(valor)}
       withDots
-      // Margem direita padrão da Mantine é maior que a esquerda — o
-      // gráfico inteiro ficava puxado pra direita dentro do card.
+      // A margem direita padrão da Mantine é maior e descentraliza o gráfico.
       lineChartProps={{ margin: { left: 0, right: 8, top: 8, bottom: 0 } }}
       aria-label={rotuloAcessivel}
     />

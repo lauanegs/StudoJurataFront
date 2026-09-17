@@ -9,13 +9,8 @@ import { theme as tokens } from '../../../styles/theme'
 import { comTamanho } from '../../../utils/redimensionarIcone'
 import type { DatePickerProps } from './types'
 
-// Sem isso, `dayjs(valorDigitado, 'DD/MM/YYYY')` (usado abaixo em dateParser)
-// ignora o formato passado — dayjs só respeita o 2º argumento com esse
-// plugin habilitado — e cai no parser nativo do JS, que não entende
-// DD/MM/YYYY (formato brasileiro). Sem esse parser próprio, o DateInput da
-// Mantine tenta o parser dela mesma (`dateStringParser`), que também não bate
-// certo com DD/MM/YYYY: digitar "15/10/2026" virava uma data completamente
-// diferente e sumia ao sair do campo.
+// Sem o plugin, dayjs ignora o formato do 2º argumento e cai no parser nativo,
+// que não entende DD/MM/YYYY; o parser padrão da Mantine também não.
 dayjs.extend(customParseFormat)
 
 const FORMATO_SAIDA: Record<'data' | 'dataHora', string> = {
@@ -78,22 +73,13 @@ function IconeCampo({
 }
 
 /**
- * Calendário de verdade (Mantine `DateInput`/`TimeInput`) no lugar do
- * `<input type="date">` nativo do navegador. O valor que entra e sai daqui
- * continua sendo a mesma string ISO de sempre (`YYYY-MM-DD` ou
- * `YYYY-MM-DDTHH:mm`) — a Mantine devolve o valor num formato próprio, então
- * a conversão é feita com dayjs pra nenhuma tela precisar mudar como lê/
- * escreve a data.
+ * Entrada e saída continuam em string ISO (`YYYY-MM-DD` ou
+ * `YYYY-MM-DDTHH:mm`); a conversão do formato da Mantine é feita aqui.
  *
- * Confirmado pelo usuário: precisa dar pra DIGITAR a data/hora (não só
- * escolher no calendário), clicando no ícone OU digitando direto — mesmo
- * padrão nos dois campos. `DatePickerInput`/`DateTimePicker` (usados antes)
- * sempre renderizam um `<button>` por trás — nunca aceitam texto digitado, é
- * comportamento fixo da lib (`PickerInputBase`), não dá pra contornar via
- * prop. `DateInput`/`TimePicker` são os componentes digitáveis equivalentes
- * da Mantine (cada um com seu próprio dropdown ao clicar no ícone); pra
- * `dataHora`, como a Mantine não tem um único campo de data+hora, a solução
- * é combinar os dois lado a lado.
+ * Usa `DateInput`/`TimePicker` porque a data precisa ser digitável:
+ * `DatePickerInput`/`DateTimePicker` renderizam um botão e não aceitam texto.
+ * Como a Mantine não tem campo único de data+hora digitável, `dataHora`
+ * combina os dois.
  */
 export function DatePicker({
   modo = 'data',
@@ -108,10 +94,7 @@ export function DatePicker({
   placeholder,
   maxWidth,
 }: DatePickerProps) {
-  // Refs pros campos (DateInput/TimePicker) — o ícone decorativo (leftSection)
-  // foca no campo real pra abrir o dropdown dele, já que agora ambos são
-  // inputs de verdade (não precisa mais do truque de "clicar num botão
-  // escondido" que o DatePickerInput/DateTimePicker exigia).
+  // O ícone (leftSection) foca o campo para abrir o dropdown dele.
   const campoDataRef = useRef<HTMLInputElement>(null)
   const campoHoraRef = useRef<HTMLInputElement>(null)
 

@@ -10,6 +10,7 @@ import { GraficoBarras } from '../../../components/ui/GraficoBarras'
 import { GraficoCard } from '../../../components/ui/GraficoCard'
 import { Header } from '../../../components/ui/Header'
 import { Histograma } from '../../../components/ui/Histograma'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
@@ -22,14 +23,6 @@ import { ResumoFiltrosDesempenho } from './ResumoFiltrosDesempenho'
 import { resumoFiltrosTexto } from './resumoFiltrosTexto'
 import { useDesempenhoDados } from './useDesempenhoDados'
 
-/* Mesmo padrão do Dashboard (Dashboard.tsx): duas colunas lado a lado em
-   telas largas, empilhando em telas estreitas. */
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: ${({ theme }) => theme.spacing.xl};
-`
-
 /* GraficoCard passa semPadding no card que envolve `detalhe` (a DataTable já
    tem sua própria margem interna) — conteúdo que não é tabela precisa do
    próprio espaçamento pra não colar nas bordas do card. */
@@ -37,9 +30,7 @@ const PreenchidoDetalhe = styled.div`
   padding: ${({ theme }) => theme.spacing.lg};
 `
 
-/* Mesmo padding/borda do cabeçalho do Card (titulo+actions) — pedido
-   explícito: a régua abaixo do título precisa aparecer aqui igual aparece
-   no card "Desempenho por questão" (que usa Card titulo=, não uma div solta). */
+/* Mesmo padding e borda do cabeçalho do Card. */
 const CabecalhoDetalhe = styled.div`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
@@ -51,12 +42,7 @@ const TituloDetalhe = styled.h3`
   color: ${({ theme }) => theme.colors.textStrong};
 `
 
-/**
- * Detalhamento de "Visão geral" (distribuição geral de notas + desempenho
- * médio por disciplina) — versão filtrável por turma/disciplina/aluno/
- * período do card de mesmo nome no Dashboard, aberta pelo botão "Ver
- * detalhes" de lá.
- */
+/** Versão filtrável do card "Visão geral" do painel de Desempenho. */
 export default function DesempenhoGeral() {
   const {
     turmaId,
@@ -130,9 +116,7 @@ export default function DesempenhoGeral() {
     { key: 'valor', cabecalho: 'Desempenho médio', alinhamento: 'right', render: (item) => item.valor },
   ]
 
-  // Valores exatos por trás do histograma — vira a tabela mostrada na
-  // impressão (no lugar do gráfico, que não imprime de forma confiável) e
-  // o conteúdo exportado pro Excel.
+  // Valores exatos do histograma, exportados junto com o gráfico no PDF e no Excel.
   const tabelaDistribuicao = useMemo(
     () =>
       calcularFaixasHistograma(notasPercentuais).map((faixa) => ({
@@ -143,10 +127,7 @@ export default function DesempenhoGeral() {
     [notasPercentuais],
   )
 
-  // Confirmado pelo usuário: o recorte aplicado (turma/disciplina/aluno/
-  // período) não fica mais solto na tela — some só pro detalhamento de cada
-  // gráfico, dentro do modal "Detalhar" (mesmo padrão do contexto já exibido
-  // no modal de "Desempenho por simulado").
+  // O recorte aplicado aparece só no modal "Detalhar" de cada gráfico.
   const recorteAplicado = {
     opcoesTurmas,
     opcoesDisciplinas,
@@ -206,7 +187,7 @@ export default function DesempenhoGeral() {
           />
         </Card>
       ) : (
-        <Grade>
+        <GradeAutoAjuste $larguraMinima="280px" $espaco="xl">
           <GraficoCard
             titulo="Distribuição geral das notas"
             descricao="Todas as tentativas concluídas dos simulados considerados, agrupadas em faixas de 20 pontos. Clique numa coluna pra ver quem está nela."
@@ -286,7 +267,7 @@ export default function DesempenhoGeral() {
               />
             }
           />
-        </Grade>
+        </GradeAutoAjuste>
       )}
     </Layout>
   )

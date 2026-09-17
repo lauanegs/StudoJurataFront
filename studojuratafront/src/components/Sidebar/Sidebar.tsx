@@ -6,8 +6,6 @@ import * as S from './styles'
 import type { ItemMenu, SidebarProps } from './types'
 
 /**
- * Navegação lateral persistente (doc §3.1).
- *
  * O item ativo é calculado pelo caminho atual: a rota exata ou qualquer rota
  * filha (`/adm/turmas/nova` mantém "Turmas" ativo).
  */

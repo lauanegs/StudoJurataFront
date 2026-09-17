@@ -54,7 +54,7 @@ const Meta = styled.div`
 `
 
 interface SimuladoIniciarCardProps {
-  /** Confirmado no Figma: o destaque do card é a disciplina, não o título interno do simulado. */
+  /** O destaque do card é a disciplina, não o título do simulado. */
   disciplina: string
   quantidadeQuestoes?: number | null
   /** Bloqueia o início (fora da janela de data, por exemplo). */

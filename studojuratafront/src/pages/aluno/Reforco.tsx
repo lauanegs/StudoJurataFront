@@ -1,13 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import { CheckCircle2, ClipboardList, Sparkles } from 'lucide-react'
 
 import { Layout } from '../../components/layout'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { DataTable } from '../../components/ui/DataTable'
-import { Header } from '../../components/ui/Header'
+import { Header, CamposFiltro, CampoFiltro } from '../../components/ui/Header'
 import { Select } from '../../components/ui/Select'
 import { SimuladoIniciarCard } from '../../components/ui/SimuladoIniciarCard'
 import { Tab } from '../../components/ui/Tab'
@@ -25,31 +24,8 @@ import {
 import { formatarDataHora, formatarTempo } from '../../utils/format'
 import type { SimuladoAlunoResponse } from '../../types'
 import type { Coluna } from '../../components/ui/DataTable/types'
+import { Stack } from '../../components/ui/Stack'
 
-const Lista = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* Confirmado no Figma: select de disciplina + botão "Buscar" colados, na
-   mesma linha, igual ao padrão já usado nas telas do professor (sem label
-   flutuante acima do campo, senão o bloco do Select fica mais alto que o
-   botão ao lado e a linha para de parecer alinhada). */
-const CamposCabecalho = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* O <Field> por baixo do Select pede width:100% do pai — dentro de um flex
-   item sem largura própria isso força o cálculo de shrink-to-fit e o campo
-   acaba quebrando de linha mesmo sobrando espaço. Uma largura fixa aqui
-   (mesmo padrão já usado nos headers do professor) resolve. */
-const CampoLargura = styled.div`
-  width: 280px;
-`
 
 type Aba = 'aFazer' | 'realizados'
 
@@ -58,9 +34,7 @@ export default function AlunoReforco() {
   const { alunoId, loading: carregandoAluno, error: erroAluno } = useAlunoLogado()
 
   const [aba, setAba] = useState<Aba>('aFazer')
-  // Confirmado no Figma: o filtro só se aplica ao clicar em "Buscar" — a
-  // seleção do campo (rascunho) fica separada do filtro de fato aplicado, que
-  // começa nulo (lista completa, sem filtro).
+  // O filtro só se aplica ao clicar em "Buscar"; a seleção do campo fica separada do aplicado.
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
 
@@ -124,8 +98,6 @@ export default function AlunoReforco() {
     return { indisponivel: false, motivo: undefined }
   }
 
-  // Confirmado no Figma: a tabela de "Simulados realizados" tem só 3 colunas
-  // (Título, Acertos, Tempo) — sem Disciplina nem Nota.
   const colunas: Coluna<SimuladoAlunoResponse>[] = [
     {
       key: 'titulo',
@@ -170,8 +142,8 @@ export default function AlunoReforco() {
       <Header
         titulo="Reforço de aprendizagem"
         filtros={
-          <CamposCabecalho>
-            <CampoLargura>
+          <CamposFiltro>
+            <CampoFiltro $largura="280px">
               <Select<number>
                 options={opcoesDisciplinas}
                 value={disciplinaSelecionada}
@@ -181,12 +153,12 @@ export default function AlunoReforco() {
                 emptyText="Nenhuma disciplina com simulados"
                 onChange={setDisciplinaSelecionada}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
             <Button size="large" onClick={() => setDisciplinaId(disciplinaSelecionada)}>
               Buscar
             </Button>
-          </CamposCabecalho>
+          </CamposFiltro>
         }
       />
 
@@ -221,9 +193,7 @@ export default function AlunoReforco() {
             />
           </Card>
         ) : (
-          // Confirmado no Figma: os cards de simulado ficam soltos direto no
-          // fundo da página, não dentro de um Card "container".
-          <Lista>
+          <Stack gap="md">
             {aFazer.map((tentativa) => {
               const simulado = porSimulado.get(tentativa.simuladoId)
               const situacao = disponibilidade(tentativa.simuladoId)
@@ -243,7 +213,7 @@ export default function AlunoReforco() {
                 />
               )
             })}
-          </Lista>
+          </Stack>
         ))}
 
       {aba === 'realizados' && (

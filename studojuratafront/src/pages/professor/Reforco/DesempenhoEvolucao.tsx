@@ -1,4 +1,3 @@
-import styled from 'styled-components'
 import { TrendingUp } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
@@ -8,6 +7,7 @@ import type { Coluna } from '../../../components/ui/DataTable/types'
 import { GraficoCard } from '../../../components/ui/GraficoCard'
 import { GraficoLinha } from '../../../components/ui/GraficoLinha'
 import { Header } from '../../../components/ui/Header'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
@@ -16,12 +16,6 @@ import { FiltrosDesempenho } from './FiltrosDesempenho'
 import { ResumoFiltrosDesempenho } from './ResumoFiltrosDesempenho'
 import { resumoFiltrosTexto } from './resumoFiltrosTexto'
 import { useDesempenhoDados } from './useDesempenhoDados'
-
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: ${({ theme }) => theme.spacing.xl};
-`
 
 interface PontoTabela {
   chave: string
@@ -35,11 +29,9 @@ const colunasPontos: Coluna<PontoTabela>[] = [
 ]
 
 /**
- * Detalhamento de "Evolução ao longo do tempo" — versão filtrável por
- * turma/disciplina/aluno/período do card de mesmo nome no Dashboard.
- * Filtrando por um aluno, cada linha passa a mostrar a evolução daquele
- * aluno especificamente (não mais a média da turma) — ver
- * useDesempenhoDados/tendenciaPorDisciplina.
+ * Versão filtrável do card "Evolução ao longo do tempo" do painel de
+ * Desempenho. Filtrando por aluno, cada linha mostra a evolução dele, não a
+ * média da turma.
  */
 export default function DesempenhoEvolucao() {
   const {
@@ -67,9 +59,7 @@ export default function DesempenhoEvolucao() {
     reload,
   } = useDesempenhoDados()
 
-  // Confirmado pelo usuário: o recorte aplicado (turma/disciplina/aluno/
-  // período) não fica mais solto na tela — some só pro detalhamento de cada
-  // gráfico, dentro do modal "Detalhar".
+  // O recorte aplicado aparece só no modal "Detalhar" de cada gráfico.
   const recorteAplicado = {
     opcoesTurmas,
     opcoesDisciplinas,
@@ -127,7 +117,7 @@ export default function DesempenhoEvolucao() {
           />
         </Card>
       ) : (
-        <Grade>
+        <GradeAutoAjuste $larguraMinima="280px" $espaco="xl">
           {tendenciaPorDisciplina.map((item) => (
             <GraficoCard
               key={item.disciplina}
@@ -165,7 +155,7 @@ export default function DesempenhoEvolucao() {
               }
             />
           ))}
-        </Grade>
+        </GradeAutoAjuste>
       )}
     </Layout>
   )

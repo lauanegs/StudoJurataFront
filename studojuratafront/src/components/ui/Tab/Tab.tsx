@@ -5,11 +5,8 @@ import { comTamanho } from '../../../utils/redimensionarIcone'
 import type { TabProps } from './types'
 
 /**
- * Confirmado no Figma (aba "Realizar chamada"): estilo de sublinhado, não
- * pílula — ativo/inativo variam só por fundo e borda inferior, o texto
- * mantém a mesma cor e peso nos dois estados. A navegação por seta
- * esquerda/direita, antes feita na mão, já vem pronta na Mantine (loop,
- * roving tabIndex, ARIA).
+ * Estilo de sublinhado: ativo e inativo variam só por fundo e borda inferior,
+ * o texto mantém cor e peso.
  */
 export function Tab<V extends string = string>({
   options,

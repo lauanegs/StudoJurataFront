@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Archive, Save, Users } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
@@ -13,6 +12,8 @@ import { Select } from '../../../components/ui/Select'
 import { TextArea } from '../../../components/ui/TextArea'
 import { TimePicker } from '../../../components/ui/TimePicker'
 import { VinculoConteudoAula } from '../../../components/ui/VinculoConteudo'
+import { Stack } from '../../../components/ui/Stack'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -24,18 +25,6 @@ import { aulas as servicoAulas, horariosTurma, planosAula } from '../../../servi
 import { formatarCargaHoraria, formatarHora, horaParaMinutos, horasParaHHmm } from '../../../utils/format'
 import { ROTULO_DIA_SEMANA_CURTO } from '../../../utils/labels'
 
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
 export default function AulaFormulario() {
   const { planoAulaId, aulaId } = useParams()
   const navegar = useNavigate()
@@ -46,11 +35,7 @@ export default function AulaFormulario() {
   const edicao = Boolean(aulaId)
   const idAula = aulaId ? Number(aulaId) : null
 
-  // Atalho vindo de "Registrar aula" (RegistrarAulaTurma) quando a disciplina
-  // ainda não tem nenhuma aula pendente no plano: sem isso, salvar aqui
-  // sempre mandava de volta pra lista de aulas do plano — o professor tinha
-  // que sair, voltar em Turmas, entrar na disciplina de novo, só pra
-  // finalmente registrar a chamada da aula que acabou de cadastrar.
+  // Vindo de "Registrar aula", salvar volta para lá em vez da lista de aulas do plano.
   const [searchParams] = useSearchParams()
   const retornarPara = searchParams.get('retornarPara')
   const destinoPadrao = retornarPara || `/professor/plano-aula/${idPlano}/aulas`
@@ -58,25 +43,16 @@ export default function AulaFormulario() {
   const [ordem, setOrdem] = useState('')
   const [titulo, setTitulo] = useState('')
   const [dataPrevista, setDataPrevista] = useState('')
-  // Sem campo na tela (esta tela só planeja a aula, não registra chamada —
-  // ver RegistrarAulaTurma.tsx) — mas precisa continuar guardado e voltando
-  // no corpo do PUT: AulaService.atualizar faz save() completo, não merge,
-  // então não reenviar apagaria silenciosamente a data de uma aula já
-  // ministrada só por ter sido editada aqui (título, observações...).
+  // Sem campo na tela, mas reenviado no PUT: AulaService.atualizar faz save()
+  // completo e apagaria a data de uma aula já ministrada.
   const [dataPublicacao, setDataPublicacao] = useState('')
-  // Horário da turma escolhido — a carga horária vem calculada dele (hora
-  // fim - hora início), não mais digitada. cargaHorariaManual (HH:mm, igual
-  // ao TimePicker de HorarioTurma) só é usada quando a turma ainda não tem
-  // NENHUM horário cadastrado — aí não há o que selecionar.
+  // A carga horária vem do horário escolhido; cargaHorariaManual (HH:mm) só
+  // quando a turma não tem nenhum horário cadastrado.
   const [horarioTurmaId, setHorarioTurmaId] = useState<number | null>(null)
   const [cargaHorariaManual, setCargaHorariaManual] = useState('')
   const [observacoes, setObservacoes] = useState('')
   const [erros, setErros] = useState<Record<string, string | undefined>>({})
-  // Conteúdos escolhidos ANTES de a aula existir (sem idAula ainda) — fica só
-  // aqui até salvar() criar a aula e vincular de verdade (confirmado pelo
-  // usuário: exigir salvar a aula primeiro pra só então vincular conteúdo
-  // era um impedimento — mesmo tratamento do QuestaoEditor, ver
-  // VinculoConteudoAula).
+  // Conteúdos escolhidos antes de a aula existir, vinculados em salvar().
   const [conteudoPlanoIdsPendentes, setConteudoPlanoIdsPendentes] = useState<number[]>([])
 
   const requisicaoPlano = useRequisicao(() => planosAula.buscar(idPlano), [idPlano])
@@ -173,11 +149,8 @@ export default function AulaFormulario() {
         ordem: ordemExibida ? Number(ordemExibida) : undefined,
         dataPrevista: dataPrevista || undefined,
         dataPublicacao: dataPublicacao || undefined,
-        // Com horário selecionado, o back recalcula cargaHoraria a partir
-        // dele de qualquer forma (AulaService.validar) — manda o valor já
-        // calculado aqui só pra não deixar o campo vazio até a resposta
-        // voltar. Sem horário cadastrado na turma, horarioTurma vai null e
-        // cargaHoraria é o que o professor digitou (HH:mm convertido em horas).
+        // Com horário, o back recalcula a carga horária de qualquer forma; sem
+        // horário cadastrado, vale o que o professor digitou (HH:mm em horas).
         horarioTurma: semHorarioCadastrado ? null : (horarioSelecionado ?? null),
         cargaHoraria: semHorarioCadastrado
           ? horaParaMinutos(cargaHorariaManual) / 60
@@ -299,7 +272,7 @@ export default function AulaFormulario() {
         <SkeletonCartao />
       ) : (
         <Card titulo="Dados da aula">
-          <Coluna>
+          <Stack gap="md">
             <Input
               label="Título da aula"
               required
@@ -311,7 +284,7 @@ export default function AulaFormulario() {
               onChange={(evento) => setTitulo(evento.target.value)}
             />
 
-            <Grade>
+            <GradeAutoAjuste $larguraMinima="200px">
               <Input
                 label="Ordem"
                 type="number"
@@ -354,7 +327,7 @@ export default function AulaFormulario() {
                 disabled={salvando}
                 onChange={(evento) => setDataPrevista(evento.target.value)}
               />
-            </Grade>
+            </GradeAutoAjuste>
 
             <TextArea
               label="Observações"
@@ -373,7 +346,7 @@ export default function AulaFormulario() {
               conteudoPlanoIdsPendentes={conteudoPlanoIdsPendentes}
               onChangePendentes={setConteudoPlanoIdsPendentes}
             />
-          </Coluna>
+          </Stack>
         </Card>
       )}
     </Layout>

@@ -12,8 +12,7 @@ const Container = styled.div`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.lg};
 
-  /* Confirmado no Figma: degradê azul horizontal sobre base cinza, não o roxo do banner. */
-  background: linear-gradient(90deg, #049dbf 0%, rgba(4, 157, 191, 0.5) 100%), #e6eaf2;
+    background: linear-gradient(90deg, #049dbf 0%, rgba(4, 157, 191, 0.5) 100%), #e6eaf2;
   border-radius: ${({ theme }) => theme.radius.md};
   box-shadow: ${({ theme }) => theme.shadow.floating};
 

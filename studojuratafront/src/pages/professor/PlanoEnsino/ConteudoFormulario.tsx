@@ -9,6 +9,8 @@ import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { TextArea } from '../../../components/ui/TextArea'
+import { Stack } from '../../../components/ui/Stack'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useToast } from '../../../contexts/toastContexto'
@@ -18,18 +20,6 @@ import { ApiError } from '../../../services/api'
 import { conteudosPlano, planosEnsino } from '../../../services/endpoints'
 import { theme as tokens } from '../../../styles/theme'
 
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
 const Ajuda = styled.div`
   display: flex;
   flex-direction: column;
@@ -37,10 +27,8 @@ const Ajuda = styled.div`
 `
 
 /**
- * Novo/editar conteúdo de um plano de ensino — página própria (não modal,
- * confirmado no Figma). A qualidade da descrição importa: é a partir dela
- * que o módulo de IA gera as questões dos simulados de reforço
- * (ia/service/GeracaoQuestaoIAService).
+ * A qualidade da descrição importa: é a partir dela que a IA gera as questões
+ * dos simulados de reforço.
  */
 export default function ConteudoFormulario() {
   const { planoId, conteudoId } = useParams()
@@ -176,8 +164,8 @@ export default function ConteudoFormulario() {
         <SkeletonCartao />
       ) : (
         <Card>
-          <Coluna>
-            <Grade>
+          <Stack gap="md">
+            <GradeAutoAjuste $larguraMinima="200px">
               <Input
                 label="Ordem"
                 type="number"
@@ -199,7 +187,7 @@ export default function ConteudoFormulario() {
                 maxLength={150}
                 onChange={(evento) => setTitulo(evento.target.value)}
               />
-            </Grade>
+            </GradeAutoAjuste>
 
             <Ajuda>
               <strong style={{ fontSize: tokens.typography.sizes.sm, color: tokens.colors.textStrong }}>
@@ -223,7 +211,7 @@ export default function ConteudoFormulario() {
               autoAltura
               onChange={(evento) => setDescricao(evento.target.value)}
             />
-          </Coluna>
+          </Stack>
         </Card>
       )}
     </Layout>

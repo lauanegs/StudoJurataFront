@@ -17,12 +17,12 @@ import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
 import { TimePicker } from '../../../components/ui/TimePicker'
+import { Stack } from '../../../components/ui/Stack'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
 import { useToast } from '../../../contexts/toastContexto'
 import { useAvisosDispensados } from '../../../hooks/useAvisosDispensados'
-import { useCargaHorariaCursada } from '../../../hooks/useCargaHorariaCursada'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { useEscola } from '../../../hooks/useEscola'
 import { useHidratar } from '../../../hooks/useHidratar'
@@ -57,14 +57,7 @@ import type {
   TurmaDisciplina,
 } from '../../../types'
 
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* Três campos por linha (confirmado pelo usuário) — não auto-fit, senão o
-   número de colunas varia com a largura da tela. */
+/* Três campos por linha fixos: com auto-fit o número de colunas variaria com a tela. */
 const Grade = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -75,10 +68,8 @@ const Grade = styled.div`
   }
 `
 
-/* Ações que dividem linha com Select/Input (56px) usam o mesmo size="large"
-   pra não ficarem mais baixas que o campo ao lado. Busca sempre por último
-   no JSX (extrema direita) — mesmo padrão do Header (actions antes, filtros
-   por último), confirmado pelo usuário. */
+/* Ações ao lado de campos usam size="large" para ter a mesma altura. A busca
+   vem por último (extrema direita), como no Header. */
 const LinhaAcaoFlutuante = styled.div`
   display: flex;
   align-items: center;
@@ -151,9 +142,7 @@ export default function TurmaFormulario() {
   const requisicaoCursos = useRequisicao(() => servicoCursos.listar(), [])
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
   const requisicaoProfessores = useRequisicao(() => servicoProfessores.listar(), [])
-  // Grade curricular do curso da turma (pedido explícito): só faz sentido
-  // vincular à turma uma disciplina que já faz parte do currículo do curso,
-  // cadastrado em /adm/cursos/:id (ver CursoFormulario).
+  // Só disciplinas da grade curricular do curso podem ser vinculadas à turma.
   const requisicaoGradeCurricular = useRequisicao(
     () => servicoCursoDisciplinas.listarPorCurso(cursoId as number),
     [cursoId],
@@ -188,9 +177,7 @@ export default function TurmaFormulario() {
   const historico = requisicaoHistorico.data ?? []
 
   const { dispensados: avisosDispensados, dispensar: dispensarAviso } = useAvisosDispensados()
-  /** Item pedido pelo usuário: aviso (só informativo, sem ação de reativar
-   * aqui) quando um aluno concluiu automaticamente a matrícula por ter
-   * atingido a carga horária do curso — ver FrequenciaService no back. */
+  /** Aviso informativo de matrícula concluída automaticamente por carga horária (FrequenciaService). */
   const avisosCargaHoraria = useMemo(
     () =>
       (requisicaoHistorico.data ?? []).filter(
@@ -225,9 +212,7 @@ export default function TurmaFormulario() {
     setAtiva(turma.status !== 'INATIVA')
   })
 
-  /** turmaDisciplinas.excluir() é soft-delete (status vira INATIVO no back) —
-   * precisa filtrar por status aqui também, senão a disciplina "removida"
-   * continua aparecendo na tabela mesmo depois do toast de sucesso. */
+  /** turmaDisciplinas.excluir() é soft-delete, então o vínculo inativo precisa ser filtrado. */
   const vinculosDaTurma = useMemo(
     () =>
       (requisicaoVinculos.data ?? []).filter(
@@ -236,12 +221,16 @@ export default function TurmaFormulario() {
     [requisicaoVinculos.data, turmaId],
   )
 
-  const requisicaoCargaHoraria = useCargaHorariaCursada(
-    ativos,
-    vinculosDaTurma,
-    aba === 'alunos' && !requisicaoAtivos.loading && !requisicaoVinculos.loading,
+  // Recalcula quando matrículas ou disciplinas da turma mudam, já que as duas alteram a carga horária.
+  const requisicaoFrequencia = useRequisicao(
+    () => servicoTurmas.frequenciaAlunos(turmaId as number),
+    [turmaId, requisicaoAtivos.data, requisicaoVinculos.data],
+    { ativo: aba === 'alunos' && Boolean(turmaId) },
   )
-  const cargaHorariaPorAluno = requisicaoCargaHoraria.data?.cargaHoraria ?? new Map<number, number>()
+  const cargaHorariaPorAluno = useMemo(
+    () => new Map((requisicaoFrequencia.data ?? []).map((resumo) => [resumo.alunoId, resumo.cargaHoraria])),
+    [requisicaoFrequencia.data],
+  )
 
   const opcoesCursos = useMemo(
     () =>
@@ -276,9 +265,7 @@ export default function TurmaFormulario() {
     gradeCurricularAtiva.length > 0 &&
     opcoesDisciplinas.length === 0
 
-  /** Visibilidade (pedido do usuário): disciplinas da grade curricular do curso ainda
-   * sem vínculo nesta turma, ou vinculadas mas sem professor — não bloqueia o salvamento,
-   * só sinaliza o que falta organizar. */
+  /** Disciplinas da grade sem vínculo ou sem professor: só sinaliza, não bloqueia o salvamento. */
   const disciplinasIncompletas = useMemo(() => {
     const grade = (requisicaoGradeCurricular.data ?? []).filter((item) => item.status !== 'INATIVO')
     return grade
@@ -617,7 +604,7 @@ export default function TurmaFormulario() {
         <>
           {(!edicao || aba === 'data') && (
             <Card titulo="Dados da turma">
-              <Coluna>
+              <Stack gap="md">
                 <Grade>
                   <Input
                     label="Nome da turma"
@@ -667,8 +654,7 @@ export default function TurmaFormulario() {
                     label="Data de término"
                     value={dataFim}
                     error={erros.dataFim}
-                    // Matrícula cíclica: uma turma ativa continua indefinidamente,
-                    // sem data de término definida — só ganha uma ao ser encerrada.
+                    // Turma ativa não tem data de término; só ganha uma ao ser encerrada.
                     disabled={salvando || ativa}
                     hint={ativa ? 'Só é definida ao encerrar a turma (Situação: Inativa).' : undefined}
                     onChange={(evento) => setDataFim(evento.target.value)}
@@ -687,7 +673,7 @@ export default function TurmaFormulario() {
                     }}
                   />
                 </Grade>
-              </Coluna>
+              </Stack>
             </Card>
           )}
 

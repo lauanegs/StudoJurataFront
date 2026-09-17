@@ -11,12 +11,7 @@ function lerDispensados(): number[] {
   }
 }
 
-/**
- * Lembra quais avisos (por id) o usuário já marcou como "ciente", persistindo
- * no navegador — usado pelo aviso de matrícula concluída por carga horária
- * (aba "Alunos ativos" da turma e tela do professor), pra não reaparecer
- * depois de dispensado.
- */
+/** Avisos (por id) já marcados como "ciente", persistidos no navegador. */
 export function useAvisosDispensados() {
   const [dispensados, setDispensados] = useState<number[]>(lerDispensados)
 

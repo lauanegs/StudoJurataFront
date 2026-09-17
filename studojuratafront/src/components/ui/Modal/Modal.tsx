@@ -3,15 +3,7 @@ import { Group, Modal as MantineModal, Text } from '@mantine/core'
 import { theme as tokens } from '../../../styles/theme'
 import type { ModalProps } from './types'
 
-/**
- * Trap de foco, fechar no Esc, restaurar foco anterior e travar o scroll do
- * body eram ~45 linhas de useEffect na mão — a Mantine já cobre tudo isso
- * por padrão (trapFocus/closeOnEscape/returnFocus/lockScroll).
- *
- * Usa os componentes compostos (Modal.Root/Content/Header/Body) em vez do
- * atalho <Modal> pra manter o rodapé fixo fora da área que rola, igual era
- * antes com <S.Rodape> fora de <S.Corpo>.
- */
+/** Componentes compostos em vez de <Modal> para o rodapé ficar fora da área que rola. */
 export function Modal({
   aberto,
   onClose,
@@ -56,10 +48,7 @@ export function Modal({
         <MantineModal.Body>{children}</MantineModal.Body>
 
         {rodape && (
-          // Padding lateral igual ao do Header/Body da Mantine (--mantine-spacing-md,
-          // usado internamente por eles) — antes era spacing.xl aqui, o dobro do
-          // Header/Body, deixando os botões visivelmente mais recuados que o
-          // resto do conteúdo do modal.
+          // Mesmo padding lateral do Header/Body da Mantine.
           <Group
             justify="flex-end"
             gap="md"

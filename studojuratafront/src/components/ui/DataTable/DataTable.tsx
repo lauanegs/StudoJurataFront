@@ -12,13 +12,8 @@ import type { Coluna, DataTableProps } from './types'
 type Direcao = 'asc' | 'desc'
 
 /**
- * Tabela de dados com os quatro estados obrigatórios das telas: loading
- * (skeleton), erro (com "tentar novamente"), vazio (com ação) e preenchido.
- *
- * A ordenação é feita no cliente porque nenhum endpoint do back aceita
- * parâmetro de ordenação — todos devolvem a lista inteira. A Mantine só
- * fornece a casca visual (Table/Paper/Group); ordenar, paginar e os estados
- * continuam sendo lógica de domínio, não trocam com a biblioteca.
+ * Ordena no cliente porque nenhum endpoint do back aceita ordenação: todos
+ * devolvem a lista inteira.
  */
 export function DataTable<T>({
   columns,
@@ -160,13 +155,8 @@ export function DataTable<T>({
               })}
 
               {actions && (
-                // width:1% + whiteSpace:nowrap (truque clássico de tabela): reserva
-                // só o espaço que os botões precisam em uma linha, sem forçar a
-                // coluna pro mínimo absoluto nem deixar outras colunas tomarem
-                // espaço demais. Só faz sentido quando a coluna NÃO pode quebrar
-                // (quebrarAcoes=false, o padrão) — com quebrarAcoes=true a coluna
-                // segue o algoritmo normal da tabela, pra sobrar espaço real pros
-                // botões antes de precisar ir pra uma segunda linha.
+                // width:1% + nowrap reserva só o espaço dos botões em uma linha;
+                // com quebrarAcoes a coluna segue o algoritmo normal da tabela.
                 <Table.Th
                   scope="col"
                   style={quebrarAcoes ? { textAlign: 'left' } : { textAlign: 'left', width: '1%', whiteSpace: 'nowrap' }}
@@ -194,12 +184,9 @@ export function DataTable<T>({
                 <Table.Tr
                   key={rowKey(item)}
                   tabIndex={onRowClick ? 0 : undefined}
-                  // Última linha sem borda embaixo — o Paper que envolve a tabela
-                  // já fecha o quadro por conta própria (borda dupla senão). A
-                  // chave só entra no objeto quando é mesmo a última linha —
-                  // com ela sempre presente (mesmo como `undefined`), o merge
-                  // do `style` local por cima do `styles.tr` do Mantine
-                  // apagaria a borda de TODAS as linhas, não só da última.
+                  // Última linha sem borda (o Paper já fecha o quadro). A chave só
+                  // entra na última linha: mesmo como `undefined`, o merge com
+                  // styles.tr apagaria a borda de todas.
                   style={{
                     cursor: onRowClick ? 'pointer' : undefined,
                     ...(indice === dadosOrdenados.length - 1 ? { borderBottom: 'none' } : null),

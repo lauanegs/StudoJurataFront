@@ -1,20 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom'
-import styled from 'styled-components'
 
+import { CarregandoTela } from '../components/feedback/CarregandoTela'
 import { useAuth } from '../hooks/useAuth'
 import type { TipoUsuario } from '../types'
-
-const Carregando = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 100%;
-  min-height: 100vh;
-
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
 
 interface RotaProtegidaProps {
   children: React.ReactNode
@@ -34,7 +22,7 @@ export function RotaProtegida({ children, perfis }: RotaProtegidaProps) {
   const localizacao = useLocation()
 
   if (loading) {
-    return <Carregando role="status">Carregando...</Carregando>
+    return <CarregandoTela />
   }
 
   if (!usuario) {

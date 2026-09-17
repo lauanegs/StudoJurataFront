@@ -14,19 +14,9 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   corDestaque?: string
   /** Altura mínima do campo. @default '56px' */
   altura?: string
-  /**
-   * Mantém a borda sempre em opacidade total, mesmo sem foco — confirmado no
-   * Figma pra tela de login. Nos demais formulários a borda fica esmaecida
-   * em repouso e só fica sólida no foco (comportamento padrão).
-   */
+  /** Borda sólida mesmo sem foco (tela de login). O padrão é esmaecida em repouso. */
   bordaSolida?: boolean
-  /**
-   * Só tem efeito com `type="password"`: troca a implementação por baixo
-   * para o `PasswordInput` da Mantine, com botão de olho para mostrar/
-   * esconder a senha. Fica fora por padrão — sem essa prop, `type="password"`
-   * continua sendo só um campo mascarado (como já era em `UsuarioFormulario`,
-   * por exemplo), sem mudar a aparência de nenhuma tela existente.
-   */
+  /** Só com `type="password"`: adiciona o botão de mostrar/esconder senha. */
   alternarVisibilidade?: boolean
   /**
    * Exibe o contador "x/maxLength" abaixo do campo quando `maxLength` está

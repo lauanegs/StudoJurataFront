@@ -9,6 +9,7 @@ import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
+import { Stack } from '../../../components/ui/Stack'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -26,12 +27,6 @@ import {
 import { OPCOES_ATIVO_INATIVO, OPCOES_TIPO_USUARIO } from '../../../utils/labels'
 import type { StatusAtivoInativo, TipoUsuario } from '../../../types'
 
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
 const Grade = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -43,8 +38,6 @@ const Grade = styled.div`
 `
 
 /**
- * Cadastro de usuário (login) — item 9.8 do documento de regras.
- *
  * Cria um login vinculado a uma Pessoa já cadastrada (Aluno/Professor/
  * Responsável), não um fluxo de pessoa+login do zero: a Pessoa em si é
  * cadastrada nas telas de Alunos/Professores/Responsáveis.
@@ -121,9 +114,7 @@ export default function UsuarioFormulario() {
     try {
       const pessoaEscolhida = (requisicaoPessoas.data ?? []).find((p) => p.id === pessoaId)
 
-      // Referência explícita ao perfil de negócio do login (item da entidade
-      // Usuario no back): busca o Aluno/Professor cujo pessoa.id bate com a
-      // pessoa escolhida, quando o tipo selecionado exigir.
+      // Usuario referencia o Aluno/Professor da pessoa escolhida, quando o tipo exigir.
       const alunoVinculado =
         tipoUsuario === 'ALUNO'
           ? (requisicaoAlunos.data ?? []).find((a) => a.pessoa?.id === pessoaId)
@@ -272,7 +263,7 @@ export default function UsuarioFormulario() {
         <SkeletonCartao />
       ) : (
         <Card titulo="Dados do usuário">
-          <Coluna>
+          <Stack gap="md">
             <Grade>
               <Select<number>
                 label="Pessoa"
@@ -331,7 +322,7 @@ export default function UsuarioFormulario() {
               disabled={salvando}
               onChange={(valor) => setAtivo(valor !== 'INATIVO')}
             />
-          </Coluna>
+          </Stack>
         </Card>
       )}
     </Layout>

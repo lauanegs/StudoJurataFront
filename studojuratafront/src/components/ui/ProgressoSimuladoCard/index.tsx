@@ -2,8 +2,7 @@ import styled from 'styled-components'
 
 export type QuestionProgressStatus = 'correct' | 'incorrect' | 'current' | 'answered' | 'pending'
 
-/* Confirmado no Figma (nós 1:887-926): acerto/erro usam degradês próprios,
-   diferentes dos tokens genéricos success/danger do tema. */
+/* Acerto/erro usam degradês próprios, não os tokens success/danger. */
 const COLORS: Record<QuestionProgressStatus, string> = {
   correct: 'linear-gradient(90deg, #0CCA4A 0%, #46A665 100%)',
   incorrect: 'linear-gradient(90deg, #F95738 0%, #F86624 100%)',
@@ -12,8 +11,7 @@ const COLORS: Record<QuestionProgressStatus, string> = {
   pending: 'rgba(115, 115, 115, 0.15)',
 }
 
-/* Mais compacto que o espaçamento do Figma (32px) — o card de progresso
-   estava ocupando altura demais na tela de execução do simulado. */
+/* Mais compacto que os 32px do Figma para não ocupar altura demais na prova. */
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -27,9 +25,6 @@ const Container = styled.div`
   border-radius: ${({ theme }) => theme.radius.md};
 `
 
-/* O texto não deve esticar pra ocupar a largura toda do card (ficava enorme
-   em telas largas) — fica com largura fixa, centralizado, sem nenhum
-   sombreado atrás (só o texto mesmo). */
 const Title = styled.p`
   align-self: center;
   width: fit-content;
@@ -41,8 +36,7 @@ const Title = styled.p`
   white-space: nowrap;
 `
 
-/* Centralizado (não mais esticado de ponta a ponta) — com poucas questões
-   cada segmento ocupava uma fração enorme da largura do card. */
+/* Centralizado: esticado, cada segmento ficava enorme com poucas questões. */
 const Track = styled.div`
   display: flex;
   justify-content: center;

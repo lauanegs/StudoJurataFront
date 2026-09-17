@@ -3,11 +3,7 @@ import styled from 'styled-components'
 import { MoedaIcone } from '../MoedaIcone'
 import { formatarMoedas } from '../../../utils/format'
 
-/**
- * Confirmado no Figma: badge de moedas translúcido sobre fundo roxo — usado
- * dentro de um Banner (Home do aluno) ou de um cabeçalho no mesmo tom
- * (Perfil do aluno). Antes duplicado em cada tela; agora é um componente só.
- */
+/** Badge translúcido pensado para fundo roxo (Banner da Home, cabeçalho do Perfil). */
 const Container = styled.div`
   display: inline-flex;
   align-items: center;

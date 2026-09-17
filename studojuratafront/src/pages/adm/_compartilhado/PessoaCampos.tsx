@@ -5,6 +5,7 @@ import { DatePicker } from '../../../components/ui/DatePicker'
 import { Input } from '../../../components/ui/Input'
 import { RadioGroup } from '../../../components/ui/RadioGroup'
 import { Select } from '../../../components/ui/Select'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { useToast } from '../../../contexts/toastContexto'
 import { formatarCep, formatarCpf, formatarTelefone } from '../../../utils/format'
 import { OPCOES_SEXO, OPCOES_UF } from '../../../utils/labels'
@@ -20,12 +21,6 @@ interface EnderecoViaCep {
   erro?: boolean
 }
 
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
 const LinhaInteira = styled.div`
   grid-column: 1 / -1;
 `
@@ -37,9 +32,7 @@ interface PessoaCamposProps {
   onExit: (campo: keyof DadosPessoa) => void
   disabled?: boolean
   rotuloNome?: string
-  /** Confirmado pelo usuário: dados pessoais e endereço viram abas separadas
-   * nas telas de Aluno/Professor/Responsável — "dados" (padrão) renderiza só
-   * os campos pessoais, "endereco" só o bloco de endereço. */
+  /** Qual aba renderizar: "dados" (padrão) ou "endereco". */
   secao?: 'dados' | 'endereco'
 }
 
@@ -90,7 +83,7 @@ export function PessoaCampos({
 
   if (secao === 'endereco') {
     return (
-      <Grade>
+      <GradeAutoAjuste $larguraMinima="240px">
         <Input
           label="CEP"
           placeholder="00000-000"
@@ -171,12 +164,12 @@ export function PessoaCampos({
           placeholder="Selecionar UF..."
           onChange={(value) => onChange('estado', value ?? '')}
         />
-      </Grade>
+      </GradeAutoAjuste>
     )
   }
 
   return (
-    <Grade>
+    <GradeAutoAjuste $larguraMinima="240px">
       <LinhaInteira>
         <Input
           label={rotuloNome}
@@ -249,6 +242,6 @@ export function PessoaCampos({
           error={erros.sexo}
         />
       </LinhaInteira>
-    </Grade>
+    </GradeAutoAjuste>
   )
 }

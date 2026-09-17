@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Check, ClipboardCheck, Pencil, Save, Sparkles, X } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
@@ -17,6 +16,8 @@ import { StatusBadge } from '../../../components/ui/StatusBadge'
 import { Tab } from '../../../components/ui/Tab'
 import { VinculoConteudoQuestao } from '../../../components/ui/VinculoConteudo'
 import * as SVinculo from '../../../components/ui/VinculoConteudo/styles'
+import { Stack } from '../../../components/ui/Stack'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -39,41 +40,12 @@ import {
 import { formatarData, paraInputDataHora } from '../../../utils/format'
 import { OPCOES_DESTINACAO, ROTULO_MOTIVO_RECOMENDACAO } from '../../../utils/labels'
 
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* Campos de data/hora numa linha própria, cheia — mesmo motivo de
-   SimuladoFormulario.tsx: dentro da Grade normal, o DatePicker "dataHora"
-   (dois campos internos: data + hora) ficava espremido, cortando o texto. */
-const LinhaDatas = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
 type Aba = 'configuracao' | 'questoes'
 
 /**
- * Aprovação de um simulado gerado pela IA — duas abas:
- * - Configuração: os mesmos campos de um simulado normal (SimuladoFormulario),
- *   pra revisar/completar antes de lançar (confirmado pelo usuário) — em
- *   especial "Disponível a partir de", que registra a data de lançamento e é
- *   sugerida a partir do prazo de revisão (SimuladoGeradoIA.prazoLancamento)
- *   quando o simulado ainda não tem uma definida.
- * - Questões: aprovação em lote das questões pendentes, uma de cada vez —
- *   reaproveita o mesmo QuestaoEditor usado em criar/editar simulado.
- *
- * Aluno-alvo e motivo da geração não são campos editáveis aqui — vêm do
- * vínculo criado na geração (GeracaoSimuladoIAService) e são só informativos.
+ * Configuração: os campos de um simulado normal, com "Disponível a partir de"
+ * sugerida pelo prazo de revisão. Questões: aprovação das pendentes.
+ * Aluno-alvo e motivo vêm da geração e são só informativos.
  */
 export default function AprovarSimulado() {
   const { simuladoId } = useParams()
@@ -429,8 +401,8 @@ export default function AprovarSimulado() {
         <SkeletonCartao />
       ) : aba === 'configuracao' ? (
         <Card titulo="Configuração do simulado">
-          <Coluna>
-            <Grade>
+          <Stack gap="md">
+            <GradeAutoAjuste $larguraMinima="220px">
               <Input
                 label="Título"
                 required
@@ -474,11 +446,7 @@ export default function AprovarSimulado() {
                 onChange={setPlanoEnsinoId}
               />
 
-              {/* Destinação e aluno-alvo não são editáveis aqui — um simulado
-                  de reforço automático nasce ESPECIFICO pra um único aluno já
-                  determinado pela recomendação que o gerou (ver SubtituloItem
-                  "Gerado pela IA" no cabeçalho); mudar isso não faz sentido
-                  pra esse tipo de simulado. */}
+              {/* Não editáveis: o reforço automático nasce ESPECIFICO para o aluno da recomendação. */}
               <Select
                 label="Destinação"
                 options={OPCOES_DESTINACAO.map((opcao) => ({ value: opcao.value, label: opcao.label }))}
@@ -506,9 +474,10 @@ export default function AprovarSimulado() {
                 hint="Distribuída igualmente entre as questões."
                 onChange={(evento) => setNotaMaxima(evento.target.value)}
               />
-            </Grade>
+            </GradeAutoAjuste>
 
-            <LinhaDatas>
+            {/* O DatePicker de data e hora tem dois campos internos e corta o texto em colunas mais estreitas. */}
+            <GradeAutoAjuste $larguraMinima="320px">
               <DatePicker
                 label="Disponível a partir de"
                 modo="dataHora"
@@ -523,7 +492,7 @@ export default function AprovarSimulado() {
                 value={dataFim}
                 onChange={(evento) => setDataFim(evento.target.value)}
               />
-            </LinhaDatas>
+            </GradeAutoAjuste>
 
             {vinculoIA && (
               <SVinculo.ChipsVinculo>
@@ -532,7 +501,7 @@ export default function AprovarSimulado() {
                 </Chip>
               </SVinculo.ChipsVinculo>
             )}
-          </Coluna>
+          </Stack>
         </Card>
       ) : questoes.length === 0 ? (
         <EstadoVazio

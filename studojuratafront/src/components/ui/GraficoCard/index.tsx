@@ -10,11 +10,7 @@ import { exportarExcel } from '../../../utils/exportarPlanilha'
 import { exportarPdfSecaoUnica } from '../../../utils/exportarPdf'
 import { renderizarGraficoComoImagem } from '../../../utils/renderizarGrafico'
 
-/* Confirmado pelo usuário: em vez de uma linha separando as seções do
-   modal, cada uma vira seu próprio retângulo (Card elevacao="none" — borda
-   cinza suave, raio padrão) — mesmo tratamento dado às seções do
-   detalhamento de simulado (DetalheSimuladoModal). Também contém melhor o
-   gráfico grande, que antes ficava "solto" no modal. */
+/* Cada seção do modal é um card próprio, como em DetalheSimuladoModal. */
 const SecaoDetalhe = styled.div`
   margin-top: ${({ theme }) => theme.spacing.lg};
 `
@@ -48,13 +44,9 @@ interface GraficoCardProps {
 }
 
 /**
- * Cada gráfico do painel de Reforço fica no seu próprio card branco (dentro
- * da seção maior de fundo transparente, mesmo padrão da Home) com um botão
- * "Detalhar" — abre o mesmo gráfico maior num modal, com as opções de
- * exportar os valores exatos em PDF (jsPDF) ou Excel (SheetJS) — geradas a
- * partir dos dados, não de uma captura da tela, que não imprimia de forma
- * confiável. Componente único pra não repetir essa mecânica em cada
- * gráfico (Histograma/GraficoBarras/GraficoLinha usam o mesmo).
+ * Card de gráfico com "Detalhar": abre o gráfico maior num modal com
+ * exportação em PDF (jsPDF) e Excel (exceljs), gerada a partir dos dados e não
+ * de captura de tela, que não imprimia de forma confiável.
  */
 export function GraficoCard({
   titulo,
@@ -125,11 +117,7 @@ export function GraficoCard({
         <Card elevacao="none">{renderGrafico(alturaDetalhe, true)}</Card>
         {detalhe && (
           <SecaoDetalhe>
-            {/* semPadding (item pedido pelo usuário): o conteúdo mais comum aqui é uma
-               DataTable, que já tem sua própria margem interna via linhas/bordas —
-               mesmo padrão do card "Desempenho por questão" em DetalheSimuladoModal.
-               Conteúdo que não é tabela (EstadoVazio, Skeleton) traz seu próprio
-               espaçamento. */}
+            {/* semPadding: o conteúdo costuma ser uma DataTable, que já tem margem interna. */}
             <Card elevacao="none" semPadding>
               {detalhe}
             </Card>

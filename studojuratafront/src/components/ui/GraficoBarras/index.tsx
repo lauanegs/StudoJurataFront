@@ -45,14 +45,10 @@ export function GraficoBarras({ itens, rotuloAcessivel = 'Comparativo', altura }
       // barras horizontais aqui).
       barProps={{ radius: [0, 8, 8, 0] }}
       withBarValueLabel
-      // Sem isso, nome de disciplina comprido (ex.: "Programação
-      // Gamificada") ficava cortado/vazando pra fora da área do eixo —
-      // reserva espaço fixo suficiente pro rótulo mais comum.
+      // Espaço fixo para nomes de disciplina longos não vazarem do eixo.
       yAxisProps={{ width: 150 }}
-      // O Recharts soma essa margem À largura do eixo Y — com as duas
-      // juntas, o gráfico inteiro ficava puxado pra direita (muito espaço
-      // vazio à esquerda). Zerando a margem, só o yAxisProps.width acima
-      // decide o espaço reservado pro rótulo.
+      // O Recharts soma essa margem à largura do eixo Y; zerada, só
+      // yAxisProps.width define o espaço do rótulo.
       barChartProps={{ margin: { left: 0, right: 24, top: 8, bottom: 8 } }}
       aria-label={rotuloAcessivel}
     />

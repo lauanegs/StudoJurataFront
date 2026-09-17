@@ -27,7 +27,7 @@ export const Centro = styled.div<{ $cor: string; $size: number; $espessura: numb
   align-items: center;
   justify-content: center;
 
-  /* Proporção confirmada no Figma: anel de 175px ~ texto de 32px. */
+  /* Proporção do Figma: anel de 175px ~ texto de 32px. */
   font-size: ${({ $size }) => Math.round($size * 0.183)}px;
   font-weight: ${({ theme }) => theme.typography.weights.bold};
   color: ${({ $cor }) => $cor};

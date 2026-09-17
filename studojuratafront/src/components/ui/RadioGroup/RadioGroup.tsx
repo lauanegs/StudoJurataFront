@@ -5,11 +5,6 @@ import { theme as tokens } from '../../../styles/theme'
 import { corComOpacidade } from '../../../utils/corComOpacidade'
 import type { RadioGroupProps } from './types'
 
-/**
- * Escolha única. Substitui o par de checkboxes "Feminino/Masculino" das telas
- * antigas — o back tem um único campo `sexo`, então dois checkboxes permitiam
- * um estado impossível (os dois marcados).
- */
 export function RadioGroup<V extends string = string>({
   options,
   value,

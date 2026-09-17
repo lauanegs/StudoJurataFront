@@ -44,12 +44,8 @@ const Tela = styled.div`
 `
 
 /*
- * O recorte da curva (abaixo) tem 368px de altura fixa e fica colado na
- * base do Banner — então o Banner precisa ter pelo menos ~196px (onde o
- * topo arredondado da curva começa, medido no próprio arquivo) pra não
- * cortar bem no meio do arco. Era esse corte que deixava a curva com cara
- * de "pico" pontudo em telas menores: o mínimo antigo (150px) cortava a
- * parte de cima arredondada e só sobrava o lado mais íngreme.
+ * O recorte da curva tem 368px fixos colados na base; abaixo de ~196px de
+ * altura o arco seria cortado e a curva viraria um "pico".
  */
 const Banner = styled.div`
   position: absolute;
@@ -62,15 +58,13 @@ const Banner = styled.div`
   overflow: hidden;
 `
 
-/* Confirmado no Figma: gradiente azul → roxo por baixo da foto. Retângulo
-   simples — sempre preenche 100% da faixa, acompanhando a tela. */
+/* Gradiente azul → roxo por baixo da foto, preenchendo toda a faixa. */
 const Gradiente = styled.div`
   position: absolute;
   inset: 0;
   background: ${({ theme }) => theme.gradients.border};
 `
 
-/* Confirmado no Figma: a foto entra só a 15% de opacidade sobre o gradiente. */
 const ImagemBanner = styled.img`
   position: absolute;
   inset: 0;
@@ -150,8 +144,7 @@ const Campos = styled.div`
   width: 100%;
 `
 
-/* Decorativo por enquanto (pedido do usuário) — sem lógica de recuperação
-   de senha implementada ainda. */
+/* Decorativo: não há recuperação de senha implementada. */
 const LinkEsqueciSenha = styled.a`
   align-self: center;
 
@@ -215,8 +208,7 @@ export default function Login() {
     try {
       const logado = await entrar(username.trim(), senha)
 
-      // O destino é decidido pelo tipoUsuario que o back devolveu — nunca por
-      // uma escolha do usuário na tela (como acontecia antes).
+      // O destino vem do tipoUsuario devolvido pelo back, nunca de escolha na tela.
       const destino =
         (localizacao.state as { de?: string } | null)?.de ??
         ROTA_INICIAL_POR_PERFIL[logado.tipoUsuario]

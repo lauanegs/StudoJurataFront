@@ -7,18 +7,9 @@ import { DatePicker } from '../../../components/ui/DatePicker'
 import { Modal } from '../../../components/ui/Modal'
 import { Select } from '../../../components/ui/Select'
 import type { SelectOption } from '../../../components/ui/Select'
+import { Stack } from '../../../components/ui/Stack'
 
-/* Confirmado pelo usuário: os 5 campos numa linha só, dentro do slot de
-   filtros do Header, ficavam grandes e apertados — viraram um botão
-   "Filtros" que abre um modal com os campos empilhados. Continua valendo o
-   pedido anterior: só filtra de verdade ao clicar em "Buscar" dentro do
-   modal, nunca ao trocar um campo. */
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
+/* Campos num modal: cinco numa linha do Header ficavam apertados. Só filtra ao clicar "Buscar". */
 const GradePeriodo = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -45,14 +36,7 @@ interface FiltrosDesempenhoProps {
   onLimpar: () => void
 }
 
-/**
- * Filtros compartilhados pelas 3 telas de detalhamento de desempenho
- * (Visão geral, Evolução, Por simulado) — turma, disciplina, aluno
- * individual e período. Um único lugar pra manter os 3 consistentes entre
- * si (ver useDesempenhoDados, que já traz as opções derivadas certas pra
- * cada campo). Fica atrás de um botão "Filtros" (modal), não solto no
- * Header — 5 campos numa linha só não cabia bem.
- */
+/** Filtros compartilhados pelas telas de detalhamento de desempenho. */
 export function FiltrosDesempenho({
   opcoesTurmas,
   opcoesDisciplinas,
@@ -107,7 +91,7 @@ export function FiltrosDesempenho({
           </>
         }
       >
-        <Coluna>
+        <Stack gap="md">
           <Select
             label="Turma"
             placeholder="Todas as turmas"
@@ -146,7 +130,7 @@ export function FiltrosDesempenho({
             <DatePicker label="De" value={dataInicio} onChange={(e) => onDataInicioChange(e.target.value)} />
             <DatePicker label="Até" value={dataFim} onChange={(e) => onDataFimChange(e.target.value)} />
           </GradePeriodo>
-        </Coluna>
+        </Stack>
       </Modal>
     </>
   )

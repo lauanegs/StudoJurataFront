@@ -7,12 +7,11 @@ import type { ButtonProps, ButtonSize, ButtonVariant } from './types'
 const SIZE_STYLES: Record<ButtonSize, { height: string; paddingInline: string; fontSize: string }> = {
   small: { height: '36px', paddingInline: tokens.spacing.sm, fontSize: tokens.typography.sizes.xs },
   medium: { height: '44px', paddingInline: tokens.spacing.lg, fontSize: tokens.typography.sizes.sm },
-  // 56px pra bater com a altura dos campos (Input/Select/DatePicker), quando um
-  // botão de ação divide linha com eles no header — confirmado no Figma.
+  // 56px para bater com a altura dos campos quando o botão divide linha com eles.
   large: { height: '56px', paddingInline: tokens.spacing.xl, fontSize: tokens.typography.sizes.md },
 }
 
-// 1.15em em cima do font-size de cada tamanho (confirmado no Figma).
+// 1.15em sobre o font-size de cada tamanho.
 const ICON_SIZES: Record<ButtonSize, number> = { small: 14, medium: 16, large: 18 }
 
 const GRADIENTS: Partial<Record<ButtonVariant, { from: string; to: string; border: string }>> = {
@@ -26,19 +25,12 @@ const GRADIENTS: Partial<Record<ButtonVariant, { from: string; to: string; borde
   success: { from: '#3DCB63', to: '#34C759', border: '#34C759' },
 }
 
-// Fundos que não são um degradê linear de 2 cores só — usam a mesma
-// propriedade CSS `background` literal do token, em vez do `gradient` da
-// Mantine (que só aceita from/to). Confirmado pelo usuário: o "info" precisa
-// ser IGUAL ao fundo da Sidebar, não uma aproximação de duas cores.
+// Fundos que não são degradê de 2 cores usam o `background` literal do token,
+// já que o `gradient` da Mantine só aceita from/to ("info" é igual ao fundo da Sidebar).
 const FUNDOS: Partial<Record<ButtonVariant, { background: string; border: string }>> = {
   info: { background: tokens.gradients.sidebar, border: tokens.colors.blue },
 }
 
-/**
- * Mesma API de sempre (variant/size/icon/loading/fullWidth) — por baixo,
- * delega pro Button da Mantine. Trocar a implementação não obriga a mexer
- * em nenhuma das telas que já usam <Button>.
- */
 export function Button({
   children,
   label,
@@ -61,16 +53,11 @@ export function Button({
   return (
     <MantineButton
       type={type}
-      // "secondary" era outline (fundo branco + borda roxa 2px) — confundia
-      // com a receita visual de Input/Select/DatePicker (mesma borda roxa
-      // grossa). "default" é o branco neutro da própria Mantine; o
-      // contorno fino cinza + texto roxo em negrito (ver styles.root abaixo)
-      // substitui a cor/espessura da borda sem trocar de variante de novo.
+      // "default" + contorno cinza (styles.root): uma borda roxa grossa se
+      // confundiria com os campos de formulário.
       variant={fundo ? 'filled' : gradient ? 'gradient' : variant === 'secondary' ? 'default' : 'subtle'}
       gradient={gradient ? { from: gradient.from, to: gradient.to, deg: 180 } : undefined}
-      // Confirmado no Figma: botão discreto de ação de linha (Detalhar,
-      // Registrar aula na tabela...) segue o cinza/azul neutro no hover —
-      // o roxo de marca fica reservado pra ação secundária/de destaque.
+      // Ação de linha de tabela: hover neutro, o roxo fica para ações de destaque.
       color={variant === 'subtle' ? 'brandNeutral' : undefined}
       leftSection={comTamanho(icon, ICON_SIZES[size])}
       rightSection={comTamanho(iconRight, ICON_SIZES[size])}
@@ -83,20 +70,12 @@ export function Button({
           ...SIZE_STYLES[size],
           fontWeight: variant === 'secondary' ? tokens.typography.weights.semiBold : tokens.typography.weights.medium,
           background: fundo && !disabled ? fundo.background : undefined,
-          // Desabilitado nunca tem borda: com a borda de 2px, um botão gradient
-          // desligado ficava parecendo campo de formulário (input/select), em
-          // vez de um botão que simplesmente não pode ser clicado agora.
+          // Desabilitado sem borda: com ela, parecia um campo de formulário.
           border: corDaBorda && !disabled && !noBorder ? `2px solid ${corDaBorda}` : undefined,
-          // "secondary": contorno fino cinza (não roxo, pra não colidir com a
-          // borda de 2px roxa dos campos) + texto roxo escuro em negrito —
-          // ainda lê como ação de marca, mas com receita visual própria.
+          // Contorno cinza (não roxo, para não colidir com os campos) + texto roxo em negrito.
           ...(variant === 'secondary' && !disabled
             ? {
-                // Mesma grossura de borda do Input/Select/DatePicker (2px) —
-                // só a cor muda (cinza neutro, não roxo). Sem sombra: mesmo
-                // shadow.base (a mais suave do sistema) ainda chamava atenção
-                // demais pra um botão de contorno — um botão outline lê bem
-                // só com a borda, não precisa de elevação.
+                // Sem sombra: um botão de contorno já lê bem só com a borda.
                 border: `2px solid ${tokens.colors.borderStrong}`,
                 color: tokens.colors.purpleDark,
               }

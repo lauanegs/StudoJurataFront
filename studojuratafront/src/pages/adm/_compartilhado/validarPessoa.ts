@@ -1,4 +1,4 @@
-import { apenasDigitos, cpfValido } from '../../../utils/validacao'
+import { apenasDigitos, cpfValido, email } from '../../../utils/validacao'
 import type { Pessoa } from '../../../types'
 import type { DadosPessoa } from './dadosPessoa'
 
@@ -35,11 +35,10 @@ export function validarPessoa(valores: DadosPessoa): Partial<Record<keyof DadosP
     }
   }
 
-  if (valores.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(valores.email.trim())) {
-    erros.email = 'E-mail inválido'
-  }
+  const erroEmail = email(valores.email)
+  if (erroEmail) erros.email = erroEmail
 
-  // Endereço é todo opcional (item 9.8) — só valida formato do que foi preenchido.
+  // Endereço é todo opcional: só valida o formato do que foi preenchido.
   if (valores.cep && apenasDigitos(valores.cep).length !== 8) {
     erros.cep = 'CEP incompleto'
   }
@@ -64,8 +63,7 @@ export function abaDoCampoPessoa(campo: keyof DadosPessoa): 'dados' | 'endereco'
 }
 
 export function paraPayloadPessoa(valores: DadosPessoa): Partial<Pessoa> {
-  // Bloco de endereço é todo opcional (item 9.8): só manda o objeto se algum
-  // campo foi preenchido, pra não gravar um Endereco vazio sem necessidade.
+  // Só envia o endereço se algum campo foi preenchido, para não gravar um Endereco vazio.
   const enderecoPreenchido =
     valores.cep || valores.logradouro || valores.numero || valores.complemento ||
     valores.bairro || valores.cidade || valores.estado

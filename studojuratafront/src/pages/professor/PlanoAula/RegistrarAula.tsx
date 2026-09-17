@@ -24,12 +24,6 @@ import { theme as tokens } from '../../../styles/theme'
 import type { AlunoTurma } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
 
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
 const Resumo = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing.md};

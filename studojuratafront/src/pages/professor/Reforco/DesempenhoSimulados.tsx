@@ -22,12 +22,8 @@ const VARIANTE_POR_NIVEL: Record<'baixo' | 'medio' | 'alto', TagVariant> = {
 }
 
 /**
- * Detalhamento de "Desempenho por simulado" — versão filtrável por
- * turma/disciplina/aluno/período do card de mesmo nome no Dashboard, em
- * formato de tabela pra padronizar com as demais listagens do sistema. O
- * botão "Detalhar" (mesmo padrão das outras tabelas) abre o mesmo modal de
- * detalhamento (DetalheSimuladoModal) já usado lá, respeitando o aluno
- * filtrado quando houver um selecionado.
+ * Versão filtrável, em tabela, do card "Desempenho por simulado" do painel de
+ * Desempenho. "Detalhar" abre o DetalheSimuladoModal respeitando o aluno filtrado.
  */
 export default function DesempenhoSimulados() {
   const {
@@ -66,15 +62,9 @@ export default function DesempenhoSimulados() {
     ? opcoesAlunos.find((opcao) => opcao.value === filtrosAplicados.alunoId)?.label
     : undefined
 
-  // Confirmado pelo usuário: o modal de detalhamento (DetalheSimuladoModal)
-  // não recebe mais o resumo de filtros daqui — ele já mostra os próprios
-  // dados do simulado (turma, disciplina, data, destinação); repetir o
-  // recorte da tela por cima disso duplicava a mesma informação duas vezes.
+  // O modal não recebe o resumo de filtros: ele já mostra os dados do próprio simulado.
 
-  // Confirmado pelo usuário: aqui a ordem é por realização, mais recente
-  // primeiro — diferente da ordem padrão de `desempenhos` (pior desempenho
-  // primeiro, usada no Dashboard pra chamar atenção pros críticos). Sem data
-  // (simulado sem dataInicio nem createdAt), o item fica no fim da lista.
+  // Mais recente primeiro; sem dataInicio nem createdAt, o item fica no fim.
   const desempenhosPorData = useMemo(
     () =>
       [...desempenhos].sort((a, b) => {

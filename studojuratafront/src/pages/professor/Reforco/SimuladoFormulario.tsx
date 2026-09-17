@@ -47,31 +47,11 @@ import { deInputDataHora, paraInputDataHora } from '../../../utils/format'
 import { OPCOES_DESTINACAO, ROTULO_TIPO_QUESTAO } from '../../../utils/labels'
 import type { QuestaoResponse, SimuladoResponse, TipoDestinacaoSimulado } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
+import { Stack } from '../../../components/ui/Stack'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 
 /** Regra de negócio: um simulado nunca pode ter mais que 10 questões (ver SimuladoQuestaoService no back). */
 const MAXIMO_QUESTOES = 10
-
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* Campos de data/hora numa linha própria, cheia — pedido explícito: dentro
-   da Grade normal (minmax 220px) o DatePicker "dataHora" (dois campos
-   internos: data + hora) ficava espremido demais, cortando o texto digitado.
-   minmax maior aqui dá espaço de sobra pros dois campos internos. */
-const LinhaDatas = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
 
 const ListaAlunos = styled.div`
   display: flex;
@@ -125,14 +105,10 @@ export default function SimuladoFormulario() {
   const [modalAlunos, setModalAlunos] = useState(false)
   const [alunosSelecionados, setAlunosSelecionados] = useState<number[]>([])
 
-  // Confirmado no Figma: filtra por Disciplina + Buscar (não busca livre por
-  // texto) e permite marcar mais de uma questão — cada uma marcada vira uma
-  // questão nova no simulado (não substitui o slot ativo).
+  // Cada questão marcada vira uma questão nova, sem substituir a ativa.
   const [modalImportar, setModalImportar] = useState(false)
   const [disciplinaBancoId, setDisciplinaBancoId] = useState<number | null>(null)
-  // Valor efetivamente usado no filtro — só atualiza ao clicar "Buscar"
-  // (pedido explícito: trocar a disciplina no Select não deve refiltrar
-  // sozinho, senão parece que a busca "adivinha" sem precisar do clique).
+  // Filtro aplicado: só muda ao clicar "Buscar".
   const [disciplinaBancoIdAplicada, setDisciplinaBancoIdAplicada] = useState<number | null>(null)
   const [filtroBancoAplicado, setFiltroBancoAplicado] = useState(false)
   const [questoesBancoSelecionadas, setQuestoesBancoSelecionadas] = useState<Set<number>>(new Set())
@@ -143,9 +119,7 @@ export default function SimuladoFormulario() {
   const [modalImportarSimulado, setModalImportarSimulado] = useState(false)
   const [turmaImportarId, setTurmaImportarId] = useState<number | null>(null)
   const [disciplinaImportarId, setDisciplinaImportarId] = useState<number | null>(null)
-  // Valores efetivamente usados no filtro — só atualizam ao clicar "Buscar"
-  // (mesmo motivo do banco de questões acima: trocar Turma/Disciplina não
-  // deve refiltrar sozinho depois do primeiro clique em Buscar).
+  // Filtros aplicados: só mudam ao clicar "Buscar".
   const [turmaImportarIdAplicada, setTurmaImportarIdAplicada] = useState<number | null>(null)
   const [disciplinaImportarIdAplicada, setDisciplinaImportarIdAplicada] = useState<number | null>(null)
   const [filtroImportarAplicado, setFiltroImportarAplicado] = useState(false)
@@ -191,12 +165,8 @@ export default function SimuladoFormulario() {
   // misturar as duas responsabilidades; ver hidratação de `questoes` abaixo.
   const requisicaoVinculosSimulado = useRequisicao(() => simuladoQuestoes.listar(), [], { ativo: edicao })
 
-  // Trava de revisão humana (mesma regra de SimuladoService.lancar() no
-  // back): enquanto este simulado tiver questão ATIVA ainda PENDENTE, ele só
-  // pode ser mexido pela tela de aprovação (AprovarSimulado.tsx) — nunca por
-  // este editor normal, que tem "Lançar" disponível. Cobre quem chega aqui
-  // direto por URL/atalho, não só quem navega pela listagem (Simulados.tsx
-  // já para de linkar "Editar"/"Lançar" pra esses simulados).
+  // Com questão ATIVA ainda PENDENTE, o simulado só pode ser mexido na tela de
+  // aprovação; cobre também o acesso direto pela URL.
   const carregandoTravaAprovacao =
     edicao && (requisicaoVinculosSimulado.loading || requisicaoBancoQuestoes.loading)
 
@@ -276,8 +246,7 @@ export default function SimuladoFormulario() {
         return
       }
 
-      // Defensivo: o simulado de origem, em tese, já respeita o limite — mas
-      // corta aqui também (ex.: dado antigo de antes da regra existir).
+      // Simulados antigos podem ter mais questões que o limite atual.
       const cortadas = Math.max(0, importadas.length - MAXIMO_QUESTOES)
       const importadasFinal = importadas.slice(0, MAXIMO_QUESTOES)
 
@@ -364,13 +333,8 @@ export default function SimuladoFormulario() {
     setNotaMaxima(simulado.notaMaxima?.toString() ?? '10')
   })
 
-  // Carrega as questões JÁ SALVAS deste simulado (editar um existente sem
-  // isso mostrava sempre 1 questão em branco, mesmo com questões reais
-  // vinculadas — o estado `questoes` só era populado pra criação do zero ou
-  // pelos fluxos de importar). Combina as 3 requisições numa só referência
-  // estável, porque useHidratar só aplica quando o valor muda de referência
-  // e as 3 precisam estar prontas juntas pra resolver enunciado+alternativas
-  // de cada questão vinculada.
+  // Questões já salvas do simulado. As 3 requisições viram uma referência
+  // estável porque useHidratar aplica por referência e precisa das 3 prontas.
   const dadosParaHidratarQuestoes = useMemo(() => {
     if (!edicao) return null
     if (!requisicaoVinculosSimulado.data || !requisicaoBancoQuestoes.data || !requisicaoBancoAlternativas.data) {
@@ -446,9 +410,7 @@ export default function SimuladoFormulario() {
   )
 
   const somenteLeitura = edicao && requisicaoSimulado.data?.status !== 'RASCUNHO'
-  // Item pedido pelo usuário: mesmo travado (somenteLeitura), um simulado
-  // PUBLICADO ainda pode ter a disponibilidade estendida — único campo
-  // editável depois do lançamento (ver salvarDisponibilidade()).
+  // Mesmo em somenteLeitura, um simulado PUBLICADO pode ter a disponibilidade estendida.
   const podeEstenderDisponibilidade = requisicaoSimulado.data?.status === 'PUBLICADO'
 
   function validarCabecalho() {
@@ -600,13 +562,7 @@ export default function SimuladoFormulario() {
     }
   }
 
-  /**
-   * Item pedido pelo usuário: mesmo com o simulado já PUBLICADO (edição
-   * geral travada — ver `somenteLeitura`), o professor ainda precisa poder
-   * "disponibilizar por mais tempo". Único campo que continua editável
-   * depois do lançamento, via endpoint dedicado (não passa pelo `salvar()`
-   * geral, que o back rejeita fora do RASCUNHO).
-   */
+  /** Endpoint dedicado: o `salvar()` geral é rejeitado pelo back fora do RASCUNHO. */
   async function salvarDisponibilidade() {
     if (!simuladoId) return
 
@@ -696,11 +652,8 @@ export default function SimuladoFormulario() {
   }
 
   /**
-   * Importa o conteúdo de uma ou mais questões já existentes no banco —
-   * confirmado no Figma: seleção múltipla via checkbox. Cada marcada vira
-   * uma questão NOVA no simulado (sem `id`, pra `salvar()` criar o vínculo
-   * SimuladoQuestao — se reaproveitássemos o id, ele pularia essa criação
-   * assumindo que quem já tem id já está vinculado a este simulado).
+   * Cada questão importada entra sem `id`: com id, `salvar()` assumiria que já
+   * está vinculada a este simulado e não criaria o SimuladoQuestao.
    */
   function alternarQuestaoBancoSelecionada(id: number) {
     setQuestoesBancoSelecionadas((atuais) => {
@@ -740,13 +693,9 @@ export default function SimuladoFormulario() {
       }
     })
 
-    // A primeira questão (se ainda vazia) é substituída; as demais são adicionadas.
-    // O índice final precisa vir do tamanho do array RESULTANTE (calculado
-    // aqui, não de `questoes.length` do closure) — quando a única questão
-    // vazia inicial é descartada, o array final fica 1 item menor do que
-    // `questoes.length + importadas.length` sugeriria, e `questaoAtiva`
-    // apontava pra fora do array: a questão importada nunca aparecia,
-    // porque o editor renderizava `questoes[questaoAtiva]` undefined.
+    // A primeira questão, se vazia, é substituída. O índice final vem do array
+    // resultante: descartar a vazia deixa o array menor que
+    // questoes.length + importadas.length.
     const questoesFinal = primeiraVaziaAntes ? importadas : [...questoes, ...importadas]
     const cortadasPeloLimite = todasEscolhidas.length - escolhidas.length
 
@@ -859,8 +808,8 @@ export default function SimuladoFormulario() {
       ) : aba === 'configuracao' ? (
         <>
           <Card titulo="Configuração do simulado">
-            <Coluna>
-              <Grade>
+            <Stack gap="md">
+              <GradeAutoAjuste $larguraMinima="220px">
                 <Input
                   label="Título"
                   required
@@ -948,9 +897,10 @@ export default function SimuladoFormulario() {
                   hint="Distribuída igualmente entre as questões."
                   onChange={(evento) => setNotaMaxima(evento.target.value)}
                 />
-              </Grade>
+              </GradeAutoAjuste>
 
-              <LinhaDatas>
+              {/* O DatePicker de data e hora tem dois campos internos e corta o texto em colunas mais estreitas. */}
+              <GradeAutoAjuste $larguraMinima="320px">
                 <DatePicker
                   label="Disponível a partir de"
                   modo="dataHora"
@@ -968,7 +918,7 @@ export default function SimuladoFormulario() {
                   disabled={somenteLeitura && !podeEstenderDisponibilidade}
                   onChange={(evento) => setDataFim(evento.target.value)}
                 />
-              </LinhaDatas>
+              </GradeAutoAjuste>
 
               {tipoDestinacao === 'ESPECIFICO' && (
                 <SVinculo.SecaoVinculo>
@@ -1020,7 +970,7 @@ export default function SimuladoFormulario() {
                   )}
                 </SVinculo.SecaoVinculo>
               )}
-            </Coluna>
+            </Stack>
           </Card>
         </>
       ) : (
@@ -1152,7 +1102,7 @@ export default function SimuladoFormulario() {
           </>
         }
       >
-        <Coluna>
+        <Stack gap="md">
           <Select<number>
             label="Disciplina"
             options={opcoesDisciplinas}
@@ -1186,7 +1136,7 @@ export default function SimuladoFormulario() {
               icon: <ClipboardCheck />,
             }}
           />
-        </Coluna>
+        </Stack>
       </Modal>
 
       <Modal
@@ -1205,8 +1155,8 @@ export default function SimuladoFormulario() {
           </>
         }
       >
-        <Coluna>
-          <Grade>
+        <Stack gap="md">
+          <GradeAutoAjuste $larguraMinima="220px">
             <Select<number>
               label="Turma"
               options={opcoesTurmasImportar}
@@ -1223,7 +1173,7 @@ export default function SimuladoFormulario() {
               placeholder="Todas"
               onChange={setDisciplinaImportarId}
             />
-          </Grade>
+          </GradeAutoAjuste>
 
           <Button
             variant="secondary"
@@ -1250,7 +1200,7 @@ export default function SimuladoFormulario() {
               icon: <FolderInput />,
             }}
           />
-        </Coluna>
+        </Stack>
       </Modal>
     </Layout>
   )

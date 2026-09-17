@@ -50,19 +50,13 @@ export interface QuestaoEditorProps {
   conteudo?: React.ReactNode
 }
 
-// Confirmado com o usuário: a tela de simulado do aluno segue o layout do
-// Figma com até 3 alternativas por questão — o cadastro trava nesse mesmo
-// limite pra nenhuma questão nova sair maior do que a tela comporta.
+// A tela de simulado do aluno comporta até 3 alternativas por questão.
 export const MAXIMO_ALTERNATIVAS = 3
 export const MINIMO_ALTERNATIVAS = 2
 
 /**
- * Confirmado no Figma ("novo simulado — tipo questão v/f"): uma questão V/F
- * é uma lista de afirmações — cada uma julgada Verdadeira ou Falsa de forma
- * independente (não é "só uma está certa" como em Alternativas). O back
- * relaxa a regra de "no máximo uma correta" especificamente pra esse tipo
- * (AlternativaService.validarCorretaUnica), então várias `correta: true` na
- * mesma questão são esperadas aqui.
+ * Em V/F cada afirmação é julgada à parte, então várias `correta: true` na
+ * mesma questão são esperadas (o back só limita a uma correta em ALTERNATIVAS).
  */
 export function afirmacoesVerdadeiroFalso(): AlternativaEditavel[] {
   return [

@@ -41,7 +41,6 @@ export const SeletorTipo = styled.div`
   gap: ${({ theme }) => theme.spacing.xxs};
 `
 
-/** Confirmado no Figma ("Novo simulado"): opção inativa é branca com borda roxa fina. */
 export const OpcaoTipo = styled.button<{ $ativa: boolean }>`
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
   border-radius: ${({ theme }) => theme.radius.sm};
@@ -157,11 +156,7 @@ export const Dica = styled.span`
   color: ${({ theme }) => theme.colors.textTertiary};
 `
 
-/* Confirmado pelo usuário: a navegação entre questões (números + "Nova
-   questão") fica dentro do mesmo card da questão atual, não num card
-   branco separado embaixo — mesmo tratamento de borda superior do Rodape
-   (alternativas), só que centralizado e envolvendo pílulas que quebram
-   linha em telas estreitas. */
+/* Navegação entre questões dentro do card da questão atual, com a mesma borda superior do Rodape. */
 export const SecaoNavegador = styled.div`
   display: flex;
   align-items: center;

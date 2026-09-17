@@ -79,11 +79,6 @@ export function deInputDataHora(valor?: string | null): string | null {
   return valor.length === 16 ? `${valor}:00` : valor
 }
 
-export function paraInputData(valor?: string | null): string {
-  if (!valor) return ''
-  return valor.slice(0, 10)
-}
-
 export function formatarCpf(cpf?: string | null): string {
   if (!cpf) return INVALIDO
 
@@ -113,18 +108,6 @@ export function formatarCep(cep?: string | null): string {
   const digitos = cep.replace(/\D/g, '').slice(0, 8)
 
   return digitos.replace(/(\d{5})(\d)/, '$1-$2')
-}
-
-export function formatarCnpj(cnpj?: string | null): string {
-  if (!cnpj) return INVALIDO
-
-  return cnpj
-    .replace(/\D/g, '')
-    .slice(0, 14)
-    .replace(/(\d{2})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1/$2')
-    .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
 }
 
 export function calcularIdade(dataNascimento?: string | null): number | null {
@@ -161,17 +144,6 @@ export function formatarTempo(segundos?: number | null): string {
   return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`
 }
 
-export function formatarDuracaoMinutos(minutos?: number | null): string {
-  if (!minutos) return INVALIDO
-
-  const h = Math.floor(minutos / 60)
-  const m = minutos % 60
-
-  if (h === 0) return `${m}min`
-  if (m === 0) return `${h}h`
-  return `${h}h ${m}min`
-}
-
 export function formatarNota(nota?: number | null, casas = 1): string {
   if (nota === null || nota === undefined) return INVALIDO
   return nota.toFixed(casas).replace('.', ',')
@@ -187,11 +159,7 @@ export function formatarMoedas(valor?: number | null): string {
   return valor.toLocaleString('pt-BR')
 }
 
-/**
- * "1h30" em vez de "1.5h" — a carga horária da aula passou a aceitar fração
- * (calculada do horário da turma, ex.: 08:00 às 09:30 = 1.5), então o
- * formato precisa mostrar minutos, não casa decimal.
- */
+/** "1h30" em vez de "1.5h": a carga horária aceita fração. */
 export function formatarCargaHoraria(horas?: number | null): string {
   if (horas === null || horas === undefined) return INVALIDO
 
@@ -225,10 +193,6 @@ export function normalizar(texto?: string | null): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
-}
-
-export function pluralizar(quantidade: number, singular: string, plural: string): string {
-  return `${quantidade} ${quantidade === 1 ? singular : plural}`
 }
 
 export function letraAlternativa(indice: number): string {

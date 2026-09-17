@@ -32,11 +32,9 @@ function hexParaRgb(hex: string): [number, number, number] {
 }
 
 /**
- * Gera um PDF de verdade (jsPDF + autoTable) a partir dos dados — não é
- * mais uma captura da tela impressa: sem depender do navegador paginar um
- * gráfico SVG corretamente, então nunca corta ou distorce. Cada seção vira
- * uma tabela, com título, contexto (filtros aplicados) e data de geração no
- * topo, numeração de página no rodapé.
+ * PDF gerado a partir dos dados (jsPDF + autoTable), sem depender do
+ * navegador paginar o SVG do gráfico, o que cortava ou distorcia. Cada seção
+ * vira uma tabela com título e contexto; páginas numeradas no rodapé.
  */
 export function exportarPdf(nomeArquivo: string, titulo: string, contexto: string[], secoes: SecaoPdf[]) {
   const doc = new jsPDF()

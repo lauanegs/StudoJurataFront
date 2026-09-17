@@ -10,10 +10,9 @@ import { DataTable } from '../../../components/ui/DataTable'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { useAvisosDispensados } from '../../../hooks/useAvisosDispensados'
-import { useCargaHorariaCursada } from '../../../hooks/useCargaHorariaCursada'
 import { useDebounce } from '../../../hooks/useDebounce'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import { matriculas, turmaDisciplinas, turmas as servicoTurmas } from '../../../services/endpoints'
+import { matriculas, turmas as servicoTurmas } from '../../../services/endpoints'
 import { formatarCargaHoraria, formatarData, formatarIdade, normalizar } from '../../../utils/format'
 import type { AlunoTurma } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
@@ -29,13 +28,10 @@ export default function TurmaDetalhada() {
 
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(idTurma), [idTurma])
   const requisicaoAlunos = useRequisicao(() => matriculas.ativosPorTurma(idTurma), [idTurma])
-  const requisicaoVinculos = useRequisicao(() => turmaDisciplinas.listar(), [])
   const requisicaoHistorico = useRequisicao(() => matriculas.historicoPorTurma(idTurma), [idTurma])
 
   const { dispensados: avisosDispensados, dispensar: dispensarAviso } = useAvisosDispensados()
-  /** Aviso (só informativo) quando um aluno concluiu automaticamente a
-   * matrícula por ter atingido a carga horária do curso — ver
-   * FrequenciaService no back. */
+  /** Aviso informativo de matrícula concluída automaticamente por carga horária (FrequenciaService). */
   const avisosCargaHoraria = useMemo(
     () =>
       (requisicaoHistorico.data ?? []).filter(
@@ -44,22 +40,11 @@ export default function TurmaDetalhada() {
     [requisicaoHistorico.data, avisosDispensados],
   )
 
-  const vinculosDaTurma = useMemo(
-    () =>
-      (requisicaoVinculos.data ?? []).filter(
-        (vinculo) => vinculo.turma?.id === idTurma && vinculo.status !== 'INATIVO',
-      ),
-    [requisicaoVinculos.data, idTurma],
+  const requisicaoFrequencia = useRequisicao(() => servicoTurmas.frequenciaAlunos(idTurma), [idTurma])
+  const frequenciaPorAluno = useMemo(
+    () => new Map((requisicaoFrequencia.data ?? []).map((resumo) => [resumo.alunoId, resumo])),
+    [requisicaoFrequencia.data],
   )
-
-  const requisicaoCargaHoraria = useCargaHorariaCursada(
-    requisicaoAlunos.data ?? [],
-    vinculosDaTurma,
-    !requisicaoAlunos.loading && !requisicaoVinculos.loading,
-  )
-
-  const cargaHorariaPorAluno = requisicaoCargaHoraria.data?.cargaHoraria ?? new Map<number, number>()
-  const faltasPorAluno = requisicaoCargaHoraria.data?.faltas ?? new Map<number, number>()
 
   const filtrados = useMemo(() => {
     const lista = requisicaoAlunos.data ?? []
@@ -89,14 +74,14 @@ export default function TurmaDetalhada() {
       // (RegistrarAulaTurma), que é escopada só à disciplina da aula.
       cabecalho: 'Carga horária atingida (curso)',
       ocultarEmTelaPequena: true,
-      render: (matricula) => formatarCargaHoraria(cargaHorariaPorAluno.get(matricula.aluno.id) ?? 0),
+      render: (matricula) => formatarCargaHoraria(frequenciaPorAluno.get(matricula.aluno.id)?.cargaHoraria ?? 0),
     },
     {
       key: 'faltas',
       cabecalho: 'Nº de faltas',
       alinhamento: 'center',
       ocultarEmTelaPequena: true,
-      render: (matricula) => faltasPorAluno.get(matricula.aluno.id) ?? 0,
+      render: (matricula) => frequenciaPorAluno.get(matricula.aluno.id)?.faltas ?? 0,
     },
     {
       key: 'matricula',

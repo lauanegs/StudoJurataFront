@@ -4,8 +4,6 @@ import * as S from './styles'
 import type { CircularProgressProps } from './types'
 
 /**
- * Medidor circular de desempenho (doc §5.9).
- *
  * A faixa de cor segue a mesma régua usada no restante do produto:
  * abaixo de 40% é crítico, até 70% é atenção, acima disso é bom.
  */

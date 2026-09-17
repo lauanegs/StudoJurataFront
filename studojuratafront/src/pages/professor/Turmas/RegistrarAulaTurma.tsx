@@ -35,14 +35,10 @@ import { formatarCargaHoraria, formatarHora, horaParaMinutos, horasParaHHmm } fr
 import { ROTULO_DIA_SEMANA_CURTO } from '../../../utils/labels'
 import type { AlunoTurma } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
+import { Stack } from '../../../components/ui/Stack'
+import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
 
 type Aba = 'chamada' | 'conteudo'
-
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
 
 /* Disciplina + aula do plano de aula + Salvar ficam juntos dentro do próprio
    cartão do Header. flex-wrap (não overflow-x: auto): quando o espaço aperta
@@ -55,12 +51,7 @@ const CamposCabecalho = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `
 
-/* Largura fixa e concreta pra cada campo — o <Field> por baixo do
-   Input/Select/DatePicker pede width:100% do pai pra preencher célula de
-   grid de formulário; só max-width no campo (auto-width no pai) não é
-   suficiente pra essa cadeia resolver de forma confiável (o pai encolhia
-   demais em vez de assumir a largura máxima do filho). Um pai com largura
-   já definida elimina essa ambiguidade. */
+/* Largura concreta: o <Field> ocupa 100% do pai, e só max-width deixava o pai encolher demais. */
 const CampoLargura = styled.div<{ $largura: string }>`
   width: ${({ $largura }) => $largura};
   max-width: 100%;
@@ -74,22 +65,13 @@ const BotoesFlutuantes = styled.div`
   gap: ${({ theme }) => theme.spacing.xs};
 `
 
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
 /* O Salvar não pode encolher junto com o resto da linha (Disciplina + Aula)
    quando o espaço aperta — senão o texto do botão corta. */
 const BotaoSalvar = styled.div`
   flex-shrink: 0;
 `
 
-/* Barra de progresso da carga horária atingida na disciplina (item pedido
-   pelo usuário: "pra ficar mais entendível pelo professor") — só aparece
-   quando a grade curricular do curso tem uma carga horária total definida
-   pra essa disciplina; sem isso não há "de quanto" pra comparar. */
+/* Só aparece quando a grade define a carga horária total da disciplina. */
 const ColunaCargaHoraria = styled.div`
   display: flex;
   flex-direction: column;
@@ -119,16 +101,9 @@ interface LinhaChamada {
 }
 
 /**
- * Entrada rápida de "Registrar aula" a partir de Turmas: o professor escolhe
- * a disciplina (uma turma pode ter mais de uma disciplina/professor) e a
- * aula do plano de aula correspondente — sem precisar de um campo de data
- * solto no topo, que só duplicava a "Data publicação" já editável na aba de
- * conteúdo. Sem escolha manual, a próxima aula pendente (sem
- * dataPublicacao, por ordem) vem pré-selecionada sozinha.
- *
- * Chegando da tela "Aulas" de um Plano de Aula específico (ver
- * PlanoAula/Aulas.tsx — mesma tela de registro, não uma duplicata), a aula
- * exata clicada vem pré-selecionada via ?aulaId=/&vinculoId=.
+ * O professor escolhe a disciplina e a aula do plano; sem escolha, a próxima
+ * aula pendente vem pré-selecionada. Vindo de PlanoAula/Aulas.tsx, a aula
+ * clicada chega por ?aulaId=&vinculoId=.
  */
 export default function RegistrarAulaTurma() {
   const { turmaId } = useParams()
@@ -144,9 +119,7 @@ export default function RegistrarAulaTurma() {
   const [aba, setAba] = useState<Aba>('conteudo')
   const [turmaDisciplinaId, setTurmaDisciplinaId] = useState<number | null>(vinculoIdDaUrl)
   const [aulaSelecionadaManualId, setAulaSelecionadaManualId] = useState<number | null>(aulaIdDaUrl)
-  // Ver AulaFormulario.tsx: mesmo padrão — horário da turma escolhido
-  // calcula a carga horária sozinho; cargaHorariaManual (HH:mm) só é usada
-  // quando a turma não tem NENHUM horário cadastrado.
+  // Como em AulaFormulario: cargaHorariaManual só quando a turma não tem horário cadastrado.
   const [horarioTurmaId, setHorarioTurmaId] = useState<number | null>(null)
   const [cargaHorariaManual, setCargaHorariaManual] = useState('')
   const [dataPrevista, setDataPrevista] = useState('')
@@ -154,9 +127,7 @@ export default function RegistrarAulaTurma() {
   const [observacoes, setObservacoes] = useState('')
   const [edicoesChamada, setEdicoesChamada] = useState<Record<number, boolean>>({})
   const [titulo, setTitulo] = useState('')
-  // Conteúdos escolhidos ANTES de a aula existir (sem aulaAlvo ainda) — fica
-  // só aqui até salvar() criar a aula e vincular de verdade (mesmo
-  // tratamento do QuestaoEditor/AulaFormulario, ver VinculoConteudoAula).
+  // Conteúdos escolhidos antes de a aula existir, vinculados em salvar().
   const [conteudoPlanoIdsPendentes, setConteudoPlanoIdsPendentes] = useState<number[]>([])
 
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(idTurma), [idTurma])
@@ -184,16 +155,10 @@ export default function RegistrarAulaTurma() {
     { ativo: Boolean(disciplinaAtiva) },
   )
 
-  // Regra de negócio já assumida em TurmaDetalhada: 1 plano de aula ativo por
-  // turma+disciplina — listarPorTurmaDisciplina traz também os já
-  // concluídos (matrícula cíclica), então filtra por ATIVO explicitamente,
-  // senão um plano concluído (ex.: pela última aula ter sido dada) ficaria
-  // no lugar do novo ciclo ativo.
+  // listarPorTurmaDisciplina traz também planos concluídos; só vale o ATIVO.
   const planoAtual = (requisicaoPlanos.data ?? []).find((plano) => plano.status === 'ATIVO') ?? null
 
-  // Carga horária TOTAL da disciplina (grade curricular do curso) — só pra
-  // desenhar a barra de progresso ao lado da carga horária já atingida na
-  // chamada (item pedido pelo usuário: "pra ficar mais entendível").
+  // Carga horária total da disciplina na grade, para a barra de progresso.
   const cursoId = requisicaoTurma.data?.curso?.id ?? null
   const requisicaoGradeCurricular = useRequisicao(
     () => cursoDisciplinas.listarPorCurso(cursoId as number),
@@ -228,12 +193,9 @@ export default function RegistrarAulaTurma() {
     ? (aulasDoPlano.find((aula) => aula.id === aulaSelecionadaManualId) ?? null)
     : aulaSugerida
 
-  // Trocar de disciplina invalida a escolha manual anterior — a
-  // reconciliação automática assume de novo a partir da nova aulaSugerida.
-  // Comparação de valor (não uma flag "já rodei uma vez"): sob StrictMode o
-  // React invoca o efeito duas vezes já na montagem, e uma flag booleana
-  // simples é zerada na primeira chamada e já não protege a segunda —
-  // descartando a pré-seleção vinda de ?aulaId= antes de qualquer render.
+  // Trocar de disciplina invalida a escolha manual. Compara valor em vez de
+  // usar flag porque o StrictMode roda o efeito duas vezes na montagem e
+  // descartaria a pré-seleção de ?aulaId=.
   const disciplinaAnterior = useRef(disciplinaAtiva)
   useEffect(() => {
     if (disciplinaAnterior.current === disciplinaAtiva) return
@@ -351,11 +313,8 @@ export default function RegistrarAulaTurma() {
   }, [requisicaoMatriculas.data, requisicaoCargaHoraria.data, edicoesChamada])
 
   /**
-   * Pedido explícito do usuário: uma única tela e uma única ação de Salvar,
-   * exista ou não a aula ainda no plano — sem aula (aulaAlvo null), cria a
-   * aula no plano (AulaService já trava sozinho se isso estourar a carga
-   * horária do plano de ensino) e, na sequência, já registra a chamada e os
-   * conteúdos pendentes; com aula (fluxo de sempre), só atualiza e registra.
+   * Um único Salvar: sem aula, cria no plano (o back barra se estourar a carga
+   * horária) e registra chamada e conteúdos; com aula, atualiza e registra.
    */
   const { executar: salvar, executando: salvando } = useAcao(async () => {
     if (!planoAtual) {
@@ -529,7 +488,7 @@ export default function RegistrarAulaTurma() {
       />
 
       {aba === 'chamada' && (
-        <Coluna>
+        <Stack gap="md">
           <BotoesFlutuantes>
             <Button
               variant="subtle"
@@ -567,12 +526,12 @@ export default function RegistrarAulaTurma() {
               icon: <Users />,
             }}
           />
-        </Coluna>
+        </Stack>
       )}
 
       {aba === 'conteudo' && (
         <Card titulo="Conteúdos trabalhados nesta aula">
-          <Coluna>
+          <Stack gap="md">
             <Input
               label="Título da aula"
               placeholder="Ex.: Aula 5 — Introdução a laços de repetição"
@@ -582,7 +541,7 @@ export default function RegistrarAulaTurma() {
               onChange={(evento) => setTitulo(evento.target.value)}
             />
 
-            <Grade>
+            <GradeAutoAjuste $larguraMinima="180px">
               {semHorarioCadastrado ? (
                 <TimePicker
                   label="Carga horária"
@@ -616,7 +575,7 @@ export default function RegistrarAulaTurma() {
                 hint="Data em que a aula foi (ou será) realizada."
                 onChange={(evento) => setDataPublicacao(evento.target.value)}
               />
-            </Grade>
+            </GradeAutoAjuste>
 
             <VinculoConteudoAula
               aulaId={aulaAlvo?.id}
@@ -635,7 +594,7 @@ export default function RegistrarAulaTurma() {
               autoAltura
               onChange={(evento) => setObservacoes(evento.target.value)}
             />
-          </Coluna>
+          </Stack>
         </Card>
       )}
     </Layout>

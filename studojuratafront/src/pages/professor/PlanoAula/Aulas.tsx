@@ -9,7 +9,7 @@ import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DataTable } from '../../../components/ui/DataTable'
 import { DatePicker } from '../../../components/ui/DatePicker'
-import { Header, SubtituloItem } from '../../../components/ui/Header'
+import { Header, SubtituloItem, CamposFiltro, CampoFiltro } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Modal } from '../../../components/ui/Modal'
 import { Tag } from '../../../components/ui/Tag'
@@ -23,24 +23,7 @@ import { aulas as servicoAulas, planosAula } from '../../../services/endpoints'
 import { formatarCargaHoraria, formatarData, normalizar } from '../../../utils/format'
 import type { Aula, AulaConteudo } from '../../../types'
 import type { Coluna } from '../../../components/ui/DataTable/types'
-
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-/* Confirmado no Figma: "Adicionar aula" (150px) + busca (250px) coladas. */
-const CamposCabecalho = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const LarguraBusca = styled.div`
-  width: 250px;
-`
+import { Stack } from '../../../components/ui/Stack'
 
 const ListaConteudos = styled.ul`
   margin: 0;
@@ -58,9 +41,7 @@ export default function Aulas() {
   const [busca, setBusca] = useState('')
   const buscaAtrasada = useDebounce(busca)
 
-  // Geração em lote (pedido explícito: gerar de uma vez, no início do
-  // curso, em vez de cadastrar aula por aula) — segue os horários já
-  // cadastrados na turma (HorarioTurma), ver AulaService.gerarLote.
+  // Geração em lote pelos horários da turma (AulaService.gerarLote).
   const [modalGerarAberto, setModalGerarAberto] = useState(false)
   const [quantidadeGerar, setQuantidadeGerar] = useState('10')
   const [dataInicioGerar, setDataInicioGerar] = useState(() => new Date().toISOString().slice(0, 10))
@@ -240,7 +221,7 @@ export default function Aulas() {
         voltarPara="/professor/plano-aula"
         rotuloVoltar="Planos de aula"
         filtros={
-          <CamposCabecalho>
+                  <CamposFiltro>
             <Button icon={<Plus />} size="large" onClick={() => navegar(`/professor/plano-aula/${idPlano}/aulas/nova`)}>
               Adicionar aula
             </Button>
@@ -254,10 +235,10 @@ export default function Aulas() {
               Gerar aulas
             </Button>
 
-            <LarguraBusca>
+            <CampoFiltro $largura="250px">
               <BuscaInput value={busca} onChange={setBusca} placeholder="Buscar aula..." />
-            </LarguraBusca>
-          </CamposCabecalho>
+            </CampoFiltro>
+          </CamposFiltro>
         }
       />
 
@@ -341,7 +322,7 @@ export default function Aulas() {
           </>
         }
       >
-        <Coluna>
+        <Stack gap="md">
           <Input
             label="Quantidade de aulas"
             type="number"
@@ -364,7 +345,7 @@ export default function Aulas() {
             maxLength={100}
             onChange={(evento) => setTituloBaseGerar(evento.target.value)}
           />
-        </Coluna>
+        </Stack>
       </Modal>
     </Layout>
   )

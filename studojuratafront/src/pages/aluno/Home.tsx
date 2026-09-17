@@ -9,6 +9,7 @@ import { Card } from '../../components/ui/Card'
 import { CircularProgress } from '../../components/ui/CircularProgress'
 import { SaldoMoedas } from '../../components/ui/SaldoMoedas'
 import { SimuladoIniciarCard } from '../../components/ui/SimuladoIniciarCard'
+import { Stack } from '../../components/ui/Stack'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../components/feedback/Skeleton'
@@ -28,12 +29,6 @@ const Medidores = styled.div`
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.lg};
   justify-content: center;
-`
-
-const Lista = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
 `
 
 export default function AlunoHome() {
@@ -157,7 +152,7 @@ export default function AlunoHome() {
             icon={<Trophy />}
           />
         ) : (
-          <Lista>
+          <Stack gap="md">
             {pendentes.map((tentativa) => {
               const simulado = porSimulado.get(tentativa.simuladoId)
 
@@ -174,7 +169,7 @@ export default function AlunoHome() {
                 />
               )
             })}
-          </Lista>
+          </Stack>
         )}
       </Card>
     </Layout>

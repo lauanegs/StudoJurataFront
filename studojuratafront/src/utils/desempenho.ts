@@ -1,6 +1,13 @@
 export type NivelDesempenho = 'baixo' | 'medio' | 'alto'
 
 /**
+ * Percentual abaixo do qual o desempenho é considerado baixo — o mesmo valor
+ * que o back usa para recomendar reforço (RecomendacaoService.LIMIAR_BAIXO_APROVEITAMENTO).
+ * Também é o gatilho de reforço manual: turma com essa % de alunos abaixo dele.
+ */
+export const LIMIAR_BAIXO_DESEMPENHO = 60
+
+/**
  * Classifica uma porcentagem (0 a 100) de desempenho — mesmos limiares usados
  * pelos gráficos de desempenho (DesempenhoCard), para que qualquer indicador
  * de nota/desempenho na aplicação use sempre a mesma regra de cor.

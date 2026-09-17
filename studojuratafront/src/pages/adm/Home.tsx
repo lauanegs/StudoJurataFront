@@ -11,6 +11,7 @@ import { Card } from '../../components/ui/Card'
 import { EventoCard } from '../../components/ui/EventoCard'
 import { InfoCard } from '../../components/ui/InfoCard'
 import { SeparadorCard } from '../../components/ui/SeparadorCard'
+import { GradeAutoAjuste } from '../../components/ui/GradeAutoAjuste'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton, SkeletonCartao } from '../../components/feedback/Skeleton'
@@ -26,12 +27,6 @@ import {
 } from '../../services/endpoints'
 import { nomeCurto } from '../../utils/format'
 import { aniversariantesDaSemana } from '../_compartilhado/aniversariantes'
-
-const Indicadores = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
 
 const GradeEventos = styled.div`
   display: grid;
@@ -80,14 +75,14 @@ export default function AdmHome() {
       />
 
       {carregandoIndicadores ? (
-        <Indicadores>
+        <GradeAutoAjuste $larguraMinima="220px">
           <Skeleton $altura="80px" $raio="8px" />
           <Skeleton $altura="80px" $raio="8px" />
           <Skeleton $altura="80px" $raio="8px" />
           <Skeleton $altura="80px" $raio="8px" />
-        </Indicadores>
+        </GradeAutoAjuste>
       ) : (
-        <Indicadores>
+        <GradeAutoAjuste $larguraMinima="220px">
           <InfoCard value={requisicaoAlunos.data?.length ?? 0} label="alunos cadastrados" icon={<Users />} tom="blue" />
           <InfoCard
             value={requisicaoProfessores.data?.length ?? 0}
@@ -102,7 +97,7 @@ export default function AdmHome() {
             icon={<BookOpen />}
             tom="orange"
           />
-        </Indicadores>
+        </GradeAutoAjuste>
       )}
 
       {requisicaoPessoas.loading ? (

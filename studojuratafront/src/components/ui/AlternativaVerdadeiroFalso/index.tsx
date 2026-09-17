@@ -3,14 +3,8 @@ import styled, { css } from 'styled-components'
 type EstadoBotaoVF = 'default' | 'selected' | 'correct' | 'incorrect'
 
 /**
- * Confirmado no Figma: cada afirmação de uma questão Verdadeiro/Falso tem
- * dois botões independentes (V e F) à esquerda — não uma letra única como em
- * AlternativaButton — porque cada afirmação é julgada à parte (ver comentário
- * em QuestaoEditor/types.ts sobre a regra de negócio).
- *
- * V e F ficam separados entre si e do card de texto (não fundidos como o
- * badge de letra) — cada peça é uma caixa própria, com um respiro pequeno
- * entre elas, mesmo padrão de espaçamento usado no resto do sistema.
+ * Dois botões (V e F) em vez de uma letra, porque cada afirmação é julgada à
+ * parte. Cada peça é uma caixa própria, não fundida como o badge de letra.
  */
 const Container = styled.div`
   display: flex;

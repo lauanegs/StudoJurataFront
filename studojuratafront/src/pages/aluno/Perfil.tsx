@@ -35,9 +35,7 @@ interface Conquista {
 }
 
 /**
- * Perfil gamificado do aluno.
- *
- * Moedas, XP e skins vêm de /gamificacao. As conquistas não existem como
+ * Moedas e skins vêm de /gamificacao. As conquistas não existem como
  * entidade no back — são derivadas aqui do histórico de tentativas, e o
  * critério de cada uma está explícito no código.
  */

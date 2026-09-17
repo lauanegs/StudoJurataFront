@@ -9,9 +9,7 @@ const pulsar = keyframes`
   50%      { opacity: 0.55; }
 `
 
-/* Confirmado no Figma: este header cobre a largura inteira da tela — sem
-   cantos arredondados, encostado nas bordas (só o conteúdo abaixo dele fica
-   dentro de um miolo com padding). */
+/* Cobre a largura inteira da tela, sem cantos arredondados. */
 const Container = styled.header`
   display: flex;
   align-items: center;
@@ -59,8 +57,7 @@ const Cronometro = styled.div<{ $alerta: boolean }>`
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.xxs};
 
-  /* Altura de 56px pra bater exatamente com o botão "Sair" (size="large")
-     ao lado — mesmo padrão de altura já usado nos campos/botões do header. */
+  /* 56px para bater com o botão "Sair" (size="large") ao lado. */
   height: 56px;
   padding: 0 ${({ theme }) => theme.spacing.xl};
   border-radius: ${({ theme }) => theme.radius.md};

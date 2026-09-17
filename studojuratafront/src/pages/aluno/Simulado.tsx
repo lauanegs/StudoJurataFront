@@ -16,6 +16,7 @@ import {
 } from '../../components/ui/ProgressoSimuladoCard'
 import { SimuladoHeader } from '../../components/ui/SimuladoHeader'
 import { Tag } from '../../components/ui/Tag'
+import { Stack } from '../../components/ui/Stack'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../components/feedback/Skeleton'
 import { useConfirm } from '../../contexts/confirmContexto'
@@ -38,10 +39,7 @@ import { animacaoFlutuar } from '../../styles/animations'
 import { theme } from '../../styles/theme'
 import type { AlternativaResponse, TipoQuestao } from '../../types'
 
-/* Confirmado no Figma: o cabeçalho (SimuladoHeader) cobre a largura inteira
-   da tela, encostado nas bordas — só o conteúdo abaixo dele (progresso,
-   enunciado, alternativas) fica com padding, centralizado num miolo de
-   largura limitada. */
+/* Só o conteúdo abaixo do SimuladoHeader tem padding e largura limitada. */
 const Tela = styled.div`
   display: flex;
   flex-direction: column;
@@ -76,12 +74,8 @@ const Rodape = styled.div`
   flex-wrap: wrap;
 `
 
-/* Confirmado no Figma: o mascote fica FORA do card, ao lado — não mais
-   dentro dele — e o card se estica (self-stretch) pra acompanhar a altura
-   da imagem. */
-/* Confirmado no Figma (nó 220:3228): moldura com o mesmo degradê azul
-   horizontal do EnunciadoSimuladoCard, envolvendo o mascote + os dois
-   cartões brancos — não mais soltos direto no fundo cinza da página. */
+/* Mascote ao lado do card, que estica para acompanhar a altura da imagem. */
+/* Moldura com o mesmo degradê do EnunciadoSimuladoCard. */
 const FrameResultado = styled.div`
   display: flex;
   align-items: center;
@@ -132,8 +126,6 @@ const TextoSecundario = styled.p`
   color: ${({ theme }) => theme.colors.textTertiary};
 `
 
-/* Confirmado no Figma: as 3 etiquetas (acertos/erros/tempo) ficam empilhadas
-   na vertical, cada uma ocupando a largura toda — não mais lado a lado. */
 const Etiquetas = styled.div`
   display: flex;
   flex-direction: column;
@@ -175,12 +167,6 @@ const ValorMoedas = styled.div`
   color: ${({ theme }) => theme.colors.textSecondary};
 `
 
-const RevisaoLista = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
 const NomeParabens = styled.strong`
   display: block;
   margin-bottom: ${({ theme }) => theme.spacing.xxs};
@@ -214,8 +200,7 @@ const QuestaoTitulo = styled.strong`
   color: ${({ theme }) => theme.colors.textSecondary};
 `
 
-/** Mesma quantidade pra qualquer simulado, independente da nota — regra do
- * back (PontuacaoAlunoService.MOEDAS_POR_SIMULADO_CONCLUIDO). */
+/** Espelha PontuacaoAlunoService.MOEDAS_POR_SIMULADO_CONCLUIDO no back. */
 const MOEDAS_POR_SIMULADO = 10
 
 interface QuestaoDaProva {
@@ -330,8 +315,7 @@ export default function Simulado() {
     return typeof respostas[questao.questaoId] === 'number'
   }
 
-  // Acerta a questão inteira só quando TODAS as afirmações batem com o
-  // gabarito — uma só errada derruba a questão toda (decisão confirmada).
+  // Só acerta a questão quando TODAS as afirmações batem com o gabarito.
   function acertouQuestao(questao: QuestaoDaProva) {
     if (questao.tipo === 'VERDADEIRO_FALSO') {
       const marcadas = respostasVF[questao.questaoId] ?? {}
@@ -358,8 +342,7 @@ export default function Simulado() {
           respostas: questoes.map((questao) => ({
             questaoId: questao.questaoId,
             alternativaId: questao.tipo === 'VERDADEIRO_FALSO' ? null : (respostas[questao.questaoId] ?? null),
-            // Sem resposta pra alguma afirmação, a questão inteira conta como
-            // em branco (item 4.2) — não manda a lista parcial, manda nada.
+            // Afirmação sem resposta: a questão inteira vai em branco, sem lista parcial.
             alternativasVerdadeiras:
               questao.tipo === 'VERDADEIRO_FALSO' && estaRespondida(questao)
                 ? questao.alternativas
@@ -511,8 +494,7 @@ export default function Simulado() {
     })
   }
 
-  // Confirmado no Figma: os marcadores de progresso ficam verde/vermelho nas
-  // questões já confirmadas (não só um "respondida" genérico).
+  // Questões confirmadas ficam verde/vermelho no progresso.
   const statusProgresso = useMemo<QuestionProgressStatus[]>(
     () =>
       questoes.map((questao, indice) => {
@@ -637,18 +619,14 @@ export default function Simulado() {
           </CardResultado>
         </FrameResultado>
 
-        <RevisaoLista>
+        <Stack gap="md">
           {questoes.map((questao, indice) => {
             const resposta = respostasDoAluno.get(questao.questaoId)
 
             const ehVF = questao.tipo === 'VERDADEIRO_FALSO'
             const marcadasVerdadeiras = new Set(resposta?.alternativasVerdadeirasIds ?? [])
-            // `respondida` é novo — registros de simulados concluídos antes dessa
-            // mudança não têm esse campo preenchido (null). Sem fallback, todo
-            // resultado antigo passaria a aparecer como "Em branco" mesmo tendo
-            // sido respondido de verdade. Pro tipo ALTERNATIVAS o sinal antigo
-            // (alternativaId presente) ainda é confiável; só V/F antigo fica com
-            // a ambiguidade original (lista vazia = em branco).
+            // Tentativas antigas têm `respondida` nulo: sem fallback apareceriam
+            // "Em branco". Em ALTERNATIVAS, alternativaId presente é confiável.
             const respondida =
               resposta?.respondida ??
               (ehVF ? (resposta?.alternativasVerdadeirasIds?.length ?? 0) > 0 : resposta?.alternativaId != null)
@@ -702,7 +680,7 @@ export default function Simulado() {
               </Card>
             )
           })}
-        </RevisaoLista>
+        </Stack>
         </Conteudo>
       </Tela>
     )

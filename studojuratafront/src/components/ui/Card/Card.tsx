@@ -33,9 +33,7 @@ export function Card({
         overflow: 'hidden',
         boxShadow: el.shadow,
         border: el.border,
-        // Confirmado no Figma (frame "home - professor", nó 1:3377): o card
-        // com corpo tingido não é opaco — é o próprio Paper translúcido
-        // (rgba(255,255,255,0.2)) por trás de um cabeçalho branco sólido.
+        // O corpo tingido é o próprio Paper translúcido atrás de um cabeçalho branco sólido.
         background: corpoComFundo ? 'rgba(255, 255, 255, 0.2)' : undefined,
         ...style,
       }}
@@ -67,9 +65,7 @@ export function Card({
                   height: 28,
                   flexShrink: 0,
                   borderRadius: tokens.radius.sm,
-                  // Mesmas cores do botão "voltar" do Header em todo card,
-                  // com ou sem corpo transparente — o roxo forte do degradê
-                  // antigo destoava dos demais cabeçalhos já neutros.
+                  // Mesmas cores do botão "voltar" do Header.
                   background: tokens.colors.background,
                   color: tokens.colors.textSecondary,
                 }}

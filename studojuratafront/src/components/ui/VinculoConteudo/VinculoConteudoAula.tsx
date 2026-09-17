@@ -12,6 +12,7 @@ import { ApiError } from '../../../services/api'
 import { aulas as servicoAulas, conteudosPlano } from '../../../services/endpoints'
 import type { ConteudoPlano } from '../../../types'
 import * as S from './styles'
+import { Stack } from '../Stack'
 
 interface VinculoConteudoAulaProps {
   /** Ausente quando a aula ainda não foi salva — nesse caso o componente entra em modo local, ver conteudoPlanoIdsPendentes/onChangePendentes. */
@@ -33,17 +34,8 @@ interface VinculoConteudoAulaProps {
 }
 
 /**
- * Vincula/desvincula a aula a conteúdo(s) do plano de ensino — mesma "seção"
- * (título + botão + chips, ver ./styles) usada por VinculoConteudoQuestao,
- * mesmo par de entidades (X vinculado a ConteudoPlano). Usada tanto em
- * AulaFormulario (cadastro/edição da aula) quanto em RegistrarAulaTurma
- * (registro de conteúdo/chamada de uma aula já existente).
- *
- * Sem `aulaId` (aula nova, ainda não salva) o componente não bloqueia a
- * escolha de conteúdo esperando o professor salvar antes — mesmo
- * impedimento identificado no fluxo de questão: escolher fica só no estado
- * local (`conteudoPlanoIdsPendentes`/`onChangePendentes`, controlado pelo
- * formulário pai) até a aula existir de verdade.
+ * Sem `aulaId` (aula ainda não salva), a escolha fica no estado local do
+ * formulário pai até a aula existir, em vez de obrigar a salvar antes.
  */
 export function VinculoConteudoAula({
   aulaId,
@@ -207,7 +199,7 @@ export function VinculoConteudoAula({
             icon={<ListTree />}
           />
         ) : (
-          <S.Coluna>
+          <Stack gap="md">
             {conteudosDisponiveis.map((conteudo) => (
               <CheckBox
                 key={conteudo.id}
@@ -216,7 +208,7 @@ export function VinculoConteudoAula({
                 onChange={() => alternarSelecionado(conteudo.id)}
               />
             ))}
-          </S.Coluna>
+          </Stack>
         )}
       </Modal>
     </S.SecaoVinculo>

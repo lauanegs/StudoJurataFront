@@ -45,7 +45,9 @@ Formato de campo → `utils/validacao.ts` (`Validador<T>`, composável via `comb
 
 ## Comentários
 
-O projeto usa comentários para explicar **decisões não óbvias** — por que um `ref` existe (`useHidratar`, `useRequisicao`), por que uma migração está em andamento (`mantineTheme.ts`), por que um hook evita re-render desnecessário. Esse é o padrão a seguir: comentário explica o "porquê", nunca repete o "o quê" que o nome já diz. Não comentar `// busca os alunos` acima de `alunos.listar()`.
+O projeto usa comentários para explicar **decisões não óbvias** — por que um `ref` existe (`useHidratar`, `useRequisicao`), por que uma migração está em andamento (`mantineTheme.ts`), por que um valor de CSS precisa ser exatamente aquele (`width: max-content` em `Header/styles.ts`). Esse é o padrão a seguir: comentário explica o "porquê", nunca repete o "o quê" que o nome já diz. Não comentar `// busca os alunos` acima de `alunos.listar()`.
+
+**Não registrar histórico no código.** Nada de "confirmado no Figma", "confirmado pelo usuário", "pedido explícito", "antes era X", "bug real", referência a item de análise ou nó do Figma — o Figma é a fonte de verdade por regra do projeto (ver `docs/figma-fidelity.md`) e a proveniência de cada decisão fica no `git log`. Manter só o porquê que continua valendo para o código atual.
 
 ## Parâmetros
 

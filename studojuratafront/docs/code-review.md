@@ -81,7 +81,7 @@ Ver `docs/figma-fidelity.md` para a regra completa — o Figma é a fonte de ver
 ## Imports
 - [ ] `import type` usado para importações só de tipo (obrigatório com `verbatimModuleSyntax`)?
 - [ ] Import não utilizado (pego por `noUnusedLocals`, mas confirmar antes de assumir que o lint pega tudo em código gerado/condicional)?
-- [ ] Import inconsistente com o padrão dominante do projeto (caminho específico de `components/ui/X`, não o barrel `components/ui/index.ts`, salvo se o restante do arquivo já usa o barrel)?
+- [ ] Import inconsistente com o padrão do projeto (caminho específico de `components/ui/X`; não há barrel)?
 
 ## Código morto
 - [ ] Prop, variável, função ou arquivo sem nenhuma referência (confirmado via busca, não só "parece não usado" — props de design system podem ser API pública intencional ainda não consumida)?

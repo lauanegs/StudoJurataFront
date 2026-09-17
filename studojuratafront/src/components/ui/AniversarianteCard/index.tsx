@@ -51,7 +51,6 @@ const Complemento = styled.span`
   color: ${({ theme }) => theme.colors.textTertiary};
 `
 
-/** Confirmado no Figma: contorno cinza ao redor da foto/avatar circular. */
 const Moldura = styled.div`
   display: inline-flex;
   border-radius: ${({ theme }) => theme.radius.circle};

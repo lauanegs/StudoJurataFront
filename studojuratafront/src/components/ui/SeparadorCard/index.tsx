@@ -28,12 +28,7 @@ interface SeparadorCardProps {
   colunas: number
 }
 
-/**
- * Mesmo Card do design system, só com paginação client-side de uma grade de
- * itens no lugar do corpo — mantém cabeçalho (ícone/título) e o corpo com
- * fundo tingido (`corpoComFundo`, mesmo tom usado em "Desempenho" na home do
- * aluno) idênticos aos demais cards em vez de reimplementar o próprio.
- */
+/** Card com uma grade paginada no cliente no lugar do corpo. */
 export function SeparadorCard({ titulo, icon, children, colunas }: SeparadorCardProps) {
   const [pagina, setPagina] = useState(0)
 

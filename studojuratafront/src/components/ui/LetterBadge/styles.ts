@@ -3,9 +3,7 @@ import styled, { css } from 'styled-components'
 import type { LetterState } from './types'
 
 /**
- * Confirmado no Figma (nós 1:939-950 execução, 1:996-1002 revisão): a letra
- * não é um badge circular solto — é um bloco retangular fundido à borda
- * esquerda da linha, ocupando a altura inteira (align-self: stretch),
+ * Bloco retangular fundido à borda esquerda da linha, na altura inteira e
  * arredondado só nos cantos esquerdos.
  */
 export const Container = styled.span<{ $state: LetterState }>`

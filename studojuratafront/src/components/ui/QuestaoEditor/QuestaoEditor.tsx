@@ -24,16 +24,9 @@ import {
 } from './types'
 
 /**
- * Editor de uma questão de simulado. É o mesmo componente usado na criação
- * (professor monta o simulado) e na revisão (professor aprova/edita questões
- * geradas pela IA) — muda apenas `somenteLeitura` e o slot `actions`.
- *
- * Confirmado no Figma ("novo simulado — tipo questão v/f"): uma questão V/F
- * tem a MESMA estrutura de Alternativas (um enunciado + uma lista de
- * afirmações) — só que cada afirmação é julgada Verdadeira/Falsa de forma
- * independente, em vez de "só uma é a correta". Por isso as duas variantes
- * dividem quase todo o layout aqui; o que muda é só o controle de
- * correção de cada linha (um botão de letra vs. um par V/F) e os textos.
+ * Usado na criação e na revisão de questões da IA; muda só `somenteLeitura` e
+ * `actions`. V/F tem a mesma estrutura de Alternativas, só que cada afirmação
+ * é julgada à parte, então só muda o controle de correção de cada linha.
  */
 export function QuestaoEditor({
   questao,

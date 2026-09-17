@@ -4,10 +4,8 @@ import { LetterBadge } from '../LetterBadge'
 import type { LetterState } from '../LetterBadge/types'
 
 /**
- * Confirmado no Figma (nós 1:939, 1:943, 1:947): a letra fica fundida na
- * borda esquerda da linha (sem padding/gap do container — quem tem padding
- * é o texto), por isso overflow:hidden aqui pra clipar o canto arredondado
- * do LetterBadge junto com o do container.
+ * A letra fica fundida na borda esquerda (quem tem padding é o texto), por
+ * isso overflow:hidden clipa o canto do LetterBadge junto com o do container.
  */
 const Container = styled.button<{ $state: LetterState; $blocked: boolean }>`
   display: flex;

@@ -19,8 +19,6 @@ import type { TipoUsuario } from '../../types'
 import type { ItemMenu } from './types'
 
 /**
- * Menu por perfil (doc §7): a sidebar é condicional ao TipoUsuario.
- *
  * Os itens espelham exatamente as áreas que o back autoriza em SecurityConfig
  * — por isso o Aluno não vê Turmas/Planos (só teria GET) e o Professor não vê
  * os cadastros de pessoas, que são POST/PUT/DELETE restritos ao Administrador.

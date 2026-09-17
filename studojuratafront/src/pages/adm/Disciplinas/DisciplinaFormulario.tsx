@@ -9,6 +9,7 @@ import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
+import { Stack } from '../../../components/ui/Stack'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -20,12 +21,6 @@ import { ApiError } from '../../../services/api'
 import { disciplinas as servicoDisciplinas } from '../../../services/endpoints'
 import { OPCOES_ATIVA_INATIVA } from '../../../utils/labels'
 import type { StatusAtivoInativo } from '../../../types'
-
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
 
 const Grade = styled.div`
   display: grid;
@@ -214,7 +209,7 @@ export default function DisciplinaFormulario() {
         <SkeletonCartao />
       ) : (
         <Card titulo="Dados da disciplina">
-          <Coluna>
+          <Stack gap="md">
             <Grade>
               <Input
                 label="Nome da disciplina"
@@ -235,7 +230,7 @@ export default function DisciplinaFormulario() {
                 onChange={(valor) => setAtiva(valor !== 'INATIVO')}
               />
             </Grade>
-          </Coluna>
+          </Stack>
         </Card>
       )}
     </Layout>

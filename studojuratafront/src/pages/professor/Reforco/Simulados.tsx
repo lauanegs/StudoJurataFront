@@ -34,10 +34,7 @@ import type { Coluna } from '../../../components/ui/DataTable/types'
 
 type Filtro = 'todos' | StatusSimulado
 
-/* Selects de Turma/Disciplina "flutuantes" abaixo das abas (pedido
-   explícito) — mesmo padrão de LinhaAcaoFlutuante usado em TurmaFormulario
-   (ADM): soltos no fundo cinza da página, à direita, fora do card branco da
-   tabela. */
+/* Filtros fora do card da tabela, à direita, como LinhaAcaoFlutuante de TurmaFormulario. */
 const LinhaFiltrosFlutuante = styled.div`
   display: flex;
   align-items: center;
@@ -83,11 +80,8 @@ export default function Simulados() {
     [requisicaoVinculos.data],
   )
 
-  // Escopo por professor (pedido explícito): cada professor só vê/controla
-  // os simulados vinculados às turmas em que leciona — o banco de questões
-  // continua público (não tem esse filtro). Simulado.turma é opcional
-  // (rascunho ainda sem turma escolhida) — sem turma definida, fica visível
-  // até ele mesmo escolher a turma e virar "de alguém".
+  // Cada professor vê só os simulados das turmas em que leciona. Rascunho sem
+  // turma fica visível até ter turma definida.
   const simuladosDoProfessor = useMemo(
     () => (data ?? []).filter((simulado) => !simulado.turmaId || turmasDoProfessor.has(simulado.turmaId)),
     [data, turmasDoProfessor],
@@ -443,10 +437,7 @@ export default function Simulados() {
                 >
                   Editar
                 </Button>
-                {/* Destinação ESPECIFICO precisa da lista de alunos escolhida
-                    no momento do lançamento — essa tela não tem esse seletor,
-                    só o editor completo tem (SimuladoFormulario). Lançar por
-                    aqui sem alunos sempre falhava com 400. */}
+                {/* ESPECIFICO precisa da lista de alunos, que só o SimuladoFormulario tem. */}
                 {simulado.tipoDestinacao === 'TODOS' && (
                   <Button
                     variant="subtle"
@@ -463,9 +454,7 @@ export default function Simulados() {
 
             {simulado.status === 'PUBLICADO' && (
               <>
-                {/* Edição geral fica travada (SimuladoFormulario já trata isso),
-                    mas "Disponível até" continua editável mesmo lançado — sem
-                    este link não havia como chegar lá pela tela. */}
+                {/* "Disponível até" continua editável mesmo depois de lançado. */}
                 <Button
                   variant="subtle"
                   size="small"

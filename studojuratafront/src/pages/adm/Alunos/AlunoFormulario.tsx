@@ -13,6 +13,7 @@ import { Modal } from '../../../components/ui/Modal'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Tag } from '../../../components/ui/Tag'
+import { Stack } from '../../../components/ui/Stack'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -35,9 +36,7 @@ import { PessoaCampos } from '../_compartilhado/PessoaCampos'
 import { PESSOA_VAZIA, type DadosPessoa } from '../_compartilhado/dadosPessoa'
 import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, validarPessoa } from '../_compartilhado/validarPessoa'
 
-/* Confirmado pelo usuário: mesmo padrão da aba "Alunos ativos" de Turmas —
-   ação de destaque flutuante, alinhada à direita, acima do conteúdo (não
-   mais dentro do slot actions do Card). */
+/* Ação de destaque acima do conteúdo, à direita, como na aba "Alunos ativos" de Turmas. */
 const LinhaAcaoFlutuante = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -75,12 +74,6 @@ const LinhaTermos = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `
 
-const Lista = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
 interface VinculoForm {
   /** Id do ResponsavelAluno quando o vínculo já existe no back. */
   id?: number
@@ -89,7 +82,7 @@ interface VinculoForm {
   parentesco: Parentesco | null
   erroResponsavel?: string
   erroParentesco?: string
-  /** Item 10.3 (LGPD) — só existem depois que o vínculo já foi salvo (tem id). */
+  /** Aceite LGPD: só existe depois que o vínculo foi salvo. */
   aceitouTermos?: boolean
   dataAceite?: string
   textoVersao?: string
@@ -116,10 +109,7 @@ export default function AlunoFormulario() {
   })
   const [matricula, setMatricula] = useState('')
   const [vinculos, setVinculos] = useState<VinculoForm[]>([])
-  // Item 10.3 (LGPD): o texto exato aceito fica gravado por vínculo
-  // (textoVersao) — antes só existia a tag "aceito"/"pendente", sem jeito de
-  // conferir depois o que, de fato, foi aceito. Esse modal só mostra o que
-  // já está salvo, não registra nada novo.
+  // Mostra o texto exato aceito (textoVersao); não registra nada novo.
   const [termoVisualizado, setTermoVisualizado] = useState<VinculoForm | null>(null)
 
   const requisicaoAluno = useRequisicao(
@@ -275,7 +265,7 @@ export default function AlunoFormulario() {
     }
   })
 
-  /** Item 10.3 — checkbox de aceite dos termos LGPD, só disponível para vínculo já salvo. */
+  /** Aceite dos termos LGPD, disponível só para vínculo já salvo. */
   async function registrarAceite(vinculo: VinculoForm) {
     if (!vinculo.id) return
 
@@ -431,7 +421,7 @@ export default function AlunoFormulario() {
         <>
           {(aba === 'dados' || aba === 'endereco') && (
             <Card titulo={aba === 'dados' ? 'Dados do aluno' : 'Endereço'}>
-              <Lista>
+              <Stack gap="md">
                 <PessoaCampos
                   secao={aba}
                   valores={formulario.valores}
@@ -461,7 +451,7 @@ export default function AlunoFormulario() {
                     onChange={(evento) => setMatricula(evento.target.value)}
                   />
                 )}
-              </Lista>
+              </Stack>
             </Card>
           )}
 
@@ -486,7 +476,7 @@ export default function AlunoFormulario() {
                   icon={<UserRound />}
                 />
               ) : (
-                <Lista>
+                <Stack gap="md">
                   {vinculos.map((vinculo) => (
                     <LinhaResponsavel key={vinculo.chave}>
                       <CamposResponsavel>
@@ -570,7 +560,7 @@ export default function AlunoFormulario() {
                       </LinhaTermos>
                     </LinhaResponsavel>
                   ))}
-                </Lista>
+                </Stack>
               )}
               </Card>
             </>

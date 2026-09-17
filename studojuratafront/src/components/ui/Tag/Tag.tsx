@@ -21,8 +21,7 @@ const CORES: Record<TagVariant, { bg: string }> = {
 const TAMANHOS: Record<NonNullable<TagProps['size']>, { fontSize: string; padding: string; icone: number }> = {
   small: { fontSize: '11px', padding: '2px 8px', icone: 12 },
   medium: { fontSize: tokens.typography.sizes.xs, padding: '4px 12px', icone: 12 },
-  // Usado no subtítulo do header — confirmado pelo usuário: um pouco maior
-  // que o "medium" padrão do resto do sistema.
+  // Usado no subtítulo do header, um pouco maior que o "medium".
   large: { fontSize: tokens.typography.sizes.sm, padding: '6px 14px', icone: 14 },
 }
 
@@ -46,10 +45,7 @@ export function Tag({ children, variant = 'neutral', icon, size = 'medium' }: Ta
           height: 'auto',
           lineHeight: tokens.typography.lineHeight.tight,
         },
-        // O Badge da Mantine trunca o texto com "..." por padrão
-        // (overflow/text-overflow/white-space no label) — confirmado pelo
-        // usuário: o texto tem que quebrar linha inteiro, nunca esconder
-        // parte dele.
+        // O Badge da Mantine trunca com "..."; aqui o texto quebra linha inteiro.
         label: {
           overflow: 'visible',
           textOverflow: 'unset',

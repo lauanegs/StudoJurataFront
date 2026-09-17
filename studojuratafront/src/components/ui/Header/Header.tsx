@@ -22,9 +22,7 @@ export function Header({
         <S.Titulos>
           <S.LinhaTitulo>
             {voltarPara && (
-              // Botão quadrado só com o ícone, na mesma linha e centralizado
-              // com a altura do título (não do bloco título+subtítulo
-              // inteiro) — confirmado pelo usuário a partir do protótipo.
+              // Centralizado com a altura do título, não do bloco título+subtítulo.
               <S.Voltar type="button" onClick={() => navegar(voltarPara)} aria-label={rotuloVoltar}>
                 <ArrowLeft size={18} />
               </S.Voltar>
