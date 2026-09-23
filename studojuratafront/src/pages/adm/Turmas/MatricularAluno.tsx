@@ -6,10 +6,8 @@ import { Check, Save, UserPlus, Users, UserX } from 'lucide-react'
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
-import { CheckBox } from '../../../components/ui/CheckBox'
 import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
-import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
 import { Stepper } from '../../../components/ui/Stepper'
 import { Tab } from '../../../components/ui/Tab'
@@ -30,7 +28,7 @@ import {
 } from '../../../services/pessoas'
 import { matriculas, turmas as servicoTurmas } from '../../../services/turmas'
 import { formatarCpf } from '../../../utils/format'
-import { OPCOES_PARENTESCO, TEXTO_VERSAO_LGPD } from '../../../utils/labels'
+import { OPCOES_PARENTESCO } from '../../../utils/labels'
 import type { Parentesco } from '../../../types/pessoas'
 import type { StatusMatricula } from '../../../types/turmas'
 import { PessoaCampos } from '../../../components/pessoas/PessoaCampos'
@@ -51,15 +49,6 @@ const Aviso = styled.p`
 
   font-size: ${({ theme }) => theme.typography.sizes.xs};
   color: ${({ theme }) => theme.colors.warningText};
-`
-
-const TextoTermo = styled.p`
-  padding: ${({ theme }) => theme.spacing.sm};
-  background: ${({ theme }) => theme.colors.background};
-  border-radius: ${({ theme }) => theme.radius.md};
-
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
 `
 
 const LinhaRodape = styled.div`
@@ -90,14 +79,13 @@ export default function MatricularAluno() {
   // --- Passo 1: aluno -------------------------------------------------------
   const [modoAluno, setModoAluno] = useState<'existente' | 'novo'>('existente')
   const [alunoIdExistente, setAlunoIdExistente] = useState<number | null>(null)
-  const formularioAluno = useFormularioPessoa()
-  const [matriculaCodigo, setMatriculaCodigo] = useState('')
+  // Aluno exige data de nascimento: é ela que define a exigência de responsável.
+  const formularioAluno = useFormularioPessoa({ exigirDataNascimento: true })
 
   // --- Passo 2: responsável ---------------------------------------------------
   const [modoResponsavel, setModoResponsavel] = useState<'existente' | 'novo'>('existente')
   const [responsavelIdExistente, setResponsavelIdExistente] = useState<number | null>(null)
   const [parentesco, setParentesco] = useState<Parentesco | null>(null)
-  const [aceitouTermos, setAceitouTermos] = useState(false)
   const formularioResponsavel = useFormularioPessoa()
 
   // --- Passo 3: matrícula ------------------------------------------------------
@@ -192,11 +180,6 @@ export default function MatricularAluno() {
           return
         }
 
-        if (!aceitouTermos) {
-          toast.warning('Confirme o aceite dos termos', 'É preciso registrar o aceite do responsável para continuar.')
-          return
-        }
-
         if (modoResponsavel === 'existente') {
           if (!responsavelIdExistente) {
             toast.warning('Selecione o responsável')
@@ -247,10 +230,8 @@ export default function MatricularAluno() {
       if (modoAluno === 'novo') {
         const payloadPessoa = paraPayloadPessoa(formularioAluno.getValues())
         const pessoaSalva = await servicoPessoas.criar(payloadPessoa)
-        alunoFinal = await servicoAlunos.criar({
-          pessoa: pessoaSalva,
-          matricula: matriculaCodigo.trim() || undefined,
-        })
+        // A matrícula é gerada pelo backend (ano + sequência).
+        alunoFinal = await servicoAlunos.criar({ pessoa: pessoaSalva })
       }
 
       if (!alunoFinal) {
@@ -275,15 +256,11 @@ export default function MatricularAluno() {
           return
         }
 
-        const vinculoCriado = await vinculosResponsavel.criar({
+        await vinculosResponsavel.criar({
           aluno: alunoFinal,
           responsavel: responsavelFinal,
           parentesco: parentesco as Parentesco,
         })
-
-        if (aceitouTermos) {
-          await vinculosResponsavel.aceitarTermos(vinculoCriado.id, TEXTO_VERSAO_LGPD)
-        }
       }
 
       // 3) Matrícula.
@@ -445,15 +422,7 @@ export default function MatricularAluno() {
                   <PessoaCampos
                     form={formularioAluno}
                     rotuloNome="Nome do aluno"
-                  />
-
-                  <Input
-                    label="Matrícula"
-                    placeholder="Código interno da escola (opcional)"
-                    value={matriculaCodigo}
-                    maxLength={30}
-                    hint="Deixe em branco para a secretaria preencher depois."
-                    onChange={(evento) => setMatriculaCodigo(evento.target.value)}
+                    exigirDataNascimento
                   />
                 </>
               )}
@@ -530,13 +499,6 @@ export default function MatricularAluno() {
                     onChange={setParentesco}
                   />
 
-                  <TextoTermo>{TEXTO_VERSAO_LGPD}</TextoTermo>
-
-                  <CheckBox
-                    label="Confirmo que o responsável leu e aceitou os termos acima"
-                    checked={aceitouTermos}
-                    onChange={(evento) => setAceitouTermos(evento.target.checked)}
-                  />
                 </>
               )}
             </Stack>

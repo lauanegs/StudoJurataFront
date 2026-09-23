@@ -9,10 +9,8 @@ import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
 import { IconButton } from '../../../components/ui/IconButton'
 import { Input } from '../../../components/ui/Input'
-import { Modal } from '../../../components/ui/Modal'
 import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
-import { Tag } from '../../../components/ui/Tag'
 import { Stack } from '../../../components/ui/Stack'
 import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
@@ -28,8 +26,7 @@ import {
   responsaveis as servicoResponsaveis,
   vinculosResponsavel,
 } from '../../../services/pessoas'
-import { formatarData } from '../../../utils/format'
-import { OPCOES_PARENTESCO, TEXTO_VERSAO_LGPD } from '../../../utils/labels'
+import { OPCOES_PARENTESCO } from '../../../utils/labels'
 import type { Parentesco } from '../../../types/pessoas'
 import { PessoaCampos } from '../../../components/pessoas/PessoaCampos'
 import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '../../../formularios/pessoas'
@@ -65,13 +62,6 @@ const CamposResponsavel = styled.div`
   }
 `
 
-const LinhaTermos = styled.div`
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-`
-
 interface VinculoForm {
   /** Id do ResponsavelAluno quando o vínculo já existe no back. */
   id?: number
@@ -80,10 +70,6 @@ interface VinculoForm {
   parentesco: Parentesco | null
   erroResponsavel?: string
   erroParentesco?: string
-  /** Aceite LGPD: só existe depois que o vínculo foi salvo. */
-  aceitouTermos?: boolean
-  dataAceite?: string
-  textoVersao?: string
 }
 
 function novoVinculo(): VinculoForm {
@@ -101,11 +87,10 @@ export default function AlunoFormulario() {
 
   const [aba, setAba] = useState<'dados' | 'endereco' | 'responsaveis'>('dados')
 
-  const form = useFormularioPessoa()
+  // Aluno exige data de nascimento: é ela que define a exigência de responsável.
+  const form = useFormularioPessoa({ exigirDataNascimento: true })
   const [matricula, setMatricula] = useState('')
   const [vinculos, setVinculos] = useState<VinculoForm[]>([])
-  // Mostra o texto exato aceito (textoVersao); não registra nada novo.
-  const [termoVisualizado, setTermoVisualizado] = useState<VinculoForm | null>(null)
 
   const requisicaoAluno = useRequisicao(
     () => servicoAlunos.buscar(alunoId as number),
@@ -134,9 +119,6 @@ export default function AlunoFormulario() {
         chave: String(vinculo.id),
         responsavelId: vinculo.responsavel?.id ?? null,
         parentesco: vinculo.parentesco ?? null,
-        aceitouTermos: vinculo.aceitouTermos ?? false,
-        dataAceite: vinculo.dataAceite,
-        textoVersao: vinculo.textoVersao,
       })),
     )
   })
@@ -224,21 +206,22 @@ export default function AlunoFormulario() {
       const alunoSalvo = edicao
         ? await servicoAlunos.atualizar(alunoId as number, {
             pessoa: pessoaSalva,
-            matricula: matricula.trim() || undefined,
           })
         : await servicoAlunos.criar({
             pessoa: pessoaSalva,
-            matricula: matricula.trim() || undefined,
           })
 
       await sincronizarVinculos(alunoSalvo.id)
 
-      toast.success(
-        edicao ? 'Aluno atualizado' : 'Aluno cadastrado',
-        `${pessoaSalva.nome} foi salvo com sucesso.`,
-      )
-
-      navegar('/adm/alunos')
+      if (edicao) {
+        toast.success('Aluno atualizado', `${pessoaSalva.nome} foi salvo com sucesso.`)
+        // Permanece na tela: só recarrega o que o back gravou.
+        await requisicaoAluno.reload()
+      } else {
+        toast.success('Aluno cadastrado', `${pessoaSalva.nome} foi salvo com sucesso.`)
+        // Continua no formulário, agora em modo de edição (com matrícula gerada).
+        navegar(`/adm/alunos/${alunoSalvo.id}`, { replace: true })
+      }
     } catch (erroSalvar) {
       toast.error(
         'Não foi possível salvar',
@@ -246,35 +229,6 @@ export default function AlunoFormulario() {
       )
     }
   })
-
-  /** Aceite dos termos LGPD, disponível só para vínculo já salvo. */
-  async function registrarAceite(vinculo: VinculoForm) {
-    if (!vinculo.id) return
-
-    try {
-      const atualizado = await vinculosResponsavel.aceitarTermos(vinculo.id, TEXTO_VERSAO_LGPD)
-
-      setVinculos((atuais) =>
-        atuais.map((item) =>
-          item.chave === vinculo.chave
-            ? {
-                ...item,
-                aceitouTermos: atualizado.aceitouTermos,
-                dataAceite: atualizado.dataAceite,
-                textoVersao: atualizado.textoVersao,
-              }
-            : item,
-        ),
-      )
-
-      toast.success('Aceite registrado')
-    } catch (erroAceite) {
-      toast.error(
-        'Não foi possível registrar o aceite',
-        erroAceite instanceof ApiError ? erroAceite.message : undefined,
-      )
-    }
-  }
 
   const { executar: excluirAluno, executando: excluindo } = useAcao(async () => {
     if (!alunoId) return
@@ -409,22 +363,15 @@ export default function AlunoFormulario() {
                   form={form}
                   disabled={salvando}
                   rotuloNome="Nome do aluno"
+                  exigirDataNascimento
                 />
 
                 {aba === 'dados' && (
                   <Input
                     label="Matrícula"
-                    placeholder="Código interno da escola (opcional)"
-                    value={matricula}
-                    // A matrícula identifica o aluno: só é editável na criação.
-                    disabled={salvando || edicao}
-                    maxLength={30}
-                    hint={
-                      edicao
-                        ? 'Identificador do aluno — não pode ser alterado depois de criado.'
-                        : 'Deixe em branco para a secretaria preencher depois.'
-                    }
-                    onChange={(evento) => setMatricula(evento.target.value)}
+                    value={edicao ? matricula : 'Gerada automaticamente ao salvar'}
+                    disabled
+                    hint="Código do aluno gerado pelo sistema (ano + sequência) — não é editável."
                   />
                 )}
               </Stack>
@@ -507,33 +454,6 @@ export default function AlunoFormulario() {
                           }
                         />
                       </CamposResponsavel>
-
-                      <LinhaTermos>
-                        <Tag variant={vinculo.aceitouTermos ? 'success' : 'warning'}>
-                          {vinculo.aceitouTermos
-                            ? `Termos aceitos em ${formatarData(vinculo.dataAceite)}`
-                            : 'Termos pendentes'}
-                        </Tag>
-
-                        {vinculo.aceitouTermos ? (
-                          <Button
-                            variant="secondary"
-                            size="small"
-                            onClick={() => setTermoVisualizado(vinculo)}
-                          >
-                            Ver termo aceito
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="secondary"
-                            size="small"
-                            disabled={!vinculo.id || salvando}
-                            onClick={() => registrarAceite(vinculo)}
-                          >
-                            Registrar aceite
-                          </Button>
-                        )}
-                      </LinhaTermos>
                     </LinhaResponsavel>
                   ))}
                 </Stack>
@@ -543,19 +463,6 @@ export default function AlunoFormulario() {
           )}
         </>
       )}
-
-      <Modal
-        aberto={Boolean(termoVisualizado)}
-        onClose={() => setTermoVisualizado(null)}
-        titulo="Termo aceito"
-        descricao={
-          termoVisualizado
-            ? `Aceito em ${formatarData(termoVisualizado.dataAceite)}.`
-            : undefined
-        }
-      >
-        <p>{termoVisualizado?.textoVersao || TEXTO_VERSAO_LGPD}</p>
-      </Modal>
     </Layout>
   )
 }

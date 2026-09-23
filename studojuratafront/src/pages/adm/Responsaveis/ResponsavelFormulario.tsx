@@ -9,7 +9,6 @@ import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
 import { IconButton } from '../../../components/ui/IconButton'
 import { Tab } from '../../../components/ui/Tab'
-import { Tag } from '../../../components/ui/Tag'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -22,7 +21,6 @@ import {
   responsaveis as servicoResponsaveis,
   vinculosResponsavel,
 } from '../../../services/pessoas'
-import { formatarData } from '../../../utils/format'
 import { ROTULO_PARENTESCO } from '../../../utils/labels'
 import type { ResponsavelAluno } from '../../../types/pessoas'
 import { PessoaCampos } from '../../../components/pessoas/PessoaCampos'
@@ -75,12 +73,15 @@ export default function ResponsavelFormulario() {
 
       if (edicao) {
         await servicoResponsaveis.atualizar(responsavelId as number, { pessoa: pessoaSalva })
+        toast.success('Responsável atualizado', pessoaSalva.nome)
+        // Permanece na tela: só recarrega o que o back gravou.
+        await requisicao.reload()
       } else {
-        await servicoResponsaveis.criar({ pessoa: pessoaSalva })
+        const criado = await servicoResponsaveis.criar({ pessoa: pessoaSalva })
+        toast.success('Responsável cadastrado', pessoaSalva.nome)
+        // Continua no formulário, agora em modo de edição.
+        navegar(`/adm/responsaveis/${criado.id}`, { replace: true })
       }
-
-      toast.success(edicao ? 'Responsável atualizado' : 'Responsável cadastrado', pessoaSalva.nome)
-      navegar('/adm/responsaveis')
     } catch (erroSalvar) {
       toast.error(
         'Não foi possível salvar',
@@ -245,16 +246,6 @@ export default function ResponsavelFormulario() {
                   cabecalho: 'Parentesco',
                   render: (vinculo) =>
                     vinculo.parentesco ? ROTULO_PARENTESCO[vinculo.parentesco] : '—',
-                },
-                {
-                  key: 'termos',
-                  cabecalho: 'Aceite de termos',
-                  render: (vinculo) =>
-                    vinculo.aceitouTermos ? (
-                      <Tag variant="success">Aceito em {formatarData(vinculo.dataAceite)}</Tag>
-                    ) : (
-                      <Tag variant="warning">Pendente</Tag>
-                    ),
                 },
               ]}
               data={requisicaoVinculos.data ?? []}

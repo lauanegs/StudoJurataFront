@@ -172,7 +172,12 @@ export default function RegistrarAula() {
       rotuloConfirmar: 'Marcar como ministrada',
       aoConfirmar: async () => {
         try {
-          await servicoAulas.publicar(idAula, new Date().toISOString().slice(0, 10))
+          // Data local (toISOString converte para UTC e, à noite, envia o dia seguinte).
+          const hoje = new Date()
+          const dataLocal = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(
+            hoje.getDate(),
+          ).padStart(2, '0')}`
+          await servicoAulas.publicar(idAula, dataLocal)
           toast.success('Aula publicada')
           await requisicaoAula.reload()
         } catch (erroPublicar) {

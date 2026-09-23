@@ -22,6 +22,7 @@ import { AbaDisciplinas } from './AbaDisciplinas'
 import { AbaHistorico } from './AbaHistorico'
 import { AbaHorarios } from './AbaHorarios'
 import { DadosTurma } from './DadosTurma'
+import { rotaDaTurmaCriada } from './destinoAposSalvar'
 
 type Aba = 'data' | 'horarios' | 'disciplinas' | 'alunos' | 'historico'
 
@@ -105,8 +106,9 @@ export default function TurmaFormulario() {
         escola,
         curso,
         titulo: titulo.trim(),
-        capacidadeMaxima: capacidadeMaxima ? Number(capacidadeMaxima) : undefined,
-        dataInicio: dataInicio || undefined,
+        // Capacidade e data de início são obrigatórias na tela (e no schema).
+        capacidadeMaxima: Number(capacidadeMaxima),
+        dataInicio,
         // Turma ativa nunca tem data de término.
         dataFim: ativa ? undefined : dataFim || undefined,
         status: ativa ? ('ATIVA' as const) : ('INATIVA' as const),
@@ -115,11 +117,14 @@ export default function TurmaFormulario() {
       if (edicao) {
         await servicoTurmas.atualizar(turmaId as number, corpo)
         toast.success('Turma atualizada', corpo.titulo)
+        // Permanece na mesma tela e na aba atual; o reload traz o que o back
+        // gravou (inclusive Situação) sem descartar o formulário.
         await requisicaoTurma.reload()
       } else {
         const criada = await servicoTurmas.criar(corpo)
         toast.success('Turma criada', 'Agora defina os horários e vincule as disciplinas.')
-        navegar(`/adm/turmas/${criada.id}`, { replace: true })
+        const destino = rotaDaTurmaCriada(criada)
+        if (destino) navegar(destino, { replace: true })
       }
     } catch (erroSalvar) {
       toast.error('Não foi possível salvar', erroSalvar instanceof ApiError ? erroSalvar.message : undefined)

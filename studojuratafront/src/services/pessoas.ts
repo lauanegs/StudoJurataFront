@@ -8,6 +8,7 @@ import type {
   Usuario,
 } from '../types/pessoas'
 import type { TurmaDisciplina } from '../types/turmas'
+import type { TentativaDesempenho } from '../types/simulados'
 
 export const pessoas = {
   listar: () => api.get<Pessoa[]>('/pessoas'),
@@ -28,6 +29,8 @@ export const professores = {
   listar: () => api.get<Professor[]>('/professores'),
   buscar: (id: number) => api.get<Professor>(`/professores/${id}`),
   turmasLecionadas: (id: number) => api.get<TurmaDisciplina[]>(`/professores/${id}/turmas`),
+  /** Tentativas concluídas dos simulados das turmas do professor. */
+  desempenho: (id: number) => api.get<TentativaDesempenho[]>(`/professores/${id}/desempenho`),
   criar: (dados: Partial<Professor>) => api.post<Professor>('/professores', dados),
   atualizar: (id: number, dados: Partial<Professor>) =>
     api.put<Professor>(`/professores/${id}`, dados),
@@ -53,8 +56,6 @@ export const vinculosResponsavel = {
     api.post<ResponsavelAluno>('/responsavel-aluno', dados),
   atualizar: (id: number, dados: Partial<ResponsavelAluno>) =>
     api.put<ResponsavelAluno>(`/responsavel-aluno/${id}`, dados),
-  aceitarTermos: (id: number, textoVersao: string) =>
-    api.post<ResponsavelAluno>(`/responsavel-aluno/${id}/aceitar-termos`, { textoVersao }),
   excluir: (id: number) => api.delete(`/responsavel-aluno/${id}`),
 }
 

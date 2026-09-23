@@ -54,9 +54,6 @@ export interface ResponsavelAluno extends EntidadeBase {
   responsavel: Responsavel
   aluno: Aluno
   parentesco: Parentesco
-  aceitouTermos?: boolean
-  dataAceite?: string
-  textoVersao?: string
 }
 
 export interface Usuario extends EntidadeBase {

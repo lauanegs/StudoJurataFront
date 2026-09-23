@@ -1,3 +1,5 @@
+import { theme as tokens } from '../styles/theme'
+
 export type NivelDesempenho = 'baixo' | 'medio' | 'alto'
 
 /**
@@ -16,6 +18,13 @@ export function nivelDesempenho(porcentagem: number): NivelDesempenho {
   if (porcentagem < 40) return 'baixo'
   if (porcentagem < 70) return 'medio'
   return 'alto'
+}
+
+/** Cor de cada faixa — os mesmos vermelho/amarelo/verde dos tokens de feedback do tema. */
+export const CORES_NIVEL_DESEMPENHO: Record<NivelDesempenho, string> = {
+  baixo: tokens.colors.error,
+  medio: tokens.colors.warning,
+  alto: tokens.colors.success,
 }
 
 const FAIXAS_HISTOGRAMA = [

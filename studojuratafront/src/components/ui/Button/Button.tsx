@@ -20,9 +20,17 @@ const GRADIENTS: Partial<Record<ButtonVariant, { from: string; to: string; borde
     to: tokens.colors.buttonPurpleLight,
     border: tokens.colors.buttonPurple,
   },
-  danger: { from: '#DB5461', to: '#CF505C', border: '#DB5461' },
+  danger: {
+    from: tokens.gradientPairs.danger.from,
+    to: tokens.gradientPairs.danger.to,
+    border: tokens.gradientPairs.danger.from,
+  },
   // Mesmo verde dos cards de desempenho do módulo de Reforço (theme.colors.success).
-  success: { from: '#3DCB63', to: '#34C759', border: '#34C759' },
+  success: {
+    from: tokens.gradientPairs.success.from,
+    to: tokens.colors.success,
+    border: tokens.colors.success,
+  },
 }
 
 // Fundos que não são degradê de 2 cores usam o `background` literal do token,

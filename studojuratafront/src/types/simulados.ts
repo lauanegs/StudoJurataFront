@@ -148,3 +148,50 @@ export interface FinalizarSimuladoRequest {
   tempoGastoTotal: number
   finalizadoPorTempo: boolean
 }
+
+/** GET /professores/{id}/desempenho: tentativa concluída de um simulado das turmas do professor. */
+export interface TentativaDesempenho {
+  id: number
+  alunoId: number
+  simuladoId: number
+  simuladoTitulo: string
+  turmaId: number | null
+  turma: string | null
+  disciplinaId: number | null
+  disciplina: string | null
+  nota: number
+  notaMaxima: number
+  /** 0 a 100. */
+  percentual: number
+  /** dataInicio do simulado, com createdAt como reserva. */
+  data: string | null
+  tipoDestinacao: TipoDestinacaoSimulado
+}
+
+/** Alternativa como o aluno vê durante a prova: sem o campo `correta`. */
+export interface AlternativaDaTentativa {
+  id: number
+  texto: string
+  ordem?: number
+}
+
+/** Questão da tentativa, com as alternativas já na ordem do servidor. */
+export interface QuestaoDaTentativa {
+  questaoId: number
+  enunciado: string
+  tipo: TipoQuestao
+  alternativas: AlternativaDaTentativa[]
+}
+
+/**
+ * Conteúdo da prova da própria tentativa.
+ *
+ * `gabarito` só vem do servidor quando a tentativa está CONCLUIDA — durante a
+ * prova o campo não existe no payload.
+ */
+export interface ProvaDaTentativa {
+  simuladoAlunoId: number
+  status: StatusSimuladoAluno
+  questoes: QuestaoDaTentativa[]
+  gabarito?: Record<string, boolean>
+}

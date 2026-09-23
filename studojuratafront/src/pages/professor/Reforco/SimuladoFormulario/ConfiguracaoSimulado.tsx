@@ -66,18 +66,22 @@ export function ConfiguracaoSimulado({
 
           <Select<number>
             label="Disciplina"
+            required
             options={opcoesDisciplinas}
             value={disciplinaId}
             loading={carregandoDisciplinas}
-            disabled={somenteLeitura}
+            error={erros.disciplinaId}
+            disabled={somenteLeitura || !turmaId}
             searchable
             clearable
-            placeholder="Selecionar disciplina..."
+            placeholder={turmaId ? 'Selecionar disciplina...' : 'Selecione a turma primeiro'}
+            emptyText="Nenhuma disciplina ofertada nesta turma"
             onChange={(valor) => form.setFieldValue('disciplinaId', valor)}
           />
 
           <Select<number>
             label="Turma"
+            required
             options={opcoesTurmas}
             value={turmaId}
             loading={carregandoTurmas}
@@ -94,14 +98,17 @@ export function ConfiguracaoSimulado({
 
           <Select<number>
             label="Plano de ensino"
+            required
             options={opcoesPlanos}
             value={planoEnsinoId}
             loading={carregandoPlanos}
+            error={erros.planoEnsinoId}
             disabled={somenteLeitura}
             searchable
             clearable
             placeholder="Selecionar plano..."
-            hint="Opcional."
+            hint="Somente planos da turma e da disciplina escolhidas."
+            emptyText="Nenhum plano desta turma e disciplina"
             onChange={(valor) => form.setFieldValue('planoEnsinoId', valor)}
           />
 

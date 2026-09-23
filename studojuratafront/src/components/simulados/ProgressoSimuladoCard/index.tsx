@@ -1,14 +1,21 @@
 import styled from 'styled-components'
 
+import { theme as tokens } from '../../../styles/theme'
+import { corComOpacidade } from '../../../utils/corComOpacidade'
+
 export type QuestionProgressStatus = 'correct' | 'incorrect' | 'current' | 'answered' | 'pending'
+
+/* Cinza esmaecido das bordas e do fundo dos segmentos ainda não respondidos. */
+const CINZA_ESMAECIDO = corComOpacidade(tokens.colors.textTertiary, 0.15)
 
 /* Acerto/erro usam degradês próprios, não os tokens success/danger. */
 const COLORS: Record<QuestionProgressStatus, string> = {
-  correct: 'linear-gradient(90deg, #0CCA4A 0%, #46A665 100%)',
-  incorrect: 'linear-gradient(90deg, #F95738 0%, #F86624 100%)',
-  current: 'linear-gradient(180deg, #049DBF 0%, rgba(4, 157, 191, 0.8) 100%), #662E9B',
-  answered: '#049DBF',
-  pending: 'rgba(115, 115, 115, 0.15)',
+  correct: tokens.gradients.correct,
+  incorrect: tokens.gradients.incorrect,
+  // Mesmo realce azul de marca usado na Sidebar.
+  current: tokens.gradients.blue,
+  answered: tokens.colors.blue,
+  pending: CINZA_ESMAECIDO,
 }
 
 /* Mais compacto que os 32px do Figma para não ocupar altura demais na prova. */
@@ -21,7 +28,7 @@ const Container = styled.div`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
 
   background: ${({ theme }) => theme.colors.white};
-  border: 1px solid rgba(115, 115, 115, 0.15);
+  border: 1px solid ${CINZA_ESMAECIDO};
   border-radius: ${({ theme }) => theme.radius.md};
 `
 
@@ -57,7 +64,7 @@ const Segment = styled.button<{ $color: string; $navigable: boolean; $pending: b
 
   border-radius: ${({ theme }) => theme.radius.sm};
   background: ${({ $color }) => $color};
-  border: ${({ $pending }) => ($pending ? '1px solid rgba(115, 115, 115, 0.15)' : 'none')};
+  border: ${({ $pending }) => ($pending ? `1px solid ${CINZA_ESMAECIDO}` : 'none')};
   cursor: ${({ $navigable }) => ($navigable ? 'pointer' : 'default')};
 
   transition: transform ${({ theme }) => theme.transition.fast};

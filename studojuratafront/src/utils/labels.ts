@@ -221,9 +221,3 @@ export const OPCOES_UF = [
   { value: 'SE', label: 'SE' },
   { value: 'TO', label: 'TO' },
 ]
-
-// --- LGPD / consentimento -----------------------------------------------------
-
-/** Texto exibido junto ao checkbox de aceite (sem versionamento formal de termos). */
-export const TEXTO_VERSAO_LGPD =
-  'Autorizo o uso dos dados do aluno na plataforma StudoJurata, conforme a Lei Geral de Proteção de Dados (LGPD).'

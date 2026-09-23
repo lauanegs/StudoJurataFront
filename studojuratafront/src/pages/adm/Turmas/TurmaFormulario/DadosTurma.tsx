@@ -62,6 +62,7 @@ export function DadosTurma({ form, salvando, opcoesCursos, carregandoCursos }: D
 
           <Input
             label="Capacidade máxima"
+            required
             type="number"
             min={1}
             placeholder="Ex.: 20"
@@ -74,7 +75,9 @@ export function DadosTurma({ form, salvando, opcoesCursos, carregandoCursos }: D
 
           <DatePicker
             label="Data de início"
+            required
             value={dataInicio}
+            error={erros.dataInicio}
             disabled={salvando}
             onChange={(evento) => form.setFieldValue('dataInicio', evento.target.value)}
           />

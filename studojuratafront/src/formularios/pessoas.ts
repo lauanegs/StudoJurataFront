@@ -1,5 +1,6 @@
 import { isValidCep, isValidCpf, isValidEmail, isValidPhone, parseCep, parsePhone } from '@brazilian-utils/brazilian-utils'
 import { schemaResolver, useForm } from '@mantine/form'
+import { useMemo } from 'react'
 import * as yup from 'yup'
 
 import { formatarCpf } from '../utils/format'
@@ -40,22 +41,42 @@ export const PESSOA_VAZIA: DadosPessoa = {
 
 const opcional = (validar: (valor: string) => boolean) => (valor?: string) => !valor || validar(valor)
 
-export const pessoaSchema = yup.object({
-  nome: yup.string().trim().required('Informe o nome completo').min(3, 'O nome deve ter ao menos 3 caracteres'),
-  cpf: yup.string().trim().required('Informe o CPF').test('cpf', 'CPF inválido', opcional(isValidCpf)),
-  dataNascimento: yup
-    .string()
-    .test('data-valida', 'Data inválida', opcional((valor) => !Number.isNaN(new Date(`${valor}T00:00:00`).getTime())))
-    .test('nao-futura', 'A data de nascimento não pode ser futura', opcional((valor) => new Date(`${valor}T00:00:00`).getTime() <= Date.now())),
-  telefone: yup.string().test('telefone', 'Telefone inválido', opcional(isValidPhone)),
-  email: yup.string().trim().test('email', 'E-mail inválido', opcional(isValidEmail)),
-  cep: yup.string().test('cep', 'CEP incompleto', opcional(isValidCep)),
-})
+export interface OpcoesFormularioPessoa {
+  /**
+   * No cadastro de aluno a data de nascimento é obrigatória: é ela que define a
+   * exigência de responsável (menor de idade) e a idade exibida nas telas.
+   */
+  exigirDataNascimento?: boolean
+}
 
-export function useFormularioPessoa() {
+export function pessoaSchema({ exigirDataNascimento = false }: OpcoesFormularioPessoa = {}) {
+  return yup.object({
+    nome: yup.string().trim().required('Informe o nome completo').min(3, 'O nome deve ter ao menos 3 caracteres'),
+    cpf: yup.string().trim().required('Informe o CPF').test('cpf', 'CPF inválido', opcional(isValidCpf)),
+    dataNascimento: (exigirDataNascimento ? yup.string().trim().required('Informe a data de nascimento') : yup.string())
+      .test('data-valida', 'Data inválida', opcional((valor) => !Number.isNaN(new Date(`${valor}T00:00:00`).getTime())))
+      .test(
+        'nao-futura',
+        'A data de nascimento não pode ser futura',
+        opcional((valor) => new Date(`${valor}T00:00:00`).getTime() <= Date.now()),
+      ),
+    telefone: yup.string().test('telefone', 'Telefone inválido', opcional(isValidPhone)),
+    email: yup.string().trim().test('email', 'E-mail inválido', opcional(isValidEmail)),
+    cep: yup.string().test('cep', 'CEP incompleto', opcional(isValidCep)),
+    // Obrigatório em todo cadastro: dado de identificação usado pela secretaria.
+    sexo: yup.string().nullable().required('Selecione o sexo'),
+  })
+}
+
+export function useFormularioPessoa({ exigirDataNascimento = false }: OpcoesFormularioPessoa = {}) {
+  const validate = useMemo(
+    () => schemaResolver(pessoaSchema({ exigirDataNascimento })),
+    [exigirDataNascimento],
+  )
+
   return useForm<DadosPessoa>({
     initialValues: PESSOA_VAZIA,
-    validate: schemaResolver(pessoaSchema),
+    validate,
     validateInputOnBlur: true,
   })
 }

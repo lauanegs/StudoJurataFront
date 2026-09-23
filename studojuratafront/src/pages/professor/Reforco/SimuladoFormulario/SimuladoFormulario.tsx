@@ -21,10 +21,11 @@ import { SkeletonCartao } from '../../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../../contexts/confirmContexto'
 import { useToast } from '../../../../contexts/toastContexto'
 import { useHidratar } from '../../../../hooks/useHidratar'
+import { useProfessorLogado } from '../../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../../hooks/useRequisicao'
 import { ApiError } from '../../../../services/api'
-import { disciplinas as servicoDisciplinas } from '../../../../services/curriculo'
 import { planosEnsino } from '../../../../services/planejamento'
+import { professores as servicoProfessores } from '../../../../services/pessoas'
 import {
   alternativas as servicoAlternativas,
   questoes as servicoQuestoes,
@@ -40,6 +41,8 @@ import { ModalImportarQuestoes } from './ModalImportarQuestoes'
 import { ModalImportarSimulado } from './ModalImportarSimulado'
 import { ModalSelecionarAlunos } from './ModalSelecionarAlunos'
 import { carregarQuestao, copiarQuestao, MAXIMO_QUESTOES } from './questoes'
+import { removerQuestaoDoSimulado } from './remocaoQuestao'
+import { disciplinaCompativelComTurma, disciplinasDaTurma } from './disciplinasDoSimulado'
 
 /**
  * Criação e edição de simulado.
@@ -59,6 +62,7 @@ export default function SimuladoFormulario() {
   const navegar = useNavigate()
   const toast = useToast()
   const confirmar = useConfirm()
+  const { professorId } = useProfessorLogado()
 
   const [aba, setAba] = useState<Aba>('configuracao')
 
@@ -87,8 +91,14 @@ export default function SimuladoFormulario() {
     [simuladoId],
     { ativo: Boolean(simuladoId) },
   )
-  const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
   const requisicaoTurmas = useRequisicao(() => servicoTurmas.listar(), [])
+  // Vínculos turma × disciplina do professor: é a oferta dele — mesma fonte que
+  // a tela de Simulados usa para montar o escopo.
+  const requisicaoVinculos = useRequisicao(
+    () => servicoProfessores.turmasLecionadas(professorId as number),
+    [professorId],
+    { ativo: Boolean(professorId) },
+  )
   const requisicaoPlanos = useRequisicao(() => planosEnsino.listar(), [])
   const requisicaoAlunos = useRequisicao(
     () => matriculas.ativosPorTurma(turmaId as number),
@@ -208,12 +218,8 @@ export default function SimuladoFormulario() {
   })
 
   const opcoesDisciplinas = useMemo(
-    () =>
-      (requisicaoDisciplinas.data ?? []).map((disciplina) => ({
-        value: disciplina.id,
-        label: disciplina.titulo ?? `Disciplina ${disciplina.id}`,
-      })),
-    [requisicaoDisciplinas.data],
+    () => disciplinasDaTurma(requisicaoVinculos.data ?? [], turmaId),
+    [requisicaoVinculos.data, turmaId],
   )
 
   const opcoesTurmas = useMemo(
@@ -226,13 +232,41 @@ export default function SimuladoFormulario() {
 
   const opcoesPlanos = useMemo(
     () =>
-      (requisicaoPlanos.data ?? []).map((plano) => ({
-        value: plano.id,
-        label: `Plano nº ${plano.id}`,
-        descricao: plano.curso?.nome,
-      })),
-    [requisicaoPlanos.data],
+      (requisicaoPlanos.data ?? [])
+        // Plano sem turma/disciplina (genérico) não tem escopo verificável e o
+        // back recusa vinculá-lo a um simulado de professor — não faz sentido
+        // oferecê-lo aqui.
+        .filter((plano) => plano.turmaDisciplina)
+        // O plano precisa ser o da turma E da disciplina escolhidas: o back
+        // valida a mesma combinação (garantirPlanoCompativel).
+        .filter((plano) => !turmaId || plano.turmaDisciplina?.turma?.id === turmaId)
+        .filter((plano) => !disciplinaId || plano.turmaDisciplina?.disciplina?.id === disciplinaId)
+        // Ciclo encerrado não recebe simulado novo.
+        .filter((plano) => plano.status !== 'CONCLUIDO')
+        .map((plano) => ({
+          value: plano.id,
+          label: `Plano nº ${plano.id}`,
+          descricao: plano.curso?.nome,
+        })),
+    [requisicaoPlanos.data, turmaId, disciplinaId],
   )
+
+  // Turma/disciplina trocadas: o plano escolhido pode ter deixado de pertencer
+  // à combinação — limpa em vez de deixar um valor que o back vai recusar.
+  useEffect(() => {
+    if (!requisicaoPlanos.data || requisicaoPlanos.loading || !planoEnsinoId) return
+    if (opcoesPlanos.some((opcao) => opcao.value === planoEnsinoId)) return
+
+    form.setFieldValue('planoEnsinoId', null)
+  }, [opcoesPlanos, planoEnsinoId, requisicaoPlanos.data, requisicaoPlanos.loading, form])
+
+  // Turma trocada: a disciplina escolhida pode não ser ofertada nela.
+  useEffect(() => {
+    if (!requisicaoVinculos.data || requisicaoVinculos.loading) return
+    if (disciplinaCompativelComTurma(requisicaoVinculos.data, turmaId, disciplinaId)) return
+
+    form.setFieldValue('disciplinaId', null)
+  }, [requisicaoVinculos.data, requisicaoVinculos.loading, turmaId, disciplinaId, form])
 
   const somenteLeitura = edicao && requisicaoSimulado.data?.status !== 'RASCUNHO'
   // Mesmo em somenteLeitura, um simulado PUBLICADO pode ter a disponibilidade estendida.
@@ -279,7 +313,6 @@ export default function SimuladoFormulario() {
         dataFim: deInputDataHora(dataFim),
         tempoLimite: tempoLimite ? Number(tempoLimite) : null,
         notaMaxima: notaMaxima ? Number(notaMaxima) : null,
-        quantidadeQuestoes: questoes.length,
       }
 
       const simulado = edicao
@@ -443,11 +476,30 @@ export default function SimuladoFormulario() {
     setQuestaoAtiva(questoes.length)
   }
 
-  function removerQuestao(indice: number) {
+  /**
+   * Questão já vinculada sai do back antes de sair da tela: sem isso, a
+   * remoção valia só no formulário e a questão continuava no simulado.
+   */
+  async function removerQuestao(indice: number) {
     if (questoes.length <= 1) return
 
-    setQuestoes((atuais) => atuais.filter((_, i) => i !== indice))
-    setQuestaoAtiva((atual) => Math.max(0, Math.min(atual, questoes.length - 2)))
+    const { questoes: restantes, erro } = await removerQuestaoDoSimulado({
+      questoes,
+      indice,
+      simuladoId,
+      desvincular: simuladoQuestoes.excluir,
+    })
+
+    if (erro) {
+      toast.error(
+        'Não foi possível remover a questão',
+        erro instanceof ApiError ? erro.message : undefined,
+      )
+      return
+    }
+
+    setQuestoes(restantes)
+    setQuestaoAtiva((atual) => Math.max(0, Math.min(atual, restantes.length - 1)))
   }
 
   function importarQuestoes(todasEscolhidas: QuestaoResponse[]) {
@@ -574,7 +626,7 @@ export default function SimuladoFormulario() {
           opcoesDisciplinas={opcoesDisciplinas}
           opcoesTurmas={opcoesTurmas}
           opcoesPlanos={opcoesPlanos}
-          carregandoDisciplinas={requisicaoDisciplinas.loading}
+          carregandoDisciplinas={requisicaoVinculos.loading}
           carregandoTurmas={requisicaoTurmas.loading}
           carregandoPlanos={requisicaoPlanos.loading}
           alunosSelecionados={alunosSelecionados.map((alunoId) => ({
@@ -601,7 +653,9 @@ export default function SimuladoFormulario() {
                   atuais.map((item, i) => (i === questaoAtiva ? atualizada : item)),
                 )
               }
-              onRemove={() => removerQuestao(questaoAtiva)}
+              onRemove={() => {
+                void removerQuestao(questaoAtiva)
+              }}
               onImport={() => setModalImportar(true)}
               conteudo={
                 <VinculoConteudoQuestao

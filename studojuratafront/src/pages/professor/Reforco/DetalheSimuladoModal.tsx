@@ -19,7 +19,7 @@ import { calcularFaixasHistograma, LIMIAR_BAIXO_DESEMPENHO } from '../../../util
 import { exportarExcelAbas } from '../../../utils/exportacao/exportarPlanilha'
 import { exportarPdf } from '../../../utils/exportacao/exportarPdf'
 import { formatarData, formatarPorcentagem } from '../../../utils/format'
-import { renderizarGraficoComoImagem } from '../../../utils/exportacao/renderizarGrafico'
+import { renderizarGraficoComoImagem } from '../../../components/graficos/RenderizarGrafico'
 import { ROTULO_DESTINACAO } from '../../../utils/labels'
 import type { SimuladoAlunoResponse, TipoDestinacaoSimulado } from '../../../types/simulados'
 import type { Coluna } from '../../../components/ui/DataTable/types'
@@ -59,7 +59,8 @@ interface DetalheSimuladoModalProps {
   turma: string
   disciplina: string
   notaMaxima: number
-  tentativas: SimuladoAlunoResponse[]
+  /** Tentativas concluídas deste simulado. */
+  tentativas: Pick<SimuladoAlunoResponse, 'id' | 'alunoId' | 'nota'>[]
   /** dataInicio do simulado, com createdAt como reserva — exibida como "Aplicado em". */
   data?: string
   tipoDestinacao?: TipoDestinacaoSimulado

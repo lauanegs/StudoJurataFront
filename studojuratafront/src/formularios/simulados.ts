@@ -25,13 +25,25 @@ export interface DadosSimulado {
 
 export const simuladoSchema = yup.object({
   titulo: yup.string().trim().required('Informe o título do simulado'),
+  // O back só aceita simulado de professor com disciplina e turma no escopo
+  // dele (sem isso a escrita é recusada como "sem escopo verificável") — a
+  // validação da tela precisa exigir os dois para o professor não bater em 403
+  // no fim do preenchimento.
+  disciplinaId: yup.number().nullable().required('Selecione a disciplina'),
   turmaId: yup
     .number()
     .nullable()
     .when('tipoDestinacao', {
       is: 'ESPECIFICO',
       then: (schema) => schema.required('Selecione a turma para escolher os alunos'),
+      otherwise: (schema) => schema.required('Selecione a turma'),
     }),
+  // O plano é o que liga o simulado ao conteúdo da turma: o back exige um plano
+  // do mesmo par turma+disciplina (SimuladoAccessGuard.garantirPlanoCompativel).
+  planoEnsinoId: yup.number().nullable().required('Selecione o plano de ensino'),
+  // Janela de aplicação: o back recusa simulado sem data de início
+  // (SimuladoService.validarCamposDoSimulado).
+  dataInicio: yup.string().required('Informe a data de início'),
   tempoLimite: inteiroPositivoOpcional('Informe os minutos como número inteiro positivo'),
   notaMaxima: numeroPositivoOpcional('A nota máxima deve ser maior que zero'),
   dataFim: yup.string().test('intervalo', MENSAGEM_DATA_FIM_SIMULADO, function (dataFim) {

@@ -1,5 +1,6 @@
 import { Download, Plus, Trash2 } from 'lucide-react'
 
+import { theme as tokens } from '../../../styles/theme'
 import { Button } from '../../ui/Button'
 import { Card } from '../../ui/Card'
 import { IconButton } from '../../ui/IconButton'
@@ -154,7 +155,7 @@ export function QuestaoEditor({
             style={{
               fontSize: '14px',
               fontWeight: 500,
-              color: '#656565',
+              color: tokens.colors.textSecondary,
               marginBottom: '8px',
             }}
           >
@@ -216,11 +217,11 @@ export function QuestaoEditor({
           style={{
             fontSize: '14px',
             fontWeight: 500,
-            color: '#656565',
+            color: tokens.colors.textSecondary,
             marginBottom: '8px',
           }}
         >
-          {rotuloLista} <span style={{ color: '#FF383C' }}>*</span>
+          {rotuloLista} <span style={{ color: tokens.colors.error }}>*</span>
         </div>
 
         <S.ListaAlternativas>

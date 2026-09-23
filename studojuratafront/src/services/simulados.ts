@@ -14,6 +14,7 @@ import type {
   SimuladoRequest,
   SimuladoResponse,
 } from '../types/simulados'
+import type { ProvaDaTentativa } from '../types/simulados'
 
 export const questoes = {
   listar: () => api.get<QuestaoResponse[]>('/questoes'),
@@ -58,6 +59,9 @@ export const simuladoQuestoes = {
   listar: () => api.get<SimuladoQuestaoResponse[]>('/simulado-questao'),
   criar: (dados: SimuladoQuestaoRequest) =>
     api.post<SimuladoQuestaoResponse>('/simulado-questao', dados),
+  /** Tira a questão do simulado; a questão em si continua existindo. */
+  excluir: (simuladoId: number, questaoId: number) =>
+    api.delete(`/simulado-questao/simulado/${simuladoId}/questao/${questaoId}`),
 }
 
 export const simuladoAlunos = {
@@ -70,6 +74,11 @@ export const simuladoAlunos = {
   /** Calcula nota, acertos e tempo gasto. Questões ausentes contam como erro. */
   finalizar: (id: number, dados: FinalizarSimuladoRequest) =>
     api.post<SimuladoAlunoResponse>(`/simulado-aluno/${id}/finalizar`, dados),
+  /**
+   * Conteúdo da prova da própria tentativa (questões e alternativas).
+   * O gabarito só vem quando a tentativa está CONCLUIDA.
+   */
+  questoesDaTentativa: (id: number) => api.get<ProvaDaTentativa>(`/simulado-aluno/${id}/questoes`),
 }
 
 export const questaoAlunos = {

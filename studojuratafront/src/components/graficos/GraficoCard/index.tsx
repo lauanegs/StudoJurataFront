@@ -8,7 +8,7 @@ import { Modal } from '../../ui/Modal'
 import type { ItemTabelaResumo } from '../TabelaResumo'
 import { exportarExcel } from '../../../utils/exportacao/exportarPlanilha'
 import { exportarPdfSecaoUnica } from '../../../utils/exportacao/exportarPdf'
-import { renderizarGraficoComoImagem } from '../../../utils/exportacao/renderizarGrafico'
+import { renderizarGraficoComoImagem } from '../RenderizarGrafico'
 
 /* Cada seção do modal é um card próprio, como em DetalheSimuladoModal. */
 const SecaoDetalhe = styled.div`

@@ -2,8 +2,8 @@ import { createRoot } from 'react-dom/client'
 import { MantineProvider } from '@mantine/core'
 import type { ReactElement } from 'react'
 
-import { mantineTheme } from '../../styles/mantineTheme'
-import { theme as tokens } from '../../styles/theme'
+import { mantineTheme } from '../../../styles/mantineTheme'
+import { theme as tokens } from '../../../styles/theme'
 
 export interface ImagemGrafico {
   dataUrl: string
@@ -53,7 +53,7 @@ function svgParaImagem(svg: SVGSVGElement): Promise<ImagemGrafico | null> {
         return
       }
       ctx.scale(escala, escala)
-      ctx.fillStyle = '#ffffff'
+      ctx.fillStyle = tokens.colors.white
       ctx.fillRect(0, 0, largura, altura)
       ctx.drawImage(img, 0, 0, largura, altura)
       // JPEG: o jsPDF embute PNG quase sem compressão e incha o arquivo.
@@ -84,7 +84,7 @@ export async function renderizarGraficoComoImagem(
   container.style.left = '-10000px'
   container.style.width = `${largura}px`
   container.style.height = `${altura}px`
-  container.style.background = '#ffffff'
+  container.style.background = tokens.colors.white
   document.body.appendChild(container)
 
   const root = createRoot(container)

@@ -25,9 +25,9 @@ import { AlertaDesempenhoCard } from '../../../components/desempenho/AlertaDesem
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { DesempenhoCard } from '../../../components/desempenho/DesempenhoCard'
-import { GraficoBarras, type ItemGraficoBarras } from '../../../components/graficos/GraficoBarras'
+import { GraficoBarras } from '../../../components/graficos/GraficoBarras'
 import { GraficoCard } from '../../../components/graficos/GraficoCard'
-import { GraficoLinha, type PontoGraficoLinha } from '../../../components/graficos/GraficoLinha'
+import { GraficoLinha } from '../../../components/graficos/GraficoLinha'
 import { Header } from '../../../components/ui/Header'
 import { Histograma } from '../../../components/graficos/Histograma'
 import { InfoCard } from '../../../components/ui/InfoCard'
@@ -42,16 +42,13 @@ import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { Skeleton } from '../../../components/feedback/Skeleton'
 import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../../hooks/useRequisicao'
-import { disciplinas as servicoDisciplinas } from '../../../services/curriculo'
 import { professores as servicoProfessores } from '../../../services/pessoas'
-import { simuladoAlunos, simulados as servicoSimulados } from '../../../services/simulados'
-import { turmas as servicoTurmas } from '../../../services/turmas'
 import { calcularFaixasHistograma } from '../../../utils/desempenho'
 import { exportarExcelAbas } from '../../../utils/exportacao/exportarPlanilha'
 import { exportarPdf } from '../../../utils/exportacao/exportarPdf'
-import { formatarData, formatarPorcentagem } from '../../../utils/format'
-import { renderizarGraficoComoImagem, type ImagemGrafico } from '../../../utils/exportacao/renderizarGrafico'
-import type { TipoDestinacaoSimulado } from '../../../types/simulados'
+import { formatarPorcentagem } from '../../../utils/format'
+import { renderizarGraficoComoImagem, type ImagemGrafico } from '../../../components/graficos/RenderizarGrafico'
+import { agruparPorSimulado, mediaPorDisciplina, tendenciaPorDisciplina as calcularTendencia, type DesempenhoSimulado } from './agregacoesDesempenho'
 import { DetalheSimuladoModal } from './DetalheSimuladoModal'
 
 // Gap igual ao padding do Card. Sempre 4 colunas em telas largas (auto-fill
@@ -77,25 +74,7 @@ const InfoSimulado = styled.div`
   gap: ${({ theme }) => theme.spacing.xs};
 `
 
-interface DesempenhoSimulado {
-  simuladoId: number
-  titulo: string
-  turmaId?: number | null
-  turma: string
-  disciplinaId?: number | null
-  disciplina: string
-  percentual: number
-  tentativas: number
-  notaMaxima: number
-  /** Pra ordenar a tendência ao longo do tempo — dataInicio do simulado, com createdAt como reserva. */
-  data?: string
-  tipoDestinacao?: TipoDestinacaoSimulado
-}
-
-/**
- * Não há endpoint agregado no back, então o desempenho por simulado é
- * calculado aqui: a nota média das tentativas concluídas sobre a notaMaxima.
- */
+/** Base: tentativas concluídas dos simulados das turmas do professor (GET /professores/{id}/desempenho). */
 export default function Desempenho() {
   const navegar = useNavigate()
 
@@ -111,10 +90,11 @@ export default function Desempenho() {
   const [turmaIdAplicado, setTurmaIdAplicado] = useState<number | null>(null)
   const [disciplinaIdAplicado, setDisciplinaIdAplicado] = useState<number | null>(null)
 
-  const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
-  const requisicaoTentativas = useRequisicao(() => simuladoAlunos.listar(), [])
-  const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
-  const requisicaoTurmas = useRequisicao(() => servicoTurmas.listar(), [])
+  const requisicaoTentativas = useRequisicao(
+    () => servicoProfessores.desempenho(professorId as number),
+    [professorId],
+    { ativo: Boolean(professorId) },
+  )
   const requisicaoVinculos = useRequisicao(
     () => servicoProfessores.turmasLecionadas(professorId as number),
     [professorId],
@@ -154,53 +134,17 @@ export default function Desempenho() {
     setDisciplinaIdAplicado(null)
   }
 
-  const desempenhosTotais = useMemo<DesempenhoSimulado[]>(() => {
-    const simulados = requisicaoSimulados.data ?? []
-    const tentativas = requisicaoTentativas.data ?? []
-    const listaDisciplinas = requisicaoDisciplinas.data ?? []
-    const listaTurmas = requisicaoTurmas.data ?? []
-
-    const acumulado = new Map<number, { soma: number; quantidade: number }>()
-
-    tentativas
-      .filter((tentativa) => tentativa.status === 'CONCLUIDO' && typeof tentativa.nota === 'number')
-      .forEach((tentativa) => {
-        const atual = acumulado.get(tentativa.simuladoId) ?? { soma: 0, quantidade: 0 }
-        acumulado.set(tentativa.simuladoId, {
-          soma: atual.soma + (tentativa.nota as number),
-          quantidade: atual.quantidade + 1,
-        })
-      })
-
-    return [...acumulado.entries()]
-      .map(([simuladoId, valores]) => {
-        const simulado = simulados.find((item) => item.id === simuladoId)
-        const maxima = simulado?.notaMaxima || 10
-
-        return {
-          simuladoId,
-          titulo: simulado?.titulo ?? `Simulado ${simuladoId}`,
-          turmaId: simulado?.turmaId,
-          turma: listaTurmas.find((turma) => turma.id === simulado?.turmaId)?.titulo ?? 'Sem turma',
-          disciplinaId: simulado?.disciplinaId,
-          disciplina:
-            listaDisciplinas.find((disciplina) => disciplina.id === simulado?.disciplinaId)?.titulo ??
-            'Sem disciplina',
-          percentual: Math.min(100, (valores.soma / valores.quantidade / maxima) * 100),
-          tentativas: valores.quantidade,
-          notaMaxima: maxima,
-          data: simulado?.dataInicio ?? simulado?.createdAt ?? undefined,
-          tipoDestinacao: simulado?.tipoDestinacao,
-        }
-      })
-      .sort((a, b) => {
+  const desempenhosTotais = useMemo(
+    () =>
+      agruparPorSimulado(requisicaoTentativas.data ?? []).sort((a, b) => {
         // Mais recente primeiro; sem data, o item fica no fim.
         if (!a.data && !b.data) return 0
         if (!a.data) return 1
         if (!b.data) return -1
         return new Date(b.data).getTime() - new Date(a.data).getTime()
-      })
-  }, [requisicaoSimulados.data, requisicaoTentativas.data, requisicaoDisciplinas.data, requisicaoTurmas.data])
+      }),
+    [requisicaoTentativas.data],
+  )
 
   // O recorte só afeta os gráficos; os cards do topo somam tudo.
   const desempenhos = useMemo(
@@ -233,21 +177,11 @@ export default function Desempenho() {
   const desempenhosRecentes = desempenhos.slice(0, 4)
 
   const notasGeraisPercentuais = useMemo(() => {
-    const idsNoPeriodo = new Set(desempenhos.map((item) => item.simuladoId))
-    const simuladosDoProfessor = new Map((requisicaoSimulados.data ?? []).map((simulado) => [simulado.id, simulado]))
-
+    const idsNoRecorte = new Set(desempenhos.map((item) => item.simuladoId))
     return (requisicaoTentativas.data ?? [])
-      .filter(
-        (tentativa) =>
-          tentativa.status === 'CONCLUIDO' &&
-          typeof tentativa.nota === 'number' &&
-          idsNoPeriodo.has(tentativa.simuladoId),
-      )
-      .map((tentativa) => {
-        const maxima = simuladosDoProfessor.get(tentativa.simuladoId)?.notaMaxima || 10
-        return Math.min(100, ((tentativa.nota as number) / maxima) * 100)
-      })
-  }, [desempenhos, requisicaoSimulados.data, requisicaoTentativas.data])
+      .filter((tentativa) => idsNoRecorte.has(tentativa.simuladoId))
+      .map((tentativa) => tentativa.percentual)
+  }, [desempenhos, requisicaoTentativas.data])
 
   // Valores exatos do histograma, exportados junto com o gráfico no PDF e no Excel.
   const tabelaDistribuicaoGeral = useMemo(
@@ -260,48 +194,8 @@ export default function Desempenho() {
     [notasGeraisPercentuais],
   )
 
-  const desempenhoPorDisciplina = useMemo<ItemGraficoBarras[]>(() => {
-    const acumulado = new Map<string, { soma: number; quantidade: number }>()
-
-    desempenhos.forEach((item) => {
-      const atual = acumulado.get(item.disciplina) ?? { soma: 0, quantidade: 0 }
-      acumulado.set(item.disciplina, { soma: atual.soma + item.percentual, quantidade: atual.quantidade + 1 })
-    })
-
-    return [...acumulado.entries()]
-      .map(([disciplina, valores]) => ({
-        chave: disciplina,
-        rotulo: disciplina,
-        valor: valores.soma / valores.quantidade,
-      }))
-      .sort((a, b) => a.valor - b.valor)
-  }, [desempenhos])
-
-  // Só disciplinas com 2+ simulados: tendência não existe com um ponto só.
-  const tendenciaPorDisciplina = useMemo(() => {
-    const porDisciplina = new Map<string, DesempenhoSimulado[]>()
-
-    desempenhos
-      .filter((item) => item.data)
-      .forEach((item) => {
-        const lista = porDisciplina.get(item.disciplina) ?? []
-        lista.push(item)
-        porDisciplina.set(item.disciplina, lista)
-      })
-
-    return [...porDisciplina.entries()]
-      .map(([disciplina, itens]) => ({
-        disciplina,
-        pontos: [...itens]
-          .sort((a, b) => new Date(a.data as string).getTime() - new Date(b.data as string).getTime())
-          .map<PontoGraficoLinha>((item) => ({
-            chave: String(item.simuladoId),
-            rotulo: formatarData(item.data),
-            valor: item.percentual,
-          })),
-      }))
-      .filter((item) => item.pontos.length >= 2)
-  }, [desempenhos])
+  const desempenhoPorDisciplina = useMemo(() => mediaPorDisciplina(desempenhos), [desempenhos])
+  const tendenciaPorDisciplina = useMemo(() => calcularTendencia(desempenhos), [desempenhos])
 
   // Valores exatos do gráfico de desempenho por disciplina (mesma linha de
   // raciocínio da tabela de distribuição acima).
@@ -316,18 +210,11 @@ export default function Desempenho() {
   )
 
   // Cards do topo: sempre o total geral, independente do filtro dos gráficos.
-  const totalTentativasConcluidas = useMemo(
-    () => (requisicaoTentativas.data ?? []).filter((tentativa) => tentativa.status === 'CONCLUIDO').length,
+  const totalTentativasConcluidas = requisicaoTentativas.data?.length ?? 0
+  const totalAlunosAvaliados = useMemo(
+    () => new Set((requisicaoTentativas.data ?? []).map((tentativa) => tentativa.alunoId)).size,
     [requisicaoTentativas.data],
   )
-  const totalAlunosAvaliados = useMemo(() => {
-    const ids = new Set(
-      (requisicaoTentativas.data ?? [])
-        .filter((tentativa) => tentativa.status === 'CONCLUIDO')
-        .map((tentativa) => tentativa.alunoId),
-    )
-    return ids.size
-  }, [requisicaoTentativas.data])
   const totalDisciplinasAvaliadas = useMemo(
     () => new Set(desempenhosTotais.map((item) => item.disciplina)).size,
     [desempenhosTotais],
@@ -424,13 +311,8 @@ export default function Desempenho() {
     return mapa
   }
 
-  const loading =
-    requisicaoSimulados.loading ||
-    requisicaoTentativas.loading ||
-    requisicaoDisciplinas.loading ||
-    requisicaoTurmas.loading
-
-  const error = requisicaoSimulados.error ?? requisicaoTentativas.error
+  const loading = requisicaoTentativas.loading
+  const error = requisicaoTentativas.error
 
   return (
     <Layout>
@@ -691,7 +573,7 @@ export default function Desempenho() {
         {loading ? (
           <Skeleton $altura="140px" $raio="8px" />
         ) : error ? (
-          <ErroCarregamento mensagem={error} onRetry={requisicaoSimulados.reload} />
+          <ErroCarregamento mensagem={error} onRetry={requisicaoTentativas.reload} />
         ) : desempenhos.length === 0 ? (
           <EstadoVazio
             titulo={
@@ -751,7 +633,7 @@ export default function Desempenho() {
         disciplina={simuladoDetalhado?.disciplina ?? ''}
         notaMaxima={simuladoDetalhado?.notaMaxima ?? 10}
         tentativas={(requisicaoTentativas.data ?? []).filter(
-          (tentativa) => tentativa.simuladoId === simuladoDetalhado?.simuladoId && tentativa.status === 'CONCLUIDO',
+          (tentativa) => tentativa.simuladoId === simuladoDetalhado?.simuladoId,
         )}
         data={simuladoDetalhado?.data}
         tipoDestinacao={simuladoDetalhado?.tipoDestinacao}

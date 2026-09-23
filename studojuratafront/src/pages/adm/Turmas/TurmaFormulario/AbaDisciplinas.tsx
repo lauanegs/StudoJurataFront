@@ -11,6 +11,7 @@ import { Tag } from '../../../../components/ui/Tag'
 import { useConfirm } from '../../../../contexts/confirmContexto'
 import { useToast } from '../../../../contexts/toastContexto'
 import { useRequisicao, type RequestResult } from '../../../../hooks/useRequisicao'
+import { useFormularioVinculoTurma } from '../../../../formularios/turmas'
 import { ApiError } from '../../../../services/api'
 import { cursoDisciplinas, disciplinas as servicoDisciplinas } from '../../../../services/curriculo'
 import { professores as servicoProfessores } from '../../../../services/pessoas'
@@ -18,8 +19,6 @@ import { turmaDisciplinas } from '../../../../services/turmas'
 import type { Disciplina } from '../../../../types/curriculo'
 import type { Turma, TurmaDisciplina } from '../../../../types/turmas'
 import { LinhaCampos } from './styles'
-
-const VINCULO_VAZIO = { disciplinaId: null as number | null, professorId: null as number | null }
 
 interface AbaDisciplinasProps {
   turma: Turma
@@ -31,7 +30,10 @@ interface AbaDisciplinasProps {
 export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinculos }: AbaDisciplinasProps) {
   const toast = useToast()
   const confirmar = useConfirm()
-  const [novoVinculo, setNovoVinculo] = useState(VINCULO_VAZIO)
+  const form = useFormularioVinculoTurma()
+  const { disciplinaId, professorId } = form.values
+  const erros = form.errors as Record<string, string | undefined>
+  const [salvando, setSalvando] = useState(false)
 
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
   const requisicaoProfessores = useRequisicao(() => servicoProfessores.listar(), [])
@@ -90,29 +92,29 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
   )
 
   async function adicionarVinculo() {
-    if (!novoVinculo.disciplinaId) {
-      toast.warning('Selecione a disciplina')
-      return
-    }
+    if ((await form.validate()).hasErrors || !disciplinaId) return
 
-    if (vinculosDaTurma.some((vinculo) => vinculo.disciplina?.id === novoVinculo.disciplinaId)) {
+    if (vinculosDaTurma.some((vinculo) => vinculo.disciplina?.id === disciplinaId)) {
       toast.warning('Disciplina já vinculada', 'Edite o vínculo existente para trocar o professor.')
       return
     }
 
+    setSalvando(true)
     try {
       await turmaDisciplinas.criar({
         turma,
-        disciplina: (requisicaoDisciplinas.data ?? []).find((item) => item.id === novoVinculo.disciplinaId),
-        professor: (requisicaoProfessores.data ?? []).find((item) => item.id === novoVinculo.professorId),
+        disciplina: (requisicaoDisciplinas.data ?? []).find((item) => item.id === disciplinaId),
+        professor: (requisicaoProfessores.data ?? []).find((item) => item.id === professorId),
         status: 'ATIVO',
       })
 
       toast.success('Disciplina vinculada')
-      setNovoVinculo(VINCULO_VAZIO)
+      form.reset()
       await requisicaoVinculos.reload()
     } catch (erroVincular) {
       toast.error('Não foi possível vincular', erroVincular instanceof ApiError ? erroVincular.message : undefined)
+    } finally {
+      setSalvando(false)
     }
   }
 
@@ -149,10 +151,12 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
         <LinhaCampos $colunas="1fr 1fr auto">
           <Select<number>
             label="Disciplina"
+            required
             options={opcoesDisciplinas}
-            value={novoVinculo.disciplinaId}
+            value={disciplinaId}
             loading={requisicaoDisciplinas.loading || requisicaoGradeCurricular.loading}
-            disabled={gradeTotalmenteVinculada}
+            error={erros.disciplinaId}
+            disabled={gradeTotalmenteVinculada || salvando}
             searchable
             placeholder="Selecionar disciplina..."
             emptyText={
@@ -160,22 +164,29 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
                 ? 'Todas as disciplinas da grade já foram vinculadas'
                 : 'O curso desta turma ainda não tem disciplinas na grade curricular'
             }
-            onChange={(valor) => setNovoVinculo((atual) => ({ ...atual, disciplinaId: valor }))}
+            onChange={(valor) => form.setFieldValue('disciplinaId', valor)}
           />
 
           <Select<number>
             label="Professor responsável"
             options={opcoesProfessores}
-            value={novoVinculo.professorId}
+            value={professorId}
             loading={requisicaoProfessores.loading}
-            disabled={gradeTotalmenteVinculada}
+            hint="Opcional — a turma pode ser organizada antes de definir o professor."
+            disabled={gradeTotalmenteVinculada || salvando}
             searchable
             clearable
             placeholder="Selecionar professor..."
-            onChange={(valor) => setNovoVinculo((atual) => ({ ...atual, professorId: valor }))}
+            onChange={(valor) => form.setFieldValue('professorId', valor)}
           />
 
-          <Button size="large" icon={<Plus />} disabled={gradeTotalmenteVinculada} onClick={adicionarVinculo}>
+          <Button
+            size="large"
+            icon={<Plus />}
+            loading={salvando}
+            disabled={gradeTotalmenteVinculada}
+            onClick={adicionarVinculo}
+          >
             Vincular
           </Button>
         </LinhaCampos>

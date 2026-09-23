@@ -26,18 +26,25 @@ import { useAlunoLogado, useSkinEquipadaDoAluno } from '../../hooks/usePerfilLog
 import { useRequisicao } from '../../hooks/useRequisicao'
 import { ApiError } from '../../services/api'
 import {
-  alternativas as servicoAlternativas,
   questaoAlunos,
-  questoes as servicoQuestoes,
   simuladoAlunos,
-  simuladoQuestoes,
   simulados as servicoSimulados,
 } from '../../services/simulados'
 import { formatarMoedas, formatarNota, formatarTempo, letraAlternativa, nomeCurto } from '../../utils/format'
 import { resolverImagemSkin } from '../../utils/skins'
 import { animacaoFlutuar } from '../../styles/animations'
 import { theme } from '../../styles/theme'
+import { corComOpacidade } from '../../utils/corComOpacidade'
 import type { AlternativaResponse, TipoQuestao } from '../../types/simulados'
+import {
+  acertouVisivel,
+  correcaoDisponivel,
+  estadoDaAlternativa,
+  statusDaQuestaoConfirmada,
+} from './feedbackProva'
+
+/* Cinza esmaecido das molduras e das etiquetas neutras (mesmo tom dos cards). */
+const CINZA_ESMAECIDO = corComOpacidade(theme.colors.textTertiary, 0.15)
 
 /* Só o conteúdo abaixo do SimuladoHeader tem padding e largura limitada. */
 const Tela = styled.div`
@@ -86,7 +93,7 @@ const FrameResultado = styled.div`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.xl};
 
-  background: linear-gradient(90deg, #049dbf 0%, rgba(4, 157, 191, 0.5) 100%), #e6eaf2;
+  background: ${theme.gradients.frame};
   border-radius: ${({ theme }) => theme.radius.lg};
   box-shadow: ${({ theme }) => theme.shadow.floating};
 `
@@ -108,7 +115,7 @@ const CardResultado = styled.div<{ $altura?: string }>`
 
   padding: ${({ theme }) => theme.spacing.xl};
   background: ${({ theme }) => theme.colors.white};
-  border: 1px solid rgba(115, 115, 115, 0.15);
+  border: 1px solid ${CINZA_ESMAECIDO};
   border-radius: ${({ theme }) => theme.radius.md};
 `
 
@@ -257,9 +264,9 @@ export default function Simulado() {
     [simuladoId],
     { ativo: Boolean(simuladoId) },
   )
-  const requisicaoVinculos = useRequisicao(() => simuladoQuestoes.listar(), [])
-  const requisicaoQuestoes = useRequisicao(() => servicoQuestoes.listar(), [])
-  const requisicaoAlternativas = useRequisicao(() => servicoAlternativas.listar(), [])
+  // Prova da própria tentativa: substitui o catálogo global de questões e
+  // alternativas (que expunha o gabarito) por uma chamada escopada.
+  const requisicaoProva = useRequisicao(() => simuladoAlunos.questoesDaTentativa(idTentativa), [idTentativa])
   const requisicaoRespostas = useRequisicao(
     () => questaoAlunos.listarPorSimuladoAluno(idTentativa),
     [idTentativa],
@@ -268,32 +275,27 @@ export default function Simulado() {
 
   const simulado = requisicaoSimulado.data
 
+  const provaTentativa = requisicaoProva.data
+
+  /**
+   * Monta a prova já no formato que a tela usa. O `correta` de cada alternativa
+   * vem do gabarito do servidor, que só existe depois de concluir — durante a
+   * prova nenhuma alternativa chega marcada como correta.
+   */
   const questoes = useMemo<QuestaoDaProva[]>(() => {
-    if (!simuladoId) return []
-
-    const vinculos = (requisicaoVinculos.data ?? [])
-      .filter((vinculo) => vinculo.simuladoId === simuladoId && vinculo.status !== 'REMOVIDA')
-      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-
-    const todasQuestoes = requisicaoQuestoes.data ?? []
-    const todasAlternativas = requisicaoAlternativas.data ?? []
-
-    return vinculos.flatMap((vinculo) => {
-      const questao = todasQuestoes.find((item) => item.id === vinculo.questaoId)
-      if (!questao) return []
-
-      return [
-        {
-          questaoId: questao.id,
-          enunciado: questao.enunciado,
-          tipo: questao.tipo,
-          alternativas: todasAlternativas
-            .filter((alternativa) => alternativa.questaoId === questao.id)
-            .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0)),
-        },
-      ]
-    })
-  }, [simuladoId, requisicaoVinculos.data, requisicaoQuestoes.data, requisicaoAlternativas.data])
+    return (provaTentativa?.questoes ?? []).map((questao) => ({
+      questaoId: questao.questaoId,
+      enunciado: questao.enunciado,
+      tipo: questao.tipo,
+      alternativas: questao.alternativas.map((alternativa) => ({
+        id: alternativa.id,
+        questaoId: questao.questaoId,
+        texto: alternativa.texto,
+        ordem: alternativa.ordem,
+        correta: provaTentativa?.gabarito?.[String(alternativa.id)] === true,
+      })),
+    }))
+  }, [provaTentativa])
 
   const tempoLimiteSegundos = simulado?.tempoLimite ? simulado.tempoLimite * 60 : null
   const restante = tempoLimiteSegundos !== null ? Math.max(0, tempoLimiteSegundos - segundos) : null
@@ -412,12 +414,19 @@ export default function Simulado() {
   const alternativaEscolhidaAtual = questaoAtual?.alternativas.find(
     (item) => item.id === respostaAtualId,
   )
-  const acertouAtual = Boolean(
-    revelada && questaoAtual && (ehVerdadeiroFalso ? acertouQuestao(questaoAtual) : alternativaEscolhidaAtual?.correta),
-  )
+  // Enquanto a tentativa esta PENDENTE o servidor devolve `gabarito: null`, entao
+  // confirmar a resposta nao pode revelar acerto/erro: a correcao aparece depois
+  // de finalizar, quando o gabarito chega.
+  const temGabarito = correcaoDisponivel(provaTentativa?.gabarito)
+  const mostrarCorrecao = revelada && temGabarito
+  const acertouAtual = acertouVisivel({
+    mostrarCorrecao,
+    acertou: Boolean(
+      questaoAtual && (ehVerdadeiroFalso ? acertouQuestao(questaoAtual) : alternativaEscolhidaAtual?.correta),
+    ),
+  })
 
-  // O gabarito já está no cliente, então o mascote reage ao confirmar a resposta.
-  const textoBalao = !revelada
+  const textoBalao = !mostrarCorrecao
     ? questaoAtual?.enunciado
     : acertouAtual
       ? 'Você acertou, parabéns!'
@@ -425,7 +434,7 @@ export default function Simulado() {
 
   // Mesma revelação que troca a frase do balão troca a imagem do mascote:
   // feliz quando acerta, triste quando erra — volta ao normal na próxima questão.
-  const mascoteReacao = !revelada
+  const mascoteReacao = !mostrarCorrecao
     ? imagemSkin
     : resolverImagemSkin(skinEquipada?.urlAsset, acertouAtual ? 'feliz' : 'triste')
 
@@ -472,28 +481,27 @@ export default function Simulado() {
     })
   }
 
-  // Questões confirmadas ficam verde/vermelho no progresso.
+  // Confirmada só vira verde/vermelho quando o gabarito chega; antes disso fica
+  // apenas marcada como respondida.
   const statusProgresso = useMemo<QuestionProgressStatus[]>(
     () =>
       questoes.map((questao, indice) => {
         if (indice === indiceAtual) return 'current'
 
         if (confirmadas[questao.questaoId]) {
-          return acertouQuestao(questao) ? 'correct' : 'incorrect'
+          return statusDaQuestaoConfirmada({ temGabarito, acertou: acertouQuestao(questao) })
         }
 
         return estaRespondida(questao) ? 'answered' : 'pending'
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [questoes, indiceAtual, respostas, respostasVF, confirmadas],
+    [questoes, indiceAtual, respostas, respostasVF, confirmadas, temGabarito],
   )
 
   const loading =
     requisicaoTentativa.loading ||
     requisicaoSimulado.loading ||
-    requisicaoVinculos.loading ||
-    requisicaoQuestoes.loading ||
-    requisicaoAlternativas.loading
+    requisicaoProva.loading
 
   if (requisicaoTentativa.error) {
     return (
@@ -556,12 +564,12 @@ export default function Simulado() {
               <Etiquetas>
                 {/* Mesmo verde/vermelho das alternativas (LetterBadge correct/incorrect) —
                     tokens.gradients.success/danger, não um verde/vermelho à parte. */}
-                <Etiqueta $fundo="rgba(115, 115, 115, 0.15)" $claro>
+                <Etiqueta $fundo={CINZA_ESMAECIDO} $claro>
                   Nota: {formatarNota(tentativa?.nota)}/{formatarNota(simulado?.notaMaxima ?? 10)}
                 </Etiqueta>
                 <Etiqueta $fundo={theme.gradients.success}>{acertos} acerto(s)</Etiqueta>
                 <Etiqueta $fundo={theme.gradients.danger}>{erradas} erro(s)</Etiqueta>
-                <Etiqueta $fundo="rgba(115, 115, 115, 0.15)" $claro>
+                <Etiqueta $fundo={CINZA_ESMAECIDO} $claro>
                   <Clock aria-hidden="true" />
                   {formatarTempo(tentativa?.tempoGasto)}
                 </Etiqueta>
@@ -719,7 +727,7 @@ export default function Simulado() {
                 texto={alternativa.texto}
                 valor={respostasVFAtual[alternativa.id] ?? null}
                 disabled={revelada}
-                revelado={revelada}
+                revelado={mostrarCorrecao}
                 correta={alternativa.correta}
                 onSelect={(valor) => {
                   if (revelada) return
@@ -739,17 +747,11 @@ export default function Simulado() {
                 letra={letraAlternativa(posicao)}
                 texto={alternativa.texto}
                 disabled={revelada}
-                state={
-                  revelada
-                    ? alternativa.correta
-                      ? 'correct'
-                      : alternativa.id === respostaAtualId
-                        ? 'incorrect'
-                        : 'default'
-                    : alternativa.id === respostaAtualId
-                      ? 'selected'
-                      : 'default'
-                }
+                state={estadoDaAlternativa({
+                  revelada: mostrarCorrecao,
+                  correta: Boolean(alternativa.correta),
+                  selecionada: alternativa.id === respostaAtualId,
+                })}
                 onSelect={() => {
                   if (revelada) return
 
@@ -774,8 +776,8 @@ export default function Simulado() {
         </Button>
 
         {temSelecao && !revelada ? (
-          // Só revela acerto/erro depois desse clique — dá a chance de
-          // trocar a resposta se o toque na alternativa foi sem querer.
+          // Trava a resposta escolhida — dá a chance de trocar se o toque na
+          // alternativa foi sem querer. O acerto/erro só aparece com o gabarito.
           <Button
             variant="info"
             size="large"

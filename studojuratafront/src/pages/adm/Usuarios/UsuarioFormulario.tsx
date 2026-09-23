@@ -125,12 +125,15 @@ export default function UsuarioFormulario() {
 
       if (edicao) {
         await servicoUsuarios.atualizar(usuarioId as number, corpo)
+        toast.success('Usuário atualizado', username.trim())
+        // Permanece na tela: só recarrega o que o back gravou.
+        await requisicao.reload()
       } else {
-        await servicoUsuarios.criar(corpo)
+        const criado = await servicoUsuarios.criar(corpo)
+        toast.success('Usuário cadastrado', username.trim())
+        // Continua no formulário, agora em modo de edição.
+        navegar(`/adm/usuarios/${criado.id}`, { replace: true })
       }
-
-      toast.success(edicao ? 'Usuário atualizado' : 'Usuário cadastrado', username.trim())
-      navegar('/adm/usuarios')
     } catch (erroSalvar) {
       toast.error(
         'Não foi possível salvar',

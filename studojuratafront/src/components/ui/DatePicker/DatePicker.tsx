@@ -1,29 +1,17 @@
 import { useRef, type ChangeEvent, type ReactNode, type RefObject } from 'react'
 import { DateInput, TimePicker } from '@mantine/dates'
 import dayjs from 'dayjs'
-import customParseFormat from 'dayjs/plugin/customParseFormat'
 import { Calendar, Clock } from 'lucide-react'
 
 import { Field } from '../Field'
 import { theme as tokens } from '../../../styles/theme'
 import { comTamanho } from '../../../utils/redimensionarIcone'
+import { FORMATO_API_DATA, FORMATO_API_DATA_HORA, dataDigitadaParaIso, dataIsoParaExibicao } from './conversaoData'
 import type { DatePickerProps } from './types'
 
-// Sem o plugin, dayjs ignora o formato do 2º argumento e cai no parser nativo,
-// que não entende DD/MM/YYYY; o parser padrão da Mantine também não.
-dayjs.extend(customParseFormat)
-
 const FORMATO_SAIDA: Record<'data' | 'dataHora', string> = {
-  data: 'YYYY-MM-DD',
-  dataHora: 'YYYY-MM-DDTHH:mm',
-}
-
-const FORMATO_EXIBICAO_DATA = 'DD/MM/YYYY'
-
-/** Só aceita o texto exatamente no formato DD/MM/YYYY (modo estrito) — evita o parser padrão da Mantine, que não é confiável pra esse formato. */
-function analisarDataDigitada(texto: string): string | null {
-  const data = dayjs(texto, FORMATO_EXIBICAO_DATA, true)
-  return data.isValid() ? data.format('YYYY-MM-DD') : null
+  data: FORMATO_API_DATA,
+  dataHora: FORMATO_API_DATA_HORA,
 }
 
 const estilosCampo = (error?: string) => ({
@@ -113,8 +101,12 @@ export function DatePicker({
           placeholder={placeholder ?? 'Digitar ou selecionar data...'}
           disabled={disabled}
           error={Boolean(error)}
-          valueFormat={FORMATO_EXIBICAO_DATA}
-          dateParser={analisarDataDigitada}
+          valueFormat={dataIsoParaExibicao}
+          dateParser={dataDigitadaParaIso}
+          // Blur com o padrão da Mantine (fixOnBlur: true) reescreve o texto a
+          // partir do valor: data digitada em formato aceito volta normalizada
+          // como DD/MM/YYYY, e texto que não é data não fica parecendo
+          // preenchido com o formulário vazio — o schema acusa no envio.
           leftSection={<IconeCampo icon={<Calendar />} campoRef={campoDataRef} disabled={disabled} />}
           leftSectionWidth={LARGURA_ICONE}
           leftSectionPointerEvents="auto"
@@ -154,8 +146,8 @@ export function DatePicker({
           placeholder={placeholder ?? 'Data...'}
           disabled={disabled}
           error={Boolean(error)}
-          valueFormat={FORMATO_EXIBICAO_DATA}
-          dateParser={analisarDataDigitada}
+          valueFormat={dataIsoParaExibicao}
+          dateParser={dataDigitadaParaIso}
           leftSection={<IconeCampo icon={<Calendar />} campoRef={campoDataRef} disabled={disabled} />}
           leftSectionWidth={LARGURA_ICONE}
           leftSectionPointerEvents="auto"

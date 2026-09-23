@@ -1,10 +1,12 @@
 import styled, { css } from 'styled-components'
 
+import { corComOpacidade } from '../../../utils/corComOpacidade'
+
 export const Overlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: ${({ theme }) => theme.zIndex.sidebar};
-  background: rgba(24, 39, 75, 0.4);
+  background: ${({ theme }) => corComOpacidade(theme.colors.scrim, 0.4)};
 
   @media (min-width: ${({ theme }) => theme.breakpoints.tablet}) {
     display: none;
@@ -63,12 +65,12 @@ export const BotaoColapso = styled.button`
 
   border-radius: ${({ theme }) => theme.radius.md};
   color: ${({ theme }) => theme.colors.white};
-  background: rgba(255, 255, 255, 0.15);
+  background: ${({ theme }) => corComOpacidade(theme.colors.white, 0.15)};
 
   transition: background ${({ theme }) => theme.transition.fast};
 
   &:hover {
-    background: rgba(255, 255, 255, 0.28);
+    background: ${({ theme }) => corComOpacidade(theme.colors.white, 0.28)};
   }
 
   &:focus-visible {
@@ -137,7 +139,7 @@ export const Navegacao = styled.nav`
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
+    background: ${({ theme }) => corComOpacidade(theme.colors.white, 0.3)};
   }
 `
 
@@ -177,7 +179,7 @@ export const ItemNav = styled.button<{ $ativo: boolean; $colapsada: boolean }>`
     `}
 
   &:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background: ${({ theme }) => corComOpacidade(theme.colors.white, 0.14)};
   }
 
   &:focus-visible {
@@ -235,7 +237,7 @@ export const BotaoSair = styled.button<{ $colapsada: boolean }>`
   transition: background ${({ theme }) => theme.transition.fast};
 
   &:hover {
-    background: rgba(255, 255, 255, 0.14);
+    background: ${({ theme }) => corComOpacidade(theme.colors.white, 0.14)};
   }
 
   &:focus-visible {

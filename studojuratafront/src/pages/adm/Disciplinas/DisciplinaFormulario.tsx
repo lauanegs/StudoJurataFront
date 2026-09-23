@@ -73,12 +73,15 @@ export default function DisciplinaFormulario() {
 
       if (edicao) {
         await servicoDisciplinas.atualizar(disciplinaId as number, corpo)
+        toast.success('Disciplina atualizada', titulo.trim())
+        // Permanece na tela: só recarrega o que o back gravou.
+        await requisicao.reload()
       } else {
-        await servicoDisciplinas.criar(corpo)
+        const criada = await servicoDisciplinas.criar(corpo)
+        toast.success('Disciplina cadastrada', titulo.trim())
+        // Continua no formulário, agora em modo de edição.
+        navegar(`/adm/disciplinas/${criada.id}`, { replace: true })
       }
-
-      toast.success(edicao ? 'Disciplina atualizada' : 'Disciplina cadastrada', titulo.trim())
-      navegar('/adm/disciplinas')
     } catch (erroSalvar) {
       toast.error(
         'Não foi possível salvar',

@@ -4,29 +4,32 @@ import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, pessoaSchema, PESSOA_VAZ
 import { errosDoSchema } from './errosDoSchema.test-utils'
 import type { Pessoa } from '../types/pessoas'
 
-const VALIDA = { ...PESSOA_VAZIA, nome: 'Rafael Torres Mendes', cpf: '800.000.001-67' }
+const VALIDA = { ...PESSOA_VAZIA, nome: 'Rafael Torres Mendes', cpf: '800.000.001-67', sexo: 'FEMININO' as const }
 
 describe('pessoaSchema', () => {
-  it('aceita só nome e CPF válidos', async () => {
-    expect(await errosDoSchema(pessoaSchema, VALIDA)).toEqual({})
+  const schema = pessoaSchema()
+
+  it('aceita cadastro com nome, CPF e sexo válidos', async () => {
+    expect(await errosDoSchema(schema, VALIDA)).toEqual({})
   })
 
-  it('exige nome e CPF', async () => {
-    expect(await errosDoSchema(pessoaSchema, PESSOA_VAZIA)).toEqual({
+  it('exige nome, CPF e sexo', async () => {
+    expect(await errosDoSchema(schema, PESSOA_VAZIA)).toEqual({
       nome: 'Informe o nome completo',
       cpf: 'Informe o CPF',
+      sexo: 'Selecione o sexo',
     })
   })
 
   it('rejeita nome curto e CPF com dígito verificador errado', async () => {
-    expect(await errosDoSchema(pessoaSchema, { ...VALIDA, nome: 'Al', cpf: '123.456.789-00' })).toEqual({
+    expect(await errosDoSchema(schema, { ...VALIDA, nome: 'Al', cpf: '123.456.789-00' })).toEqual({
       nome: 'O nome deve ter ao menos 3 caracteres',
       cpf: 'CPF inválido',
     })
   })
 
   it('valida os campos opcionais só quando preenchidos', async () => {
-    const erros = await errosDoSchema(pessoaSchema, {
+    const erros = await errosDoSchema(schema, {
       ...VALIDA,
       telefone: '(34) 99',
       email: 'sem-arroba',
@@ -44,7 +47,16 @@ describe('pessoaSchema', () => {
 
   it('aceita telefone, e-mail e CEP válidos', async () => {
     const dados = { ...VALIDA, telefone: '(11) 98100-0001', email: 'rafael@escola.com', cep: '01310-100' }
-    expect(await errosDoSchema(pessoaSchema, dados)).toEqual({})
+    expect(await errosDoSchema(schema, dados)).toEqual({})
+  })
+
+  it('no cadastro de aluno a data de nascimento passa a ser obrigatória', async () => {
+    const schemaDoAluno = pessoaSchema({ exigirDataNascimento: true })
+
+    expect(await errosDoSchema(schemaDoAluno, VALIDA)).toEqual({
+      dataNascimento: 'Informe a data de nascimento',
+    })
+    expect(await errosDoSchema(schemaDoAluno, { ...VALIDA, dataNascimento: '2015-05-20' })).toEqual({})
   })
 })
 

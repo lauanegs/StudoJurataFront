@@ -115,13 +115,28 @@ export default function PlanoEnsinoFormulario() {
     return [...unicas.entries()].map(([value, label]) => ({ value, label }))
   }, [requisicaoVinculos.data, cursoId])
 
-  const opcoesDisciplinas = useMemo(
-    () =>
-      (requisicaoVinculos.data ?? [])
-        .filter((vinculo) => vinculo.turma?.id === turmaId && vinculo.disciplina)
-        .map((vinculo) => ({ value: vinculo.disciplina!.id, label: vinculo.disciplina?.titulo ?? '—' })),
-    [requisicaoVinculos.data, turmaId],
+  const gradeCurricularAtiva = useMemo(
+    () => (requisicaoGradeCurricular.data ?? []).filter((item) => item.status !== 'INATIVO'),
+    [requisicaoGradeCurricular.data],
   )
+
+  /**
+   * Só vínculos utilizáveis: vínculo ativo, disciplina ativa e — no cadastro de
+   * um plano novo, quando a grade do curso já chegou — disciplina ainda na grade
+   * ativa. Disciplina inativada não some do histórico: na edição a lista
+   * continua completa, e o plano que já existe segue com o vínculo dele.
+   */
+  const filtrarPelaGradeAtiva = !edicao && !requisicaoGradeCurricular.loading && Boolean(cursoId)
+
+  const opcoesDisciplinas = useMemo(() => {
+    const idsNaGradeAtiva = new Set(gradeCurricularAtiva.map((item) => item.disciplina?.id))
+
+    return (requisicaoVinculos.data ?? [])
+      .filter((vinculo) => vinculo.turma?.id === turmaId && vinculo.disciplina)
+      .filter((vinculo) => vinculo.status !== 'INATIVO' && vinculo.disciplina!.status !== 'INATIVO')
+      .filter((vinculo) => !filtrarPelaGradeAtiva || idsNaGradeAtiva.has(vinculo.disciplina!.id))
+      .map((vinculo) => ({ value: vinculo.disciplina!.id, label: vinculo.disciplina?.titulo ?? '—' }))
+  }, [requisicaoVinculos.data, turmaId, filtrarPelaGradeAtiva, gradeCurricularAtiva])
 
   const vinculoSelecionado = useMemo(
     () =>

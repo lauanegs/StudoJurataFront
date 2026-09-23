@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs'
 
 import { theme as tokens } from '../../styles/theme'
-import type { ImagemGrafico } from './renderizarGrafico'
+import type { ImagemGrafico } from '../../components/graficos/RenderizarGrafico'
 
 export interface LinhaPlanilha {
   rotulo: string

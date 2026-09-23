@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
 import { theme as tokens } from '../../styles/theme'
-import type { ImagemGrafico } from './renderizarGrafico'
+import type { ImagemGrafico } from '../../components/graficos/RenderizarGrafico'
 
 export interface LinhaPdf {
   rotulo: string

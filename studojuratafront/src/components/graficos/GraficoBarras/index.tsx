@@ -1,13 +1,8 @@
 import { BarChart } from '@mantine/charts'
 
-import { nivelDesempenho, type NivelDesempenho } from '../../../utils/desempenho'
+import { theme as tokens } from '../../../styles/theme'
+import { CORES_NIVEL_DESEMPENHO, nivelDesempenho } from '../../../utils/desempenho'
 import { formatarPorcentagem } from '../../../utils/format'
-
-const CORES_NIVEL: Record<NivelDesempenho, string> = {
-  baixo: '#FF383C',
-  medio: '#FFCC00',
-  alto: '#34C759',
-}
 
 export interface ItemGraficoBarras {
   chave: string
@@ -37,8 +32,8 @@ export function GraficoBarras({ itens, rotuloAcessivel = 'Comparativo', altura }
       data={data}
       dataKey="rotulo"
       orientation="vertical"
-      series={[{ name: 'valor', color: '#049DBF' }]}
-      getBarColor={(valor) => CORES_NIVEL[nivelDesempenho(valor)]}
+      series={[{ name: 'valor', color: tokens.colors.blue }]}
+      getBarColor={(valor) => CORES_NIVEL_DESEMPENHO[nivelDesempenho(valor)]}
       valueFormatter={(valor) => formatarPorcentagem(valor)}
       // Arredonda só a ponta da direita, para onde a barra cresce.
       barProps={{ radius: [0, 8, 8, 0] }}

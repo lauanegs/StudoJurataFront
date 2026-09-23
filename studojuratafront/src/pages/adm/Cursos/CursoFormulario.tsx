@@ -28,7 +28,7 @@ import {
   disciplinas as servicoDisciplinas,
 } from '../../../services/curriculo'
 import { formatarCargaHoraria } from '../../../utils/format'
-import { useFormularioCurso } from '../../../formularios/curriculo'
+import { useFormularioCurso, useFormularioGradeCurso } from '../../../formularios/curriculo'
 import { OPCOES_ATIVO_INATIVO } from '../../../utils/labels'
 import type { StatusAtivoInativo } from '../../../types/comum'
 import type { CursoDisciplina } from '../../../types/curriculo'
@@ -55,11 +55,6 @@ const LinhaVinculo = styled.div`
   }
 `
 
-const DescricaoGrade = styled.p`
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
 type Aba = 'dados' | 'grade'
 
 export default function CursoFormulario() {
@@ -75,10 +70,9 @@ export default function CursoFormulario() {
   const [aba, setAba] = useState<Aba>('dados')
   const form = useFormularioCurso()
 
-  const [novaGrade, setNovaGrade] = useState<{ disciplinaId: number | null; cargaHoraria: string }>({
-    disciplinaId: null,
-    cargaHoraria: '',
-  })
+  const gradeForm = useFormularioGradeCurso()
+  const { disciplinaId: disciplinaDaGrade, cargaHoraria: cargaHorariaDaGrade } = gradeForm.values
+  const errosGrade = gradeForm.errors as Record<string, string | undefined>
 
   const requisicao = useRequisicao(() => servicoCursos.buscar(cursoId as number), [cursoId], {
     ativo: Boolean(cursoId),
@@ -123,11 +117,13 @@ export default function CursoFormulario() {
       if (edicao) {
         await servicoCursos.atualizar(cursoId as number, corpo)
         toast.success('Curso atualizado', nome.trim())
-        navegar('/adm/cursos')
+        // Permanece na tela: só recarrega o que o back gravou.
+        await requisicao.reload()
       } else {
         const criado = await servicoCursos.criar(corpo)
         toast.success('Curso cadastrado', 'Agora defina a grade curricular.')
-        navegar(`/adm/cursos/${criado.id}`)
+        // Continua no formulário, agora em modo de edição.
+        navegar(`/adm/cursos/${criado.id}`, { replace: true })
       }
     } catch (erroSalvar) {
       toast.error(
@@ -185,18 +181,9 @@ export default function CursoFormulario() {
   async function adicionarDisciplina() {
     if (!cursoId || !requisicao.data) return
 
-    if (!novaGrade.disciplinaId) {
-      toast.warning('Selecione a disciplina')
-      return
-    }
+    if ((await gradeForm.validate()).hasErrors || !disciplinaDaGrade) return
 
-    const cargaHoraria = Number(novaGrade.cargaHoraria)
-    if (!novaGrade.cargaHoraria || !Number.isFinite(cargaHoraria) || cargaHoraria <= 0) {
-      toast.warning('Informe uma carga horária maior que zero')
-      return
-    }
-
-    const jaExiste = gradeAtiva.some((item) => item.disciplina?.id === novaGrade.disciplinaId)
+    const jaExiste = gradeAtiva.some((item) => item.disciplina?.id === disciplinaDaGrade)
     if (jaExiste) {
       toast.warning('Disciplina já vinculada', 'Remova o vínculo existente para trocar a carga horária.')
       return
@@ -205,13 +192,13 @@ export default function CursoFormulario() {
     try {
       await servicoCursoDisciplinas.criar({
         curso: requisicao.data,
-        disciplina: (requisicaoDisciplinas.data ?? []).find((item) => item.id === novaGrade.disciplinaId),
-        cargaHoraria,
+        disciplina: (requisicaoDisciplinas.data ?? []).find((item) => item.id === disciplinaDaGrade),
+        cargaHoraria: Number(cargaHorariaDaGrade),
         status: 'ATIVO',
       })
 
       toast.success('Disciplina adicionada à grade curricular')
-      setNovaGrade({ disciplinaId: null, cargaHoraria: '' })
+      gradeForm.reset()
       await Promise.all([requisicaoGrade.reload(), requisicao.reload()])
     } catch (erroVincular) {
       toast.error(
@@ -367,32 +354,28 @@ export default function CursoFormulario() {
             <>
               <Card titulo="Grade curricular">
                 <Stack gap="md">
-                  <DescricaoGrade>
-                    Disciplinas que compõem este curso — usadas para restringir o
-                    seletor de disciplina ao vincular uma turma e para pré-preencher
-                    a carga horária ao criar um plano de ensino.
-                  </DescricaoGrade>
-
                   <LinhaVinculo>
                     <Select<number>
                       label="Disciplina"
+                      required
                       options={opcoesDisciplinas}
-                      value={novaGrade.disciplinaId}
+                      value={disciplinaDaGrade}
                       loading={requisicaoDisciplinas.loading}
+                      error={errosGrade.disciplinaId}
                       searchable
                       placeholder="Selecionar disciplina..."
-                      onChange={(value) => setNovaGrade((atual) => ({ ...atual, disciplinaId: value }))}
+                      onChange={(value) => gradeForm.setFieldValue('disciplinaId', value)}
                     />
 
                     <Input
                       label="Carga horária (h)"
+                      required
                       type="number"
                       min={1}
                       placeholder="Ex.: 30"
-                      value={novaGrade.cargaHoraria}
-                      onChange={(evento) =>
-                        setNovaGrade((atual) => ({ ...atual, cargaHoraria: evento.target.value }))
-                      }
+                      value={cargaHorariaDaGrade}
+                      error={errosGrade.cargaHoraria}
+                      onChange={(evento) => gradeForm.setFieldValue('cargaHoraria', evento.target.value)}
                     />
 
                     <Button size="large" icon={<Plus />} onClick={adicionarDisciplina}>

@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { Volume2, VolumeX } from 'lucide-react'
 
 import { animacaoFlutuar } from '../../../styles/animations'
+import { theme as tokens } from '../../../styles/theme'
 
 const Container = styled.div`
   display: flex;
@@ -12,7 +13,7 @@ const Container = styled.div`
   width: 100%;
   padding: ${({ theme }) => theme.spacing.lg};
 
-    background: linear-gradient(90deg, #049dbf 0%, rgba(4, 157, 191, 0.5) 100%), #e6eaf2;
+  background: ${tokens.gradients.frame};
   border-radius: ${({ theme }) => theme.radius.md};
   box-shadow: ${({ theme }) => theme.shadow.floating};
 

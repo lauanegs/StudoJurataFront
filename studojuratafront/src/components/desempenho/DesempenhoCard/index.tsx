@@ -1,14 +1,8 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
-import { nivelDesempenho, type NivelDesempenho } from '../../../utils/desempenho'
+import { CORES_NIVEL_DESEMPENHO, nivelDesempenho } from '../../../utils/desempenho'
 import { comTamanho } from '../../../utils/redimensionarIcone'
-
-const CORES_NIVEL: Record<NivelDesempenho, string> = {
-  baixo: '#FF383C',
-  medio: '#FFCC00',
-  alto: '#34C759',
-}
 
 /* Vertical: grade compacta. Horizontal: lista de largura total, um card por linha. */
 const Container = styled.article<{ $clicavel: boolean; $horizontal: boolean }>`
@@ -153,7 +147,7 @@ export function DesempenhoCard({
   onClick,
 }: DesempenhoCardProps) {
   const valor = Math.min(100, Math.max(0, porcentagem))
-  const cor = CORES_NIVEL[nivelDesempenho(valor)]
+  const cor = CORES_NIVEL_DESEMPENHO[nivelDesempenho(valor)]
   const horizontal = orientacao === 'horizontal'
 
   return (

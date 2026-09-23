@@ -152,7 +152,6 @@ export default function DesempenhoSimulados() {
         tentativas={tentativas.filter(
           (tentativa) =>
             tentativa.simuladoId === simuladoDetalhado?.simuladoId &&
-            tentativa.status === 'CONCLUIDO' &&
             (!filtrosAplicados.alunoId || tentativa.alunoId === filtrosAplicados.alunoId),
         )}
         data={simuladoDetalhado?.data}

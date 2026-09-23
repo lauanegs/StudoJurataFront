@@ -22,10 +22,18 @@ interface PessoaCamposProps {
   disabled?: boolean
   rotuloNome?: string
   secao?: 'dados' | 'endereco'
+  /** No cadastro de aluno a data de nascimento é obrigatória (ver formularios/pessoas). */
+  exigirDataNascimento?: boolean
 }
 
 /** Bloco de dados pessoais compartilhado por Aluno, Professor e Responsável (todos estendem Pessoa no back). */
-export function PessoaCampos({ form, disabled, rotuloNome = 'Nome completo', secao = 'dados' }: PessoaCamposProps) {
+export function PessoaCampos({
+  form,
+  disabled,
+  rotuloNome = 'Nome completo',
+  secao = 'dados',
+  exigirDataNascimento = false,
+}: PessoaCamposProps) {
   const toast = useToast()
   const [buscandoCep, setBuscandoCep] = useState(false)
 
@@ -119,6 +127,7 @@ export function PessoaCampos({ form, disabled, rotuloNome = 'Nome completo', sec
 
       <DatePicker
         label="Data de nascimento"
+        required={exigirDataNascimento}
         value={form.values.dataNascimento}
         error={form.errors.dataNascimento as string | undefined}
         disabled={disabled}
@@ -148,6 +157,7 @@ export function PessoaCampos({ form, disabled, rotuloNome = 'Nome completo', sec
       <LinhaInteira>
         <RadioGroup<Sexo>
           label="Sexo"
+          required
           options={OPCOES_SEXO}
           value={form.values.sexo}
           error={form.errors.sexo as string | undefined}

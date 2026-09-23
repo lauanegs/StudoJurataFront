@@ -7,6 +7,7 @@ import { EstadoVazio } from '../../feedback/EstadoVazio'
 import { Skeleton } from '../../feedback/Skeleton'
 import { Paginacao } from '../Paginacao'
 import { theme as tokens } from '../../../styles/theme'
+import { corComOpacidade } from '../../../utils/corComOpacidade'
 import type { Coluna, DataTableProps } from './types'
 
 type Direcao = 'asc' | 'desc'
@@ -94,7 +95,7 @@ export function DataTable<T>({
           withRowBorders
           styles={{
             table: { width: '100%' },
-            thead: { background: 'rgba(230, 234, 242, 0.3)' },
+            thead: { background: corComOpacidade(tokens.colors.background, 0.3) },
             th: {
               padding: `${tokens.spacing.md} ${tokens.spacing.xl}`,
               fontSize: tokens.typography.sizes.md,
@@ -103,7 +104,7 @@ export function DataTable<T>({
               color: tokens.colors.textSecondary,
               whiteSpace: 'nowrap',
             },
-            tr: { borderBottom: '2px solid rgba(115, 115, 115, 0.1)' },
+            tr: { borderBottom: `2px solid ${corComOpacidade(tokens.colors.textTertiary, 0.1)}` },
             td: {
               padding: paddingTd,
               fontSize: tokens.typography.sizes.sm,

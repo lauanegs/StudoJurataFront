@@ -9,6 +9,7 @@ import { Select } from '../../../../components/ui/Select'
 import { TimePicker } from '../../../../components/ui/TimePicker'
 import { useConfirm } from '../../../../contexts/confirmContexto'
 import { useToast } from '../../../../contexts/toastContexto'
+import { useFormularioHorarioTurma } from '../../../../formularios/turmas'
 import { ApiError } from '../../../../services/api'
 import { horariosTurma } from '../../../../services/turmas'
 import { formatarHora } from '../../../../utils/format'
@@ -16,8 +17,6 @@ import { OPCOES_DIA_SEMANA, ROTULO_DIA_SEMANA } from '../../../../utils/labels'
 import type { RequestResult } from '../../../../hooks/useRequisicao'
 import type { DiaSemana, HorarioTurma } from '../../../../types/turmas'
 import { LinhaCampos } from './styles'
-
-const HORARIO_VAZIO = { diaSemana: null as DiaSemana | null, horaInicio: '', horaFim: '' }
 
 interface AbaHorariosProps {
   turmaId: number
@@ -27,31 +26,29 @@ interface AbaHorariosProps {
 export function AbaHorarios({ turmaId, requisicaoHorarios }: AbaHorariosProps) {
   const toast = useToast()
   const confirmar = useConfirm()
-  const [novoHorario, setNovoHorario] = useState(HORARIO_VAZIO)
+  const form = useFormularioHorarioTurma()
+  const { diaSemana, horaInicio, horaFim } = form.values
+  const erros = form.errors as Record<string, string | undefined>
+  const [salvando, setSalvando] = useState(false)
 
   async function adicionarHorario() {
-    if (!novoHorario.diaSemana || !novoHorario.horaInicio || !novoHorario.horaFim) {
-      toast.warning('Horário incompleto', 'Informe o dia, a hora de início e a de término.')
-      return
-    }
+    if ((await form.validate()).hasErrors || !diaSemana) return
 
-    if (novoHorario.horaFim <= novoHorario.horaInicio) {
-      toast.warning('Horário inválido', 'A hora de término deve ser maior que a de início.')
-      return
-    }
-
+    setSalvando(true)
     try {
       await horariosTurma.adicionar(turmaId, {
-        diaSemana: novoHorario.diaSemana,
-        horaInicio: `${novoHorario.horaInicio}:00`,
-        horaFim: `${novoHorario.horaFim}:00`,
+        diaSemana,
+        horaInicio: `${horaInicio}:00`,
+        horaFim: `${horaFim}:00`,
       })
 
       toast.success('Horário adicionado')
-      setNovoHorario(HORARIO_VAZIO)
+      form.reset()
       await requisicaoHorarios.reload()
     } catch (erroAdicionar) {
       toast.error('Não foi possível adicionar', erroAdicionar instanceof ApiError ? erroAdicionar.message : undefined)
+    } finally {
+      setSalvando(false)
     }
   }
 
@@ -78,25 +75,34 @@ export function AbaHorarios({ turmaId, requisicaoHorarios }: AbaHorariosProps) {
         <LinhaCampos $colunas="2fr 1fr 1fr auto">
           <Select<DiaSemana>
             label="Dia da semana"
+            required
             options={OPCOES_DIA_SEMANA}
-            value={novoHorario.diaSemana}
+            value={diaSemana}
+            error={erros.diaSemana}
+            disabled={salvando}
             placeholder="Selecionar dia..."
-            onChange={(valor) => setNovoHorario((atual) => ({ ...atual, diaSemana: valor }))}
+            onChange={(valor) => form.setFieldValue('diaSemana', valor)}
           />
 
           <TimePicker
             label="Início"
-            value={novoHorario.horaInicio}
-            onChange={(evento) => setNovoHorario((atual) => ({ ...atual, horaInicio: evento.target.value }))}
+            required
+            value={horaInicio}
+            error={erros.horaInicio}
+            disabled={salvando}
+            onChange={(evento) => form.setFieldValue('horaInicio', evento.target.value)}
           />
 
           <TimePicker
             label="Término"
-            value={novoHorario.horaFim}
-            onChange={(evento) => setNovoHorario((atual) => ({ ...atual, horaFim: evento.target.value }))}
+            required
+            value={horaFim}
+            error={erros.horaFim}
+            disabled={salvando}
+            onChange={(evento) => form.setFieldValue('horaFim', evento.target.value)}
           />
 
-          <Button size="large" icon={<Plus />} onClick={adicionarHorario}>
+          <Button size="large" icon={<Plus />} loading={salvando} onClick={adicionarHorario}>
             Adicionar
           </Button>
         </LinhaCampos>
