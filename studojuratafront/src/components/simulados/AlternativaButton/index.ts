@@ -1,0 +1,1 @@
+export { AlternativaButton } from './AlternativaButton'

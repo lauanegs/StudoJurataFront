@@ -1,5 +1,5 @@
 import type { ConferenciaDaQuestao, ProvaDaTentativa } from '@/types/simulados'
-import type { QuestaoDaProva } from './tipos'
+import type { QuestaoDaProva } from './types'
 
 export type RespostasAlternativa = Record<number, number | null>
 /** V/F: por questão, cada afirmação julgada à parte (true = Verdadeiro). */

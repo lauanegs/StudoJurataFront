@@ -1,0 +1,1 @@
+export { MoedaIcone } from './MoedaIcone'

@@ -1,0 +1,1 @@
+export { SeparadorCard } from './SeparadorCard'

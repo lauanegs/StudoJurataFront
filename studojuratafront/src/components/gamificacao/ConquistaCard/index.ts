@@ -1,0 +1,1 @@
+export { ConquistaCard } from './ConquistaCard'

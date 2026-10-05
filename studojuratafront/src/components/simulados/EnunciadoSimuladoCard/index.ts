@@ -1,0 +1,1 @@
+export { EnunciadoSimuladoCard } from './EnunciadoSimuladoCard'

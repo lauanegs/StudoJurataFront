@@ -1,0 +1,1 @@
+export { Histograma } from './Histograma'

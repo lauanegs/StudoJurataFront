@@ -31,7 +31,7 @@ import { acertouVisivel, correcaoDisponivel, estadoDaAlternativa, statusDaQuesta
 import { montarQuestoesDaProva, questaoAcertada, questaoRespondida } from './provaDoAluno'
 import { ResultadoDoSimulado } from './ResultadoDoSimulado'
 import { Alternativas, Conteudo, Rodape, Tela } from './styles'
-import type { QuestaoDaProva } from './tipos'
+import type { QuestaoDaProva } from './types'
 
 /**
  * Execução do simulado pelo aluno.

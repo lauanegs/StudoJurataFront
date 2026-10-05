@@ -1,0 +1,1 @@
+export { EventoCard } from './EventoCard'

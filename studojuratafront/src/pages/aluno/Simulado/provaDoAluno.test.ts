@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { montarQuestoesDaProva, questaoAcertada, questaoRespondida } from './provaDoAluno'
-import type { QuestaoDaProva } from './tipos'
+import type { QuestaoDaProva } from './types'
 import type { ProvaDaTentativa } from '@/types/simulados'
 
 const alternativa = (id: number, correta = false) => ({ id, questaoId: 1, texto: `t${id}`, ordem: id, correta })

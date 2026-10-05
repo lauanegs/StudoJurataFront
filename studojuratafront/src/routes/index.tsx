@@ -14,89 +14,89 @@ import { CarregandoTela } from '@/components/feedback/CarregandoTela'
  */
 
 // --- Autenticação ----------------------------------------------------------
-const Login = lazy(() => import('@/pages/auth/Login'))
-const NaoAutorizado = lazy(() => import('@/pages/auth/NaoAutorizado'))
-const NaoEncontrada = lazy(() => import('@/pages/auth/NaoEncontrada'))
+const Login = lazy(() => import('@/pages/auth/Login/Login'))
+const NaoAutorizado = lazy(() => import('@/pages/auth/NaoAutorizado/NaoAutorizado'))
+const NaoEncontrada = lazy(() => import('@/pages/auth/NaoEncontrada/NaoEncontrada'))
 
 // --- Administrador ---------------------------------------------------------
-const AdmHome = lazy(() => import('@/pages/adm/Home'))
+const AdmHome = lazy(() => import('@/pages/adm/Home/Home'))
 const AdmTurmas = lazy(() => import('@/pages/adm/Turmas/Turmas'))
 const AdmTurmaFormulario = lazy(() => import('@/pages/adm/Turmas/TurmaFormulario/TurmaFormulario'))
-const AdmMatricularAluno = lazy(() => import('@/pages/adm/Turmas/MatricularAluno'))
+const AdmMatricularAluno = lazy(() => import('@/pages/adm/Turmas/MatricularAluno/MatricularAluno'))
 const AdmAlunos = lazy(() => import('@/pages/adm/Alunos/Alunos'))
-const AdmAlunoFormulario = lazy(() => import('@/pages/adm/Alunos/AlunoFormulario'))
+const AdmAlunoFormulario = lazy(() => import('@/pages/adm/Alunos/AlunoFormulario/AlunoFormulario'))
 const AdmProfessores = lazy(() => import('@/pages/adm/Professores/Professores'))
-const AdmProfessorFormulario = lazy(() => import('@/pages/adm/Professores/ProfessorFormulario'))
+const AdmProfessorFormulario = lazy(() => import('@/pages/adm/Professores/ProfessorFormulario/ProfessorFormulario'))
 const AdmResponsaveis = lazy(() => import('@/pages/adm/Responsaveis/Responsaveis'))
 const AdmResponsavelFormulario = lazy(
-  () => import('@/pages/adm/Responsaveis/ResponsavelFormulario'),
+  () => import('@/pages/adm/Responsaveis/ResponsavelFormulario/ResponsavelFormulario'),
 )
 const AdmCursos = lazy(() => import('@/pages/adm/Cursos/Cursos'))
-const AdmCursoFormulario = lazy(() => import('@/pages/adm/Cursos/CursoFormulario'))
+const AdmCursoFormulario = lazy(() => import('@/pages/adm/Cursos/CursoFormulario/CursoFormulario'))
 const AdmDisciplinas = lazy(() => import('@/pages/adm/Disciplinas/Disciplinas'))
 const AdmDisciplinaFormulario = lazy(
-  () => import('@/pages/adm/Disciplinas/DisciplinaFormulario'),
+  () => import('@/pages/adm/Disciplinas/DisciplinaFormulario/DisciplinaFormulario'),
 )
 const AdmEventos = lazy(() => import('@/pages/adm/Eventos/Eventos'))
 const AdmUsuarios = lazy(() => import('@/pages/adm/Usuarios/Usuarios'))
-const AdmUsuarioFormulario = lazy(() => import('@/pages/adm/Usuarios/UsuarioFormulario'))
+const AdmUsuarioFormulario = lazy(() => import('@/pages/adm/Usuarios/UsuarioFormulario/UsuarioFormulario'))
 
 // --- Professor -------------------------------------------------------------
-const ProfessorHome = lazy(() => import('@/pages/professor/Home'))
+const ProfessorHome = lazy(() => import('@/pages/professor/Home/Home'))
 const ProfessorTurmas = lazy(() => import('@/pages/professor/Turmas/Turmas'))
-const ProfessorTurmaDetalhada = lazy(() => import('@/pages/professor/Turmas/TurmaDetalhada'))
-const ProfessorPlanosEnsino = lazy(() => import('@/pages/professor/PlanoEnsino/PlanosEnsino'))
+const ProfessorTurmaDetalhada = lazy(() => import('@/pages/professor/Turmas/TurmaDetalhada/TurmaDetalhada'))
+const ProfessorPlanosEnsino = lazy(() => import('@/pages/professor/PlanoEnsino/PlanosEnsino/PlanosEnsino'))
 const ProfessorPlanoEnsinoFormulario = lazy(
-  () => import('@/pages/professor/PlanoEnsino/PlanoEnsinoFormulario'),
+  () => import('@/pages/professor/PlanoEnsino/PlanoEnsinoFormulario/PlanoEnsinoFormulario'),
 )
-const ProfessorConteudosPlano = lazy(() => import('@/pages/professor/PlanoEnsino/ConteudosPlano'))
+const ProfessorConteudosPlano = lazy(() => import('@/pages/professor/PlanoEnsino/ConteudosPlano/ConteudosPlano'))
 const ProfessorConteudoFormulario = lazy(
-  () => import('@/pages/professor/PlanoEnsino/ConteudoFormulario'),
+  () => import('@/pages/professor/PlanoEnsino/ConteudoFormulario/ConteudoFormulario'),
 )
-const ProfessorPlanosAula = lazy(() => import('@/pages/professor/PlanoAula/PlanosAula'))
+const ProfessorPlanosAula = lazy(() => import('@/pages/professor/PlanoAula/PlanosAula/PlanosAula'))
 const ProfessorPlanoAulaFormulario = lazy(
-  () => import('@/pages/professor/PlanoAula/PlanoAulaFormulario'),
+  () => import('@/pages/professor/PlanoAula/PlanoAulaFormulario/PlanoAulaFormulario'),
 )
-const ProfessorAulas = lazy(() => import('@/pages/professor/PlanoAula/Aulas'))
-const ProfessorAulaFormulario = lazy(() => import('@/pages/professor/PlanoAula/AulaFormulario'))
-const ProfessorRegistrarAula = lazy(() => import('@/pages/professor/PlanoAula/RegistrarAula'))
-const ProfessorRegistrarAulaTurma = lazy(() => import('@/pages/professor/Turmas/RegistrarAulaTurma'))
+const ProfessorAulas = lazy(() => import('@/pages/professor/PlanoAula/Aulas/Aulas'))
+const ProfessorAulaFormulario = lazy(() => import('@/pages/professor/PlanoAula/AulaFormulario/AulaFormulario'))
+const ProfessorRegistrarAula = lazy(() => import('@/pages/professor/PlanoAula/RegistrarAula/RegistrarAula'))
+const ProfessorRegistrarAulaTurma = lazy(() => import('@/pages/professor/Turmas/RegistrarAulaTurma/RegistrarAulaTurma'))
 const ProfessorNotas = lazy(() => import('@/pages/professor/Notas/Notas'))
-const ProfessorDesempenho = lazy(() => import('@/pages/professor/Reforco/Desempenho'))
-const ProfessorDesempenhoGeral = lazy(() => import('@/pages/professor/Reforco/DesempenhoGeral'))
-const ProfessorDesempenhoEvolucao = lazy(() => import('@/pages/professor/Reforco/DesempenhoEvolucao'))
+const ProfessorDesempenho = lazy(() => import('@/pages/professor/Reforco/Desempenho/Desempenho'))
+const ProfessorDesempenhoGeral = lazy(() => import('@/pages/professor/Reforco/DesempenhoGeral/DesempenhoGeral'))
+const ProfessorDesempenhoEvolucao = lazy(() => import('@/pages/professor/Reforco/DesempenhoEvolucao/DesempenhoEvolucao'))
 const ProfessorDesempenhoSimulados = lazy(
-  () => import('@/pages/professor/Reforco/DesempenhoSimulados'),
+  () => import('@/pages/professor/Reforco/DesempenhoSimulados/DesempenhoSimulados'),
 )
-const ProfessorSimulados = lazy(() => import('@/pages/professor/Reforco/Simulados'))
+const ProfessorSimulados = lazy(() => import('@/pages/professor/Reforco/Simulados/Simulados'))
 const ProfessorSimuladoFormulario = lazy(
   () => import('@/pages/professor/Reforco/SimuladoFormulario/SimuladoFormulario'),
 )
 const ProfessorResultadosSimulado = lazy(
-  () => import('@/pages/professor/Reforco/ResultadosSimulado'),
+  () => import('@/pages/professor/Reforco/ResultadosSimulado/ResultadosSimulado'),
 )
-const ProfessorResultadoAluno = lazy(() => import('@/pages/professor/Reforco/ResultadoAluno'))
+const ProfessorResultadoAluno = lazy(() => import('@/pages/professor/Reforco/ResultadoAluno/ResultadoAluno'))
 const ProfessorSimuladosRealizados = lazy(
-  () => import('@/pages/professor/Reforco/SimuladosRealizados'),
+  () => import('@/pages/professor/Reforco/SimuladosRealizados/SimuladosRealizados'),
 )
 const ProfessorSimuladosAprovacao = lazy(
-  () => import('@/pages/professor/Reforco/SimuladosAprovacao'),
+  () => import('@/pages/professor/Reforco/SimuladosAprovacao/SimuladosAprovacao'),
 )
 const ProfessorAprovarSimulado = lazy(
-  () => import('@/pages/professor/Reforco/AprovarSimulado'),
+  () => import('@/pages/professor/Reforco/AprovarSimulado/AprovarSimulado'),
 )
 const ProfessorQuestoesPendentes = lazy(
-  () => import('@/pages/professor/Reforco/QuestoesPendentes'),
+  () => import('@/pages/professor/Reforco/QuestoesPendentes/QuestoesPendentes'),
 )
-const ProfessorRevisarQuestao = lazy(() => import('@/pages/professor/Reforco/RevisarQuestao'))
+const ProfessorRevisarQuestao = lazy(() => import('@/pages/professor/Reforco/RevisarQuestao/RevisarQuestao'))
 
 // --- Aluno -----------------------------------------------------------------
-const AlunoHome = lazy(() => import('@/pages/aluno/Home'))
-const AlunoReforco = lazy(() => import('@/pages/aluno/Reforco'))
+const AlunoHome = lazy(() => import('@/pages/aluno/Home/Home'))
+const AlunoReforco = lazy(() => import('@/pages/aluno/Reforco/Reforco'))
 const AlunoSimulado = lazy(() => import('@/pages/aluno/Simulado/Simulado'))
-const AlunoNotas = lazy(() => import('@/pages/aluno/Notas'))
-const AlunoPerfil = lazy(() => import('@/pages/aluno/Perfil'))
-const AlunoSelecionarCurso = lazy(() => import('@/pages/aluno/SelecionarCurso'))
+const AlunoNotas = lazy(() => import('@/pages/aluno/Notas/Notas'))
+const AlunoPerfil = lazy(() => import('@/pages/aluno/Perfil/Perfil'))
+const AlunoSelecionarCurso = lazy(() => import('@/pages/aluno/SelecionarCurso/SelecionarCurso'))
 
 export function AppRoutes() {
   return (

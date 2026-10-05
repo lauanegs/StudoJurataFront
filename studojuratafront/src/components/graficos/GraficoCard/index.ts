@@ -1,0 +1,1 @@
+export { GraficoCard } from './GraficoCard'

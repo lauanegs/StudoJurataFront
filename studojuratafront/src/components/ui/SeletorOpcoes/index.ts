@@ -1,0 +1,1 @@
+export { SeletorOpcoes } from './SeletorOpcoes'

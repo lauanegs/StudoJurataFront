@@ -1,0 +1,1 @@
+export { RodapeDosPassos } from './RodapeDosPassos'

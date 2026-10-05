@@ -16,7 +16,7 @@ import { formatarMoedas, formatarNota, formatarTempo, letraAlternativa, nomeCurt
 import type { QuestaoAlunoResponse, SimuladoAlunoResponse, SimuladoResponse } from '@/types/simulados'
 import { ganhouMoedas, mensagemDoResultado } from './feedbackProva'
 import { Alternativas, Conteudo, Tela } from './styles'
-import type { QuestaoDaProva } from './tipos'
+import type { QuestaoDaProva } from './types'
 
 /* Cinza esmaecido das molduras e das etiquetas neutras (mesmo tom dos cards). */
 const CINZA_ESMAECIDO = corComOpacidade(theme.colors.textTertiary, 0.15)

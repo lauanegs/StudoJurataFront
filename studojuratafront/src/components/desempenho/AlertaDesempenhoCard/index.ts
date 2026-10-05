@@ -1,0 +1,1 @@
+export { AlertaDesempenhoCard } from './AlertaDesempenhoCard'

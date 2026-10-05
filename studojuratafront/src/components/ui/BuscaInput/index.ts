@@ -1,0 +1,1 @@
+export { BuscaInput } from './BuscaInput'
