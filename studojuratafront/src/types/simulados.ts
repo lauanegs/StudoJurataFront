@@ -79,6 +79,8 @@ export interface SimuladoRequest {
 
 export interface SimuladoResponse extends SimuladoRequest {
   id: number
+  /** "Studo Jurata" quando gerado pela IA; senão o professor da turma/disciplina. */
+  autor?: string
   status?: StatusSimulado
   createdAt?: string
 }
@@ -129,6 +131,12 @@ export interface QuestaoAlunoResponse {
 /** POST /simulados/{id}/lancar. */
 export interface LancarSimuladoRequest {
   alunoIds?: number[]
+}
+
+/** POST /simulado-aluno/{id}/conferir-questao: feedback imediato de uma questão. */
+export interface ConferenciaDaQuestao {
+  acertou: boolean
+  alternativasCorretasIds: number[]
 }
 
 /** POST /simulado-aluno/{id}/finalizar. */

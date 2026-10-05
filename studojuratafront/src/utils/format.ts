@@ -189,3 +189,8 @@ export function normalizar(texto?: string | null): string {
 export function letraAlternativa(indice: number): string {
   return String.fromCharCode(65 + indice)
 }
+
+/** Data de hoje (ou de `data`) no fuso local, em YYYY-MM-DD. toISOString converte para UTC e, à noite, devolveria o dia seguinte. */
+export function dataLocalIso(data: Date = new Date()): string {
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`
+}

@@ -30,6 +30,7 @@ export interface QuestaoEditavel {
 export interface ErrosQuestao {
   enunciado?: string
   alternativas?: string
+  conteudo?: string
 }
 
 export interface QuestaoEditorProps {
@@ -99,6 +100,12 @@ export function validarQuestao(questao: QuestaoEditavel): ErrosQuestao {
       questao.tipo === 'VERDADEIRO_FALSO'
         ? 'Marque ao menos uma afirmação como Verdadeira'
         : 'Marque qual alternativa é a correta'
+  }
+
+  // Questão nova precisa nascer com conteúdo (o back só aceita conteúdo ministrado);
+  // questão já salva tem os conteúdos no back.
+  if (!questao.id && (questao.conteudoPlanoIdsPendentes?.length ?? 0) === 0) {
+    erros.conteudo = 'Vincule ao menos um conteúdo já ministrado (com aula realizada)'
   }
 
   return erros

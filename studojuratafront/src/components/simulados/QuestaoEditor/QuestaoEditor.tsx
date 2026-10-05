@@ -6,6 +6,7 @@ import { Card } from '../../ui/Card'
 import { IconButton } from '../../ui/IconButton'
 import { Input } from '../../ui/Input'
 import { Select } from '../../ui/Select'
+import { SeletorOpcoes } from '../../ui/SeletorOpcoes'
 import { Tag } from '../../ui/Tag'
 import { TextArea } from '../../ui/TextArea'
 import { letraAlternativa } from '../../../utils/format'
@@ -14,7 +15,7 @@ import {
   ROTULO_STATUS_QUESTAO,
   STATUS_QUESTAO_VARIANT,
 } from '../../../utils/labels'
-import type { NivelDificuldade } from '../../../types/simulados'
+import type { NivelDificuldade, TipoQuestao } from '../../../types/simulados'
 import * as S from './styles'
 import {
   MAXIMO_ALTERNATIVAS,
@@ -162,27 +163,16 @@ export function QuestaoEditor({
             Tipo de questão
           </div>
 
-          <S.SeletorTipo role="group" aria-label="Tipo de questão">
-            <S.OpcaoTipo
-              type="button"
-              $ativa={!verdadeiroFalso}
-              disabled={somenteLeitura}
-              aria-pressed={!verdadeiroFalso}
-              onClick={() => trocarTipo('ALTERNATIVAS')}
-            >
-              Alternativas
-            </S.OpcaoTipo>
-
-            <S.OpcaoTipo
-              type="button"
-              $ativa={verdadeiroFalso}
-              disabled={somenteLeitura}
-              aria-pressed={verdadeiroFalso}
-              onClick={() => trocarTipo('VERDADEIRO_FALSO')}
-            >
-              Verdadeiro / Falso
-            </S.OpcaoTipo>
-          </S.SeletorTipo>
+          <SeletorOpcoes<TipoQuestao>
+            rotuloAcessivel="Tipo de questão"
+            value={questao.tipo === 'VERDADEIRO_FALSO' ? 'VERDADEIRO_FALSO' : 'ALTERNATIVAS'}
+            disabled={somenteLeitura}
+            options={[
+              { value: 'ALTERNATIVAS', label: 'Alternativas' },
+              { value: 'VERDADEIRO_FALSO', label: 'Verdadeiro / Falso' },
+            ]}
+            onChange={trocarTipo}
+          />
         </div>
 
         <Select<NivelDificuldade>
@@ -318,6 +308,7 @@ export function QuestaoEditor({
       </S.Rodape>
 
       {conteudo}
+      {erros.conteudo && <S.MensagemErro role="alert">{erros.conteudo}</S.MensagemErro>}
 
       {navegador && (
         <S.SecaoNavegador role="group" aria-label="Navegação entre questões">

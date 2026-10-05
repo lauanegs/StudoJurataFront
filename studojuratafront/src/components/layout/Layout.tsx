@@ -4,6 +4,7 @@ import { Menu } from 'lucide-react'
 
 import { MENUS, Sidebar } from './Sidebar'
 import { useAuth } from '../../hooks/useAuth'
+import { useCursoAluno } from '../../hooks/useCursoAluno'
 import { useConfirm } from '../../contexts/confirmContexto'
 import * as S from './styles'
 import type { LayoutProps } from './types'
@@ -20,6 +21,8 @@ export function Layout({ children, largura = 'default' }: LayoutProps) {
   const navegar = useNavigate()
   const confirmar = useConfirm()
   const { usuario, cargo, sair } = useAuth()
+  // Só aluno com mais de um curso ganha o atalho para escolher outro (a consulta nem roda para os demais perfis).
+  const { temVariosCursos, matriculas, turmaId, selecionar } = useCursoAluno()
 
   const [colapsada, setColapsada] = useState(
     () => window.localStorage.getItem(CHAVE_COLAPSO) === 'true',
@@ -44,6 +47,18 @@ export function Layout({ children, largura = 'default' }: LayoutProps) {
 
   if (!usuario) return null
 
+  const seletorCurso =
+    usuario.tipoUsuario === 'ALUNO' && temVariosCursos
+      ? {
+          opcoes: matriculas.map((matricula) => ({
+            value: matricula.turma.id,
+            label: `${matricula.turma.curso?.nome ?? matricula.turma.titulo}${matricula.status === 'CONCLUIDA' ? ' (concluído)' : ''}`,
+          })),
+          valor: turmaId,
+          onChange: selecionar,
+        }
+      : undefined
+
   return (
     <S.Container>
       <Sidebar
@@ -51,6 +66,7 @@ export function Layout({ children, largura = 'default' }: LayoutProps) {
         cargo={cargo}
         perfil={usuario.tipoUsuario}
         itens={MENUS[usuario.tipoUsuario]}
+        seletorCurso={seletorCurso}
         colapsada={colapsada}
         onToggleCollapse={() => setColapsada((atual) => !atual)}
         onExit={confirmarSaida}

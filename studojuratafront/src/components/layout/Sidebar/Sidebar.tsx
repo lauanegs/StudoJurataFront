@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
 import { Avatar } from '../../ui/Avatar'
+import { Select } from '../../ui/Select'
 import * as S from './styles'
 import type { ItemMenu, SidebarProps } from './types'
 
@@ -16,6 +17,7 @@ export function Sidebar({
   colapsada,
   onToggleCollapse,
   onExit,
+  seletorCurso,
   abertaNoMobile = false,
   onCloseOnMobile,
 }: SidebarProps) {
@@ -68,6 +70,17 @@ export function Sidebar({
               </S.DadosUsuario>
             )}
           </S.BlocoUsuario>
+
+          {seletorCurso && !colapsada && (
+            <S.BlocoCurso>
+              <Select<number>
+                label="Curso"
+                options={seletorCurso.opcoes}
+                value={seletorCurso.valor}
+                onChange={(valor) => valor && seletorCurso.onChange(valor)}
+              />
+            </S.BlocoCurso>
+          )}
 
           <S.Navegacao aria-label="Navegação principal">
             {itens.map((item) => {

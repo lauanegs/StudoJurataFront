@@ -10,13 +10,4 @@ export const LinhaAcaoFlutuante = styled.div`
   flex-wrap: wrap;
 `
 
-export const LinhaCampos = styled.div<{ $colunas: string }>`
-  display: grid;
-  grid-template-columns: ${({ $colunas }) => $colunas};
-  align-items: end;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    grid-template-columns: 1fr;
-  }
-`
+export { LinhaCampos } from '../../../../components/ui/LinhaCampos'

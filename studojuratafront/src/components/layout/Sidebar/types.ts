@@ -10,6 +10,13 @@ export interface ItemMenu {
   prefixos?: string[]
 }
 
+/** Select de curso na sidebar do aluno com mais de um curso. */
+export interface SeletorCurso {
+  opcoes: { value: number; label: string }[]
+  valor: number | null
+  onChange: (turmaId: number) => void
+}
+
 export interface SidebarProps {
   usuario: string
   cargo: string
@@ -18,6 +25,7 @@ export interface SidebarProps {
   colapsada: boolean
   onToggleCollapse: () => void
   onExit: () => void
+  seletorCurso?: SeletorCurso
   /** Em telas pequenas a sidebar vira um painel sobreposto. */
   abertaNoMobile?: boolean
   onCloseOnMobile?: () => void

@@ -65,21 +65,6 @@ export function ConfiguracaoSimulado({
           />
 
           <Select<number>
-            label="Disciplina"
-            required
-            options={opcoesDisciplinas}
-            value={disciplinaId}
-            loading={carregandoDisciplinas}
-            error={erros.disciplinaId}
-            disabled={somenteLeitura || !turmaId}
-            searchable
-            clearable
-            placeholder={turmaId ? 'Selecionar disciplina...' : 'Selecione a turma primeiro'}
-            emptyText="Nenhuma disciplina ofertada nesta turma"
-            onChange={(valor) => form.setFieldValue('disciplinaId', valor)}
-          />
-
-          <Select<number>
             label="Turma"
             required
             options={opcoesTurmas}
@@ -94,6 +79,21 @@ export function ConfiguracaoSimulado({
               form.setFieldValue('turmaId', valor)
               onTrocarTurma()
             }}
+          />
+
+          <Select<number>
+            label="Disciplina"
+            required
+            options={opcoesDisciplinas}
+            value={disciplinaId}
+            loading={carregandoDisciplinas}
+            error={erros.disciplinaId}
+            disabled={somenteLeitura || !turmaId}
+            searchable
+            clearable
+            placeholder={turmaId ? 'Selecionar disciplina...' : 'Selecione a turma primeiro'}
+            emptyText="Nenhuma disciplina ofertada nesta turma"
+            onChange={(valor) => form.setFieldValue('disciplinaId', valor)}
           />
 
           <Select<number>
@@ -152,6 +152,7 @@ export function ConfiguracaoSimulado({
             label="Disponível a partir de"
             modo="dataHora"
             value={dataInicio}
+            hint="O simulado para a turma toda é publicado sozinho nesta data."
             disabled={somenteLeitura}
             onChange={(evento) => form.setFieldValue('dataInicio', evento.target.value)}
           />
@@ -161,7 +162,11 @@ export function ConfiguracaoSimulado({
             modo="dataHora"
             value={dataFim}
             error={erros.dataFim}
-            hint={podeEstenderDisponibilidade ? 'Simulado já lançado — só este campo pode ser alterado.' : undefined}
+            hint={
+              podeEstenderDisponibilidade
+                ? 'Simulado já lançado — só este campo pode ser alterado.'
+                : 'O simulado é encerrado sozinho nesta data.'
+            }
             disabled={somenteLeitura && !podeEstenderDisponibilidade}
             onChange={(evento) => form.setFieldValue('dataFim', evento.target.value)}
           />

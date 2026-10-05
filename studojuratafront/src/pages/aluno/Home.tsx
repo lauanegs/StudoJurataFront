@@ -14,11 +14,13 @@ import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../components/feedback/Skeleton'
 import { useAuth } from '../../hooks/useAuth'
+import { useCursoAluno } from '../../hooks/useCursoAluno'
 import { useAlunoLogado, useSkinEquipadaDoAluno } from '../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../hooks/useRequisicao'
 import { disciplinas as servicoDisciplinas } from '../../services/curriculo'
 import { gamificacao } from '../../services/gamificacao'
 import { simuladoAlunos, simulados as servicoSimulados } from '../../services/simulados'
+import { disponibilidadeDoSimulado } from '../../utils/disponibilidadeSimulado'
 import { nomeCurto } from '../../utils/format'
 
 const Medidores = styled.div`
@@ -33,6 +35,8 @@ export default function AlunoHome() {
   const { usuario } = useAuth()
   const { alunoId, loading: carregandoAluno, error: erroAluno } = useAlunoLogado()
   const { imagemSkin } = useSkinEquipadaDoAluno(alunoId)
+  // O portal mostra um curso por vez: o que o aluno escolheu após o login.
+  const { turmaId } = useCursoAluno()
 
   const requisicaoTentativas = useRequisicao(
     () => simuladoAlunos.listarPorAluno(alunoId as number),
@@ -55,15 +59,19 @@ export default function AlunoHome() {
   const pendentes = useMemo(
     () =>
       (requisicaoTentativas.data ?? [])
+        .filter((tentativa) => porSimulado.get(tentativa.simuladoId)?.turmaId === turmaId)
         .filter((tentativa) => tentativa.status !== 'CONCLUIDO')
+        // Simulado encerrado, vencido ou ainda fechado não é "para fazer agora".
+        .filter((tentativa) => !disponibilidadeDoSimulado(porSimulado.get(tentativa.simuladoId)).indisponivel)
         .slice(0, 4),
-    [requisicaoTentativas.data],
+    [requisicaoTentativas.data, porSimulado, turmaId],
   )
 
   const desempenhos = useMemo(() => {
     const acumulado = new Map<number, { soma: number; quantidade: number }>()
 
     ;(requisicaoTentativas.data ?? [])
+      .filter((tentativa) => porSimulado.get(tentativa.simuladoId)?.turmaId === turmaId)
       .filter((tentativa) => tentativa.status === 'CONCLUIDO' && typeof tentativa.nota === 'number')
       .forEach((tentativa) => {
         const simulado = porSimulado.get(tentativa.simuladoId)
@@ -88,7 +96,7 @@ export default function AlunoHome() {
           ?.titulo ?? `Disciplina ${disciplinaId}`,
       percentual: valores.soma / valores.quantidade,
     }))
-  }, [requisicaoTentativas.data, porSimulado, requisicaoDisciplinas.data])
+  }, [requisicaoTentativas.data, porSimulado, requisicaoDisciplinas.data, turmaId])
 
   const pontuacao = requisicaoPontuacao.data
 
@@ -161,6 +169,7 @@ export default function AlunoHome() {
                       (disciplina) => disciplina.id === simulado?.disciplinaId,
                     )?.titulo ?? simulado?.titulo ?? `Simulado ${tentativa.simuladoId}`
                   }
+                  autor={simulado?.autor}
                   quantidadeQuestoes={simulado?.quantidadeQuestoes}
                   onStart={() => navegar(`/aluno/simulado/${tentativa.id}`)}
                 />

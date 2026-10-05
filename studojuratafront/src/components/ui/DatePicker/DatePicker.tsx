@@ -1,4 +1,4 @@
-import { useRef, type ChangeEvent, type ReactNode, type RefObject } from 'react'
+import { useRef, type ChangeEvent, type FormEvent, type ReactNode, type RefObject } from 'react'
 import { DateInput, TimePicker } from '@mantine/dates'
 import dayjs from 'dayjs'
 import { Calendar, Clock } from 'lucide-react'
@@ -6,7 +6,7 @@ import { Calendar, Clock } from 'lucide-react'
 import { Field } from '../Field'
 import { theme as tokens } from '../../../styles/theme'
 import { comTamanho } from '../../../utils/redimensionarIcone'
-import { FORMATO_API_DATA, FORMATO_API_DATA_HORA, dataDigitadaParaIso, dataIsoParaExibicao } from './conversaoData'
+import { FORMATO_API_DATA, FORMATO_API_DATA_HORA, dataDigitadaParaIso, dataIsoParaExibicao, mascararData } from './conversaoData'
 import type { DatePickerProps } from './types'
 
 const FORMATO_SAIDA: Record<'data' | 'dataHora', string> = {
@@ -25,6 +25,11 @@ const estilosCampo = (error?: string) => ({
 })
 
 const LARGURA_ICONE = '56px'
+
+// Roda antes do onChange interno da Mantine, que então já lê o texto mascarado.
+function aplicarMascara(evento: FormEvent<HTMLInputElement>) {
+  evento.currentTarget.value = mascararData(evento.currentTarget.value)
+}
 
 /**
  * Componente à parte (não uma função chamada dentro do render do
@@ -103,6 +108,7 @@ export function DatePicker({
           error={Boolean(error)}
           valueFormat={dataIsoParaExibicao}
           dateParser={dataDigitadaParaIso}
+          onInput={aplicarMascara}
           // Blur com o padrão da Mantine (fixOnBlur: true) reescreve o texto a
           // partir do valor: data digitada em formato aceito volta normalizada
           // como DD/MM/YYYY, e texto que não é data não fica parecendo
@@ -148,6 +154,7 @@ export function DatePicker({
           error={Boolean(error)}
           valueFormat={dataIsoParaExibicao}
           dateParser={dataDigitadaParaIso}
+          onInput={aplicarMascara}
           leftSection={<IconeCampo icon={<Calendar />} campoRef={campoDataRef} disabled={disabled} />}
           leftSectionWidth={LARGURA_ICONE}
           leftSectionPointerEvents="auto"

@@ -44,3 +44,48 @@ export function statusDaQuestaoConfirmada(params: {
   if (!params.temGabarito) return 'answered'
   return params.acertou ? 'correct' : 'incorrect'
 }
+
+export interface MensagemResultado {
+  titulo: string
+  descricao: string
+}
+
+/**
+ * Frase da tela de resultado de acordo com o desempenho — antes era sempre
+ * "Parabéns". Questão em branco pesa: quem não respondeu tudo não ganha moedas,
+ * e a mensagem fala disso em vez de comemorar.
+ */
+export function mensagemDoResultado(params: {
+  nome: string
+  acertos: number
+  total: number
+  respondidas: number
+}): MensagemResultado {
+  const { nome, acertos, total, respondidas } = params
+  const sufixo = nome ? `, ${nome}` : ''
+
+  if (total > 0 && respondidas === 0) {
+    return {
+      titulo: `Você não respondeu nenhuma questão${sufixo}`,
+      descricao: 'Da próxima vez, tente responder todas — mesmo um palpite ajuda a revelar o que você já sabe.',
+    }
+  }
+
+  const percentual = total > 0 ? (acertos / total) * 100 : 0
+
+  if (percentual >= 70) {
+    return { titulo: `Parabéns${sufixo}!`, descricao: 'Continue assim para desenvolver seus conhecimentos, você vai longe!' }
+  }
+  if (percentual >= 40) {
+    return { titulo: `Bom trabalho${sufixo}!`, descricao: 'Você está no caminho. Revise o que errou e vai melhorar na próxima!' }
+  }
+  return {
+    titulo: `Não desanime${sufixo}!`,
+    descricao: 'Errar faz parte de aprender. Revise a correção abaixo e tente de novo no próximo simulado.',
+  }
+}
+
+/** Moedas só quando a prova foi toda respondida (mesma regra do back). */
+export function ganhouMoedas(respondidas: number, total: number): boolean {
+  return total > 0 && respondidas === total
+}

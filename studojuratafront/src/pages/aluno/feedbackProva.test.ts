@@ -4,6 +4,8 @@ import {
   acertouVisivel,
   correcaoDisponivel,
   estadoDaAlternativa,
+  ganhouMoedas,
+  mensagemDoResultado,
   statusDaQuestaoConfirmada,
 } from './feedbackProva'
 
@@ -52,5 +54,30 @@ describe('statusDaQuestaoConfirmada', () => {
   it('com o gabarito a questao confirmada fica verde ou vermelha', () => {
     expect(statusDaQuestaoConfirmada({ temGabarito: true, acertou: true })).toBe('correct')
     expect(statusDaQuestaoConfirmada({ temGabarito: true, acertou: false })).toBe('incorrect')
+  })
+})
+
+describe('mensagemDoResultado', () => {
+  const base = { nome: 'Ana', total: 10, respondidas: 10 }
+
+  it('comemora so quando o desempenho e bom', () => {
+    expect(mensagemDoResultado({ ...base, acertos: 8 }).titulo).toBe('Parabéns, Ana!')
+  })
+
+  it('incentiva no desempenho medio e no baixo, sem parabenizar', () => {
+    expect(mensagemDoResultado({ ...base, acertos: 5 }).titulo).toBe('Bom trabalho, Ana!')
+    expect(mensagemDoResultado({ ...base, acertos: 1 }).titulo).toBe('Não desanime, Ana!')
+  })
+
+  it('prova inteira em branco nao e parabenizada', () => {
+    expect(mensagemDoResultado({ ...base, acertos: 0, respondidas: 0 }).titulo).toContain('não respondeu')
+  })
+})
+
+describe('ganhouMoedas', () => {
+  it('exige todas as questoes respondidas', () => {
+    expect(ganhouMoedas(5, 5)).toBe(true)
+    expect(ganhouMoedas(4, 5)).toBe(false)
+    expect(ganhouMoedas(0, 0)).toBe(false)
   })
 })

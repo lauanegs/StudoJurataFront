@@ -1,18 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
-import { Archive, ArchiveRestore, Plus, Save, Trash2, UserRound } from 'lucide-react'
+import { Archive, ArchiveRestore, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
-import { IconButton } from '../../../components/ui/IconButton'
 import { Input } from '../../../components/ui/Input'
-import { Select } from '../../../components/ui/Select'
 import { Tab } from '../../../components/ui/Tab'
 import { Stack } from '../../../components/ui/Stack'
-import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../contexts/confirmContexto'
@@ -26,54 +22,17 @@ import {
   responsaveis as servicoResponsaveis,
   vinculosResponsavel,
 } from '../../../services/pessoas'
-import { OPCOES_PARENTESCO } from '../../../utils/labels'
 import type { Parentesco } from '../../../types/pessoas'
+import { VinculoResponsavelAluno } from '../../../components/pessoas/VinculoResponsavelAluno'
 import { PessoaCampos } from '../../../components/pessoas/PessoaCampos'
 import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '../../../formularios/pessoas'
-
-/* Ação de destaque acima do conteúdo, à direita, como na aba "Alunos ativos" de Turmas. */
-const LinhaAcaoFlutuante = styled.div`
-  display: flex;
-  justify-content: flex-end;
-`
-
-const LinhaResponsavel = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  padding-bottom: ${({ theme }) => theme.spacing.sm};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-
-  &:last-of-type {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-`
-
-const CamposResponsavel = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr auto;
-  align-items: end;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    grid-template-columns: 1fr;
-  }
-`
 
 interface VinculoForm {
   /** Id do ResponsavelAluno quando o vínculo já existe no back. */
   id?: number
   chave: string
-  responsavelId: number | null
-  parentesco: Parentesco | null
-  erroResponsavel?: string
-  erroParentesco?: string
-}
-
-function novoVinculo(): VinculoForm {
-  return { chave: crypto.randomUUID(), responsavelId: null, parentesco: null }
+  responsavelId: number
+  parentesco: Parentesco
 }
 
 export default function AlunoFormulario() {
@@ -117,8 +76,8 @@ export default function AlunoFormulario() {
       lista.map((vinculo) => ({
         id: vinculo.id,
         chave: String(vinculo.id),
-        responsavelId: vinculo.responsavel?.id ?? null,
-        parentesco: vinculo.parentesco ?? null,
+        responsavelId: vinculo.responsavel?.id as number,
+        parentesco: vinculo.parentesco as Parentesco,
       })),
     )
   })
@@ -133,28 +92,37 @@ export default function AlunoFormulario() {
     [requisicaoResponsaveis.data],
   )
 
-  function validarVinculos(): boolean {
-    let valido = true
+  const opcoesDisponiveis = useMemo(() => {
+    const jaVinculados = new Set(vinculos.map((vinculo) => vinculo.responsavelId))
+    return opcoesResponsaveis.filter((opcao) => !jaVinculados.has(opcao.value))
+  }, [opcoesResponsaveis, vinculos])
 
-    setVinculos((atuais) =>
-      atuais.map((vinculo) => {
-        const erroResponsavel = vinculo.responsavelId ? undefined : 'Selecione o responsável'
-        const erroParentesco = vinculo.parentesco ? undefined : 'Selecione o parentesco'
+  const itensVinculos = useMemo(
+    () =>
+      vinculos.map((vinculo) => ({
+        // O id do responsável vira a chave para o botão "Ver" e para remover.
+        chave: String(vinculo.responsavelId),
+        nome: opcoesResponsaveis.find((opcao) => opcao.value === vinculo.responsavelId)?.label ?? `Responsável ${vinculo.responsavelId}`,
+        parentesco: vinculo.parentesco,
+      })),
+    [vinculos, opcoesResponsaveis],
+  )
 
-        if (erroResponsavel || erroParentesco) valido = false
+  // Os vínculos ficam na tela e só vão para o back ao salvar o aluno.
+  function vincularResponsavel(responsavelId: number, parentesco: Parentesco) {
+    setVinculos((atuais) => [...atuais, { chave: crypto.randomUUID(), responsavelId, parentesco }])
+  }
 
-        return { ...vinculo, erroResponsavel, erroParentesco }
-      }),
-    )
-
-    // Responsável duplicado quebraria a unique constraint (responsavel_id, aluno_id).
-    const ids = vinculos.map((vinculo) => vinculo.responsavelId).filter(Boolean)
-    if (new Set(ids).size !== ids.length) {
-      toast.warning('Responsável repetido', 'Cada responsável só pode ser vinculado uma vez.')
-      valido = false
-    }
-
-    return valido
+  async function removerResponsavel(item: { chave: string; nome: string }) {
+    await confirmar({
+      titulo: 'Remover responsável?',
+      descricao: `${item.nome} deixa de ser responsável por este aluno quando você salvar.`,
+      rotuloConfirmar: 'Remover',
+      tone: 'danger',
+      aoConfirmar: async () => {
+        setVinculos((atuais) => atuais.filter((vinculo) => String(vinculo.responsavelId) !== item.chave))
+      },
+    })
   }
 
   async function sincronizarVinculos(idDoAluno: number) {
@@ -186,11 +154,6 @@ export default function AlunoFormulario() {
     if (validacao.hasErrors) {
       setAba(abaDoCampoPessoa(Object.keys(validacao.errors)[0]))
       toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
-      return
-    }
-
-    if (!validarVinculos()) {
-      setAba('responsaveis')
       return
     }
 
@@ -379,87 +342,17 @@ export default function AlunoFormulario() {
           )}
 
           {aba === 'responsaveis' && (
-            <>
-              <LinhaAcaoFlutuante>
-                <Button
-                  size="large"
-                  icon={<Plus />}
-                  disabled={salvando}
-                  onClick={() => setVinculos((atuais) => [...atuais, novoVinculo()])}
-                >
-                  Vincular responsável
-                </Button>
-              </LinhaAcaoFlutuante>
-
-              <Card titulo="Responsáveis">
-              {vinculos.length === 0 ? (
-                <EstadoVazio
-                  titulo="Nenhum responsável vinculado"
-                  descricao="Vincule ao menos um responsável legal para o acompanhamento do aluno."
-                  icon={<UserRound />}
-                />
-              ) : (
-                <Stack gap="md">
-                  {vinculos.map((vinculo) => (
-                    <LinhaResponsavel key={vinculo.chave}>
-                      <CamposResponsavel>
-                        <Select<number>
-                          label="Responsável"
-                          required
-                          options={opcoesResponsaveis}
-                          value={vinculo.responsavelId}
-                          loading={requisicaoResponsaveis.loading}
-                          error={vinculo.erroResponsavel}
-                          searchable
-                          placeholder="Selecione o responsável..."
-                          emptyText="Cadastre um responsável primeiro"
-                          onChange={(value) =>
-                            setVinculos((atuais) =>
-                              atuais.map((item) =>
-                                item.chave === vinculo.chave
-                                  ? { ...item, responsavelId: value, erroResponsavel: undefined }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-
-                        <Select<Parentesco>
-                          label="Parentesco"
-                          required
-                          options={OPCOES_PARENTESCO.map((opcao) => ({
-                            value: opcao.value,
-                            label: opcao.label,
-                          }))}
-                          value={vinculo.parentesco}
-                          error={vinculo.erroParentesco}
-                          placeholder="Selecione..."
-                          onChange={(value) =>
-                            setVinculos((atuais) =>
-                              atuais.map((item) =>
-                                item.chave === vinculo.chave
-                                  ? { ...item, parentesco: value, erroParentesco: undefined }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-
-                        <IconButton
-                          label="Remover responsável"
-                          icon={<Trash2 />}
-                          variant="danger"
-                          onClick={() =>
-                            setVinculos((atuais) => atuais.filter((item) => item.chave !== vinculo.chave))
-                          }
-                        />
-                      </CamposResponsavel>
-                    </LinhaResponsavel>
-                  ))}
-                </Stack>
-              )}
-              </Card>
-            </>
+            <VinculoResponsavelAluno
+              titulo="Responsáveis do aluno"
+              rotuloCampo="Responsável"
+              opcoes={opcoesDisponiveis}
+              carregandoOpcoes={requisicaoResponsaveis.loading}
+              itens={itensVinculos}
+              desabilitado={salvando}
+              aoVincular={vincularResponsavel}
+              aoRemover={removerResponsavel}
+              aoVer={(item) => navegar(`/adm/responsaveis/${item.chave}`)}
+            />
           )}
         </>
       )}

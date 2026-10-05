@@ -16,9 +16,7 @@ import { SkeletonCartao } from '../../../components/feedback/Skeleton'
 import { useRequisicao } from '../../../hooks/useRequisicao'
 import { alunos as servicoAlunos } from '../../../services/pessoas'
 import {
-  alternativas as servicoAlternativas,
   questaoAlunos,
-  questoes as servicoQuestoes,
   simuladoAlunos,
   simulados as servicoSimulados,
 } from '../../../services/simulados'
@@ -66,8 +64,9 @@ export default function ResultadoAluno() {
     () => questaoAlunos.listarPorSimuladoAluno(idTentativa),
     [idTentativa],
   )
-  const requisicaoQuestoes = useRequisicao(() => servicoQuestoes.listar(), [])
-  const requisicaoAlternativas = useRequisicao(() => servicoAlternativas.listar(), [])
+  // Prova da própria tentativa (questões + gabarito): o catálogo geral de
+  // questões é recortado por disciplina e não traz tudo que o aluno respondeu.
+  const requisicaoProva = useRequisicao(() => simuladoAlunos.questoesDaTentativa(idTentativa), [idTentativa])
   const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [])
 
   const tentativa = requisicaoTentativa.data
@@ -81,37 +80,33 @@ export default function ResultadoAluno() {
   )
 
   const correcao = useMemo(() => {
-    const respostas = requisicaoRespostas.data ?? []
-    const questoes = requisicaoQuestoes.data ?? []
-    const todasAlternativas = requisicaoAlternativas.data ?? []
+    const respostas = new Map((requisicaoRespostas.data ?? []).map((resposta) => [resposta.questaoId, resposta]))
+    const gabarito = requisicaoProva.data?.gabarito ?? {}
 
-    return respostas.map((resposta) => {
-      const questao = questoes.find((item) => item.id === resposta.questaoId)
-      const ehVF = questao?.tipo === 'VERDADEIRO_FALSO'
-      const marcadasVerdadeiras = new Set(resposta.alternativasVerdadeirasIds ?? [])
-
-      const alternativasDaQuestao = todasAlternativas
-        .filter((alternativa) => alternativa.questaoId === resposta.questaoId)
-        .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+    return (requisicaoProva.data?.questoes ?? []).map((questao) => {
+      const resposta = respostas.get(questao.questaoId)
+      const ehVF = questao.tipo === 'VERDADEIRO_FALSO'
+      const marcadasVerdadeiras = new Set(resposta?.alternativasVerdadeirasIds ?? [])
 
       // Tentativas antigas têm `respondida` nulo (mesmo fallback de Simulado.tsx).
       const respondida =
-        resposta.respondida ??
-        (ehVF ? (resposta.alternativasVerdadeirasIds?.length ?? 0) > 0 : resposta.alternativaId != null)
+        resposta?.respondida ??
+        (ehVF ? (resposta?.alternativasVerdadeirasIds?.length ?? 0) > 0 : resposta?.alternativaId != null)
 
       return {
-        respostaId: resposta.id,
-        enunciado: questao?.enunciado ?? 'Questão não encontrada',
-        acertou: Boolean(resposta.acertou),
+        questaoId: questao.questaoId,
+        enunciado: questao.enunciado,
+        acertou: Boolean(resposta?.acertou),
         respondida,
         ehVF,
         marcadasVerdadeiras,
-        tempoResposta: resposta.tempoResposta,
-        alternativas: alternativasDaQuestao,
-        alternativaMarcada: resposta.alternativaId ?? null,
+        alternativas: [...questao.alternativas]
+          .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+          .map((alternativa) => ({ ...alternativa, correta: gabarito[String(alternativa.id)] === true })),
+        alternativaMarcada: resposta?.alternativaId ?? null,
       }
     })
-  }, [requisicaoRespostas.data, requisicaoQuestoes.data, requisicaoAlternativas.data])
+  }, [requisicaoRespostas.data, requisicaoProva.data])
 
   if (requisicaoTentativa.error) {
     return (
@@ -148,7 +143,7 @@ export default function ResultadoAluno() {
         rotuloVoltar="Resultados"
       />
 
-      {requisicaoRespostas.loading ? (
+      {requisicaoRespostas.loading || requisicaoProva.loading ? (
         <SkeletonCartao />
       ) : correcao.length === 0 ? (
         <EstadoVazio
@@ -159,7 +154,7 @@ export default function ResultadoAluno() {
       ) : (
         <Stack gap="md">
           {correcao.map((item, indice) => (
-            <Card key={item.respostaId}>
+            <Card key={item.questaoId}>
               <QuestaoCabecalho>
                 <QuestaoTitulo>Questão {indice + 1}</QuestaoTitulo>
 

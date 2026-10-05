@@ -2,6 +2,7 @@ import { api } from './api'
 import type {
   AlternativaRequest,
   AlternativaResponse,
+  ConferenciaDaQuestao,
   FinalizarSimuladoRequest,
   LancarSimuladoRequest,
   QuestaoAlunoResponse,
@@ -74,6 +75,9 @@ export const simuladoAlunos = {
   /** Calcula nota, acertos e tempo gasto. Questões ausentes contam como erro. */
   finalizar: (id: number, dados: FinalizarSimuladoRequest) =>
     api.post<SimuladoAlunoResponse>(`/simulado-aluno/${id}/finalizar`, dados),
+  /** Feedback imediato: grava a resposta da questão (travada) e devolve acerto + gabarito dela. */
+  conferirQuestao: (id: number, resposta: FinalizarSimuladoRequest['respostas'][number]) =>
+    api.post<ConferenciaDaQuestao>(`/simulado-aluno/${id}/conferir-questao`, resposta),
   /**
    * Conteúdo da prova da própria tentativa (questões e alternativas).
    * O gabarito só vem quando a tentativa está CONCLUIDA.

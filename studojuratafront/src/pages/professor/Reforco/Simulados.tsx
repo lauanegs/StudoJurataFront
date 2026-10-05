@@ -135,8 +135,12 @@ export default function Simulados() {
     return mapa
   }, [requisicaoTentativas.data])
 
+  // Os contadores das abas respeitam os filtros de turma e disciplina (só a aba de status fica de fora,
+  // porque é justamente o que os números comparam).
   const contadores = useMemo(() => {
     const lista = simuladosDoProfessor
+      .filter((simulado) => !turmaFiltroId || simulado.turmaId === turmaFiltroId)
+      .filter((simulado) => !disciplinaFiltroId || simulado.disciplinaId === disciplinaFiltroId)
 
     return {
       todos: lista.length,
@@ -144,7 +148,7 @@ export default function Simulados() {
       PUBLICADO: lista.filter((simulado) => simulado.status === 'PUBLICADO').length,
       ENCERRADO: lista.filter((simulado) => simulado.status === 'ENCERRADO').length,
     }
-  }, [simuladosDoProfessor])
+  }, [simuladosDoProfessor, turmaFiltroId, disciplinaFiltroId])
 
   const opcoesTurmasFiltro = useMemo(
     () =>
@@ -267,14 +271,21 @@ export default function Simulados() {
     {
       key: 'status',
       cabecalho: 'Status',
-      render: (simulado) =>
-        simulado.status ? (
-          <Tag variant={STATUS_SIMULADO_VARIANT[simulado.status]}>
-            {ROTULO_STATUS_SIMULADO[simulado.status]}
+      render: (simulado) => {
+        if (!simulado.status) return '—'
+
+        // Rascunho cuja janela já abriu: os alunos ainda não veem nada até o professor lançar.
+        const janelaJaAberta =
+          simulado.status === 'RASCUNHO' &&
+          Boolean(simulado.dataInicio) &&
+          new Date(simulado.dataInicio as string).getTime() <= Date.now()
+
+        return (
+          <Tag variant={janelaJaAberta ? 'warning' : STATUS_SIMULADO_VARIANT[simulado.status]}>
+            {janelaJaAberta ? 'Rascunho — falta lançar' : ROTULO_STATUS_SIMULADO[simulado.status]}
           </Tag>
-        ) : (
-          '—'
-        ),
+        )
+      },
     },
   ]
 

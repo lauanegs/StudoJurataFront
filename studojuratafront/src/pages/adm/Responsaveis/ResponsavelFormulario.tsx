@@ -1,13 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Archive, ArchiveRestore, Eye, Save } from 'lucide-react'
+import { Archive, ArchiveRestore, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
 import { Card } from '../../../components/ui/Card'
-import { DataTable } from '../../../components/ui/DataTable'
 import { Header } from '../../../components/ui/Header'
-import { IconButton } from '../../../components/ui/IconButton'
 import { Tab } from '../../../components/ui/Tab'
 import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../components/feedback/Skeleton'
@@ -17,12 +15,13 @@ import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import {
+  alunos as servicoAlunos,
   pessoas as servicoPessoas,
   responsaveis as servicoResponsaveis,
   vinculosResponsavel,
 } from '../../../services/pessoas'
-import { ROTULO_PARENTESCO } from '../../../utils/labels'
-import type { ResponsavelAluno } from '../../../types/pessoas'
+import type { Parentesco } from '../../../types/pessoas'
+import { VinculoResponsavelAluno } from '../../../components/pessoas/VinculoResponsavelAluno'
 import { PessoaCampos } from '../../../components/pessoas/PessoaCampos'
 import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '../../../formularios/pessoas'
 
@@ -50,6 +49,61 @@ export default function ResponsavelFormulario() {
     [responsavelId],
     { ativo: Boolean(responsavelId) },
   )
+
+  const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [], { ativo: edicao })
+
+  const opcoesAlunos = useMemo(() => {
+    const jaVinculados = new Set((requisicaoVinculos.data ?? []).map((vinculo) => vinculo.aluno?.id))
+
+    return (requisicaoAlunos.data ?? [])
+      .filter((aluno) => !jaVinculados.has(aluno.id))
+      .map((aluno) => ({
+        value: aluno.id,
+        label: aluno.pessoa?.nome ?? `Aluno ${aluno.id}`,
+        descricao: aluno.matricula,
+      }))
+  }, [requisicaoAlunos.data, requisicaoVinculos.data])
+
+  const itensVinculos = useMemo(
+    () =>
+      (requisicaoVinculos.data ?? []).map((vinculo) => ({
+        chave: String(vinculo.id),
+        nome: vinculo.aluno?.pessoa?.nome ?? '—',
+        parentesco: vinculo.parentesco,
+      })),
+    [requisicaoVinculos.data],
+  )
+
+  async function vincularAluno(alunoId: number, parentesco: Parentesco) {
+    const aluno = (requisicaoAlunos.data ?? []).find((item) => item.id === alunoId)
+    if (!aluno || !requisicao.data) return
+
+    try {
+      await vinculosResponsavel.criar({ aluno, responsavel: requisicao.data, parentesco })
+      toast.success('Aluno vinculado', aluno.pessoa?.nome)
+      await requisicaoVinculos.reload()
+    } catch (erroVincular) {
+      toast.error('Não foi possível vincular', erroVincular instanceof ApiError ? erroVincular.message : undefined)
+    }
+  }
+
+  async function desvincularAluno(item: { chave: string; nome: string }) {
+    await confirmar({
+      titulo: 'Desvincular aluno?',
+      descricao: `${item.nome} deixa de ser vinculado a este responsável.`,
+      rotuloConfirmar: 'Desvincular',
+      tone: 'danger',
+      aoConfirmar: async () => {
+        try {
+          await vinculosResponsavel.excluir(Number(item.chave))
+          toast.success('Aluno desvinculado')
+          await requisicaoVinculos.reload()
+        } catch (erroDesvincular) {
+          toast.error('Não foi possível desvincular', erroDesvincular instanceof ApiError ? erroDesvincular.message : undefined)
+        }
+      },
+    })
+  }
 
   useHidratar(requisicao.data, (responsavel) => {
     form.setValues(dePessoa(responsavel.pessoa))
@@ -233,37 +287,21 @@ export default function ResponsavelFormulario() {
           )}
 
           {edicao && aba === 'alunos' && (
-            <DataTable<ResponsavelAluno>
-              descricao="Alunos vinculados a este responsável"
-              columns={[
-                {
-                  key: 'aluno',
-                  cabecalho: 'Aluno',
-                  render: (vinculo) => vinculo.aluno?.pessoa?.nome ?? '—',
-                },
-                {
-                  key: 'parentesco',
-                  cabecalho: 'Parentesco',
-                  render: (vinculo) =>
-                    vinculo.parentesco ? ROTULO_PARENTESCO[vinculo.parentesco] : '—',
-                },
-              ]}
-              data={requisicaoVinculos.data ?? []}
-              rowKey={(vinculo) => vinculo.id}
-              loading={requisicaoVinculos.loading}
-              error={requisicaoVinculos.error}
-              onReload={requisicaoVinculos.reload}
-              empty={{
-                titulo: 'Nenhum aluno vinculado',
-                descricao: 'O vínculo é criado na tela de cadastro do aluno.',
+            <VinculoResponsavelAluno
+              titulo="Alunos vinculados"
+              rotuloCampo="Aluno"
+              opcoes={opcoesAlunos}
+              carregandoOpcoes={requisicaoAlunos.loading}
+              itens={itensVinculos}
+              carregandoItens={requisicaoVinculos.loading}
+              erroItens={requisicaoVinculos.error}
+              onRecarregar={requisicaoVinculos.reload}
+              aoVincular={vincularAluno}
+              aoRemover={desvincularAluno}
+              aoVer={(item) => {
+                const vinculo = (requisicaoVinculos.data ?? []).find((v) => String(v.id) === item.chave)
+                navegar(`/adm/alunos/${vinculo?.aluno?.id}`)
               }}
-              actions={(vinculo) => (
-                <IconButton
-                  label={`Ver ${vinculo.aluno?.pessoa?.nome ?? 'aluno'}`}
-                  icon={<Eye />}
-                  onClick={() => navegar(`/adm/alunos/${vinculo.aluno?.id}`)}
-                />
-              )}
             />
           )}
         </>

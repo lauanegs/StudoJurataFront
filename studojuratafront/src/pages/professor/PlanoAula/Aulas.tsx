@@ -175,10 +175,10 @@ export default function Aulas() {
       valorOrdenacao: (aula) => aula.dataPublicacao ?? '',
       render: (aula) =>
         aula.dataPublicacao ? (
-          formatarData(aula.dataPublicacao)
+          <Tag variant="success">{formatarData(aula.dataPublicacao)}</Tag>
         ) : (
-          <Tag variant="neutral">
-            Planejada
+          <Tag variant="warning">
+            Não realizada
           </Tag>
         ),
     },

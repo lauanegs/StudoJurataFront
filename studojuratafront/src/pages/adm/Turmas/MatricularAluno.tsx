@@ -10,7 +10,7 @@ import { DatePicker } from '../../../components/ui/DatePicker'
 import { Header, SubtituloItem } from '../../../components/ui/Header'
 import { Select } from '../../../components/ui/Select'
 import { Stepper } from '../../../components/ui/Stepper'
-import { Tab } from '../../../components/ui/Tab'
+import { SeletorOpcoes } from '../../../components/ui/SeletorOpcoes'
 import { Tag } from '../../../components/ui/Tag'
 import { Stack } from '../../../components/ui/Stack'
 import { GradeAutoAjuste } from '../../../components/ui/GradeAutoAjuste'
@@ -27,7 +27,7 @@ import {
   vinculosResponsavel,
 } from '../../../services/pessoas'
 import { matriculas, turmas as servicoTurmas } from '../../../services/turmas'
-import { formatarCpf } from '../../../utils/format'
+import { calcularIdade, formatarCpf } from '../../../utils/format'
 import { OPCOES_PARENTESCO } from '../../../utils/labels'
 import type { Parentesco } from '../../../types/pessoas'
 import type { StatusMatricula } from '../../../types/turmas'
@@ -86,6 +86,9 @@ export default function MatricularAluno() {
   const [modoResponsavel, setModoResponsavel] = useState<'existente' | 'novo'>('existente')
   const [responsavelIdExistente, setResponsavelIdExistente] = useState<number | null>(null)
   const [parentesco, setParentesco] = useState<Parentesco | null>(null)
+  // Erros no próprio campo: só o toast passava despercebido e o botão parecia não fazer nada.
+  const [erroParentesco, setErroParentesco] = useState<string>()
+  const [erroResponsavel, setErroResponsavel] = useState<string>()
   const formularioResponsavel = useFormularioPessoa()
 
   // --- Passo 3: matrícula ------------------------------------------------------
@@ -151,8 +154,18 @@ export default function MatricularAluno() {
   const responsaveisDoAlunoExistente = requisicaoVinculosDoAluno.data ?? []
   // Passo "Responsável" é obrigatório pra aluno novo (nunca teve nenhum) ou
   // pra aluno existente que ainda não tem nenhum responsável vinculado.
+  // Só menor de 18 anos exige responsável (mesma regra do back); aluno sem data de
+  // nascimento conhecida segue exigindo, por cautela.
+  const nascimentoDoAluno =
+    modoAluno === 'novo'
+      ? formularioAluno.values.dataNascimento
+      : (requisicaoAlunos.data ?? []).find((aluno) => aluno.id === alunoIdExistente)?.pessoa?.dataNascimento
+  const idadeDoAluno = calcularIdade(nascimentoDoAluno)
+  const alunoMenor = idadeDoAluno === null || idadeDoAluno < 18
   const responsavelObrigatorio =
-    !edicao && (modoAluno === 'novo' || (modoAluno === 'existente' && responsaveisDoAlunoExistente.length === 0))
+    !edicao &&
+    alunoMenor &&
+    (modoAluno === 'novo' || (modoAluno === 'existente' && responsaveisDoAlunoExistente.length === 0))
 
   async function avancar() {
     if (passo === 'aluno') {
@@ -175,22 +188,17 @@ export default function MatricularAluno() {
 
     if (passo === 'responsavel') {
       if (responsavelObrigatorio) {
-        if (!parentesco) {
-          toast.warning('Selecione o parentesco do responsável')
-          return
-        }
+        const faltaParentesco = !parentesco
+        const faltaResponsavel = modoResponsavel === 'existente' && !responsavelIdExistente
+        const { hasErrors } =
+          modoResponsavel === 'novo' ? await formularioResponsavel.validate() : { hasErrors: false }
 
-        if (modoResponsavel === 'existente') {
-          if (!responsavelIdExistente) {
-            toast.warning('Selecione o responsável')
-            return
-          }
-        } else {
-          const { hasErrors } = await formularioResponsavel.validate()
-          if (hasErrors) {
-            toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
-            return
-          }
+        setErroParentesco(faltaParentesco ? 'Selecione o parentesco' : undefined)
+        setErroResponsavel(faltaResponsavel ? 'Selecione o responsável' : undefined)
+
+        if (faltaParentesco || faltaResponsavel || hasErrors) {
+          toast.warning('Revise os campos', 'Há informações obrigatórias pendentes.')
+          return
         }
       }
 
@@ -379,14 +387,14 @@ export default function MatricularAluno() {
         onChange={setPasso}
         options={[
           { value: 'aluno', label: 'Aluno', description: 'Quem vai ser matriculado' },
-          { value: 'responsavel', label: 'Responsável', description: 'Vínculo e termo' },
+          { value: 'responsavel', label: 'Responsável', description: 'Vínculo com o aluno' },
           { value: 'matricula', label: 'Matrícula', description: 'Turma e datas' },
         ]}
       />
 
       {passo === 'aluno' && (
         <>
-          <Tab<'existente' | 'novo'>
+          <SeletorOpcoes<'existente' | 'novo'>
             rotuloAcessivel="Aluno já cadastrado ou novo"
             value={modoAluno}
             onChange={setModoAluno}
@@ -441,7 +449,7 @@ export default function MatricularAluno() {
       {passo === 'responsavel' && (
         <>
           {responsavelObrigatorio && (
-            <Tab<'existente' | 'novo'>
+            <SeletorOpcoes<'existente' | 'novo'>
               rotuloAcessivel="Responsável já cadastrado ou novo"
               value={modoResponsavel}
               onChange={setModoResponsavel}
@@ -457,8 +465,9 @@ export default function MatricularAluno() {
               {!responsavelObrigatorio ? (
                 <>
                   <Aviso role="status">
-                    Este aluno já tem {responsaveisDoAlunoExistente.length} responsável(is) vinculado(s) —
-                    este passo é opcional aqui. Vincule ou troque responsáveis depois, na ficha do aluno.
+                    {responsaveisDoAlunoExistente.length > 0
+                      ? `Este aluno já tem ${responsaveisDoAlunoExistente.length} responsável(is) vinculado(s) — este passo é opcional aqui. Vincule ou troque responsáveis depois, na ficha do aluno.`
+                      : 'Aluno maior de idade: o responsável não é obrigatório. Se precisar, vincule depois na ficha do aluno.'}
                   </Aviso>
 
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -477,11 +486,15 @@ export default function MatricularAluno() {
                       required
                       options={opcoesResponsaveis}
                       value={responsavelIdExistente}
+                      error={erroResponsavel}
                       loading={requisicaoResponsaveis.loading}
                       searchable
                       placeholder="Selecionar responsável..."
                       emptyText="Cadastre um novo responsável"
-                      onChange={setResponsavelIdExistente}
+                      onChange={(valor) => {
+                        setResponsavelIdExistente(valor)
+                        setErroResponsavel(undefined)
+                      }}
                     />
                   ) : (
                     <PessoaCampos
@@ -495,8 +508,12 @@ export default function MatricularAluno() {
                     required
                     options={OPCOES_PARENTESCO.map((opcao) => ({ value: opcao.value, label: opcao.label }))}
                     value={parentesco}
+                    error={erroParentesco}
                     placeholder="Selecione..."
-                    onChange={setParentesco}
+                    onChange={(valor) => {
+                      setParentesco(valor)
+                      setErroParentesco(undefined)
+                    }}
                   />
 
                 </>

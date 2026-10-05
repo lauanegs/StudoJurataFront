@@ -35,11 +35,13 @@ import { resolverImagemSkin } from '../../utils/skins'
 import { animacaoFlutuar } from '../../styles/animations'
 import { theme } from '../../styles/theme'
 import { corComOpacidade } from '../../utils/corComOpacidade'
-import type { AlternativaResponse, TipoQuestao } from '../../types/simulados'
+import type { AlternativaResponse, ConferenciaDaQuestao, TipoQuestao } from '../../types/simulados'
 import {
   acertouVisivel,
   correcaoDisponivel,
   estadoDaAlternativa,
+  ganhouMoedas,
+  mensagemDoResultado,
   statusDaQuestaoConfirmada,
 } from './feedbackProva'
 
@@ -244,6 +246,8 @@ export default function Simulado() {
   const [respostasVF, setRespostasVF] = useState<Record<number, Record<number, boolean>>>({})
   // Até confirmar, a seleção pode ser trocada e nada é revelado.
   const [confirmadas, setConfirmadas] = useState<Record<number, boolean>>({})
+  // Retorno de POST /conferir-questao: acerto e alternativas corretas de cada questão confirmada.
+  const [conferencias, setConferencias] = useState<Record<number, ConferenciaDaQuestao>>({})
   const [temposPorQuestao, setTemposPorQuestao] = useState<Record<number, number>>({})
   const [segundos, setSegundos] = useState(0)
   const [finalizando, setFinalizando] = useState(false)
@@ -292,10 +296,12 @@ export default function Simulado() {
         questaoId: questao.questaoId,
         texto: alternativa.texto,
         ordem: alternativa.ordem,
-        correta: provaTentativa?.gabarito?.[String(alternativa.id)] === true,
+        correta:
+          provaTentativa?.gabarito?.[String(alternativa.id)] === true ||
+          Boolean(conferencias[questao.questaoId]?.alternativasCorretasIds.includes(alternativa.id)),
       })),
     }))
-  }, [provaTentativa])
+  }, [provaTentativa, conferencias])
 
   const tempoLimiteSegundos = simulado?.tempoLimite ? simulado.tempoLimite * 60 : null
   const restante = tempoLimiteSegundos !== null ? Math.max(0, tempoLimiteSegundos - segundos) : null
@@ -360,7 +366,7 @@ export default function Simulado() {
           'Confira sua correção abaixo.',
         )
 
-        await Promise.all([requisicaoTentativa.reload(), requisicaoRespostas.reload()])
+        await Promise.all([requisicaoTentativa.reload(), requisicaoProva.reload(), requisicaoRespostas.reload()])
       } catch (erroFinalizar) {
         toast.error(
           'Não foi possível finalizar',
@@ -414,15 +420,16 @@ export default function Simulado() {
   const alternativaEscolhidaAtual = questaoAtual?.alternativas.find(
     (item) => item.id === respostaAtualId,
   )
-  // Enquanto a tentativa esta PENDENTE o servidor devolve `gabarito: null`, entao
-  // confirmar a resposta nao pode revelar acerto/erro: a correcao aparece depois
-  // de finalizar, quando o gabarito chega.
-  const temGabarito = correcaoDisponivel(provaTentativa?.gabarito)
+  // Durante a prova o gabarito de cada questão chega na conferência (confirmar
+  // resposta); depois de finalizar, vem no GET da prova.
+  const conferenciaAtual = questaoAtual ? conferencias[questaoAtual.questaoId] : undefined
+  const temGabarito = Boolean(conferenciaAtual) || correcaoDisponivel(provaTentativa?.gabarito)
   const mostrarCorrecao = revelada && temGabarito
   const acertouAtual = acertouVisivel({
     mostrarCorrecao,
     acertou: Boolean(
-      questaoAtual && (ehVerdadeiroFalso ? acertouQuestao(questaoAtual) : alternativaEscolhidaAtual?.correta),
+      conferenciaAtual?.acertou ??
+        (questaoAtual && (ehVerdadeiroFalso ? acertouQuestao(questaoAtual) : alternativaEscolhidaAtual?.correta)),
     ),
   })
 
@@ -458,11 +465,63 @@ export default function Simulado() {
     setIndiceAtual(indice)
   }
 
-  function confirmarResposta() {
-    if (!questaoAtual || !temSelecao) return
+  const [conferindo, setConferindo] = useState(false)
 
-    setConfirmadas((atuais) => ({ ...atuais, [questaoAtual.questaoId]: true }))
+  async function confirmarResposta() {
+    if (!questaoAtual || !temSelecao || conferindo) return
+
+    setConferindo(true)
+    try {
+      const conferencia = await simuladoAlunos.conferirQuestao(idTentativa, {
+        questaoId: questaoAtual.questaoId,
+        alternativaId: ehVerdadeiroFalso ? null : (respostas[questaoAtual.questaoId] ?? null),
+        alternativasVerdadeiras: ehVerdadeiroFalso
+          ? questaoAtual.alternativas.filter((a) => respostasVFAtual[a.id] === true).map((a) => a.id)
+          : undefined,
+        tempoResposta:
+          (temposPorQuestao[questaoAtual.questaoId] ?? 0) +
+          Math.round((Date.now() - inicioQuestaoRef.current) / 1000),
+      })
+
+      setConferencias((atuais) => ({ ...atuais, [questaoAtual.questaoId]: conferencia }))
+      setConfirmadas((atuais) => ({ ...atuais, [questaoAtual.questaoId]: true }))
+    } catch (erroConferir) {
+      toast.error('Não foi possível confirmar', erroConferir instanceof ApiError ? erroConferir.message : undefined)
+    } finally {
+      setConferindo(false)
+    }
   }
+
+  function pedirSaida() {
+    return confirmar({
+      titulo: 'Sair do simulado?',
+      descricao:
+        'Depois de iniciado, o simulado não pode ser retomado — sair agora finaliza a tentativa e as questões não respondidas contam como erro. Essa ação não pode ser desfeita.',
+      rotuloConfirmar: 'Sair e finalizar',
+      tone: 'danger',
+      aoConfirmar: () => finalizar('saida'),
+    })
+  }
+
+  // O "voltar" do navegador não passa pelo beforeunload: sem esta trava o aluno
+  // sairia da prova sem finalizar e poderia reabri-la com o tempo zerado.
+  const pedirSaidaRef = useRef(pedirSaida)
+  useEffect(() => {
+    pedirSaidaRef.current = pedirSaida
+  })
+
+  useEffect(() => {
+    if (concluido) return
+
+    window.history.pushState(null, '', window.location.href)
+    function aoVoltar() {
+      window.history.pushState(null, '', window.location.href)
+      void pedirSaidaRef.current()
+    }
+
+    window.addEventListener('popstate', aoVoltar)
+    return () => window.removeEventListener('popstate', aoVoltar)
+  }, [concluido])
 
   async function confirmarFinalizacao() {
     registrarTempoDaQuestao()
@@ -489,13 +548,16 @@ export default function Simulado() {
         if (indice === indiceAtual) return 'current'
 
         if (confirmadas[questao.questaoId]) {
-          return statusDaQuestaoConfirmada({ temGabarito, acertou: acertouQuestao(questao) })
+          return statusDaQuestaoConfirmada({
+            temGabarito: Boolean(conferencias[questao.questaoId]) || correcaoDisponivel(provaTentativa?.gabarito),
+            acertou: conferencias[questao.questaoId]?.acertou ?? acertouQuestao(questao),
+          })
         }
 
         return estaRespondida(questao) ? 'answered' : 'pending'
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [questoes, indiceAtual, respostas, respostasVF, confirmadas, temGabarito],
+    [questoes, indiceAtual, respostas, respostasVF, confirmadas, conferencias, provaTentativa],
   )
 
   const loading =
@@ -538,6 +600,22 @@ export default function Simulado() {
     const respostasDoAluno = new Map(
       (requisicaoRespostas.data ?? []).map((resposta) => [resposta.questaoId, resposta]),
     )
+    const respondidas = questoes.filter((questao) => {
+      const resposta = respostasDoAluno.get(questao.questaoId)
+      return (
+        resposta?.respondida ??
+        (questao.tipo === 'VERDADEIRO_FALSO'
+          ? (resposta?.alternativasVerdadeirasIds?.length ?? 0) > 0
+          : resposta?.alternativaId != null)
+      )
+    }).length
+    const mensagem = mensagemDoResultado({
+      nome: nomeCurto(usuario?.nomePessoa) ?? '',
+      acertos,
+      total: questoes.length,
+      respondidas,
+    })
+    const rendeuMoedas = ganhouMoedas(respondidas, questoes.length)
 
     return (
       <Tela>
@@ -555,10 +633,8 @@ export default function Simulado() {
           <CardResultado>
             <ColunaResultado>
               <div>
-                <NomeParabens>Parabéns, {nomeCurto(usuario?.nomePessoa)}!</NomeParabens>
-                <DescricaoParabens>
-                  Continue assim para desenvolver seus conhecimentos, você vai longe!
-                </DescricaoParabens>
+                <NomeParabens>{mensagem.titulo}</NomeParabens>
+                <DescricaoParabens>{mensagem.descricao}</DescricaoParabens>
               </div>
 
               <Etiquetas>
@@ -579,12 +655,21 @@ export default function Simulado() {
 
           <CardResultado $altura="322px">
             <ColunaResultado $centralizado>
-              <TextoSecundario>Para comemorar, aqui estão algumas moedas!</TextoSecundario>
+              {rendeuMoedas ? (
+                <>
+                  <TextoSecundario>Para comemorar, aqui estão algumas moedas!</TextoSecundario>
 
-              <ValorMoedas>
-                + {formatarMoedas(MOEDAS_POR_SIMULADO)}
-                <MoedaIcone size={32} aria-hidden="true" />
-              </ValorMoedas>
+                  <ValorMoedas>
+                    + {formatarMoedas(MOEDAS_POR_SIMULADO)}
+                    <MoedaIcone size={32} aria-hidden="true" />
+                  </ValorMoedas>
+                </>
+              ) : (
+                <TextoSecundario>
+                  Você deixou questões em branco, então desta vez não houve ganho de moedas. Responda
+                  todas as questões no próximo simulado para ganhar!
+                </TextoSecundario>
+              )}
 
               <TextoSecundario>
                 {diasProximaRevisao === null
@@ -696,16 +781,7 @@ export default function Simulado() {
         titulo={simulado?.titulo ?? 'Simulado'}
         segundos={restante ?? segundos}
         regressivo={restante !== null}
-        onExit={() =>
-          confirmar({
-            titulo: 'Sair do simulado?',
-            descricao:
-              'Depois de iniciado, o simulado não pode ser retomado — sair agora finaliza a tentativa e as questões não respondidas contam como erro. Essa ação não pode ser desfeita.',
-            rotuloConfirmar: 'Sair e finalizar',
-            tone: 'danger',
-            aoConfirmar: () => finalizar('saida'),
-          })
-        }
+        onExit={pedirSaida}
       />
 
       <Conteudo>
@@ -783,6 +859,7 @@ export default function Simulado() {
             size="large"
             noBorder
             icon={<CheckCircle2 />}
+            loading={conferindo}
             onClick={confirmarResposta}
           >
             Confirmar resposta

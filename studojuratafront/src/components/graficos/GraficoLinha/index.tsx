@@ -22,15 +22,21 @@ interface GraficoLinhaProps {
 export function GraficoLinha({ pontos, rotuloAcessivel = 'Evolução ao longo do tempo', altura = 220 }: GraficoLinhaProps) {
   if (pontos.length < 2) return null
 
-  const data = pontos.map((ponto) => ({ rotulo: ponto.rotulo, valor: ponto.valor }))
+  // O eixo X usa a chave única: simulados com o mesmo título/data têm rótulos iguais
+  // e o tooltip mostraria o valor do primeiro deles em qualquer um dos pontos.
+  const data = pontos.map((ponto) => ({ chave: ponto.chave, valor: ponto.valor }))
+  const rotuloDaChave = new Map(pontos.map((ponto) => [ponto.chave, ponto.rotulo]))
+  const rotulo = (chave: unknown) => rotuloDaChave.get(String(chave)) ?? String(chave)
 
   return (
     <LineChart
       h={altura}
       data={data}
-      dataKey="rotulo"
-      series={[{ name: 'valor', color: tokens.colors.blue }]}
+      dataKey="chave"
+      series={[{ name: 'valor', label: 'Nota', color: tokens.colors.blue }]}
       referenceLines={[{ y: LIMIAR_BAIXO_DESEMPENHO, label: `${LIMIAR_BAIXO_DESEMPENHO}%`, color: tokens.colors.textTertiary }]}
+      xAxisProps={{ tickFormatter: rotulo }}
+      tooltipProps={{ labelFormatter: rotulo }}
       yAxisProps={{ domain: [0, 100] }}
       valueFormatter={(valor) => formatarPorcentagem(valor)}
       withDots

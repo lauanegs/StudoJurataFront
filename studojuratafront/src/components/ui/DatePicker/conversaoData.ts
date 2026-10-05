@@ -42,3 +42,11 @@ export function dataIsoParaExibicao(valor?: string | null): string {
   const data = dayjs(valor)
   return data.isValid() ? data.format(FORMATO_EXIBICAO_DATA) : ''
 }
+
+/** Máscara DD/MM/AAAA aplicada enquanto o usuário digita (só dígitos entram). */
+export function mascararData(texto: string): string {
+  const digitos = texto.replace(/\D/g, '').slice(0, 8)
+  if (digitos.length <= 2) return digitos
+  if (digitos.length <= 4) return `${digitos.slice(0, 2)}/${digitos.slice(2)}`
+  return `${digitos.slice(0, 2)}/${digitos.slice(2, 4)}/${digitos.slice(4)}`
+}

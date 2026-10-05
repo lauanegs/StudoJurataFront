@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
+import { Alerta } from '../../../components/ui/Alerta'
 import { Card } from '../../../components/ui/Card'
 import { Header } from '../../../components/ui/Header'
 import { Input } from '../../../components/ui/Input'
@@ -18,14 +18,7 @@ import { useHidratar } from '../../../hooks/useHidratar'
 import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { conteudosPlano, planosEnsino } from '../../../services/planejamento'
-import { theme as tokens } from '../../../styles/theme'
 import { useFormularioConteudo } from '../../../formularios/planejamento'
-
-const Ajuda = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xxs};
-`
 
 /**
  * A qualidade da descrição importa: é a partir dela que a IA gera as questões
@@ -166,15 +159,10 @@ export default function ConteudoFormulario() {
               />
             </GradeAutoAjuste>
 
-            <Ajuda>
-              <strong style={{ fontSize: tokens.typography.sizes.sm, color: tokens.colors.textStrong }}>
-                Conteúdo detalhado:
-              </strong>
-              <span style={{ fontSize: tokens.typography.sizes.sm, color: tokens.colors.textSecondary }}>
-                É importante que o conteúdo seja detalhadamente explicado, a fim de que o portal elabore
-                questões bem alinhadas ao conteúdo desenvolvido durante o curso.
-              </span>
-            </Ajuda>
+            <Alerta titulo="Conteúdo detalhado">
+              É importante que o conteúdo seja detalhadamente explicado, a fim de que o portal elabore
+              questões bem alinhadas ao conteúdo desenvolvido durante o curso.
+            </Alerta>
 
             <TextArea
               label="Conteúdo"

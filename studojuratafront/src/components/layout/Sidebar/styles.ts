@@ -103,6 +103,15 @@ export const BlocoUsuario = styled.div<{ $colapsada: boolean }>`
     `}
 `
 
+/* Select do curso do aluno (só aparece com mais de um curso); o rótulo acompanha o texto claro da sidebar. */
+export const BlocoCurso = styled.div`
+  padding: 0 ${({ theme }) => theme.spacing.xs};
+
+  label {
+    color: ${({ theme }) => theme.colors.white};
+  }
+`
+
 export const DadosUsuario = styled.div`
   display: flex;
   flex-direction: column;

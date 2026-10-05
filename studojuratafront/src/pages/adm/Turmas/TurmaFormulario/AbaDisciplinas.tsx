@@ -172,7 +172,6 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
             options={opcoesProfessores}
             value={professorId}
             loading={requisicaoProfessores.loading}
-            hint="Opcional — a turma pode ser organizada antes de definir o professor."
             disabled={gradeTotalmenteVinculada || salvando}
             searchable
             clearable

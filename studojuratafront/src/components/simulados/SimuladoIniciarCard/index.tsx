@@ -56,6 +56,8 @@ const Meta = styled.div`
 interface SimuladoIniciarCardProps {
   /** O destaque do card é a disciplina, não o título do simulado. */
   disciplina: string
+  /** Quem elaborou o simulado (professor ou "Studo Jurata" quando gerado pela IA). */
+  autor?: string
   quantidadeQuestoes?: number | null
   /** Bloqueia o início (fora da janela de data, por exemplo). */
   indisponivel?: boolean
@@ -66,6 +68,7 @@ interface SimuladoIniciarCardProps {
 
 export function SimuladoIniciarCard({
   disciplina,
+  autor,
   quantidadeQuestoes,
   indisponivel = false,
   motivoIndisponivel,
@@ -78,7 +81,7 @@ export function SimuladoIniciarCard({
         <Titulo>{disciplina}</Titulo>
 
         <Meta>
-          <span>Studo Jurata{quantidadeQuestoes ? ` | ${quantidadeQuestoes} questões` : ''}</span>
+          <span>{autor ?? 'Professor'}{quantidadeQuestoes ? ` | ${quantidadeQuestoes} questões` : ''}</span>
           {indisponivel && motivoIndisponivel && (
             <Tag variant="warning" size="small">
               {motivoIndisponivel}

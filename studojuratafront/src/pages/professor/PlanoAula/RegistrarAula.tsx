@@ -20,7 +20,8 @@ import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
 import { ApiError } from '../../../services/api'
 import { aulas as servicoAulas } from '../../../services/planejamento'
 import { matriculas } from '../../../services/turmas'
-import { formatarData } from '../../../utils/format'
+import { DatePicker } from '../../../components/ui/DatePicker'
+import { dataLocalIso, formatarData } from '../../../utils/format'
 import { theme as tokens } from '../../../styles/theme'
 import type { AlunoTurma } from '../../../types/turmas'
 import type { Coluna } from '../../../components/ui/DataTable/types'
@@ -164,20 +165,26 @@ export default function RegistrarAula() {
     }
   })
 
+  // Já vem com a data de hoje, mas o professor pode corrigir (ex.: registrar uma aula de ontem).
+  const [dataRealizacao, setDataRealizacao] = useState(() => dataLocalIso())
+
   const { executar: publicar, executando: publicando } = useAcao(async () => {
+    if (!dataRealizacao) {
+      toast.warning('Informe a data de realização')
+      return
+    }
+    if (dataRealizacao > dataLocalIso()) {
+      toast.warning('A data de realização não pode ser futura')
+      return
+    }
+
     await confirmar({
       titulo: 'Marcar aula como ministrada?',
-      descricao:
-        'A data de hoje será registrada como data de publicação. A aula passa a contar nas estatísticas do plano.',
+      descricao: `A aula será registrada como realizada em ${formatarData(dataRealizacao)}. Ela passa a contar nas estatísticas do plano.`,
       rotuloConfirmar: 'Marcar como ministrada',
       aoConfirmar: async () => {
         try {
-          // Data local (toISOString converte para UTC e, à noite, envia o dia seguinte).
-          const hoje = new Date()
-          const dataLocal = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(
-            hoje.getDate(),
-          ).padStart(2, '0')}`
-          await servicoAulas.publicar(idAula, dataLocal)
+          await servicoAulas.publicar(idAula, dataRealizacao)
           toast.success('Aula publicada')
           await requisicaoAula.reload()
         } catch (erroPublicar) {
@@ -285,6 +292,16 @@ export default function RegistrarAula() {
           </>
         }
       />
+
+      {!aula?.dataPublicacao && (
+        <DatePicker
+          label="Data de realização"
+          value={dataRealizacao}
+          maxWidth="280px"
+          hint="Data em que a aula foi realizada. Altere se não foi hoje."
+          onChange={(evento) => setDataRealizacao(evento.target.value)}
+        />
+      )}
 
       <Tab<Aba>
         rotuloAcessivel="Seções do registro de aula"

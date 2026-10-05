@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { ApiError, aoExpirarSessao } from '../services/api'
 import { autenticacao } from '../services/autenticacao'
+import { esquecerCursoEscolhido } from '../utils/cursoEscolhido'
 import { ROTULO_TIPO_USUARIO } from '../utils/labels'
 import type { LoginResponse } from '../types/autenticacao'
 import {
@@ -76,6 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const entrar = useCallback(async (username: string, senha: string) => {
     const logado = await autenticacao.entrar({ username, senha })
+    // Cada login recomeça pela escolha do curso.
+    esquecerCursoEscolhido()
     setUsuario(logado)
     gravarCache(logado)
     return logado
@@ -90,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setUsuario(null)
       gravarCache(null)
+      esquecerCursoEscolhido()
     }
   }, [])
 

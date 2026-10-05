@@ -37,6 +37,7 @@ export const turmaDisciplinas = {
 export const matriculas = {
   listar: () => api.get<AlunoTurma[]>('/aluno-turma'),
   buscar: (id: number) => api.get<AlunoTurma>(`/aluno-turma/${id}`),
+  porAluno: (alunoId: number) => api.get<AlunoTurma[]>(`/aluno-turma/aluno/${alunoId}`),
   historicoPorTurma: (turmaId: number) =>
     api.get<AlunoTurma[]>(`/aluno-turma/turma/${turmaId}/historico`),
   ativosPorTurma: (turmaId: number) => api.get<AlunoTurma[]>(`/aluno-turma/turma/${turmaId}/ativos`),

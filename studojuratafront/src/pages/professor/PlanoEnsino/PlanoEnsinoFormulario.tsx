@@ -179,14 +179,12 @@ export default function PlanoEnsinoFormulario() {
       : `Ciclo anterior concluído em ${fim}.`
   }, [planoAnteriorConcluido, requisicaoConteudosExistentes.data])
 
-  /** Sugere a carga horária definida na grade curricular do curso — só preenche se o campo ainda estiver vazio (não sobrescreve o que o professor já digitou). */
+  /** A carga horária vem da grade curricular do curso e é só para observação: acompanha a disciplina escolhida. */
   function sugerirCargaHoraria(disciplinaSelecionada: number | null, grade: CursoDisciplina[]) {
-    if (cargaHoraria || !cursoId || !disciplinaSelecionada) return
-
     const encontrado = grade.find(
       (item) => item.disciplina?.id === disciplinaSelecionada && item.status !== 'INATIVO',
     )
-    if (encontrado?.cargaHoraria) form.setFieldValue('cargaHoraria', String(encontrado.cargaHoraria))
+    form.setFieldValue('cargaHoraria', encontrado?.cargaHoraria ? String(encontrado.cargaHoraria) : '')
   }
 
   const { executar: salvar, executando: salvando } = useAcao(async () => {
@@ -442,8 +440,8 @@ export default function PlanoEnsinoFormulario() {
                   placeholder="Ex.: 40"
                   value={cargaHoraria}
                   error={erros.cargaHoraria}
-                  disabled={salvando}
-                  hint="Em horas."
+                  disabled
+                  hint="Em horas, definida na grade curricular do curso (somente para consulta)."
                   onChange={(evento) => form.setFieldValue('cargaHoraria', evento.target.value)}
                 />
 

@@ -33,7 +33,7 @@ import {
   simulados as servicoSimulados,
 } from '../../../../services/simulados'
 import { matriculas, turmas as servicoTurmas } from '../../../../services/turmas'
-import { deInputDataHora, paraInputDataHora } from '../../../../utils/format'
+import { deInputDataHora, formatarDataHora, paraInputDataHora } from '../../../../utils/format'
 import type { QuestaoResponse } from '../../../../types/simulados'
 import { dataFimSimuladoValida, MENSAGEM_DATA_FIM_SIMULADO, useFormularioSimulado } from '../../../../formularios/simulados'
 import { ConfiguracaoSimulado } from './ConfiguracaoSimulado'
@@ -260,6 +260,13 @@ export default function SimuladoFormulario() {
     form.setFieldValue('planoEnsinoId', null)
   }, [opcoesPlanos, planoEnsinoId, requisicaoPlanos.data, requisicaoPlanos.loading, form])
 
+  // Turma + disciplina escolhidas com um único plano ativo: já vem selecionado.
+  useEffect(() => {
+    if (edicao || planoEnsinoId || !turmaId || !disciplinaId || opcoesPlanos.length !== 1) return
+
+    form.setFieldValue('planoEnsinoId', opcoesPlanos[0].value)
+  }, [edicao, planoEnsinoId, turmaId, disciplinaId, opcoesPlanos, form])
+
   // Turma trocada: a disciplina escolhida pode não ser ofertada nela.
   useEffect(() => {
     if (!requisicaoVinculos.data || requisicaoVinculos.loading) return
@@ -359,15 +366,8 @@ export default function SimuladoFormulario() {
 
         // Vincula a questão ao simulado só na primeira vez.
         if (!questao.id) {
-          await simuladoQuestoes.criar({
-            simuladoId: simulado.id,
-            questaoId: questaoSalva.id,
-            ordem: indice + 1,
-            pontuacao: pontuacaoPorQuestao,
-          })
-
-          // Conteúdos escolhidos antes de a questão existir (VinculoConteudoQuestao
-          // em modo local) — comitados agora que ela finalmente tem id.
+          // Conteúdos primeiro: o back só aceita no simulado questão com conteúdo já
+          // ministrado, então o vínculo com o simulado precisa vir depois deles.
           if (questao.conteudoPlanoIdsPendentes && questao.conteudoPlanoIdsPendentes.length > 0) {
             await Promise.all(
               questao.conteudoPlanoIdsPendentes.map((conteudoPlanoId) =>
@@ -375,13 +375,47 @@ export default function SimuladoFormulario() {
               ),
             )
           }
+
+          await simuladoQuestoes.criar({
+            simuladoId: simulado.id,
+            questaoId: questaoSalva.id,
+            ordem: indice + 1,
+            pontuacao: pontuacaoPorQuestao,
+          })
         }
       }
 
-      toast.success(
-        edicao ? 'Simulado atualizado' : 'Simulado criado',
-        'Ele fica em rascunho até você lançá-lo para os alunos.',
-      )
+      // Publicação e encerramento seguem as datas informadas. Janela já aberta: lança agora.
+      // Alunos específicos só são conhecidos neste momento, então esse simulado é lançado
+      // já (os alunos o iniciam a partir da data de início). Simulado para a turma toda com
+      // início futuro fica em rascunho e o sistema o publica sozinho quando a data chegar.
+      const agora = Date.now()
+      const inicioJaChegou = new Date(corpo.dataInicio as string).getTime() <= agora
+      const janelaVencida = Boolean(corpo.dataFim) && new Date(corpo.dataFim as string).getTime() <= agora
+      const especificoComAlunos = tipoDestinacao === 'ESPECIFICO' && alunosSelecionados.length > 0
+      const lancarAgora = !janelaVencida && (inicioJaChegou ? tipoDestinacao === 'TODOS' || especificoComAlunos : especificoComAlunos)
+
+      if (lancarAgora) {
+        await servicoSimulados.lancar(simulado.id, {
+          alunoIds: tipoDestinacao === 'ESPECIFICO' ? alunosSelecionados : undefined,
+        })
+        toast.success(
+          edicao ? 'Simulado atualizado e lançado' : 'Simulado criado e lançado',
+          inicioJaChegou
+            ? 'A disponibilidade já começou, então os alunos já podem fazê-lo.'
+            : `Os alunos poderão iniciá-lo a partir de ${formatarDataHora(corpo.dataInicio)}.`,
+        )
+      } else if (tipoDestinacao === 'TODOS' && !janelaVencida) {
+        toast.success(
+          edicao ? 'Simulado atualizado' : 'Simulado criado',
+          `Será publicado automaticamente em ${formatarDataHora(corpo.dataInicio)} e encerrado na data final.`,
+        )
+      } else {
+        toast.success(
+          edicao ? 'Simulado atualizado' : 'Simulado criado',
+          'Ele fica em rascunho até você lançá-lo para os alunos.',
+        )
+      }
 
       navegar('/professor/reforco')
     } catch (erroSalvar) {

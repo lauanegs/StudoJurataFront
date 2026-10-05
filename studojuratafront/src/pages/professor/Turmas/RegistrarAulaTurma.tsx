@@ -29,7 +29,7 @@ import {
   planosAula,
 } from '../../../services/planejamento'
 import { horariosTurma, matriculas, turmas as servicoTurmas } from '../../../services/turmas'
-import { formatarCargaHoraria, formatarHora, horaParaMinutos, horasParaHHmm } from '../../../utils/format'
+import { dataLocalIso, formatarCargaHoraria, formatarHora, horaParaMinutos, horasParaHHmm } from '../../../utils/format'
 import { ROTULO_DIA_SEMANA_CURTO } from '../../../utils/labels'
 import type { AlunoTurma } from '../../../types/turmas'
 import type { Coluna } from '../../../components/ui/DataTable/types'
@@ -121,7 +121,7 @@ export default function RegistrarAulaTurma() {
   const [horarioTurmaId, setHorarioTurmaId] = useState<number | null>(null)
   const [cargaHorariaManual, setCargaHorariaManual] = useState('')
   const [dataPrevista, setDataPrevista] = useState('')
-  const [dataPublicacao, setDataPublicacao] = useState(() => new Date().toISOString().slice(0, 10))
+  const [dataPublicacao, setDataPublicacao] = useState(() => dataLocalIso())
   const [observacoes, setObservacoes] = useState('')
   const [edicoesChamada, setEdicoesChamada] = useState<Record<number, boolean>>({})
   const [titulo, setTitulo] = useState('')
@@ -244,7 +244,7 @@ export default function RegistrarAulaTurma() {
       setCargaHorariaManual('')
     }
     setDataPrevista(aulaAlvo?.dataPrevista?.slice(0, 10) ?? '')
-    setDataPublicacao(aulaAlvo?.dataPublicacao?.slice(0, 10) ?? new Date().toISOString().slice(0, 10))
+    setDataPublicacao(aulaAlvo?.dataPublicacao?.slice(0, 10) ?? dataLocalIso())
     setObservacoes(aulaAlvo?.observacoes ?? '')
     setTitulo(aulaAlvo?.titulo ?? '')
     setConteudoPlanoIdsPendentes([])

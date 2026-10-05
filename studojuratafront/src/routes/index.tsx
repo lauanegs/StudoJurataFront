@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
+import { GuardaCursoAluno } from './GuardaCursoAluno'
 import { RotaProtegida } from './RotaProtegida'
 import { CarregandoTela } from '../components/feedback/CarregandoTela'
 
@@ -95,6 +96,7 @@ const AlunoReforco = lazy(() => import('../pages/aluno/Reforco'))
 const AlunoSimulado = lazy(() => import('../pages/aluno/Simulado'))
 const AlunoNotas = lazy(() => import('../pages/aluno/Notas'))
 const AlunoPerfil = lazy(() => import('../pages/aluno/Perfil'))
+const AlunoSelecionarCurso = lazy(() => import('../pages/aluno/SelecionarCurso'))
 
 export function AppRoutes() {
   return (
@@ -561,7 +563,9 @@ export function AppRoutes() {
           path="/aluno"
           element={
             <RotaProtegida perfis={['ALUNO']}>
-              <AlunoHome />
+              <GuardaCursoAluno>
+                <AlunoHome />
+              </GuardaCursoAluno>
             </RotaProtegida>
           }
         />
@@ -569,7 +573,9 @@ export function AppRoutes() {
           path="/aluno/reforco"
           element={
             <RotaProtegida perfis={['ALUNO']}>
-              <AlunoReforco />
+              <GuardaCursoAluno>
+                <AlunoReforco />
+              </GuardaCursoAluno>
             </RotaProtegida>
           }
         />
@@ -577,7 +583,9 @@ export function AppRoutes() {
           path="/aluno/simulado/:simuladoAlunoId"
           element={
             <RotaProtegida perfis={['ALUNO']}>
-              <AlunoSimulado />
+              <GuardaCursoAluno>
+                <AlunoSimulado />
+              </GuardaCursoAluno>
             </RotaProtegida>
           }
         />
@@ -585,7 +593,17 @@ export function AppRoutes() {
           path="/aluno/notas"
           element={
             <RotaProtegida perfis={['ALUNO']}>
-              <AlunoNotas />
+              <GuardaCursoAluno>
+                <AlunoNotas />
+              </GuardaCursoAluno>
+            </RotaProtegida>
+          }
+        />
+        <Route
+          path="/aluno/curso"
+          element={
+            <RotaProtegida perfis={['ALUNO']}>
+              <AlunoSelecionarCurso />
             </RotaProtegida>
           }
         />

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { LogIn } from 'lucide-react'
 
+import { TelaComBanner } from '../../components/layout/TelaComBanner'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { ROTA_INICIAL_POR_PERFIL } from '../../contexts/authContexto'
@@ -10,101 +11,6 @@ import { useAuth } from '../../hooks/useAuth'
 import { ApiError } from '../../services/api'
 import { theme as tokens } from '../../styles/theme'
 import { useFormularioLogin } from '../../formularios/autenticacao'
-
-const bannerLogin = '/images/bannerLogin.png'
-
-/*
- * Recorte da mordida branca ao redor do logo, extraído do próprio asset do
- * Figma (node "1:3283", "Vector 1") — canal alfa invertido: branco opaco só
- * onde o design tinha o "buraco", transparente no resto. Fica em cima do
- * retângulo colorido, com tamanho FIXO (não em %), pra não esticar/encolher
- * com a responsividade — só o retângulo por baixo é que acompanha a largura
- * da tela; a mordida em si mantém sempre a proporção original do Figma.
- */
-const curvaLogoRecorte = '/images/curvaLogoRecorte.png'
-
-/*
- * A curva/banner é uma camada decorativa absoluta, fora do fluxo — assim o
- * card fica livre pra ser centralizado verticalmente em 100vh e a tela nunca
- * precisa de scroll, independente da altura da janela.
- *
- * A altura usa `min(vw, vh)` em vez de só `vh`: numa tela alta e estreita
- * (celular em pé), só vh faz a curva crescer desproporcional à largura —
- * "subir demais". Amarrando também à largura, ela cresce em telas largas
- * (desktop, onde a foto pode ocupar mais da página) sem inflar em telas
- * estreitas e altas.
- */
-const Tela = styled.div`
-  position: relative;
-  overflow: hidden;
-
-  width: 100%;
-  height: 100vh;
-
-  background: ${({ theme }) => theme.colors.white};
-`
-
-/*
- * O recorte da curva tem 368px fixos colados na base; abaixo de ~196px de
- * altura o arco seria cortado e a curva viraria um "pico".
- */
-const Banner = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 0;
-
-  height: clamp(230px, min(28vw, 38vh), 360px);
-  overflow: hidden;
-`
-
-/* Gradiente azul → roxo por baixo da foto, preenchendo toda a faixa. */
-const Gradiente = styled.div`
-  position: absolute;
-  inset: 0;
-  background: ${({ theme }) => theme.gradients.border};
-`
-
-const ImagemBanner = styled.img`
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.15;
-`
-
-/*
- * Tamanho fixo (escala 1:1 do frame do Figma, 1280×367.5) — não usa % nem
- * vh, então a mordida ao redor do logo não muda de tamanho com a tela,
- * só sua posição (sempre centralizada, alinhada à base da faixa).
- */
-const Recorte = styled.img`
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-
-  width: 1280px;
-  height: 368px;
-  pointer-events: none;
-`
-
-const Conteudo = styled.div`
-  position: relative;
-  z-index: 1;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  width: 100%;
-  height: 100%;
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-`
 
 const Cartao = styled.form`
   display: flex;
@@ -213,65 +119,57 @@ export default function Login() {
   }
 
   return (
-    <Tela>
-      <Banner aria-hidden="true">
-        <Gradiente />
-        <ImagemBanner src={bannerLogin} alt="" />
-        <Recorte src={curvaLogoRecorte} alt="" />
-      </Banner>
+    <TelaComBanner>
+      <Cartao onSubmit={form.onSubmit(entrarComCredenciais, () => setErroGeral(''))} noValidate>
+        <Logo src="/images/logo.png" alt="Studo Jurata" />
 
-      <Conteudo>
-        <Cartao onSubmit={form.onSubmit(entrarComCredenciais, () => setErroGeral(''))} noValidate>
-          <Logo src="/images/logo.png" alt="Studo Jurata" />
+        <Titulos>
+          <Titulo>Studo Jurata</Titulo>
+          <Subtitulo>Seja Bem-vindo!</Subtitulo>
+        </Titulos>
 
-          <Titulos>
-            <Titulo>Studo Jurata</Titulo>
-            <Subtitulo>Seja Bem-vindo!</Subtitulo>
-          </Titulos>
+        <Campos>
+          <Input
+            aria-label="Usuário"
+            corDestaque={tokens.colors.blue}
+            altura="52px"
+            bordaSolida
+            placeholder="usuário"
+            autoComplete="username"
+            autoFocus
+            {...form.getInputProps('username')}
+          />
 
-          <Campos>
-            <Input
-              aria-label="Usuário"
-              corDestaque={tokens.colors.blue}
-              altura="52px"
-              bordaSolida
-              placeholder="usuário"
-              autoComplete="username"
-              autoFocus
-              {...form.getInputProps('username')}
-            />
+          <Input
+            aria-label="Senha"
+            type="password"
+            alternarVisibilidade
+            corDestaque={tokens.colors.blue}
+            altura="52px"
+            bordaSolida
+            placeholder="senha"
+            autoComplete="current-password"
+            {...form.getInputProps('senha')}
+          />
+        </Campos>
 
-            <Input
-              aria-label="Senha"
-              type="password"
-              alternarVisibilidade
-              corDestaque={tokens.colors.blue}
-              altura="52px"
-              bordaSolida
-              placeholder="senha"
-              autoComplete="current-password"
-              {...form.getInputProps('senha')}
-            />
-          </Campos>
+        <LinkEsqueciSenha href="#" onClick={(evento) => evento.preventDefault()}>
+          Esqueci minha senha
+        </LinkEsqueciSenha>
 
-          <LinkEsqueciSenha href="#" onClick={(evento) => evento.preventDefault()}>
-            Esqueci minha senha
-          </LinkEsqueciSenha>
+        {erroGeral && <Alerta role="alert">{erroGeral}</Alerta>}
 
-          {erroGeral && <Alerta role="alert">{erroGeral}</Alerta>}
-
-          <Button
-            type="submit"
-            fullWidth
-            size="large"
-            icon={<LogIn />}
-            loading={enviando}
-            style={{ background: tokens.gradients.sidebar, borderColor: tokens.colors.blue }}
-          >
-            Entrar
-          </Button>
-        </Cartao>
-      </Conteudo>
-    </Tela>
+        <Button
+          type="submit"
+          fullWidth
+          size="large"
+          icon={<LogIn />}
+          loading={enviando}
+          style={{ background: tokens.gradients.sidebar, borderColor: tokens.colors.blue }}
+        >
+          Entrar
+        </Button>
+      </Cartao>
+    </TelaComBanner>
   )
 }

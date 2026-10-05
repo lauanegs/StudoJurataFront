@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { dataDigitadaParaIso, dataIsoParaExibicao } from './conversaoData'
+import { dataDigitadaParaIso, dataIsoParaExibicao, mascararData } from './conversaoData'
 
 describe('dataDigitadaParaIso', () => {
   it('converte dia/mês/ano digitado para o ISO que a API recebe', () => {
@@ -40,5 +40,18 @@ describe('dataIsoParaExibicao', () => {
     expect(dataIsoParaExibicao('')).toBe('')
     expect(dataIsoParaExibicao(null)).toBe('')
     expect(dataIsoParaExibicao(undefined)).toBe('')
+  })
+})
+
+describe('mascararData', () => {
+  it('insere as barras conforme os dígitos são digitados', () => {
+    expect(mascararData('1')).toBe('1')
+    expect(mascararData('150')).toBe('15/0')
+    expect(mascararData('15012026')).toBe('15/01/2026')
+  })
+
+  it('ignora o que não é dígito e limita a 8 dígitos', () => {
+    expect(mascararData('15/01/2026999')).toBe('15/01/2026')
+    expect(mascararData('ab')).toBe('')
   })
 })

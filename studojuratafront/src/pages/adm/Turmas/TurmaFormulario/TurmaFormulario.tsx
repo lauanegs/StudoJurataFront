@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { Archive, ArchiveRestore, Save } from 'lucide-react'
+import { Archive, ArchiveRestore, ArrowRight, Check, Save } from 'lucide-react'
 
 import { Layout } from '../../../../components/layout'
 import { Button } from '../../../../components/ui/Button'
 import { Header } from '../../../../components/ui/Header'
+import { RodapeDosPassos } from '../../../../components/ui/RodapeDosPassos'
+import { Stepper } from '../../../../components/ui/Stepper'
 import { Tab } from '../../../../components/ui/Tab'
 import { ErroCarregamento } from '../../../../components/feedback/ErroCarregamento'
 import { SkeletonCartao } from '../../../../components/feedback/Skeleton'
@@ -25,6 +27,13 @@ import { DadosTurma } from './DadosTurma'
 import { rotaDaTurmaCriada } from './destinoAposSalvar'
 
 type Aba = 'data' | 'horarios' | 'disciplinas' | 'alunos' | 'historico'
+type Passo = 'data' | 'horarios' | 'disciplinas'
+
+const PASSOS: { value: Passo; label: string; description: string }[] = [
+  { value: 'data', label: 'Dados da turma', description: 'Curso, capacidade e datas' },
+  { value: 'horarios', label: 'Horários', description: 'Dias e horas das aulas' },
+  { value: 'disciplinas', label: 'Disciplinas', description: 'Disciplinas e professores' },
+]
 
 export default function TurmaFormulario() {
   const { id } = useParams()
@@ -37,8 +46,11 @@ export default function TurmaFormulario() {
   const edicao = Boolean(id)
   const turmaId = id ? Number(id) : null
 
-  const abaInicial = (localizacao.state as { aba?: Aba } | null)?.aba
-  const [aba, setAba] = useState<Aba>(abaInicial ?? 'data')
+  const estadoDaRota = localizacao.state as { aba?: Aba; passoAPasso?: boolean } | null
+  const [aba, setAba] = useState<Aba>(estadoDaRota?.aba ?? 'data')
+  // Turma nova é montada em passos (cada um libera o seguinte depois de salvar); a
+  // edição de uma turma existente continua em abas, que também têm alunos e histórico.
+  const [emPassos, setEmPassos] = useState(!edicao || Boolean(estadoDaRota?.passoAPasso))
 
   const form = useFormularioTurma()
   const { titulo, cursoId, capacidadeMaxima, dataInicio, dataFim, ativa } = form.values
@@ -85,19 +97,19 @@ export default function TurmaFormulario() {
     [requisicaoCursos.data],
   )
 
-  async function salvar() {
+  async function salvar(): Promise<boolean> {
     if ((await form.validate()).hasErrors) {
       setAba('data')
-      return
+      return false
     }
 
     if (!escola) {
       toast.error('Escola não encontrada', 'Cadastre uma escola antes de criar turmas.')
-      return
+      return false
     }
 
     const curso = (requisicaoCursos.data ?? []).find((item) => item.id === cursoId)
-    if (!curso) return
+    if (!curso) return false
 
     setSalvando(true)
 
@@ -124,10 +136,12 @@ export default function TurmaFormulario() {
         const criada = await servicoTurmas.criar(corpo)
         toast.success('Turma criada', 'Agora defina os horários e vincule as disciplinas.')
         const destino = rotaDaTurmaCriada(criada)
-        if (destino) navegar(destino, { replace: true })
+        if (destino) navegar(destino, { replace: true, state: { aba: 'horarios', passoAPasso: true } })
       }
+      return true
     } catch (erroSalvar) {
       toast.error('Não foi possível salvar', erroSalvar instanceof ApiError ? erroSalvar.message : undefined)
+      return false
     } finally {
       setSalvando(false)
     }
@@ -217,7 +231,16 @@ export default function TurmaFormulario() {
         }
       />
 
-      {edicao && (
+      {emPassos && (
+        <Stepper<Passo>
+          rotuloAcessivel="Passos da nova turma"
+          options={PASSOS}
+          value={(aba === 'horarios' || aba === 'disciplinas' ? aba : 'data') as Passo}
+          onChange={edicao ? (passo) => setAba(passo) : undefined}
+        />
+      )}
+
+      {edicao && !emPassos && (
         <Tab<Aba>
           rotuloAcessivel="Seções da turma"
           value={aba}
@@ -253,6 +276,40 @@ export default function TurmaFormulario() {
               cursoId={cursoId}
               vinculosDaTurma={vinculosDaTurma}
               requisicaoVinculos={requisicaoVinculos}
+            />
+          )}
+
+          {emPassos && aba === 'data' && (
+            <RodapeDosPassos
+              rotuloAvancar="Próximo: Horários"
+              iconeAvancar={<ArrowRight />}
+              carregando={salvando}
+              aoAvancar={async () => {
+                // Na criação o próprio salvar leva ao passo seguinte (navegação); na edição basta avançar.
+                if ((await salvar()) && edicao) setAba('horarios')
+              }}
+            />
+          )}
+
+          {emPassos && edicao && aba === 'horarios' && (
+            <RodapeDosPassos
+              aoVoltar={() => setAba('data')}
+              rotuloAvancar="Próximo: Disciplinas"
+              iconeAvancar={<ArrowRight />}
+              aoAvancar={() => setAba('disciplinas')}
+            />
+          )}
+
+          {emPassos && edicao && aba === 'disciplinas' && (
+            <RodapeDosPassos
+              aoVoltar={() => setAba('horarios')}
+              rotuloAvancar="Concluir"
+              iconeAvancar={<Check />}
+              aoAvancar={() => {
+                setEmPassos(false)
+                setAba('data')
+                toast.success('Turma pronta', 'Você pode ajustar qualquer seção pelas abas.')
+              }}
             />
           )}
 

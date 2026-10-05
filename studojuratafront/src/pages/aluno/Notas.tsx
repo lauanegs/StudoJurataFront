@@ -11,6 +11,7 @@ import { Tag } from '../../components/ui/Tag'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../components/feedback/Skeleton'
+import { useCursoAluno } from '../../hooks/useCursoAluno'
 import { useAlunoLogado } from '../../hooks/usePerfilLogado'
 import { useRequisicao } from '../../hooks/useRequisicao'
 import { notas as servicoNotas } from '../../services/notas'
@@ -27,14 +28,12 @@ const VARIANTE_POR_NIVEL = { baixo: 'error', medio: 'warning', alto: 'success' }
  */
 export default function AlunoNotas() {
   const { alunoId, loading: carregandoAluno, error: erroAluno } = useAlunoLogado()
+  // O curso vem da escolha feita após o login; não há seletor de turma nesta tela.
+  const { turmaId } = useCursoAluno()
 
   // O filtro só se aplica ao clicar em "Buscar"; a lista começa completa.
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
-
-  // O aluno pode ter nota em mais de uma turma; a lista mostra uma por vez.
-  // null = usa a turma da nota mais recente (o back já ordena do mais novo).
-  const [turmaSelecionada, setTurmaSelecionada] = useState<number | null>(null)
 
   const requisicaoNotas = useRequisicao(
     () => servicoNotas.historicoPorAluno(alunoId as number),
@@ -53,16 +52,6 @@ export default function AlunoNotas() {
     () => new Map((requisicaoSimulados.data ?? []).map((simulado) => [simulado.id, simulado])),
     [requisicaoSimulados.data],
   )
-
-  const opcoesTurmas = useMemo(() => {
-    const mapa = new Map<number, string>()
-    for (const nota of requisicaoNotas.data ?? []) {
-      if (nota.turma?.id) mapa.set(nota.turma.id, nota.turma.titulo ?? `Turma ${nota.turma.id}`)
-    }
-    return Array.from(mapa, ([value, label]) => ({ value, label }))
-  }, [requisicaoNotas.data])
-
-  const turmaId = turmaSelecionada ?? requisicaoNotas.data?.[0]?.turma?.id ?? null
 
   const opcoesDisciplinas = useMemo(() => {
     const ids = new Set(
@@ -123,21 +112,6 @@ export default function AlunoNotas() {
         titulo="Notas"
         filtros={
           <CamposFiltro>
-            {opcoesTurmas.length > 1 && (
-              <CampoFiltro $largura="280px">
-                <Select<number>
-                  options={opcoesTurmas}
-                  value={turmaId}
-                  placeholder="Selecione a turma"
-                  emptyText="Nenhuma turma com notas"
-                  onChange={(valor) => {
-                    setTurmaSelecionada(valor)
-                    setDisciplinaSelecionada(null)
-                    setDisciplinaId(null)
-                  }}
-                />
-              </CampoFiltro>
-            )}
 
             <CampoFiltro $largura="280px">
               <Select<number>

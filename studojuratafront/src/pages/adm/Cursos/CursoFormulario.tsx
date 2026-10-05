@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { Archive, ArchiveRestore, Plus, Save } from 'lucide-react'
+import { Archive, ArchiveRestore, ArrowRight, Check, Plus, Save } from 'lucide-react'
 
 import { Layout } from '../../../components/layout'
 import { Button } from '../../../components/ui/Button'
@@ -11,6 +11,8 @@ import { Header } from '../../../components/ui/Header'
 import { IconButton } from '../../../components/ui/IconButton'
 import { Input } from '../../../components/ui/Input'
 import { Select } from '../../../components/ui/Select'
+import { RodapeDosPassos } from '../../../components/ui/RodapeDosPassos'
+import { Stepper } from '../../../components/ui/Stepper'
 import { Tab } from '../../../components/ui/Tab'
 import { TextArea } from '../../../components/ui/TextArea'
 import { Stack } from '../../../components/ui/Stack'
@@ -57,9 +59,15 @@ const LinhaVinculo = styled.div`
 
 type Aba = 'dados' | 'grade'
 
+const PASSOS: { value: Aba; label: string; description: string }[] = [
+  { value: 'dados', label: 'Dados do curso', description: 'Nome, descrição e situação' },
+  { value: 'grade', label: 'Grade curricular', description: 'Disciplinas e carga horária' },
+]
+
 export default function CursoFormulario() {
   const { id } = useParams()
   const navegar = useNavigate()
+  const localizacao = useLocation()
   const toast = useToast()
   const confirmar = useConfirm()
   const { escola, loading: carregandoEscola } = useEscola()
@@ -67,7 +75,11 @@ export default function CursoFormulario() {
   const edicao = Boolean(id)
   const cursoId = id ? Number(id) : null
 
-  const [aba, setAba] = useState<Aba>('dados')
+  const estadoDaRota = localizacao.state as { aba?: Aba; passoAPasso?: boolean } | null
+  const [aba, setAba] = useState<Aba>(estadoDaRota?.aba ?? 'dados')
+  // Curso novo é montado em passos (a grade só existe depois de salvar os dados); a edição
+  // de um curso existente continua em abas.
+  const [emPassos, setEmPassos] = useState(!edicao || Boolean(estadoDaRota?.passoAPasso))
   const form = useFormularioCurso()
 
   const gradeForm = useFormularioGradeCurso()
@@ -98,12 +110,12 @@ export default function CursoFormulario() {
   })
 
   const { executar: salvar, executando: salvando } = useAcao(async () => {
-    if ((await form.validate()).hasErrors) return
+    if ((await form.validate()).hasErrors) return false
     const { nome, descricao, ativo } = form.getValues()
 
     if (!escola) {
       toast.error('Escola não encontrada', 'Cadastre uma escola antes de criar cursos.')
-      return
+      return false
     }
 
     try {
@@ -123,13 +135,15 @@ export default function CursoFormulario() {
         const criado = await servicoCursos.criar(corpo)
         toast.success('Curso cadastrado', 'Agora defina a grade curricular.')
         // Continua no formulário, agora em modo de edição.
-        navegar(`/adm/cursos/${criado.id}`, { replace: true })
+        navegar(`/adm/cursos/${criado.id}`, { replace: true, state: { aba: 'grade', passoAPasso: true } })
       }
+      return true
     } catch (erroSalvar) {
       toast.error(
         'Não foi possível salvar',
         erroSalvar instanceof ApiError ? erroSalvar.message : undefined,
       )
+      return false
     }
   })
 
@@ -292,7 +306,16 @@ export default function CursoFormulario() {
         }
       />
 
-      {edicao && (
+      {emPassos && (
+        <Stepper<Aba>
+          rotuloAcessivel="Passos do novo curso"
+          options={PASSOS}
+          value={aba}
+          onChange={edicao ? setAba : undefined}
+        />
+      )}
+
+      {edicao && !emPassos && (
         <Tab<Aba>
           rotuloAcessivel="Seções do curso"
           value={aba}
@@ -348,6 +371,18 @@ export default function CursoFormulario() {
               />
             </Stack>
           </Card>
+          )}
+
+          {emPassos && aba === 'dados' && (
+            <RodapeDosPassos
+              rotuloAvancar="Próximo: Grade curricular"
+              iconeAvancar={<ArrowRight />}
+              carregando={salvando}
+              aoAvancar={async () => {
+                // Na criação o próprio salvar leva à grade (navegação); na edição basta avançar.
+                if ((await salvar()) && edicao) setAba('grade')
+              }}
+            />
           )}
 
           {edicao && aba === 'grade' && (
@@ -418,6 +453,19 @@ export default function CursoFormulario() {
                   />
                 )}
               />
+
+              {emPassos && (
+                <RodapeDosPassos
+                  aoVoltar={() => setAba('dados')}
+                  rotuloAvancar="Concluir"
+                  iconeAvancar={<Check />}
+                  aoAvancar={() => {
+                    setEmPassos(false)
+                    setAba('dados')
+                    toast.success('Curso pronto', 'Você pode ajustar qualquer seção pelas abas.')
+                  }}
+                />
+              )}
             </>
           )}
         </>

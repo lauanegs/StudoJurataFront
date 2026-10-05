@@ -13,22 +13,25 @@ import { Tab } from '../../components/ui/Tab'
 import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
 import { EstadoVazio } from '../../components/feedback/EstadoVazio'
 import { Skeleton } from '../../components/feedback/Skeleton'
+import { useCursoAluno } from '../../hooks/useCursoAluno'
 import { useAlunoLogado } from '../../hooks/usePerfilLogado'
 import { usePaginacao } from '../../hooks/usePaginacao'
 import { useRequisicao } from '../../hooks/useRequisicao'
 import { disciplinas as servicoDisciplinas } from '../../services/curriculo'
 import { simuladoAlunos, simulados as servicoSimulados } from '../../services/simulados'
-import { formatarDataHora, formatarTempo } from '../../utils/format'
+import { disponibilidadeDoSimulado } from '../../utils/disponibilidadeSimulado'
+import { formatarTempo } from '../../utils/format'
 import type { SimuladoAlunoResponse } from '../../types/simulados'
 import type { Coluna } from '../../components/ui/DataTable/types'
 import { Stack } from '../../components/ui/Stack'
 
 
-type Aba = 'aFazer' | 'realizados'
+type Aba = 'aFazer' | 'realizados' | 'encerrados'
 
 export default function AlunoReforco() {
   const navegar = useNavigate()
   const { alunoId, loading: carregandoAluno, error: erroAluno } = useAlunoLogado()
+  const { turmaId } = useCursoAluno()
 
   const [aba, setAba] = useState<Aba>('aFazer')
   // O filtro só se aplica ao clicar em "Buscar"; a seleção do campo fica separada do aplicado.
@@ -52,18 +55,29 @@ export default function AlunoReforco() {
     (requisicaoDisciplinas.data ?? []).find((disciplina) => disciplina.id === id)?.titulo
 
   const filtradas = useMemo(() => {
-    const lista = requisicaoTentativas.data ?? []
+    // Só o curso escolhido após o login.
+    const lista = (requisicaoTentativas.data ?? []).filter(
+      (tentativa) => porSimulado.get(tentativa.simuladoId)?.turmaId === turmaId,
+    )
     if (!disciplinaId) return lista
 
     return lista.filter((tentativa) => porSimulado.get(tentativa.simuladoId)?.disciplinaId === disciplinaId)
-  }, [requisicaoTentativas.data, disciplinaId, porSimulado])
+  }, [requisicaoTentativas.data, disciplinaId, porSimulado, turmaId])
 
-  const aFazer = filtradas.filter((tentativa) => tentativa.status !== 'CONCLUIDO')
+  const pendentes = filtradas.filter((tentativa) => tentativa.status !== 'CONCLUIDO')
+  // Pendente cujo simulado já não abre (encerrado/prazo vencido) sai de "Para fazer".
+  // eslint-disable-next-line react-hooks/purity
+  const agora = Date.now()
+  const encerrados = pendentes.filter(
+    (tentativa) => disponibilidadeDoSimulado(porSimulado.get(tentativa.simuladoId), agora).encerrado,
+  )
+  const aFazer = pendentes.filter((tentativa) => !encerrados.includes(tentativa))
   const realizados = filtradas.filter((tentativa) => tentativa.status === 'CONCLUIDO')
 
   const opcoesDisciplinas = useMemo(() => {
     const ids = new Set(
       (requisicaoTentativas.data ?? [])
+        .filter((tentativa) => porSimulado.get(tentativa.simuladoId)?.turmaId === turmaId)
         .map((tentativa) => porSimulado.get(tentativa.simuladoId)?.disciplinaId)
         .filter((id): id is number => Boolean(id)),
     )
@@ -71,29 +85,7 @@ export default function AlunoReforco() {
     return (requisicaoDisciplinas.data ?? [])
       .filter((disciplina) => ids.has(disciplina.id))
       .map((disciplina) => ({ value: disciplina.id, label: disciplina.titulo ?? '—' }))
-  }, [requisicaoTentativas.data, requisicaoDisciplinas.data, porSimulado])
-
-  /** Fora da janela de datas, o simulado aparece mas não pode ser iniciado. */
-  function disponibilidade(simuladoId: number) {
-    const simulado = porSimulado.get(simuladoId)
-    if (!simulado) return { indisponivel: true, motivo: 'Simulado indisponível' }
-
-    if (simulado.status === 'ENCERRADO') return { indisponivel: true, motivo: 'Encerrado' }
-
-    // A janela de disponibilidade depende do relógio no momento da exibição.
-    // eslint-disable-next-line react-hooks/purity
-    const agora = Date.now()
-
-    if (simulado.dataInicio && new Date(simulado.dataInicio).getTime() > agora) {
-      return { indisponivel: true, motivo: `Abre em ${formatarDataHora(simulado.dataInicio)}` }
-    }
-
-    if (simulado.dataFim && new Date(simulado.dataFim).getTime() < agora) {
-      return { indisponivel: true, motivo: 'Prazo encerrado' }
-    }
-
-    return { indisponivel: false, motivo: undefined }
-  }
+  }, [requisicaoTentativas.data, requisicaoDisciplinas.data, porSimulado, turmaId])
 
   const colunas: Coluna<SimuladoAlunoResponse>[] = [
     {
@@ -166,10 +158,11 @@ export default function AlunoReforco() {
         options={[
           { value: 'aFazer', label: 'Para fazer', contador: aFazer.length },
           { value: 'realizados', label: 'Realizados', contador: realizados.length },
+          { value: 'encerrados', label: 'Encerrados', contador: encerrados.length },
         ]}
       />
 
-      {aba === 'aFazer' &&
+      {(aba === 'aFazer' || aba === 'encerrados') &&
         (requisicaoTentativas.loading || carregandoAluno ? (
           <Card>
             <Skeleton $altura="120px" $raio="8px" />
@@ -181,19 +174,23 @@ export default function AlunoReforco() {
               onRetry={requisicaoTentativas.reload}
             />
           </Card>
-        ) : aFazer.length === 0 ? (
+        ) : (aba === 'aFazer' ? aFazer : encerrados).length === 0 ? (
           <Card>
             <EstadoVazio
-              titulo="Tudo em dia!"
-              descricao="Você não tem simulados pendentes no momento."
+              titulo={aba === 'aFazer' ? 'Tudo em dia!' : 'Nenhum simulado encerrado'}
+              descricao={
+                aba === 'aFazer'
+                  ? 'Você não tem simulados pendentes no momento.'
+                  : 'Simulados que fecharam sem você fazer aparecem aqui.'
+              }
               icon={<CheckCircle2 />}
             />
           </Card>
         ) : (
           <Stack gap="md">
-            {aFazer.map((tentativa) => {
+            {(aba === 'aFazer' ? aFazer : encerrados).map((tentativa) => {
               const simulado = porSimulado.get(tentativa.simuladoId)
-              const situacao = disponibilidade(tentativa.simuladoId)
+              const situacao = disponibilidadeDoSimulado(simulado)
 
               return (
                 <SimuladoIniciarCard
@@ -203,6 +200,7 @@ export default function AlunoReforco() {
                     simulado?.titulo ??
                     `Simulado ${tentativa.simuladoId}`
                   }
+                  autor={simulado?.autor}
                   quantidadeQuestoes={simulado?.quantidadeQuestoes}
                   indisponivel={situacao.indisponivel}
                   motivoIndisponivel={situacao.motivo}

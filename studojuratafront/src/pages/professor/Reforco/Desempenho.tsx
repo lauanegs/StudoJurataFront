@@ -146,7 +146,7 @@ export default function Desempenho() {
     [requisicaoTentativas.data],
   )
 
-  // O recorte só afeta os gráficos; os cards do topo somam tudo.
+  // O recorte (turma/disciplina aplicados) vale para os gráficos E para os cards do topo.
   const desempenhos = useMemo(
     () =>
       desempenhosTotais.filter(
@@ -209,15 +209,19 @@ export default function Desempenho() {
     [desempenhoPorDisciplina],
   )
 
-  // Cards do topo: sempre o total geral, independente do filtro dos gráficos.
-  const totalTentativasConcluidas = requisicaoTentativas.data?.length ?? 0
+  // Cards do topo: acompanham o recorte aplicado, como os gráficos.
+  const tentativasNoRecorte = useMemo(() => {
+    const idsNoRecorte = new Set(desempenhos.map((item) => item.simuladoId))
+    return (requisicaoTentativas.data ?? []).filter((tentativa) => idsNoRecorte.has(tentativa.simuladoId))
+  }, [desempenhos, requisicaoTentativas.data])
+  const totalTentativasConcluidas = tentativasNoRecorte.length
   const totalAlunosAvaliados = useMemo(
-    () => new Set((requisicaoTentativas.data ?? []).map((tentativa) => tentativa.alunoId)).size,
-    [requisicaoTentativas.data],
+    () => new Set(tentativasNoRecorte.map((tentativa) => tentativa.alunoId)).size,
+    [tentativasNoRecorte],
   )
   const totalDisciplinasAvaliadas = useMemo(
-    () => new Set(desempenhosTotais.map((item) => item.disciplina)).size,
-    [desempenhosTotais],
+    () => new Set(desempenhos.map((item) => item.disciplina)).size,
+    [desempenhos],
   )
 
   // Exporta todas as seções num arquivo só: uma aba por seção no Excel, uma
@@ -229,7 +233,7 @@ export default function Desempenho() {
         colunaRotulo: 'Indicador',
         colunaValor: 'Valor',
         linhas: [
-          { chave: 'simulados', rotulo: 'Simulados aplicados', valor: String(desempenhosTotais.length) },
+          { chave: 'simulados', rotulo: 'Simulados aplicados', valor: String(desempenhos.length) },
           { chave: 'tentativas', rotulo: 'Tentativas concluídas', valor: String(totalTentativasConcluidas) },
           { chave: 'alunos', rotulo: 'Alunos avaliados', valor: String(totalAlunosAvaliados) },
           { chave: 'disciplinas', rotulo: 'Disciplinas avaliadas', valor: String(totalDisciplinasAvaliadas) },
@@ -269,7 +273,6 @@ export default function Desempenho() {
       },
     ],
     [
-      desempenhosTotais.length,
       totalTentativasConcluidas,
       totalAlunosAvaliados,
       totalDisciplinasAvaliadas,
@@ -423,7 +426,7 @@ export default function Desempenho() {
 
       <GradeAutoAjuste $larguraMinima="220px">
         <InfoCard
-          value={desempenhosTotais.length}
+          value={desempenhos.length}
           label="simulados aplicados"
           icon={<ClipboardCheck />}
           tom="purple"

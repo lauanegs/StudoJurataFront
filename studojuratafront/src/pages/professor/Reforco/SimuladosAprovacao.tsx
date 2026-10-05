@@ -321,6 +321,29 @@ export default function SimuladosAprovacao() {
     },
   )
 
+  // "Próximas gerações" também respeita o filtro aplicado (turma e disciplina/aluno), como a outra aba.
+  const proximasGeracoes = useMemo(() => {
+    const lista = requisicaoProximasGeracoes.data ?? []
+    if (!filtro) return lista
+
+    const alunosDaTurma = new Set(
+      (requisicaoMatriculasGerais.data ?? [])
+        .filter((matricula) => matricula.status === 'ATIVA' && matricula.turma?.id === filtro.turmaId)
+        .map((matricula) => matricula.aluno.id),
+    )
+    const conteudos = requisicaoConteudos.data ?? []
+
+    return lista.filter((item) => {
+      if (!alunosDaTurma.has(item.alunoId)) return false
+      if (filtro.tipo === 'aluno') return item.alunoId === filtro.especificoId
+      if (filtro.tipo === 'disciplina') {
+        const oferta = conteudos.find((conteudo) => conteudo.id === item.conteudoPlanoId)?.planoEnsino?.turmaDisciplina
+        return oferta?.disciplina?.id === filtro.especificoId
+      }
+      return true
+    })
+  }, [requisicaoProximasGeracoes.data, filtro, requisicaoMatriculasGerais.data, requisicaoConteudos.data])
+
   const carregando =
     requisicaoSimulados.loading ||
     requisicaoPendentes.loading ||
@@ -381,10 +404,12 @@ export default function SimuladosAprovacao() {
           ])
           setAba('aprovacao')
         } catch (erroGerar) {
-          toast.error(
-            'Não foi possível gerar',
-            erroGerar instanceof ApiError ? erroGerar.message : undefined,
-          )
+          // 409 é regra de negócio (ex.: baixo aproveitamento coletivo), não falha: o texto orienta o professor.
+          if (erroGerar instanceof ApiError && erroGerar.status === 409) {
+            toast.warning('Geração não recomendada', erroGerar.message)
+          } else {
+            toast.error('Não foi possível gerar', erroGerar instanceof ApiError ? erroGerar.message : undefined)
+          }
         } finally {
           setGerando(null)
         }
@@ -475,7 +500,7 @@ export default function SimuladosAprovacao() {
           {
             value: 'proximas',
             label: 'Próximas gerações da IA',
-            contador: requisicaoProximasGeracoes.data?.length,
+            contador: requisicaoProximasGeracoes.data ? proximasGeracoes.length : undefined,
           },
         ]}
       />
@@ -516,15 +541,16 @@ export default function SimuladosAprovacao() {
           <DataTable
             descricao="Próximas gerações automáticas de simulados via IA"
             columns={colunasProximasGeracoes}
-            data={requisicaoProximasGeracoes.data ?? []}
+            data={proximasGeracoes}
             rowKey={(item) => `${item.alunoId}-${item.conteudoPlanoId}`}
             loading={requisicaoProximasGeracoes.loading}
             error={requisicaoProximasGeracoes.error}
             onReload={requisicaoProximasGeracoes.reload}
             empty={{
               titulo: 'Nada agendado',
-              descricao:
-                'Nenhum aluno das suas turmas está com repetição espaçada agendada ou aproveitamento baixo no momento.',
+              descricao: filtro
+                ? 'Nenhuma geração prevista para esse filtro.'
+                : 'Nenhum aluno das suas turmas está com repetição espaçada agendada ou aproveitamento baixo no momento.',
               icon: <Sparkles />,
             }}
             actions={(item) => (
