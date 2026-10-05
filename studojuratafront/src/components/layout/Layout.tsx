@@ -5,7 +5,7 @@ import { Menu } from 'lucide-react'
 import { MENUS, Sidebar } from './Sidebar'
 import { useAuth } from '@/hooks/useAuth'
 import { useCursoAluno } from '@/hooks/useCursoAluno'
-import { useConfirm } from '@/contexts/confirmContexto'
+import { useConfirm } from '@/contexts/confirm/confirmContexto'
 import * as S from './styles'
 import type { LayoutProps } from './types'
 

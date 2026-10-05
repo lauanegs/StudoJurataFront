@@ -3,7 +3,7 @@ import { useTheme } from 'styled-components'
 import { ShieldAlert } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { ROTA_INICIAL_POR_PERFIL } from '@/contexts/authContexto'
+import { ROTA_INICIAL_POR_PERFIL } from '@/contexts/auth/authContexto'
 import { useAuth } from '@/hooks/useAuth'
 import { TelaAviso } from '@/pages/auth/TelaAviso/TelaAviso'
 

@@ -10,7 +10,7 @@ import { Header, CamposFiltro, CampoFiltro, BotaoFiltro } from '@/components/ui/
 import { Select } from '@/components/ui/Select'
 import { Tag } from '@/components/ui/Tag'
 import { Skeleton } from '@/components/feedback/Skeleton'
-import { useToast } from '@/contexts/toastContexto'
+import { useToast } from '@/contexts/toast/toastContexto'
 import { useProfessorLogado } from '@/hooks/usePerfilLogado'
 import { useRequisicao } from '@/hooks/useRequisicao'
 import { professores as servicoProfessores } from '@/services/pessoas'

@@ -1,1 +1,1 @@
-export { useAuthContext as useAuth } from '@/contexts/authContexto'
+export { useAuthContext as useAuth } from '@/contexts/auth/authContexto'
