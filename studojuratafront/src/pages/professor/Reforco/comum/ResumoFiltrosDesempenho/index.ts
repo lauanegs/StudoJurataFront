@@ -1,1 +1,0 @@
-export { ResumoFiltrosDesempenho } from './ResumoFiltrosDesempenho'

@@ -22,7 +22,7 @@ import {
 } from '@/services/pessoas'
 import type { Parentesco } from '@/types/pessoas'
 import { VinculoResponsavelAluno } from '@/components/pessoas/VinculoResponsavelAluno'
-import { PessoaCampos } from '@/components/pessoas/PessoaCampos/PessoaCampos'
+import { PessoaCampos } from '@/components/pessoas/PessoaCampos'
 import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '@/formularios/pessoas'
 
 export default function ResponsavelFormulario() {

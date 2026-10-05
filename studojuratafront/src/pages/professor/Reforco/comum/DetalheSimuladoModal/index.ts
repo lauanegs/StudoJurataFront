@@ -1,1 +1,0 @@
-export { DetalheSimuladoModal } from './DetalheSimuladoModal'

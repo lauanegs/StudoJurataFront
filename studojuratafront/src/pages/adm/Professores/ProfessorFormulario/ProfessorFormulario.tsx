@@ -18,7 +18,7 @@ import { ApiError } from '@/services/api'
 import { OPCOES_ATIVO_INATIVO } from '@/utils/labels'
 import type { StatusAtivoInativo } from '@/types/comum'
 import { pessoas as servicoPessoas, professores as servicoProfessores } from '@/services/pessoas'
-import { PessoaCampos } from '@/components/pessoas/PessoaCampos/PessoaCampos'
+import { PessoaCampos } from '@/components/pessoas/PessoaCampos'
 import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '@/formularios/pessoas'
 
 export default function ProfessorFormulario() {

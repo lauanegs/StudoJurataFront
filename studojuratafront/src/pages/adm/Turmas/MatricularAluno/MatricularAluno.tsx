@@ -30,7 +30,7 @@ import { calcularIdade, formatarCpf } from '@/utils/format'
 import { OPCOES_PARENTESCO } from '@/utils/labels'
 import type { Parentesco } from '@/types/pessoas'
 import type { StatusMatricula } from '@/types/turmas'
-import { PessoaCampos } from '@/components/pessoas/PessoaCampos/PessoaCampos'
+import { PessoaCampos } from '@/components/pessoas/PessoaCampos'
 import { paraPayloadPessoa, useFormularioPessoa } from '@/formularios/pessoas'
 import { useFormularioMatricula } from '@/formularios/turmas'
 
