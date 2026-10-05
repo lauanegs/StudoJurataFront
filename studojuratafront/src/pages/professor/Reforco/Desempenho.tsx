@@ -50,6 +50,7 @@ import { formatarPorcentagem } from '../../../utils/format'
 import { renderizarGraficoComoImagem, type ImagemGrafico } from '../../../components/graficos/RenderizarGrafico'
 import { agruparPorSimulado, mediaPorDisciplina, tendenciaPorDisciplina as calcularTendencia, type DesempenhoSimulado } from './agregacoesDesempenho'
 import { DetalheSimuladoModal } from './DetalheSimuladoModal'
+import { montarSecoesRelatorio } from './relatorioDesempenho'
 
 // Gap igual ao padding do Card. Sempre 4 colunas em telas largas (auto-fill
 // colocaria uma 5ª/6ª), colapsando para 2 e 1 em telas estreitas.
@@ -224,62 +225,25 @@ export default function Desempenho() {
     [desempenhos],
   )
 
-  // Exporta todas as seções num arquivo só: uma aba por seção no Excel, uma
-  // tabela por seção no PDF.
   const secoesRelatorioCompleto = useMemo(
-    () => [
-      {
-        titulo: 'Resumo geral',
-        colunaRotulo: 'Indicador',
-        colunaValor: 'Valor',
-        linhas: [
-          { chave: 'simulados', rotulo: 'Simulados aplicados', valor: String(desempenhos.length) },
-          { chave: 'tentativas', rotulo: 'Tentativas concluídas', valor: String(totalTentativasConcluidas) },
-          { chave: 'alunos', rotulo: 'Alunos avaliados', valor: String(totalAlunosAvaliados) },
-          { chave: 'disciplinas', rotulo: 'Disciplinas avaliadas', valor: String(totalDisciplinasAvaliadas) },
-        ],
-      },
-      {
-        titulo: 'Distribuição geral das notas',
-        colunaRotulo: 'Faixa de nota',
-        colunaValor: 'Quantidade',
-        linhas: tabelaDistribuicaoGeral,
-      },
-      {
-        titulo: 'Desempenho médio por disciplina',
-        colunaRotulo: 'Disciplina',
-        colunaValor: 'Desempenho médio',
-        linhas: tabelaDesempenhoPorDisciplina,
-      },
-      ...tendenciaPorDisciplina.map((item) => ({
-        titulo: `Evolução — ${item.disciplina}`,
-        colunaRotulo: 'Simulado',
-        colunaValor: 'Nota',
-        linhas: item.pontos.map((ponto) => ({
-          chave: ponto.chave,
-          rotulo: ponto.rotulo,
-          valor: formatarPorcentagem(ponto.valor),
-        })),
-      })),
-      {
-        titulo: 'Desempenho por simulado',
-        colunaRotulo: 'Simulado',
-        colunaValor: 'Desempenho',
-        linhas: desempenhos.map((item) => ({
-          chave: String(item.simuladoId),
-          rotulo: `${item.titulo} — ${item.turma} — ${item.disciplina}`,
-          valor: formatarPorcentagem(item.percentual),
-        })),
-      },
-    ],
+    () =>
+      montarSecoesRelatorio({
+        desempenhos,
+        totalTentativasConcluidas,
+        totalAlunosAvaliados,
+        totalDisciplinasAvaliadas,
+        tabelaDistribuicaoGeral,
+        tabelaDesempenhoPorDisciplina,
+        tendenciaPorDisciplina,
+      }),
     [
+      desempenhos,
       totalTentativasConcluidas,
       totalAlunosAvaliados,
       totalDisciplinasAvaliadas,
       tabelaDistribuicaoGeral,
       tabelaDesempenhoPorDisciplina,
       tendenciaPorDisciplina,
-      desempenhos,
     ],
   )
 
