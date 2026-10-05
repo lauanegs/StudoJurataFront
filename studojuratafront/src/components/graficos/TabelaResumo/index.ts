@@ -1,1 +1,2 @@
-export type { ItemTabelaResumo } from './TabelaResumo'
+
+export type { ItemTabelaResumo } from './types'

@@ -19,24 +19,7 @@ import { matriculas } from '@/services/turmas'
 import { formatarPorcentagem } from '@/utils/format'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-type TipoFiltro = 'disciplina' | 'aluno'
-
-interface FiltroAplicado {
-  turmaId: number
-  tipo: TipoFiltro
-  especificoId: number
-}
-
-interface LinhaSimulado {
-  chave: string
-  simuladoId: number
-  titulo: string
-  disciplinaOuAluno: string
-  mediaGeral: number | null
-  participacao?: { concluidas: number; total: number }
-  acertos?: { quantidade: number; total: number }
-  tentativaId?: number
-}
+import type { TipoFiltro, FiltroAplicado, LinhaSimulado } from './types'
 
 export default function SimuladosRealizados() {
   const navegar = useNavigate()

@@ -5,22 +5,13 @@ import { Button } from '@/components/ui/Button'
 import { CheckBox } from '@/components/ui/CheckBox'
 import { DataTable } from '@/components/ui/DataTable'
 import { Modal } from '@/components/ui/Modal'
-import { Select, type SelectOption } from '@/components/ui/Select'
+import { Select } from '@/components/ui/Select'
 import { Stack } from '@/components/ui/Stack'
 import { ROTULO_TIPO_QUESTAO } from '@/utils/labels'
 import type { Coluna } from '@/components/ui/DataTable/types'
 import type { QuestaoResponse } from '@/types/simulados'
 
-interface ModalImportarQuestoesProps {
-  aberto: boolean
-  onClose: () => void
-  opcoesDisciplinas: SelectOption<number>[]
-  bancoQuestoes: QuestaoResponse[]
-  carregando: boolean
-  idsJaNoSimulado: Set<number>
-  /** Retorna false quando nada pôde ser importado, mantendo a seleção. */
-  onImportar: (escolhidas: QuestaoResponse[]) => boolean
-}
+import type { ModalImportarQuestoesProps } from './types'
 
 export function ModalImportarQuestoes({
   aberto,

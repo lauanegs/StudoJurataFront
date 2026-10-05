@@ -25,8 +25,7 @@ import type { SimuladoAlunoResponse } from '@/types/simulados'
 import type { Coluna } from '@/components/ui/DataTable/types'
 import { Stack } from '@/components/ui/Stack'
 
-
-type Aba = 'aFazer' | 'realizados' | 'encerrados'
+import type { Aba } from './types'
 
 export default function AlunoReforco() {
   const navegar = useNavigate()

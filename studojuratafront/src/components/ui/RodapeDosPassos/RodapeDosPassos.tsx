@@ -1,23 +1,7 @@
-import type { ReactNode } from 'react'
-import styled from 'styled-components'
-
 import { Button } from '@/components/ui/Button'
 
-const Linha = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.sm};
-`
-
-interface RodapeDosPassosProps {
-  /** Ausente no primeiro passo. */
-  aoVoltar?: () => void
-  aoAvancar: () => void
-  rotuloAvancar: string
-  iconeAvancar?: ReactNode
-  carregando?: boolean
-}
+import { Linha } from './styles'
+import type { RodapeDosPassosProps } from './types'
 
 /** Botões Voltar / Próximo abaixo do conteúdo de um passo do Stepper. */
 export function RodapeDosPassos({ aoVoltar, aoAvancar, rotuloAvancar, iconeAvancar, carregando }: RodapeDosPassosProps) {

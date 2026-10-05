@@ -1,29 +1,9 @@
-import styled from 'styled-components'
-
 import { Button } from '@/components/ui/Button'
 import { CheckBox } from '@/components/ui/CheckBox'
 import { Modal } from '@/components/ui/Modal'
 import { EstadoVazio } from '@/components/feedback/EstadoVazio'
-import type { AlunoTurma } from '@/types/turmas'
-
-const ListaAlunos = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  max-height: 320px;
-  overflow-y: auto;
-  padding-bottom: ${({ theme }) => theme.spacing.xs};
-`
-
-interface ModalSelecionarAlunosProps {
-  aberto: boolean
-  onClose: () => void
-  matriculas: AlunoTurma[]
-  carregando: boolean
-  vazio: boolean
-  selecionados: number[]
-  onChange: (selecionados: number[]) => void
-}
+import { ListaAlunos } from './styles'
+import type { ModalSelecionarAlunosProps } from './types'
 
 export function ModalSelecionarAlunos({
   aberto,

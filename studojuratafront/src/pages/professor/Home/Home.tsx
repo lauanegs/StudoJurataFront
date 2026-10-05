@@ -1,5 +1,4 @@
 import { useMemo } from 'react'
-import styled from 'styled-components'
 import { Cake, CalendarDays } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -15,12 +14,7 @@ import { eventos as servicoEventos } from '@/services/eventos'
 import { pessoas as servicoPessoas } from '@/services/pessoas'
 import { aniversariantesDaSemana } from '@/utils/aniversariantes'
 
-/** Altura fixa do Figma; a largura vem da grade do SeparadorCard. */
-const ItemEvento = styled.div`
-  width: 100%;
-  min-width: 0;
-  height: 160px;
-`
+import { ItemEvento } from './styles'
 
 export default function ProfessorHome() {
   const requisicaoPessoas = useRequisicao(() => servicoPessoas.listar(), [])

@@ -27,13 +27,7 @@ import { VinculoResponsavelAluno } from '@/components/pessoas/VinculoResponsavel
 import { PessoaCampos } from '@/components/pessoas/PessoaCampos/PessoaCampos'
 import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '@/formularios/pessoas'
 
-interface VinculoForm {
-  /** Id do ResponsavelAluno quando o vínculo já existe no back. */
-  id?: number
-  chave: string
-  responsavelId: number
-  parentesco: Parentesco
-}
+import type { VinculoForm } from './types'
 
 export default function AlunoFormulario() {
   const { id } = useParams()

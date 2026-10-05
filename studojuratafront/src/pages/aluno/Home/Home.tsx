@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import { Sparkles, Target, Trophy } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -23,12 +22,7 @@ import { simuladoAlunos, simulados as servicoSimulados } from '@/services/simula
 import { disponibilidadeDoSimulado } from '@/utils/disponibilidadeSimulado'
 import { nomeCurto } from '@/utils/format'
 
-const Medidores = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.lg};
-  justify-content: center;
-`
+import { Medidores } from './styles'
 
 export default function AlunoHome() {
   const navegar = useNavigate()

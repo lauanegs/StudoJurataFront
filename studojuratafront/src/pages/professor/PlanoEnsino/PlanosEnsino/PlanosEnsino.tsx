@@ -18,7 +18,7 @@ import { ROTULO_STATUS_PLANO, STATUS_PLANO_VARIANT } from '@/utils/labels'
 import type { PlanoEnsino } from '@/types/planejamento'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-type Visao = 'meus' | 'outros'
+import type { Visao } from './types'
 
 export default function PlanosEnsino() {
   const navegar = useNavigate()

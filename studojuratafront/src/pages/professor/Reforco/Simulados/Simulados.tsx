@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import { BarChart3, BookOpen, ClipboardCheck, FileText, Pencil, Plus, Rocket, Square } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -29,23 +28,11 @@ import {
 import { turmas as servicoTurmas } from '@/services/turmas'
 import { ROTULO_STATUS_SIMULADO, STATUS_SIMULADO_VARIANT } from '@/utils/labels'
 import { theme as tokens } from '@/styles/theme'
-import type { SimuladoResponse, StatusSimulado } from '@/types/simulados'
+import type { SimuladoResponse } from '@/types/simulados'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-type Filtro = 'todos' | StatusSimulado
-
-/* Filtros fora do card da tabela, à direita, como LinhaAcaoFlutuante de TurmaFormulario. */
-const LinhaFiltrosFlutuante = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.sm};
-  flex-wrap: wrap;
-`
-
-const CampoLargura = styled.div`
-  width: 211px;
-`
+import { LinhaFiltrosFlutuante, CampoLargura } from './styles'
+import type { Filtro } from './types'
 
 export default function Simulados() {
   const navegar = useNavigate()

@@ -1,2 +1,2 @@
 export { GraficoLinha } from './GraficoLinha'
-export type { PontoGraficoLinha } from './GraficoLinha'
+export type { PontoGraficoLinha } from './types'

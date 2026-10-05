@@ -5,11 +5,7 @@ import type { ReactElement } from 'react'
 import { mantineTheme } from '@/styles/mantineTheme'
 import { theme as tokens } from '@/styles/theme'
 
-export interface ImagemGrafico {
-  dataUrl: string
-  largura: number
-  altura: number
-}
+import type { ImagemGrafico } from './types'
 
 const LARGURA_PADRAO = 640
 /** Tempo máximo esperando o gráfico desenhar antes de desistir — não pode travar a exportação inteira por causa de UM gráfico. */

@@ -6,29 +6,13 @@ import { Chip } from '@/components/ui/Chip'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { GradeAutoAjuste } from '@/components/ui/GradeAutoAjuste'
 import { Input } from '@/components/ui/Input'
-import { Select, type SelectOption } from '@/components/ui/Select'
+import { Select } from '@/components/ui/Select'
 import { Stack } from '@/components/ui/Stack'
 import * as SVinculo from '@/components/planejamento/VinculoConteudo/styles'
 import { OPCOES_DESTINACAO } from '@/utils/labels'
-import type { FormularioSimulado } from '@/formularios/simulados'
 import type { TipoDestinacaoSimulado } from '@/types/simulados'
 
-interface ConfiguracaoSimuladoProps {
-  form: FormularioSimulado
-  somenteLeitura: boolean
-  podeEstenderDisponibilidade: boolean
-  opcoesDisciplinas: SelectOption<number>[]
-  opcoesTurmas: SelectOption<number>[]
-  opcoesPlanos: SelectOption<number>[]
-  carregandoDisciplinas: boolean
-  carregandoTurmas: boolean
-  carregandoPlanos: boolean
-  alunosSelecionados: { id: number; nome: string }[]
-  onSelecionarAlunos: () => void
-  onRemoverAluno: (alunoId: number) => void
-  /** Trocar de turma invalida os alunos já escolhidos. */
-  onTrocarTurma: () => void
-}
+import type { ConfiguracaoSimuladoProps } from './types'
 
 export function ConfiguracaoSimulado({
   form,

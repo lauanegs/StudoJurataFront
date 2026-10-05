@@ -4,19 +4,7 @@ import { theme as tokens } from '@/styles/theme'
 import { LIMIAR_BAIXO_DESEMPENHO } from '@/utils/desempenho'
 import { formatarPorcentagem } from '@/utils/format'
 
-export interface PontoGraficoLinha {
-  chave: string
-  rotulo: string
-  /** 0 a 100. */
-  valor: number
-}
-
-interface GraficoLinhaProps {
-  pontos: PontoGraficoLinha[]
-  rotuloAcessivel?: string
-  /** Em px — maior no modal de detalhamento do que dentro do card compacto. */
-  altura?: number
-}
+import type { GraficoLinhaProps } from './types'
 
 /** Evolução ao longo do tempo, com linha de referência no limiar de baixo desempenho. */
 export function GraficoLinha({ pontos, rotuloAcessivel = 'Evolução ao longo do tempo', altura = 220 }: GraficoLinhaProps) {

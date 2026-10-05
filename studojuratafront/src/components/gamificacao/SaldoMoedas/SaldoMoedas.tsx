@@ -1,30 +1,8 @@
-import styled from 'styled-components'
-
 import { MoedaIcone } from '@/components/gamificacao/MoedaIcone'
 import { formatarMoedas } from '@/utils/format'
 
-/** Badge translúcido pensado para fundo roxo (Banner da Home, cabeçalho do Perfil). */
-const Container = styled.div`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: ${({ theme }) => theme.radius.pill};
-
-  color: ${({ theme }) => theme.colors.white};
-  font-size: ${({ theme }) => theme.typography.sizes.md};
-  font-weight: ${({ theme }) => theme.typography.weights.bold};
-`
-
-interface SaldoMoedasProps {
-  moedas: number
-  /** "80 moedas" (Home) vs "+ 300,00" (resultado do simulado) — o texto varia por tela. */
-  sufixo?: string
-}
+import { Container } from './styles'
+import type { SaldoMoedasProps } from './types'
 
 export function SaldoMoedas({ moedas, sufixo = 'moedas' }: SaldoMoedasProps) {
   return (

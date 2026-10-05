@@ -2,25 +2,12 @@ import { Plus, Sparkles } from 'lucide-react'
 
 import { VinculoConteudoQuestao } from '@/components/planejamento/VinculoConteudo'
 import { QuestaoEditor } from '@/components/simulados/QuestaoEditor'
-import type { ErrosQuestao, QuestaoEditavel } from '@/components/simulados/QuestaoEditor/types'
 import { StatusBadge } from '@/components/simulados/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { EstadoVazio } from '@/components/feedback/EstadoVazio'
 import { MAXIMO_QUESTOES } from './questoes'
 
-interface AbaQuestoesProps {
-  questoes: QuestaoEditavel[]
-  questaoAtiva: number
-  errosQuestoes: Record<number, ErrosQuestao>
-  somenteLeitura: boolean
-  /** Disciplina do simulado: padrão para filtrar os conteúdos de uma questão sem disciplina própria. */
-  disciplinaId: number | null
-  onSelecionar: (indice: number) => void
-  onAlterar: (indice: number, questao: QuestaoEditavel) => void
-  onAdicionar: () => void
-  onRemover: (indice: number) => void
-  onImportar: () => void
-}
+import type { AbaQuestoesProps } from './types'
 
 /** Aba "Questões" do formulário: editor da questão ativa com a navegação entre as questões do simulado. */
 export function AbaQuestoes({

@@ -6,24 +6,14 @@ import { CheckBox } from '@/components/ui/CheckBox'
 import { DataTable } from '@/components/ui/DataTable'
 import { GradeAutoAjuste } from '@/components/ui/GradeAutoAjuste'
 import { Modal } from '@/components/ui/Modal'
-import { Select, type SelectOption } from '@/components/ui/Select'
+import { Select } from '@/components/ui/Select'
 import { Stack } from '@/components/ui/Stack'
 import { useRequisicao } from '@/hooks/useRequisicao'
 import { simuladoQuestoes, simulados as servicoSimulados } from '@/services/simulados'
 import type { Coluna } from '@/components/ui/DataTable/types'
 import type { SimuladoResponse } from '@/types/simulados'
 
-interface ModalImportarSimuladoProps {
-  aberto: boolean
-  onClose: () => void
-  /** Simulado em edição, que não aparece na lista. */
-  simuladoId: number | null
-  opcoesTurmas: SelectOption<number>[]
-  opcoesDisciplinas: SelectOption<number>[]
-  carregandoBanco: boolean
-  /** Ids das questões do simulado de origem, na ordem do vínculo. */
-  onImportar: (questaoIds: number[]) => void
-}
+import type { ModalImportarSimuladoProps } from './types'
 
 /** O pai remonta o modal (via `key`) a cada abertura para começar com os filtros limpos. */
 export function ModalImportarSimulado({

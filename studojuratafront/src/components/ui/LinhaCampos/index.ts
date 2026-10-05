@@ -1,1 +1,1 @@
-export { LinhaCampos } from './LinhaCampos'
+export { LinhaCampos } from './styles'

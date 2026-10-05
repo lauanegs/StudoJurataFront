@@ -30,43 +30,7 @@ import { ROTULO_MOTIVO_RECOMENDACAO } from '@/utils/labels'
 import type { MotivoRecomendacao } from '@/types/ia'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-type TipoFiltro = 'disciplina' | 'aluno'
-type Aba = 'aprovacao' | 'proximas'
-
-interface FiltroAplicado {
-  turmaId: number
-  tipo: TipoFiltro
-  especificoId: number
-}
-
-interface LinhaAprovacao {
-  simuladoId: number
-  titulo: string
-  disciplinaRotulo: string
-  alunoRotulo: string
-  motivoRotulo: string
-  dataCriacao?: string
-  /** Dias após o prazo de revisão (SimuladoGeradoIA.prazoLancamento) sem o simulado ter sido lançado; null = sem vínculo IA ou ainda no prazo. */
-  atrasoDias: number | null
-}
-
-/**
- * Item da fila de geração automática: a IA gera sozinha, no prazo calculado.
- * `dataGeracaoPrevista` vem:
- * - de RevisaoConteudo.dataProximoReforco (repetição espaçada) quando existe
- *   — pode ser uma data futura, não só "devida hoje";
- * - de hoje, pra baixo aproveitamento (não tem agenda própria: é um limiar
- *   de nota já atingido agora, não uma data calculada).
- */
-interface ProximaGeracaoIA {
-  alunoId: number
-  alunoNome: string
-  conteudoPlanoId: number
-  conteudoTitulo: string
-  motivos: MotivoRecomendacao[]
-  dataGeracaoPrevista: string
-  taxaAcerto?: number
-}
+import type { TipoFiltro, Aba, FiltroAplicado, LinhaAprovacao, ProximaGeracaoIA } from './types'
 
 function rotuloMotivos(motivos?: MotivoRecomendacao[]): string {
   if (!motivos || motivos.length === 0) return '—'

@@ -4,19 +4,7 @@ import { theme as tokens } from '@/styles/theme'
 import { CORES_NIVEL_DESEMPENHO, nivelDesempenho } from '@/utils/desempenho'
 import { formatarPorcentagem } from '@/utils/format'
 
-export interface ItemGraficoBarras {
-  chave: string
-  rotulo: string
-  /** 0 a 100. */
-  valor: number
-}
-
-interface GraficoBarrasProps {
-  itens: ItemGraficoBarras[]
-  rotuloAcessivel?: string
-  /** Em px — se omitido, calcula pela quantidade de barras (mínimo legível). */
-  altura?: number
-}
+import type { GraficoBarrasProps } from './types'
 
 /**
  * Barras horizontais de comparação (ex.: desempenho médio por disciplina) —

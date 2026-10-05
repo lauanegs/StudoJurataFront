@@ -17,10 +17,7 @@ import { normalizar } from '@/utils/format'
 import type { Turma } from '@/types/turmas'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-interface LinhaTurma {
-  turma: Turma
-  alunosAtivos: number
-}
+import type { LinhaTurma } from './types'
 
 /**
  * Turmas do professor logado — uma linha por turma (não por vínculo

@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import { BookOpen, Cake, CalendarDays, GraduationCap, Plus, School, Users } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -28,11 +27,7 @@ import { turmas as servicoTurmas } from '@/services/turmas'
 import { nomeCurto } from '@/utils/format'
 import { aniversariantesDaSemana } from '@/utils/aniversariantes'
 
-const GradeEventos = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
+import { GradeEventos } from './styles'
 
 export default function AdmHome() {
   const navegar = useNavigate()

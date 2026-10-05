@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import styled from 'styled-components'
 import { GetAddressInfoByCepNotFoundError, getAddressInfoByCep, isValidCep } from '@brazilian-utils/brazilian-utils'
 
 import { DatePicker } from '@/components/ui/DatePicker'
@@ -10,21 +9,10 @@ import { Select } from '@/components/ui/Select'
 import { useToast } from '@/contexts/toastContexto'
 import { formatarCep, formatarCpf, formatarTelefone } from '@/utils/format'
 import { OPCOES_SEXO, OPCOES_UF } from '@/utils/labels'
-import type { FormularioPessoa } from '@/formularios/pessoas'
 import type { Sexo } from '@/types/pessoas'
 
-const LinhaInteira = styled.div`
-  grid-column: 1 / -1;
-`
-
-interface PessoaCamposProps {
-  form: FormularioPessoa
-  disabled?: boolean
-  rotuloNome?: string
-  secao?: 'dados' | 'endereco'
-  /** No cadastro de aluno a data de nascimento é obrigatória (ver formularios/pessoas). */
-  exigirDataNascimento?: boolean
-}
+import { LinhaInteira } from './styles'
+import type { PessoaCamposProps } from './types'
 
 /** Bloco de dados pessoais compartilhado por Aluno, Professor e Responsável (todos estendem Pessoa no back). */
 export function PessoaCampos({

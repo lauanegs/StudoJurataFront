@@ -8,16 +8,12 @@ import { IconButton } from '@/components/ui/IconButton'
 import { Tag } from '@/components/ui/Tag'
 import { useDebounce } from '@/hooks/useDebounce'
 import { usePaginacao } from '@/hooks/usePaginacao'
-import type { RequestResult } from '@/hooks/useRequisicao'
 import { formatarData, normalizar } from '@/utils/format'
 import { ROTULO_STATUS_MATRICULA, STATUS_MATRICULA_VARIANT } from '@/utils/labels'
 import type { AlunoTurma } from '@/types/turmas'
 import { LinhaAcaoFlutuante } from './styles'
 
-interface AbaHistoricoProps {
-  turmaId: number
-  requisicaoHistorico: RequestResult<AlunoTurma[]>
-}
+import type { AbaHistoricoProps } from './types'
 
 export function AbaHistorico({ turmaId, requisicaoHistorico }: AbaHistoricoProps) {
   const navegar = useNavigate()

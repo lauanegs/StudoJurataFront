@@ -2,7 +2,7 @@ import styled, { css } from 'styled-components'
 
 import type { BadgeColor } from './types'
 
-const colors = {
+export const colors = {
   purple: css`
     background: ${({ theme }) => theme.gradients.primary};
     color: ${({ theme }) => theme.colors.white};

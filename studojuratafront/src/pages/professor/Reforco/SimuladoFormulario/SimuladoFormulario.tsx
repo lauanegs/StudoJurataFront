@@ -49,18 +49,7 @@ import { planejarPublicacao } from './publicacaoAoSalvar'
 import { removerQuestaoDoSimulado } from './remocaoQuestao'
 import { disciplinaCompativelComTurma, disciplinasDaTurma } from './disciplinasDoSimulado'
 
-/**
- * Criação e edição de simulado.
- *
- * O back modela isso em três entidades: Simulado, Questao (+ Alternativa) e
- * SimuladoQuestao. A tela junta tudo em um fluxo só e, ao salvar, executa a
- * sequência: cria/atualiza o Simulado → cria cada Questao com suas
- * Alternativas → liga tudo via SimuladoQuestao.
- *
- * Edição só é permitida enquanto o simulado está em RASCUNHO — depois de
- * lançado existem tentativas de alunos apontando para as questões.
- */
-type Aba = 'configuracao' | 'questoes'
+import type { Aba } from './types'
 
 export default function SimuladoFormulario() {
   const { id } = useParams()

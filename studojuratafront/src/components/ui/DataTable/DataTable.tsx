@@ -10,7 +10,7 @@ import { theme as tokens } from '@/styles/theme'
 import { corComOpacidade } from '@/utils/corComOpacidade'
 import type { Coluna, DataTableProps } from './types'
 
-type Direcao = 'asc' | 'desc'
+import type { Direcao } from './types'
 
 /**
  * Ordena no cliente porque nenhum endpoint do back aceita ordenação: todos

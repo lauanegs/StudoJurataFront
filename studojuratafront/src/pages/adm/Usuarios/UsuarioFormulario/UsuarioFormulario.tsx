@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Archive, ArchiveRestore, Save } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -28,15 +27,7 @@ import { useFormularioUsuario } from '@/formularios/pessoas'
 import { OPCOES_ATIVO_INATIVO, OPCOES_TIPO_USUARIO } from '@/utils/labels'
 import type { StatusAtivoInativo, TipoUsuario } from '@/types/comum'
 
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    grid-template-columns: 1fr;
-  }
-`
+import { Grade } from './styles'
 
 /**
  * Cria um login vinculado a uma Pessoa já cadastrada (Aluno/Professor/

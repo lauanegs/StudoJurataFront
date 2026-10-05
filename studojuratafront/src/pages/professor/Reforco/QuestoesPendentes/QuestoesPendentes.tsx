@@ -29,7 +29,7 @@ import {
 import type { QuestaoResponse } from '@/types/simulados'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-type Aba = 'pendentes' | 'aprovadas' | 'rejeitadas' | 'todas'
+import type { Aba } from './types'
 
 /**
  * Fila de moderação de questões — e, nas abas "Aprovadas"/"Todas", o banco

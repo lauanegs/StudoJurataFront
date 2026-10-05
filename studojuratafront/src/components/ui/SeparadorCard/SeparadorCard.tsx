@@ -1,32 +1,11 @@
-import { Children, useState, type ReactNode } from 'react'
-import styled from 'styled-components'
+import { Children, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { Card } from '@/components/ui/Card'
 import { IconButton } from '@/components/ui/IconButton'
 
-const Setas = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.xxs};
-  flex-shrink: 0;
-`
-
-/** Grade que preenche a largura em `colunas` cartões de tamanho igual, com espaçamento uniforme. */
-const Trilha = styled.div<{ $colunas: number }>`
-  display: grid;
-  grid-template-columns: repeat(${({ $colunas }) => $colunas}, 1fr);
-  gap: ${({ theme }) => theme.spacing.lg};
-
-  padding: ${({ theme }) => theme.spacing.xl};
-`
-
-interface SeparadorCardProps {
-  titulo: string
-  icon?: ReactNode
-  children: ReactNode
-  /** Quantos cartões cabem lado a lado, preenchendo a largura. O excedente vira uma próxima página. */
-  colunas: number
-}
+import { Setas, Trilha } from './styles'
+import type { SeparadorCardProps } from './types'
 
 /** Card com uma grade paginada no cliente no lugar do corpo. */
 export function SeparadorCard({ titulo, icon, children, colunas }: SeparadorCardProps) {

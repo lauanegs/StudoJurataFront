@@ -11,19 +11,14 @@ import { Tag } from '@/components/ui/Tag'
 import { useAvisosDispensados } from '@/hooks/useAvisosDispensados'
 import { useDebounce } from '@/hooks/useDebounce'
 import { usePaginacao } from '@/hooks/usePaginacao'
-import { useRequisicao, type RequestResult } from '@/hooks/useRequisicao'
+import { useRequisicao } from '@/hooks/useRequisicao'
 import { turmas as servicoTurmas } from '@/services/turmas'
 import { formatarCargaHoraria, formatarData, formatarIdade, normalizar } from '@/utils/format'
 import { ROTULO_STATUS_MATRICULA, STATUS_MATRICULA_VARIANT } from '@/utils/labels'
-import type { AlunoTurma, TurmaDisciplina } from '@/types/turmas'
+import type { AlunoTurma } from '@/types/turmas'
 import { LinhaAcaoFlutuante } from './styles'
 
-interface AbaAlunosProps {
-  turmaId: number
-  requisicaoAtivos: RequestResult<AlunoTurma[]>
-  historico: AlunoTurma[]
-  vinculos: TurmaDisciplina[] | null
-}
+import type { AbaAlunosProps } from './types'
 
 export function AbaAlunos({ turmaId, requisicaoAtivos, historico, vinculos }: AbaAlunosProps) {
   const navegar = useNavigate()

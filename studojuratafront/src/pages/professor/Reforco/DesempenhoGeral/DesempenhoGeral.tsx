@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import styled from 'styled-components'
 import { BarChart3, MousePointerClick } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -23,24 +22,7 @@ import { ResumoFiltrosDesempenho } from '@/pages/professor/Reforco/comum/ResumoF
 import { resumoFiltrosTexto } from '@/pages/professor/Reforco/comum/resumoFiltrosTexto'
 import { useDesempenhoDados } from '@/pages/professor/Reforco/comum/useDesempenhoDados'
 
-/* GraficoCard passa semPadding no card que envolve `detalhe` (a DataTable já
-   tem sua própria margem interna) — conteúdo que não é tabela precisa do
-   próprio espaçamento pra não colar nas bordas do card. */
-const PreenchidoDetalhe = styled.div`
-  padding: ${({ theme }) => theme.spacing.lg};
-`
-
-/* Mesmo padding e borda do cabeçalho do Card. */
-const CabecalhoDetalhe = styled.div`
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-`
-
-const TituloDetalhe = styled.h3`
-  font-size: ${({ theme }) => theme.typography.sizes.md};
-  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  color: ${({ theme }) => theme.colors.textStrong};
-`
+import { PreenchidoDetalhe, CabecalhoDetalhe, TituloDetalhe } from './styles'
 
 /** Versão filtrável do card "Visão geral" do painel de Desempenho. */
 export default function DesempenhoGeral() {

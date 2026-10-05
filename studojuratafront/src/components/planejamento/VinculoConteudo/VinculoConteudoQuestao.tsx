@@ -15,16 +15,7 @@ import type { ConteudoPlano } from '@/types/planejamento'
 import * as S from './styles'
 import { Stack } from '@/components/ui/Stack'
 
-interface VinculoConteudoQuestaoProps {
-  /** Ausente quando a questão ainda não foi salva — nesse caso o componente entra em modo local, ver conteudoPlanoIdsPendentes/onChangePendentes. */
-  questaoId?: number
-  /** Escopo do seletor: só conteúdos do plano de ensino desta disciplina aparecem como opção. */
-  disciplinaId?: number | null
-  somenteLeitura?: boolean
-  /** Modo local (sem questaoId ainda): ids escolhidos ficam só no estado do formulário pai, comitados via API assim que a questão for salva e ganhar id — mesmo princípio das alternativas, que também só existem no back depois do salvar. */
-  conteudoPlanoIdsPendentes?: number[]
-  onChangePendentes?: (ids: number[]) => void
-}
+import type { VinculoConteudoQuestaoProps } from './types'
 
 /**
  * Sem o vínculo, a questão fica fora do cálculo de desempenho por conteúdo que

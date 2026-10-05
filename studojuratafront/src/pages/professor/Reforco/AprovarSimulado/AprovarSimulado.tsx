@@ -41,7 +41,7 @@ import { formatarData, paraInputDataHora } from '@/utils/format'
 import { questoesPendentesDoSimulado } from '@/pages/professor/Reforco/comum/aprovacaoDeQuestoes'
 import { OPCOES_DESTINACAO, ROTULO_MOTIVO_RECOMENDACAO } from '@/utils/labels'
 
-type Aba = 'configuracao' | 'questoes'
+import type { Aba } from './types'
 
 /**
  * Configuração: os campos de um simulado normal, com "Disponível a partir de"

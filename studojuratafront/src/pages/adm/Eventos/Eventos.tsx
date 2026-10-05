@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import { CalendarDays, Check, Pencil, Plus, Trash2 } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -28,14 +27,8 @@ import { deEvento, useFormularioEvento } from '@/formularios/eventos'
 import type { Evento } from '@/types/eventos'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-const CorpoModal = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding-bottom: ${({ theme }) => theme.spacing.xs};
-`
-
-type Filtro = 'todos' | 'pendentes' | 'concluidos'
+import { CorpoModal } from './styles'
+import type { Filtro } from './types'
 
 export default function Eventos() {
   const toast = useToast()

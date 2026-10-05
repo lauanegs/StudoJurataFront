@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Archive, BookOpen, CalendarPlus, CalendarRange, ClipboardCheck, ClipboardList, Clock, Pencil, Plus, Users } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -25,10 +24,7 @@ import type { Aula, AulaConteudo } from '@/types/planejamento'
 import type { Coluna } from '@/components/ui/DataTable/types'
 import { Stack } from '@/components/ui/Stack'
 
-const ListaConteudos = styled.ul`
-  margin: 0;
-  padding-left: ${({ theme }) => theme.spacing.md};
-`
+import { ListaConteudos } from './styles'
 
 export default function Aulas() {
   const { planoAulaId } = useParams()

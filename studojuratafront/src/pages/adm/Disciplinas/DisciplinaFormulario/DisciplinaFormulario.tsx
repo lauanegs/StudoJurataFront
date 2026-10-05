@@ -1,5 +1,4 @@
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Archive, ArchiveRestore, Save } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -22,15 +21,7 @@ import { useFormularioDisciplina } from '@/formularios/curriculo'
 import { OPCOES_ATIVA_INATIVA } from '@/utils/labels'
 import type { StatusAtivoInativo } from '@/types/comum'
 
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    grid-template-columns: 1fr;
-  }
-`
+import { Grade } from './styles'
 
 export default function DisciplinaFormulario() {
   const { id } = useParams()

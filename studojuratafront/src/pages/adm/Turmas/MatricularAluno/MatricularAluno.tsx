@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Check, Save, UserPlus, Users, UserX } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -35,30 +34,15 @@ import { PessoaCampos } from '@/components/pessoas/PessoaCampos/PessoaCampos'
 import { paraPayloadPessoa, useFormularioPessoa } from '@/formularios/pessoas'
 import { useFormularioMatricula } from '@/formularios/turmas'
 
+import { Aviso, LinhaRodape } from './styles'
+import type { Passo } from './types'
+
 /* Não há transferência entre turmas. Reativar uma matrícula CONCLUIDA também é feito aqui. */
 const OPCOES_STATUS_MATRICULA_EDITAVEL: { value: StatusMatricula; label: string }[] = [
   { value: 'ATIVA', label: 'Ativa' },
   { value: 'CONCLUIDA', label: 'Concluída' },
   { value: 'CANCELADA', label: 'Cancelada' },
 ]
-
-const Aviso = styled.p`
-  padding: ${({ theme }) => theme.spacing.sm};
-  background: ${({ theme }) => theme.colors.warningBackground};
-  border-radius: ${({ theme }) => theme.radius.md};
-
-  font-size: ${({ theme }) => theme.typography.sizes.xs};
-  color: ${({ theme }) => theme.colors.warningText};
-`
-
-const LinhaRodape = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.sm};
-`
-
-type Passo = 'aluno' | 'responsavel' | 'matricula'
 
 /**
  * Nada é gravado até "Concluir matrícula": só então aluno, responsável e

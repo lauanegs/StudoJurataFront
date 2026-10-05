@@ -17,11 +17,7 @@ import { ResumoFiltrosDesempenho } from '@/pages/professor/Reforco/comum/ResumoF
 import { resumoFiltrosTexto } from '@/pages/professor/Reforco/comum/resumoFiltrosTexto'
 import { useDesempenhoDados } from '@/pages/professor/Reforco/comum/useDesempenhoDados'
 
-interface PontoTabela {
-  chave: string
-  rotulo: string
-  valor: string
-}
+import type { PontoTabela } from './types'
 
 const colunasPontos: Coluna<PontoTabela>[] = [
   { key: 'rotulo', cabecalho: 'Simulado', render: (item) => item.rotulo },

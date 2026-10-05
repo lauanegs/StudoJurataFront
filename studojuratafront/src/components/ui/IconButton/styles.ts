@@ -2,7 +2,7 @@ import styled, { css } from 'styled-components'
 
 import type { IconButtonVariant } from './types'
 
-const variants = {
+export const variants = {
   neutral: css`
     color: ${({ theme }) => theme.colors.textSecondary};
     &:hover:not(:disabled) {

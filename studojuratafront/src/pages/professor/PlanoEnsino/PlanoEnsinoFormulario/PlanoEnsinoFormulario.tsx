@@ -37,7 +37,7 @@ import type { CursoDisciplina } from '@/types/curriculo'
 import type { StatusPlano } from '@/types/planejamento'
 import { useFormularioPlanoEnsino } from '@/formularios/planejamento'
 
-type Aba = 'identificacao' | 'proposta'
+import type { Aba } from './types'
 
 export default function PlanoEnsinoFormulario() {
   const { id } = useParams()

@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import styled from 'styled-components'
 import { Award, Shirt } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -21,19 +20,8 @@ import { gamificacao } from '@/services/gamificacao'
 import { simuladoAlunos } from '@/services/simulados'
 import { resolverImagemSkin } from '@/utils/skins'
 
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-interface Conquista {
-  id: string
-  titulo: string
-  descricao: string
-  conquistada: boolean
-  progresso?: string
-}
+import { Grade } from './styles'
+import type { Conquista } from './types'
 
 /**
  * Moedas e skins vêm de /gamificacao. As conquistas não existem como

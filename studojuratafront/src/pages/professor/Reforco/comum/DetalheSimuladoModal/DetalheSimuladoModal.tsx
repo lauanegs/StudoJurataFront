@@ -1,5 +1,4 @@
 import { useMemo, type ReactNode } from 'react'
-import styled from 'styled-components'
 import { BookOpen, CalendarClock, FileDown, FileSpreadsheet, GraduationCap, Target, Users } from 'lucide-react'
 
 import { AlertaDesempenhoCard } from '@/components/desempenho/AlertaDesempenhoCard'
@@ -21,52 +20,10 @@ import { exportarPdf } from '@/utils/exportacao/exportarPdf'
 import { formatarData, formatarPorcentagem } from '@/utils/format'
 import { renderizarGraficoComoImagem } from '@/components/graficos/RenderizarGrafico'
 import { ROTULO_DESTINACAO } from '@/utils/labels'
-import type { SimuladoAlunoResponse, TipoDestinacaoSimulado } from '@/types/simulados'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-const Coluna = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`
-
-/* ListaInfo não tem margem própria; cada tela define o espaçamento. */
-const EnvolveContexto = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-`
-
-const ListaAlunos = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xxs};
-`
-
-const LinhaAluno = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-  border-radius: ${({ theme }) => theme.radius.sm};
-  background: ${({ theme }) => theme.colors.background};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-`
-
-interface DetalheSimuladoModalProps {
-  aberto: boolean
-  onClose: () => void
-  simuladoId: number | null
-  titulo: string
-  turma: string
-  disciplina: string
-  notaMaxima: number
-  /** Tentativas concluídas deste simulado. */
-  tentativas: Pick<SimuladoAlunoResponse, 'id' | 'alunoId' | 'nota'>[]
-  /** dataInicio do simulado, com createdAt como reserva — exibida como "Aplicado em". */
-  data?: string
-  tipoDestinacao?: TipoDestinacaoSimulado
-  /** Nome do aluno, quando o detalhamento foi aberto com um filtro de aluno aplicado (tela "Desempenho por simulado"). */
-  alunoFiltrado?: string
-}
+import { ColunaConteudo, EnvolveContexto, ListaAlunos, LinhaAluno } from './styles'
+import type { DetalheSimuladoModalProps } from './types'
 
 /**
  * Histograma de notas, alunos abaixo do limiar (gatilho de reforço manual) e
@@ -302,10 +259,10 @@ export function DetalheSimuladoModal({
       </EnvolveContexto>
 
       {carregando ? (
-        <Coluna>
+        <ColunaConteudo>
           <Skeleton $altura="160px" $raio="8px" />
           <Skeleton $altura="120px" $raio="8px" />
-        </Coluna>
+        </ColunaConteudo>
       ) : notasPercentuais.length === 0 ? (
         <EstadoVazio
           titulo="Sem tentativas concluídas"
@@ -313,7 +270,7 @@ export function DetalheSimuladoModal({
           icon={<Users />}
         />
       ) : (
-        <Coluna>
+        <ColunaConteudo>
           {alunoFiltrado ? (
             <AlertaDesempenhoCard
               tom={alunoAbaixoDoLimiar ? 'warning' : 'success'}
@@ -381,7 +338,7 @@ export function DetalheSimuladoModal({
               empty={{ titulo: 'Nenhuma questão vinculada a este simulado' }}
             />
           </Card>
-        </Coluna>
+        </ColunaConteudo>
       )}
     </Modal>
   )

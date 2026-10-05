@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import styled from 'styled-components'
 import { NotebookPen, Search } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -33,30 +32,8 @@ import { ROTULO_STATUS_MATRICULA } from '@/utils/labels'
 import type { SimuladoAlunoResponse } from '@/types/simulados'
 import type { AlunoTurma } from '@/types/turmas'
 
-type TipoFiltro = 'disciplina' | 'aluno'
-type Visao = 'ativos' | 'historico'
-
-/* 32px de padding (o padrão do Card é 24px, por isso semPadding) e 16px de gap. */
-const Lista = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.xl};
-`
-
-interface FiltroAplicado {
-  turmaId: number
-  tipo: TipoFiltro
-  especificoId: number
-}
-
-interface LinhaAcordeao {
-  chave: string
-  titulo: string
-  alunoId: number
-  disciplinaId: number
-  turmaId: number
-}
+import { Lista } from './styles'
+import type { TipoFiltro, Visao, FiltroAplicado, LinhaAcordeao } from './types'
 
 /**
  * Notas por turma, filtradas por disciplina ou por aluno, em acordeão: cada

@@ -1,47 +1,15 @@
-import { useState, type ReactNode } from 'react'
-import styled from 'styled-components'
+import { useState } from 'react'
 import { FileDown, FileSpreadsheet, Maximize2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
-import type { ItemTabelaResumo } from '@/components/graficos/TabelaResumo'
 import { exportarExcel } from '@/utils/exportacao/exportarPlanilha'
 import { exportarPdfSecaoUnica } from '@/utils/exportacao/exportarPdf'
 import { renderizarGraficoComoImagem } from '@/components/graficos/RenderizarGrafico'
 
-/* Cada seção do modal é um card próprio, como em DetalheSimuladoModal. */
-const SecaoDetalhe = styled.div`
-  margin-top: ${({ theme }) => theme.spacing.lg};
-`
-
-/* Espaço entre o resumo dos filtros aplicados e o gráfico abaixo dele. */
-const SecaoContexto = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-`
-
-interface GraficoCardProps {
-  titulo: string
-  /** Descrição opcional mostrada só no modal de detalhamento (o card compacto não tem espaço pra ela). */
-  descricao?: string
-  /** Recebe a altura (px) a usar e se é a versão interativa (dentro do modal) — o mesmo gráfico é
-   * renderizado compacto (não interativo) no card e maior (interativo) no modal. Interações como
-   * clicar numa coluna pra detalhar só devem ficar ativas quando `interativo` for true. */
-  renderGrafico: (altura: number, interativo: boolean) => ReactNode
-  /** Resumo do recorte aplicado (turma/disciplina/aluno/período) — mostrado só no modal de detalhamento, antes do gráfico. */
-  contexto?: ReactNode
-  /** Mesmo recorte de `contexto`, como texto puro — vai no cabeçalho do PDF exportado (que não sabe renderizar o ReactNode de `contexto`). */
-  contextoTexto?: string[]
-  /** Conteúdo extra abaixo do gráfico — tabela de valores exatos, ou o detalhe de uma coluna clicada
-   * (e o pedido pra selecionar uma, enquanto nada foi clicado). Mostrado só no modal de detalhamento, nunca no card compacto. */
-  detalhe?: ReactNode
-  /** Valores exatos por trás do gráfico — o que é exportado pro PDF e pro Excel. */
-  dados: ItemTabelaResumo[]
-  colunaRotulo?: string
-  colunaValor?: string
-  alturaCompacta?: number
-  alturaDetalhe?: number
-}
+import { SecaoDetalhe, SecaoContexto } from './styles'
+import type { GraficoCardProps } from './types'
 
 /**
  * Card de gráfico com "Detalhar": abre o gráfico maior num modal com

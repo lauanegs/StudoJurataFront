@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { BookOpen, Calendar, CheckCheck, Clock, Save, Send, UserX, Users } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -26,20 +25,8 @@ import { theme as tokens } from '@/styles/theme'
 import type { AlunoTurma } from '@/types/turmas'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-const Resumo = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-  flex-wrap: wrap;
-`
-
-type Aba = 'chamada' | 'conteudo'
-
-interface LinhaChamada {
-  alunoId: number
-  nome: string
-  presente: boolean
-  justificativa: string
-}
+import { Resumo } from './styles'
+import type { Aba, LinhaChamada } from './types'
 
 /**
  * Tela de registro da aula: chamada (POST em lote) e conteúdos ministrados.

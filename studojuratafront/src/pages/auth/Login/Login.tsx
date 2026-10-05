@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import { LogIn } from 'lucide-react'
 
 import { TelaComBanner } from '@/components/layout/TelaComBanner'
@@ -12,69 +11,7 @@ import { ApiError } from '@/services/api'
 import { theme as tokens } from '@/styles/theme'
 import { useFormularioLogin } from '@/formularios/autenticacao'
 
-const Cartao = styled.form`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.lg};
-
-  width: 100%;
-  max-width: 300px;
-`
-
-const Logo = styled.img`
-  width: clamp(90px, 14vh, 140px);
-  height: clamp(90px, 14vh, 140px);
-  object-fit: cover;
-`
-
-const Titulos = styled.div`
-  text-align: center;
-`
-
-const Titulo = styled.h1`
-  font-size: ${({ theme }) => theme.typography.sizes.title};
-  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  letter-spacing: -0.6px;
-`
-
-const Subtitulo = styled.p`
-  font-size: ${({ theme }) => theme.typography.sizes.md};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-const Campos = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-  width: 100%;
-`
-
-/* Decorativo: não há recuperação de senha implementada. */
-const LinkEsqueciSenha = styled.a`
-  align-self: center;
-
-  font-size: ${({ theme }) => theme.typography.sizes.xs};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  text-decoration: underline;
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.blue};
-  }
-`
-
-const Alerta = styled.p`
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
-
-  background: ${({ theme }) => theme.colors.errorBackground};
-  border-radius: ${({ theme }) => theme.radius.md};
-
-  font-size: ${({ theme }) => theme.typography.sizes.xs};
-  color: ${({ theme }) => theme.colors.errorText};
-  text-align: center;
-`
+import { Cartao, Logo, Titulos, Titulo, Subtitulo, Campos, LinkEsqueciSenha, Alerta } from './styles'
 
 export default function Login() {
   const navegar = useNavigate()

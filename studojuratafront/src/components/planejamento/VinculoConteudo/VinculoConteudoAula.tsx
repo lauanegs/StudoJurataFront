@@ -14,24 +14,7 @@ import type { ConteudoPlano } from '@/types/planejamento'
 import * as S from './styles'
 import { Stack } from '@/components/ui/Stack'
 
-interface VinculoConteudoAulaProps {
-  /** Ausente quando a aula ainda não foi salva — nesse caso o componente entra em modo local, ver conteudoPlanoIdsPendentes/onChangePendentes. */
-  aulaId?: number
-  /** Escopo do seletor: só conteúdos deste plano de ensino aparecem como opção. */
-  planoEnsinoId?: number | null
-  somenteLeitura?: boolean
-  /** Modo local (sem aulaId ainda): ids escolhidos ficam só no estado do formulário pai, comitados via API assim que a aula for salva e ganhar id — mesmo princípio de VinculoConteudoQuestao. */
-  conteudoPlanoIdsPendentes?: number[]
-  onChangePendentes?: (ids: number[]) => void
-  /**
-   * false em telas onde a aula é sempre escolhida entre as já existentes,
-   * nunca criada aqui (RegistrarAulaTurma) — sem aulaId o botão fica
-   * bloqueado em vez de abrir o modo local, porque não existe um "salvar"
-   * nesta tela capaz de comitar os pendentes depois. Default true
-   * (AulaFormulario, que cria a aula).
-   */
-  permitirModoLocal?: boolean
-}
+import type { VinculoConteudoAulaProps } from './types'
 
 /**
  * Sem `aulaId` (aula ainda não salva), a escolha fica no estado local do

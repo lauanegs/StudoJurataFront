@@ -1,14 +1,10 @@
-import type { ReactNode } from 'react'
 import { Alert } from '@mantine/core'
 import { Info } from 'lucide-react'
 
 import { theme as tokens } from '@/styles/theme'
 import { comTamanho } from '@/utils/redimensionarIcone'
 
-interface AlertaProps {
-  titulo?: string
-  children: ReactNode
-}
+import type { AlertaProps } from './types'
 
 /** Aviso informativo fixo (não é toast): orienta o preenchimento de um campo ou tela. */
 export function Alerta({ titulo, children }: AlertaProps) {

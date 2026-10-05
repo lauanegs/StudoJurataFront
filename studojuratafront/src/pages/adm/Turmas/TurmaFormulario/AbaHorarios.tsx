@@ -14,14 +14,10 @@ import { ApiError } from '@/services/api'
 import { horariosTurma } from '@/services/turmas'
 import { formatarHora } from '@/utils/format'
 import { OPCOES_DIA_SEMANA, ROTULO_DIA_SEMANA } from '@/utils/labels'
-import type { RequestResult } from '@/hooks/useRequisicao'
 import type { DiaSemana, HorarioTurma } from '@/types/turmas'
 import { LinhaCampos } from './styles'
 
-interface AbaHorariosProps {
-  turmaId: number
-  requisicaoHorarios: RequestResult<HorarioTurma[]>
-}
+import type { AbaHorariosProps } from './types'
 
 export function AbaHorarios({ turmaId, requisicaoHorarios }: AbaHorariosProps) {
   const toast = useToast()

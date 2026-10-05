@@ -1,12 +1,7 @@
 import { Search } from 'lucide-react'
 
 import { Input } from '@/components/ui/Input'
-import type { InputProps } from '@/components/ui/Input/types'
-
-interface BuscaInputProps extends Omit<InputProps, 'icon' | 'onClear' | 'label' | 'onChange'> {
-  value: string
-  onChange: (value: string) => void
-}
+import type { BuscaInputProps } from './types'
 
 export function BuscaInput({ value, onChange, placeholder = 'Buscar...', ...rest }: BuscaInputProps) {
   return (

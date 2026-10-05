@@ -1,9 +1,4 @@
-interface MoedaIconeProps {
-  /** Mesma interface dos ícones lucide — permite passar por `comTamanho` sem tratamento especial. */
-  size?: number
-  className?: string
-  'aria-hidden'?: React.AriaAttributes['aria-hidden']
-}
+import type { MoedaIconeProps } from './types'
 
 /**
  * Substitui o ícone genérico `Coins` (lucide) nos lugares que falam de

@@ -1,4 +1,3 @@
-import styled from 'styled-components'
 import { Clock } from 'lucide-react'
 
 import { AlternativaCard } from '@/components/simulados/AlternativaCard'
@@ -9,157 +8,15 @@ import { MoedaIcone } from '@/components/gamificacao/MoedaIcone'
 import { SimuladoHeader } from '@/components/simulados/SimuladoHeader'
 import { Stack } from '@/components/ui/Stack'
 import { Tag } from '@/components/ui/Tag'
-import { animacaoFlutuar } from '@/styles/animations'
 import { theme } from '@/styles/theme'
-import { corComOpacidade } from '@/utils/corComOpacidade'
 import { formatarMoedas, formatarNota, formatarTempo, letraAlternativa, nomeCurto } from '@/utils/format'
-import type { QuestaoAlunoResponse, SimuladoAlunoResponse, SimuladoResponse } from '@/types/simulados'
 import { ganhouMoedas, mensagemDoResultado } from './feedbackProva'
-import { Alternativas, Conteudo, Tela } from './styles'
-import type { QuestaoDaProva } from './types'
-
-/* Cinza esmaecido das molduras e das etiquetas neutras (mesmo tom dos cards). */
-const CINZA_ESMAECIDO = corComOpacidade(theme.colors.textTertiary, 0.15)
-
-/* Mascote ao lado do card, que estica para acompanhar a altura da imagem. */
-/* Moldura com o mesmo degradê do EnunciadoSimuladoCard. */
-const FrameResultado = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.xl};
-  flex-wrap: wrap;
-
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.xl};
-
-  background: ${theme.gradients.frame};
-  border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: ${({ theme }) => theme.shadow.floating};
-`
-
-const Mascote = styled.img`
-  width: 120px;
-  height: 180px;
-  flex-shrink: 0;
-  object-fit: contain;
-  ${animacaoFlutuar}
-`
-
-const CardResultado = styled.div<{ $altura?: string }>`
-  display: flex;
-  flex: 1;
-  align-self: ${({ $altura }) => ($altura ? 'auto' : 'stretch')};
-  height: ${({ $altura }) => $altura ?? 'auto'};
-  min-width: 280px;
-
-  padding: ${({ theme }) => theme.spacing.xl};
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${CINZA_ESMAECIDO};
-  border-radius: ${({ theme }) => theme.radius.md};
-`
-
-const ColunaResultado = styled.div<{ $centralizado?: boolean }>`
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: ${({ $centralizado }) => ($centralizado ? 'center' : 'flex-start')};
-  gap: ${({ theme }) => theme.spacing.md};
-  min-width: 0;
-`
-
-const TextoSecundario = styled.p`
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textTertiary};
-`
-
-const Etiquetas = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  width: 100%;
-`
-
-const Etiqueta = styled.span<{ $fundo: string; $claro?: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.xxs};
-
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ $fundo }) => $fundo};
-
-  font-size: ${({ theme }) => theme.typography.sizes.md};
-  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  color: ${({ $claro, theme }) => ($claro ? theme.colors.textSecondary : theme.colors.white)};
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-`
-
-const ValorMoedas = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.xxs};
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.xs} 0;
-
-  font-size: ${({ theme }) => theme.typography.sizes.xl};
-  font-weight: ${({ theme }) => theme.typography.weights.bold};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-const NomeParabens = styled.strong`
-  display: block;
-  margin-bottom: ${({ theme }) => theme.spacing.xxs};
-  font-size: ${({ theme }) => theme.typography.sizes.xl};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-const DescricaoParabens = styled.span`
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-const QuestaoCabecalho = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-`
-
-const QuestaoEnunciado = styled.p`
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-/* Sem herdar o preto padrão do texto do card (#202020) — cinza, como o
-   resto dos textos desta tela. */
-const QuestaoTitulo = styled.strong`
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
+import { Alternativas, CINZA_ESMAECIDO, Conteudo, Tela } from './styles'
+import { FrameResultado, Mascote, CardResultado, ColunaResultado, TextoSecundario, Etiquetas, Etiqueta, ValorMoedas, NomeParabens, DescricaoParabens, QuestaoCabecalho, QuestaoEnunciado, QuestaoTitulo } from './styles'
+import type { ResultadoDoSimuladoProps } from './types'
 
 /** Espelha PontuacaoAlunoService.MOEDAS_POR_SIMULADO_CONCLUIDO no back. */
 const MOEDAS_POR_SIMULADO = 10
-
-interface ResultadoDoSimuladoProps {
-  tentativa?: SimuladoAlunoResponse | null
-  simulado?: SimuladoResponse | null
-  questoes: QuestaoDaProva[]
-  respostas: QuestaoAlunoResponse[]
-  nomeDoAluno?: string | null
-  imagemSkin: string
-  diasProximaRevisao: number | null
-  aoVoltar: () => void
-}
 
 /** Tela de resultado: frase pelo desempenho, nota, moedas, próxima revisão e a correção questão a questão. */
 export function ResultadoDoSimulado({

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Archive, ArchiveRestore, ArrowRight, Check, Plus, Save } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -35,29 +34,8 @@ import { OPCOES_ATIVO_INATIVO } from '@/utils/labels'
 import type { StatusAtivoInativo } from '@/types/comum'
 import type { CursoDisciplina } from '@/types/curriculo'
 
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    grid-template-columns: 1fr;
-  }
-`
-
-/* Select + Input + botão numa linha, como em TurmaFormulario. */
-const LinhaVinculo = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr auto;
-  align-items: end;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    grid-template-columns: 1fr;
-  }
-`
-
-type Aba = 'dados' | 'grade'
+import { Grade, LinhaVinculo } from './styles'
+import type { Aba } from './types'
 
 const PASSOS: { value: Aba; label: string; description: string }[] = [
   { value: 'dados', label: 'Dados do curso', description: 'Nome, descrição e situação' },

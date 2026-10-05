@@ -1,40 +1,14 @@
 import { useState } from 'react'
-import styled from 'styled-components'
 import { Filter, Search, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
-import type { SelectOption } from '@/components/ui/Select'
 import { Stack } from '@/components/ui/Stack'
 
-/* Campos num modal: cinco numa linha do Header ficavam apertados. Só filtra ao clicar "Buscar". */
-const GradePeriodo = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-interface FiltrosDesempenhoProps {
-  opcoesTurmas: SelectOption<number>[]
-  opcoesDisciplinas: SelectOption<number>[]
-  opcoesAlunos: SelectOption<number>[]
-  turmaId: number | null
-  disciplinaId: number | null
-  alunoId: number | null
-  dataInicio: string
-  dataFim: string
-  carregandoTurmas: boolean
-  carregandoAlunos: boolean
-  onTurmaChange: (valor: number | null) => void
-  onDisciplinaChange: (valor: number | null) => void
-  onAlunoChange: (valor: number | null) => void
-  onDataInicioChange: (valor: string) => void
-  onDataFimChange: (valor: string) => void
-  onBuscar: () => void
-  onLimpar: () => void
-}
+import { GradePeriodo } from './styles'
+import type { FiltrosDesempenhoProps } from './types'
 
 /** Filtros compartilhados pelas telas de detalhamento de desempenho. */
 export function FiltrosDesempenho({

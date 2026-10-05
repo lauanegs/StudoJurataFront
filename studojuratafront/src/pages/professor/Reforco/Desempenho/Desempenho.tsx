@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
 import {
   ArrowRight,
   BarChart3,
@@ -52,28 +51,7 @@ import { agruparPorSimulado, mediaPorDisciplina, tendenciaPorDisciplina as calcu
 import { DetalheSimuladoModal } from '@/pages/professor/Reforco/comum/DetalheSimuladoModal/DetalheSimuladoModal'
 import { montarSecoesRelatorio } from '@/pages/professor/Reforco/comum/relatorioDesempenho'
 
-// Gap igual ao padding do Card. Sempre 4 colunas em telas largas (auto-fill
-// colocaria uma 5ª/6ª), colapsando para 2 e 1 em telas estreitas.
-const GradeDesempenho = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
-    grid-template-columns: 1fr;
-  }
-`
-
-/* No card, turma e disciplina são tags com ícone; o texto por extenso fica no modal. */
-const InfoSimulado = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.xs};
-`
+import { GradeDesempenho, InfoSimulado } from './styles'
 
 /** Base: tentativas concluídas dos simulados das turmas do professor (GET /professores/{id}/desempenho). */
 export default function Desempenho() {

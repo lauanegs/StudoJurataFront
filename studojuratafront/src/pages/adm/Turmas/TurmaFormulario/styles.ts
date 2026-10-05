@@ -11,3 +11,14 @@ export const LinhaAcaoFlutuante = styled.div`
 `
 
 export { LinhaCampos } from '@/components/ui/LinhaCampos'
+
+/* Três campos por linha fixos: com auto-fit o número de colunas variaria com a tela. */
+export const Grade = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    grid-template-columns: 1fr;
+  }
+`

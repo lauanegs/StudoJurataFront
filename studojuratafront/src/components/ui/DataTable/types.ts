@@ -49,3 +49,5 @@ export interface DataTableProps<T> {
   descricao?: string
   linhasSkeleton?: number
 }
+
+export type Direcao = 'asc' | 'desc'

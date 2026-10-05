@@ -10,22 +10,17 @@ import { Select } from '@/components/ui/Select'
 import { Tag } from '@/components/ui/Tag'
 import { useConfirm } from '@/contexts/confirmContexto'
 import { useToast } from '@/contexts/toastContexto'
-import { useRequisicao, type RequestResult } from '@/hooks/useRequisicao'
+import { useRequisicao } from '@/hooks/useRequisicao'
 import { useFormularioVinculoTurma } from '@/formularios/turmas'
 import { ApiError } from '@/services/api'
 import { cursoDisciplinas, disciplinas as servicoDisciplinas } from '@/services/curriculo'
 import { professores as servicoProfessores } from '@/services/pessoas'
 import { turmaDisciplinas } from '@/services/turmas'
 import type { Disciplina } from '@/types/curriculo'
-import type { Turma, TurmaDisciplina } from '@/types/turmas'
+import type { TurmaDisciplina } from '@/types/turmas'
 import { LinhaCampos } from './styles'
 
-interface AbaDisciplinasProps {
-  turma: Turma
-  cursoId: number | null
-  vinculosDaTurma: TurmaDisciplina[]
-  requisicaoVinculos: RequestResult<TurmaDisciplina[]>
-}
+import type { AbaDisciplinasProps } from './types'
 
 export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinculos }: AbaDisciplinasProps) {
   const toast = useToast()

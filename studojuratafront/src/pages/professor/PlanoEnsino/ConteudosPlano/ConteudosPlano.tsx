@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
 import { Archive, BookOpen, ListTree, Pencil, Plus, Upload } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { CheckBox } from '@/components/ui/CheckBox'
 import { DataTable } from '@/components/ui/DataTable'
-import { Header, SubtituloItem, CamposFiltro, CampoFiltro } from '@/components/ui/Header'
+import { Header, SubtituloItem, CampoFiltro } from '@/components/ui/Header'
 import { Modal } from '@/components/ui/Modal'
 import { Tag } from '@/components/ui/Tag'
 import { ErroCarregamento } from '@/components/feedback/ErroCarregamento'
@@ -29,12 +28,7 @@ import { formatarData, normalizar } from '@/utils/format'
 import type { ConteudoPlano } from '@/types/planejamento'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-/* flex-shrink:0 nos botões para o texto não cortar quando a linha aperta. */
-const CamposCabecalho = styled(CamposFiltro)`
-  > button {
-    flex-shrink: 0;
-  }
-`
+import { CamposCabecalho } from './styles'
 
 export default function ConteudosPlano() {
   const { planoId } = useParams()

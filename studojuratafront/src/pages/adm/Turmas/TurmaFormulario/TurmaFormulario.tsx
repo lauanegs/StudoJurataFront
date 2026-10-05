@@ -26,8 +26,7 @@ import { AbaHorarios } from './AbaHorarios'
 import { DadosTurma } from './DadosTurma'
 import { rotaDaTurmaCriada } from './destinoAposSalvar'
 
-type Aba = 'data' | 'horarios' | 'disciplinas' | 'alunos' | 'historico'
-type Passo = 'data' | 'horarios' | 'disciplinas'
+import type { Aba, Passo } from './types'
 
 const PASSOS: { value: Passo; label: string; description: string }[] = [
   { value: 'data', label: 'Dados da turma', description: 'Curso, capacidade e datas' },
