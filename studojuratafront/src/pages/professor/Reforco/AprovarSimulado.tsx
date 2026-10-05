@@ -38,6 +38,7 @@ import {
 } from '../../../services/simulados'
 import { turmas as servicoTurmas } from '../../../services/turmas'
 import { formatarData, paraInputDataHora } from '../../../utils/format'
+import { questoesPendentesDoSimulado } from './aprovacaoDeQuestoes'
 import { OPCOES_DESTINACAO, ROTULO_MOTIVO_RECOMENDACAO } from '../../../utils/labels'
 
 type Aba = 'configuracao' | 'questoes'
@@ -101,31 +102,12 @@ export default function AprovarSimulado() {
     requisicaoVinculos.data && requisicaoTodasQuestoes.data && requisicaoAlternativas.data ? idSimulado : null
 
   useHidratar(prontoParaHidratar, () => {
-    const idsDoSimulado = new Set(
-      (requisicaoVinculos.data ?? [])
-        .filter((vinculo) => vinculo.simuladoId === idSimulado)
-        .map((vinculo) => vinculo.questaoId),
+    const pendentes = questoesPendentesDoSimulado(
+      requisicaoVinculos.data ?? [],
+      requisicaoTodasQuestoes.data ?? [],
+      requisicaoAlternativas.data ?? [],
+      idSimulado,
     )
-
-    const pendentes = (requisicaoTodasQuestoes.data ?? [])
-      .filter((questao) => idsDoSimulado.has(questao.id) && questao.status === 'PENDENTE')
-      .sort((a, b) => a.id - b.id)
-      .map((questao): QuestaoEditavel => ({
-        id: questao.id,
-        enunciado: questao.enunciado,
-        tipo: questao.tipo,
-        disciplinaId: questao.disciplinaId ?? null,
-        nivelDificuldade: questao.nivelDificuldade ?? null,
-        status: questao.status,
-        alternativas: (requisicaoAlternativas.data ?? [])
-          .filter((alternativa) => alternativa.questaoId === questao.id)
-          .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-          .map((alternativa) => ({
-            id: alternativa.id,
-            texto: alternativa.texto,
-            correta: Boolean(alternativa.correta),
-          })),
-      }))
 
     setQuestoes(pendentes)
   })
