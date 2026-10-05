@@ -1,5 +1,5 @@
-import type { LetterState } from '../../components/simulados/LetterBadge'
-import type { QuestionProgressStatus } from '../../components/simulados/ProgressoSimuladoCard'
+import type { LetterState } from '../../../components/simulados/LetterBadge'
+import type { QuestionProgressStatus } from '../../../components/simulados/ProgressoSimuladoCard'
 
 /**
  * Feedback da prova em andamento.

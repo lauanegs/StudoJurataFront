@@ -93,7 +93,7 @@ const ProfessorRevisarQuestao = lazy(() => import('../pages/professor/Reforco/Re
 // --- Aluno -----------------------------------------------------------------
 const AlunoHome = lazy(() => import('../pages/aluno/Home'))
 const AlunoReforco = lazy(() => import('../pages/aluno/Reforco'))
-const AlunoSimulado = lazy(() => import('../pages/aluno/Simulado'))
+const AlunoSimulado = lazy(() => import('../pages/aluno/Simulado/Simulado'))
 const AlunoNotas = lazy(() => import('../pages/aluno/Notas'))
 const AlunoPerfil = lazy(() => import('../pages/aluno/Perfil'))
 const AlunoSelecionarCurso = lazy(() => import('../pages/aluno/SelecionarCurso'))

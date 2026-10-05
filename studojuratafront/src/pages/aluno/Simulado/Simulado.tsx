@@ -1,223 +1,37 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import styled from 'styled-components'
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Flag } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Flag } from 'lucide-react'
 
-import { AlternativaButton } from '../../components/simulados/AlternativaButton'
-import { AlternativaCard } from '../../components/simulados/AlternativaCard'
-import { AlternativaVerdadeiroFalso } from '../../components/simulados/AlternativaVerdadeiroFalso'
-import { Button } from '../../components/ui/Button'
-import { Card } from '../../components/ui/Card'
-import { EnunciadoSimuladoCard } from '../../components/simulados/EnunciadoSimuladoCard'
-import { MoedaIcone } from '../../components/gamificacao/MoedaIcone'
+import { AlternativaButton } from '../../../components/simulados/AlternativaButton'
+import { AlternativaVerdadeiroFalso } from '../../../components/simulados/AlternativaVerdadeiroFalso'
+import { Button } from '../../../components/ui/Button'
+import { EnunciadoSimuladoCard } from '../../../components/simulados/EnunciadoSimuladoCard'
 import {
   ProgressoSimuladoCard,
   type QuestionProgressStatus,
-} from '../../components/simulados/ProgressoSimuladoCard'
-import { SimuladoHeader } from '../../components/simulados/SimuladoHeader'
-import { Tag } from '../../components/ui/Tag'
-import { Stack } from '../../components/ui/Stack'
-import { ErroCarregamento } from '../../components/feedback/ErroCarregamento'
-import { SkeletonCartao } from '../../components/feedback/Skeleton'
-import { useConfirm } from '../../contexts/confirmContexto'
-import { useToast } from '../../contexts/toastContexto'
-import { useAuth } from '../../hooks/useAuth'
-import { useAlunoLogado, useSkinEquipadaDoAluno } from '../../hooks/usePerfilLogado'
-import { useRequisicao } from '../../hooks/useRequisicao'
-import { ApiError } from '../../services/api'
+} from '../../../components/simulados/ProgressoSimuladoCard'
+import { SimuladoHeader } from '../../../components/simulados/SimuladoHeader'
+import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
+import { SkeletonCartao } from '../../../components/feedback/Skeleton'
+import { useConfirm } from '../../../contexts/confirmContexto'
+import { useToast } from '../../../contexts/toastContexto'
+import { useAuth } from '../../../hooks/useAuth'
+import { useAlunoLogado, useSkinEquipadaDoAluno } from '../../../hooks/usePerfilLogado'
+import { useRequisicao } from '../../../hooks/useRequisicao'
+import { ApiError } from '../../../services/api'
 import {
   questaoAlunos,
   simuladoAlunos,
   simulados as servicoSimulados,
-} from '../../services/simulados'
-import { formatarMoedas, formatarNota, formatarTempo, letraAlternativa, nomeCurto } from '../../utils/format'
-import { resolverImagemSkin } from '../../utils/skins'
-import { animacaoFlutuar } from '../../styles/animations'
-import { theme } from '../../styles/theme'
-import { corComOpacidade } from '../../utils/corComOpacidade'
-import type { AlternativaResponse, ConferenciaDaQuestao, TipoQuestao } from '../../types/simulados'
-import {
-  acertouVisivel,
-  correcaoDisponivel,
-  estadoDaAlternativa,
-  ganhouMoedas,
-  mensagemDoResultado,
-  statusDaQuestaoConfirmada,
-} from './feedbackProva'
-
-/* Cinza esmaecido das molduras e das etiquetas neutras (mesmo tom dos cards). */
-const CINZA_ESMAECIDO = corComOpacidade(theme.colors.textTertiary, 0.15)
-
-/* Só o conteúdo abaixo do SimuladoHeader tem padding e largura limitada. */
-const Tela = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  width: 100%;
-  min-height: 100vh;
-`
-
-const Conteudo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing.md};
-`
-
-const Alternativas = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xxs};
-`
-
-const Rodape = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.sm};
-  flex-wrap: wrap;
-`
-
-/* Mascote ao lado do card, que estica para acompanhar a altura da imagem. */
-/* Moldura com o mesmo degradê do EnunciadoSimuladoCard. */
-const FrameResultado = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.xl};
-  flex-wrap: wrap;
-
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.xl};
-
-  background: ${theme.gradients.frame};
-  border-radius: ${({ theme }) => theme.radius.lg};
-  box-shadow: ${({ theme }) => theme.shadow.floating};
-`
-
-const Mascote = styled.img`
-  width: 120px;
-  height: 180px;
-  flex-shrink: 0;
-  object-fit: contain;
-  ${animacaoFlutuar}
-`
-
-const CardResultado = styled.div<{ $altura?: string }>`
-  display: flex;
-  flex: 1;
-  align-self: ${({ $altura }) => ($altura ? 'auto' : 'stretch')};
-  height: ${({ $altura }) => $altura ?? 'auto'};
-  min-width: 280px;
-
-  padding: ${({ theme }) => theme.spacing.xl};
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${CINZA_ESMAECIDO};
-  border-radius: ${({ theme }) => theme.radius.md};
-`
-
-const ColunaResultado = styled.div<{ $centralizado?: boolean }>`
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: ${({ $centralizado }) => ($centralizado ? 'center' : 'flex-start')};
-  gap: ${({ theme }) => theme.spacing.md};
-  min-width: 0;
-`
-
-const TextoSecundario = styled.p`
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textTertiary};
-`
-
-const Etiquetas = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-  width: 100%;
-`
-
-const Etiqueta = styled.span<{ $fundo: string; $claro?: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.xxs};
-
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ $fundo }) => $fundo};
-
-  font-size: ${({ theme }) => theme.typography.sizes.md};
-  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  color: ${({ $claro, theme }) => ($claro ? theme.colors.textSecondary : theme.colors.white)};
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-`
-
-const ValorMoedas = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.xxs};
-  width: 100%;
-  padding: ${({ theme }) => theme.spacing.xs} 0;
-
-  font-size: ${({ theme }) => theme.typography.sizes.xl};
-  font-weight: ${({ theme }) => theme.typography.weights.bold};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-const NomeParabens = styled.strong`
-  display: block;
-  margin-bottom: ${({ theme }) => theme.spacing.xxs};
-  font-size: ${({ theme }) => theme.typography.sizes.xl};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-const DescricaoParabens = styled.span`
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-const QuestaoCabecalho = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-`
-
-const QuestaoEnunciado = styled.p`
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-/* Sem herdar o preto padrão do texto do card (#202020) — cinza, como o
-   resto dos textos desta tela. */
-const QuestaoTitulo = styled.strong`
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-/** Espelha PontuacaoAlunoService.MOEDAS_POR_SIMULADO_CONCLUIDO no back. */
-const MOEDAS_POR_SIMULADO = 10
-
-interface QuestaoDaProva {
-  questaoId: number
-  enunciado: string
-  tipo: TipoQuestao
-  alternativas: AlternativaResponse[]
-}
+} from '../../../services/simulados'
+import { letraAlternativa } from '../../../utils/format'
+import { resolverImagemSkin } from '../../../utils/skins'
+import type { ConferenciaDaQuestao } from '../../../types/simulados'
+import { acertouVisivel, correcaoDisponivel, estadoDaAlternativa, statusDaQuestaoConfirmada } from './feedbackProva'
+import { montarQuestoesDaProva, questaoAcertada, questaoRespondida } from './provaDoAluno'
+import { ResultadoDoSimulado } from './ResultadoDoSimulado'
+import { Alternativas, Conteudo, Rodape, Tela } from './styles'
+import type { QuestaoDaProva } from './tipos'
 
 /**
  * Execução do simulado pelo aluno.
@@ -281,49 +95,16 @@ export default function Simulado() {
 
   const provaTentativa = requisicaoProva.data
 
-  /**
-   * Monta a prova já no formato que a tela usa. O `correta` de cada alternativa
-   * vem do gabarito do servidor, que só existe depois de concluir — durante a
-   * prova nenhuma alternativa chega marcada como correta.
-   */
-  const questoes = useMemo<QuestaoDaProva[]>(() => {
-    return (provaTentativa?.questoes ?? []).map((questao) => ({
-      questaoId: questao.questaoId,
-      enunciado: questao.enunciado,
-      tipo: questao.tipo,
-      alternativas: questao.alternativas.map((alternativa) => ({
-        id: alternativa.id,
-        questaoId: questao.questaoId,
-        texto: alternativa.texto,
-        ordem: alternativa.ordem,
-        correta:
-          provaTentativa?.gabarito?.[String(alternativa.id)] === true ||
-          Boolean(conferencias[questao.questaoId]?.alternativasCorretasIds.includes(alternativa.id)),
-      })),
-    }))
-  }, [provaTentativa, conferencias])
+  const questoes = useMemo<QuestaoDaProva[]>(
+    () => montarQuestoesDaProva(provaTentativa, conferencias),
+    [provaTentativa, conferencias],
+  )
 
   const tempoLimiteSegundos = simulado?.tempoLimite ? simulado.tempoLimite * 60 : null
   const restante = tempoLimiteSegundos !== null ? Math.max(0, tempoLimiteSegundos - segundos) : null
 
-  // V/F só conta como respondida com todas as afirmações julgadas.
-  function estaRespondida(questao: QuestaoDaProva) {
-    if (questao.tipo === 'VERDADEIRO_FALSO') {
-      const marcadas = respostasVF[questao.questaoId] ?? {}
-      return questao.alternativas.length > 0 && questao.alternativas.every((a) => a.id in marcadas)
-    }
-    return typeof respostas[questao.questaoId] === 'number'
-  }
-
-  // Só acerta a questão quando TODAS as afirmações batem com o gabarito.
-  function acertouQuestao(questao: QuestaoDaProva) {
-    if (questao.tipo === 'VERDADEIRO_FALSO') {
-      const marcadas = respostasVF[questao.questaoId] ?? {}
-      return questao.alternativas.every((a) => marcadas[a.id] === Boolean(a.correta))
-    }
-    const escolhida = questao.alternativas.find((a) => a.id === respostas[questao.questaoId])
-    return Boolean(escolhida?.correta)
-  }
+  const estaRespondida = (questao: QuestaoDaProva) => questaoRespondida(questao, respostas, respostasVF)
+  const acertouQuestao = (questao: QuestaoDaProva) => questaoAcertada(questao, respostas, respostasVF)
 
   // 'saida' finaliza como 'manual' no back; só muda o aviso e não mostra a correção.
   const finalizar = useCallback(
@@ -593,167 +374,17 @@ export default function Simulado() {
   }
 
   if (concluido) {
-    const tentativa = requisicaoTentativa.data
-    const acertos = tentativa?.quantidadeAcertos ?? 0
-    const erradas = questoes.length - acertos
-
-    const respostasDoAluno = new Map(
-      (requisicaoRespostas.data ?? []).map((resposta) => [resposta.questaoId, resposta]),
-    )
-    const respondidas = questoes.filter((questao) => {
-      const resposta = respostasDoAluno.get(questao.questaoId)
-      return (
-        resposta?.respondida ??
-        (questao.tipo === 'VERDADEIRO_FALSO'
-          ? (resposta?.alternativasVerdadeirasIds?.length ?? 0) > 0
-          : resposta?.alternativaId != null)
-      )
-    }).length
-    const mensagem = mensagemDoResultado({
-      nome: nomeCurto(usuario?.nomePessoa) ?? '',
-      acertos,
-      total: questoes.length,
-      respondidas,
-    })
-    const rendeuMoedas = ganhouMoedas(respondidas, questoes.length)
-
     return (
-      <Tela>
-        <SimuladoHeader
-          titulo={simulado?.titulo ?? 'Simulado'}
-          segundos={tentativa?.tempoGasto ?? 0}
-          onExit={() => navegar('/aluno/reforco')}
-          rotuloSair="Voltar"
-        />
-
-        <Conteudo>
-        <FrameResultado>
-          <Mascote src={imagemSkin} alt="" aria-hidden="true" />
-
-          <CardResultado>
-            <ColunaResultado>
-              <div>
-                <NomeParabens>{mensagem.titulo}</NomeParabens>
-                <DescricaoParabens>{mensagem.descricao}</DescricaoParabens>
-              </div>
-
-              <Etiquetas>
-                {/* Mesmo verde/vermelho das alternativas (LetterBadge correct/incorrect) —
-                    tokens.gradients.success/danger, não um verde/vermelho à parte. */}
-                <Etiqueta $fundo={CINZA_ESMAECIDO} $claro>
-                  Nota: {formatarNota(tentativa?.nota)}/{formatarNota(simulado?.notaMaxima ?? 10)}
-                </Etiqueta>
-                <Etiqueta $fundo={theme.gradients.success}>{acertos} acerto(s)</Etiqueta>
-                <Etiqueta $fundo={theme.gradients.danger}>{erradas} erro(s)</Etiqueta>
-                <Etiqueta $fundo={CINZA_ESMAECIDO} $claro>
-                  <Clock aria-hidden="true" />
-                  {formatarTempo(tentativa?.tempoGasto)}
-                </Etiqueta>
-              </Etiquetas>
-            </ColunaResultado>
-          </CardResultado>
-
-          <CardResultado $altura="322px">
-            <ColunaResultado $centralizado>
-              {rendeuMoedas ? (
-                <>
-                  <TextoSecundario>Para comemorar, aqui estão algumas moedas!</TextoSecundario>
-
-                  <ValorMoedas>
-                    + {formatarMoedas(MOEDAS_POR_SIMULADO)}
-                    <MoedaIcone size={32} aria-hidden="true" />
-                  </ValorMoedas>
-                </>
-              ) : (
-                <TextoSecundario>
-                  Você deixou questões em branco, então desta vez não houve ganho de moedas. Responda
-                  todas as questões no próximo simulado para ganhar!
-                </TextoSecundario>
-              )}
-
-              <TextoSecundario>
-                {diasProximaRevisao === null
-                  ? 'Continue praticando os simulados disponíveis, até a próxima!'
-                  : diasProximaRevisao <= 0
-                    ? 'Este conteúdo já está disponível para revisão — até logo!'
-                    : `Este conteúdo voltará em ${diasProximaRevisao} dia${diasProximaRevisao === 1 ? '' : 's'} para sua revisão, então até logo!`}
-              </TextoSecundario>
-
-              <TextoSecundario>
-                Até lá, continue no ritmo e faça os simulados que já estão prontos!
-              </TextoSecundario>
-
-              <Button variant="info" noBorder fullWidth onClick={() => navegar('/aluno/reforco')}>
-                Ver simulados para realizar
-              </Button>
-            </ColunaResultado>
-          </CardResultado>
-        </FrameResultado>
-
-        <Stack gap="md">
-          {questoes.map((questao, indice) => {
-            const resposta = respostasDoAluno.get(questao.questaoId)
-
-            const ehVF = questao.tipo === 'VERDADEIRO_FALSO'
-            const marcadasVerdadeiras = new Set(resposta?.alternativasVerdadeirasIds ?? [])
-            // Tentativas antigas têm `respondida` nulo: sem fallback apareceriam
-            // "Em branco". Em ALTERNATIVAS, alternativaId presente é confiável.
-            const respondida =
-              resposta?.respondida ??
-              (ehVF ? (resposta?.alternativasVerdadeirasIds?.length ?? 0) > 0 : resposta?.alternativaId != null)
-
-            return (
-              <Card key={questao.questaoId}>
-                <QuestaoCabecalho>
-                  <QuestaoTitulo>Questão {indice + 1}</QuestaoTitulo>
-
-                  {!respondida ? (
-                    <Tag variant="neutral">Em branco</Tag>
-                  ) : resposta?.acertou ? (
-                    <Tag variant="success">
-                      Você acertou
-                    </Tag>
-                  ) : (
-                    <Tag variant="error">
-                      Você errou
-                    </Tag>
-                  )}
-                </QuestaoCabecalho>
-
-                <QuestaoEnunciado>{questao.enunciado}</QuestaoEnunciado>
-
-                <Alternativas>
-                  {ehVF
-                    ? questao.alternativas.map((alternativa) => (
-                        <AlternativaVerdadeiroFalso
-                          key={alternativa.id}
-                          texto={alternativa.texto}
-                          valor={respondida ? marcadasVerdadeiras.has(alternativa.id) : null}
-                          revelado
-                          correta={alternativa.correta}
-                          disabled
-                        />
-                      ))
-                    : questao.alternativas.map((alternativa, posicao) => {
-                        const marcada = alternativa.id === resposta?.alternativaId
-
-                        return (
-                          <AlternativaCard
-                            key={alternativa.id}
-                            letra={letraAlternativa(posicao)}
-                            texto={alternativa.texto}
-                            status={alternativa.correta ? 'correct' : marcada ? 'incorrect' : 'neutral'}
-                            legenda=""
-                          />
-                        )
-                      })}
-                </Alternativas>
-              </Card>
-            )
-          })}
-        </Stack>
-        </Conteudo>
-      </Tela>
+      <ResultadoDoSimulado
+        tentativa={requisicaoTentativa.data}
+        simulado={simulado}
+        questoes={questoes}
+        respostas={requisicaoRespostas.data ?? []}
+        nomeDoAluno={usuario?.nomePessoa}
+        imagemSkin={imagemSkin}
+        diasProximaRevisao={diasProximaRevisao}
+        aoVoltar={() => navegar('/aluno/reforco')}
+      />
     )
   }
 
