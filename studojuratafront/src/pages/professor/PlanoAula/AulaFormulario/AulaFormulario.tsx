@@ -20,12 +20,12 @@ import { useConfirm } from '@/contexts/confirm/confirmContexto'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { aulas as servicoAulas, planosAula } from '@/services/planejamento'
-import { horariosTurma } from '@/services/turmas'
+import { ApiError } from '@/dominios/comum/api'
+import { aulas as servicoAulas, planosAula } from '@/dominios/planejamento/service'
+import { horariosTurma } from '@/dominios/turmas/service'
 import { formatarCargaHoraria, formatarHora, horaParaMinutos, horasParaHHmm } from '@/utils/format'
 import { ROTULO_DIA_SEMANA_CURTO } from '@/utils/labels'
-import { useFormularioAula } from '@/formularios/planejamento'
+import { useFormularioAula } from '@/dominios/planejamento/formulario'
 
 export default function AulaFormulario() {
   const { planoAulaId, aulaId } = useParams()

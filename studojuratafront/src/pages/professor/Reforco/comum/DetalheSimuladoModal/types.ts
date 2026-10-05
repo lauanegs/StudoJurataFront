@@ -1,4 +1,4 @@
-import type { SimuladoAlunoResponse, TipoDestinacaoSimulado } from '@/types/simulados'
+import type { SimuladoAlunoResponse, TipoDestinacaoSimulado } from '@/dominios/simulados/types'
 
 export interface DetalheSimuladoModalProps {
   aberto: boolean

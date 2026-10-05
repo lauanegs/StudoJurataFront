@@ -18,15 +18,15 @@ import { useToast } from '@/contexts/toast/toastContexto'
 import { useAuth } from '@/hooks/useAuth'
 import { useAlunoLogado, useSkinEquipadaDoAluno } from '@/hooks/usePerfilLogado'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
+import { ApiError } from '@/dominios/comum/api'
 import {
   questaoAlunos,
   simuladoAlunos,
   simulados as servicoSimulados,
-} from '@/services/simulados'
+} from '@/dominios/simulados/service'
 import { letraAlternativa } from '@/utils/format'
 import { resolverImagemSkin } from '@/utils/skins'
-import type { ConferenciaDaQuestao } from '@/types/simulados'
+import type { ConferenciaDaQuestao } from '@/dominios/simulados/types'
 import { acertouVisivel, correcaoDisponivel, estadoDaAlternativa, statusDaQuestaoConfirmada } from './feedbackProva'
 import { montarQuestoesDaProva, questaoAcertada, questaoRespondida } from './provaDoAluno'
 import { ResultadoDoSimulado } from './ResultadoDoSimulado'

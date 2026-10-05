@@ -1,9 +1,9 @@
-import type { AlunoTurma } from '@/types/turmas'
+import type { AlunoTurma } from '@/dominios/turmas/types'
 
-import type { QuestaoResponse } from '@/types/simulados'
+import type { QuestaoResponse } from '@/dominios/simulados/types'
 
 import type { SelectOption } from '@/components/ui/Select'
-import type { FormularioSimulado } from '@/formularios/simulados'
+import type { FormularioSimulado } from '@/dominios/simulados/formulario'
 
 import type { ErrosQuestao, QuestaoEditavel } from '@/components/simulados/QuestaoEditor/types'
 

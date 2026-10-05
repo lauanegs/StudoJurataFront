@@ -8,7 +8,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import { LinhaCampos } from '@/components/ui/LinhaCampos'
 import { Select } from '@/components/ui/Select'
 import { OPCOES_PARENTESCO, ROTULO_PARENTESCO } from '@/utils/labels'
-import type { Parentesco } from '@/types/pessoas'
+import type { Parentesco } from '@/dominios/pessoas/types'
 
 import type { ItemVinculo, VinculoResponsavelAlunoProps } from './types'
 

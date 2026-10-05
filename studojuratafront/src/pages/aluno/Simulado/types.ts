@@ -1,6 +1,6 @@
-import type { QuestaoAlunoResponse, SimuladoAlunoResponse, SimuladoResponse } from '@/types/simulados'
+import type { QuestaoAlunoResponse, SimuladoAlunoResponse, SimuladoResponse } from '@/dominios/simulados/types'
 
-import type { AlternativaResponse, TipoQuestao } from '@/types/simulados'
+import type { AlternativaResponse, TipoQuestao } from '@/dominios/simulados/types'
 
 /** Questão da prova no formato que a tela usa (`correta` vem do gabarito, que só existe após conferir ou finalizar). */
 export interface QuestaoDaProva {

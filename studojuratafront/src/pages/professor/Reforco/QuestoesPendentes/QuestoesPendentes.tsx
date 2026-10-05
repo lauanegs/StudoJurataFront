@@ -14,9 +14,9 @@ import { useToast } from '@/contexts/toast/toastContexto'
 import { useDebounce } from '@/hooks/useDebounce'
 import { usePaginacao } from '@/hooks/usePaginacao'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { disciplinas as servicoDisciplinas } from '@/services/curriculo'
-import { questoes as servicoQuestoes } from '@/services/simulados'
+import { ApiError } from '@/dominios/comum/api'
+import { disciplinas as servicoDisciplinas } from '@/dominios/curriculo/service'
+import { questoes as servicoQuestoes } from '@/dominios/simulados/service'
 import { normalizar } from '@/utils/format'
 import {
   ROTULO_NIVEL_DIFICULDADE,
@@ -26,7 +26,7 @@ import {
   NIVEL_DIFICULDADE_VARIANT,
   STATUS_QUESTAO_VARIANT,
 } from '@/utils/labels'
-import type { QuestaoResponse } from '@/types/simulados'
+import type { QuestaoResponse } from '@/dominios/simulados/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
 import type { Aba } from './types'

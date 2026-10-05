@@ -1,4 +1,4 @@
-import type { FormularioPessoa } from '@/formularios/pessoas'
+import type { FormularioPessoa } from '@/dominios/pessoas/formulario'
 
 export interface PessoaCamposProps {
   form: FormularioPessoa

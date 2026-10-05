@@ -16,14 +16,14 @@ import { EstadoVazio } from '@/components/feedback/EstadoVazio'
 import { Skeleton, SkeletonCartao } from '@/components/feedback/Skeleton'
 import { useAuth } from '@/hooks/useAuth'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { eventos as servicoEventos } from '@/services/eventos'
-import { disciplinas as servicoDisciplinas } from '@/services/curriculo'
+import { eventos as servicoEventos } from '@/dominios/eventos/service'
+import { disciplinas as servicoDisciplinas } from '@/dominios/curriculo/service'
 import {
   alunos as servicoAlunos,
   pessoas as servicoPessoas,
   professores as servicoProfessores,
-} from '@/services/pessoas'
-import { turmas as servicoTurmas } from '@/services/turmas'
+} from '@/dominios/pessoas/service'
+import { turmas as servicoTurmas } from '@/dominios/turmas/service'
 import { nomeCurto } from '@/utils/format'
 import { aniversariantesDaSemana } from '@/utils/aniversariantes'
 

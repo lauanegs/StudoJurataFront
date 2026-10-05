@@ -16,16 +16,16 @@ import { useToast } from '@/contexts/toast/toastContexto'
 import { useEscola } from '@/hooks/useEscola'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
+import { ApiError } from '@/dominios/comum/api'
 import {
   alunos as servicoAlunos,
   pessoas as servicoPessoas,
   professores as servicoProfessores,
   usuarios as servicoUsuarios,
-} from '@/services/pessoas'
-import { useFormularioUsuario } from '@/formularios/pessoas'
+} from '@/dominios/pessoas/service'
+import { useFormularioUsuario } from '@/dominios/pessoas/formulario'
 import { OPCOES_ATIVO_INATIVO, OPCOES_TIPO_USUARIO } from '@/utils/labels'
-import type { StatusAtivoInativo, TipoUsuario } from '@/types/comum'
+import type { StatusAtivoInativo, TipoUsuario } from '@/dominios/comum/types'
 
 import { Grade } from './styles'
 

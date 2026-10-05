@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import type { TipoUsuario } from '@/types/comum'
+import type { TipoUsuario } from '@/dominios/comum/types'
 
 export interface ItemMenu {
   label: string

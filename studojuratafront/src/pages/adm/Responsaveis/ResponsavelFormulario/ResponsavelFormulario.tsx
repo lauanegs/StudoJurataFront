@@ -13,17 +13,17 @@ import { useConfirm } from '@/contexts/confirm/confirmContexto'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
+import { ApiError } from '@/dominios/comum/api'
 import {
   alunos as servicoAlunos,
   pessoas as servicoPessoas,
   responsaveis as servicoResponsaveis,
   vinculosResponsavel,
-} from '@/services/pessoas'
-import type { Parentesco } from '@/types/pessoas'
+} from '@/dominios/pessoas/service'
+import type { Parentesco } from '@/dominios/pessoas/types'
 import { VinculoResponsavelAluno } from '@/components/pessoas/VinculoResponsavelAluno'
 import { PessoaCampos } from '@/components/pessoas/PessoaCampos'
-import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '@/formularios/pessoas'
+import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '@/dominios/pessoas/formulario'
 
 export default function ResponsavelFormulario() {
   const { id } = useParams()

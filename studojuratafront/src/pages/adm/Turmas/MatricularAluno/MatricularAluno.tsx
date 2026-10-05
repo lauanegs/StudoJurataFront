@@ -18,21 +18,21 @@ import { SkeletonCartao } from '@/components/feedback/Skeleton'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
+import { ApiError } from '@/dominios/comum/api'
 import {
   alunos as servicoAlunos,
   pessoas as servicoPessoas,
   responsaveis as servicoResponsaveis,
   vinculosResponsavel,
-} from '@/services/pessoas'
-import { matriculas, turmas as servicoTurmas } from '@/services/turmas'
+} from '@/dominios/pessoas/service'
+import { matriculas, turmas as servicoTurmas } from '@/dominios/turmas/service'
 import { calcularIdade, formatarCpf } from '@/utils/format'
 import { OPCOES_PARENTESCO } from '@/utils/labels'
-import type { Parentesco } from '@/types/pessoas'
-import type { StatusMatricula } from '@/types/turmas'
+import type { Parentesco } from '@/dominios/pessoas/types'
+import type { StatusMatricula } from '@/dominios/turmas/types'
 import { PessoaCampos } from '@/components/pessoas/PessoaCampos'
-import { paraPayloadPessoa, useFormularioPessoa } from '@/formularios/pessoas'
-import { useFormularioMatricula } from '@/formularios/turmas'
+import { paraPayloadPessoa, useFormularioPessoa } from '@/dominios/pessoas/formulario'
+import { useFormularioMatricula } from '@/dominios/turmas/formulario'
 
 import { Aviso, LinhaRodape } from './styles'
 import type { Passo } from './types'

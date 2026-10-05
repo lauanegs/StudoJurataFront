@@ -1,12 +1,12 @@
 import type { SelectOption } from '@/components/ui/Select'
-import type { FormularioTurma } from '@/formularios/turmas'
+import type { FormularioTurma } from '@/dominios/turmas/formulario'
 
-import type { HorarioTurma } from '@/types/turmas'
+import type { HorarioTurma } from '@/dominios/turmas/types'
 
-import type { Turma } from '@/types/turmas'
+import type { Turma } from '@/dominios/turmas/types'
 
 import type { RequestResult } from '@/hooks/useRequisicao'
-import type { AlunoTurma, TurmaDisciplina } from '@/types/turmas'
+import type { AlunoTurma, TurmaDisciplina } from '@/dominios/turmas/types'
 
 export interface AbaAlunosProps {
   turmaId: number

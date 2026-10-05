@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/Select'
 import { Stack } from '@/components/ui/Stack'
 import * as SVinculo from '@/components/planejamento/VinculoConteudo/styles'
 import { OPCOES_DESTINACAO } from '@/utils/labels'
-import type { TipoDestinacaoSimulado } from '@/types/simulados'
+import type { TipoDestinacaoSimulado } from '@/dominios/simulados/types'
 
 import type { ConfiguracaoSimuladoProps } from './types'
 

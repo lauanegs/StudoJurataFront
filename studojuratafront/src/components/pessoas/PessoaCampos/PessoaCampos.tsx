@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { formatarCep, formatarCpf, formatarTelefone } from '@/utils/format'
 import { OPCOES_SEXO, OPCOES_UF } from '@/utils/labels'
-import type { Sexo } from '@/types/pessoas'
+import type { Sexo } from '@/dominios/pessoas/types'
 
 import { LinhaInteira } from './styles'
 import type { PessoaCamposProps } from './types'

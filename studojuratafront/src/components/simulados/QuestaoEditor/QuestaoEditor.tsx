@@ -15,7 +15,7 @@ import {
   ROTULO_STATUS_QUESTAO,
   STATUS_QUESTAO_VARIANT,
 } from '@/utils/labels'
-import type { NivelDificuldade, TipoQuestao } from '@/types/simulados'
+import type { NivelDificuldade, TipoQuestao } from '@/dominios/simulados/types'
 import * as S from './styles'
 import {
   MAXIMO_ALTERNATIVAS,

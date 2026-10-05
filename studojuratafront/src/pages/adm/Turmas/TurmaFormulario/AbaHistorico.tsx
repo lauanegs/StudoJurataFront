@@ -10,7 +10,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { usePaginacao } from '@/hooks/usePaginacao'
 import { formatarData, normalizar } from '@/utils/format'
 import { ROTULO_STATUS_MATRICULA, STATUS_MATRICULA_VARIANT } from '@/utils/labels'
-import type { AlunoTurma } from '@/types/turmas'
+import type { AlunoTurma } from '@/dominios/turmas/types'
 import { LinhaAcaoFlutuante } from './styles'
 
 import type { AbaHistoricoProps } from './types'

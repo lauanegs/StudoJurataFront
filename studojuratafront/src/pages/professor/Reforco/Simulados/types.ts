@@ -1,3 +1,3 @@
-import type { StatusSimulado } from '@/types/simulados'
+import type { StatusSimulado } from '@/dominios/simulados/types'
 
 export type Filtro = 'todos' | StatusSimulado

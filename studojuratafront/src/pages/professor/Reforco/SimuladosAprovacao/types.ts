@@ -1,4 +1,4 @@
-import type { MotivoRecomendacao } from '@/types/ia'
+import type { MotivoRecomendacao } from '@/dominios/ia/types'
 
 export type TipoFiltro = 'disciplina' | 'aluno'
 

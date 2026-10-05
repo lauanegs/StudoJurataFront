@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react'
 
-import type { LoginResponse } from '@/types/autenticacao'
-import type { TipoUsuario } from '@/types/comum'
+import type { LoginResponse } from '@/dominios/autenticacao/types'
+import type { TipoUsuario } from '@/dominios/comum/types'
 
 export interface ContextoAutenticacao {
   usuario: LoginResponse | null

@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Select'
 import { Stack } from '@/components/ui/Stack'
 import { ROTULO_TIPO_QUESTAO } from '@/utils/labels'
 import type { Coluna } from '@/components/ui/DataTable/types'
-import type { QuestaoResponse } from '@/types/simulados'
+import type { QuestaoResponse } from '@/dominios/simulados/types'
 
 import type { ModalImportarQuestoesProps } from './types'
 

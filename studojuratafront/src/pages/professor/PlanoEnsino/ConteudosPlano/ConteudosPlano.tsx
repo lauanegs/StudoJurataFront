@@ -17,15 +17,15 @@ import { useConfirm } from '@/contexts/confirm/confirmContexto'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
+import { ApiError } from '@/dominios/comum/api'
 import {
   aulas as servicoAulas,
   conteudosPlano,
   planosAula,
   planosEnsino,
-} from '@/services/planejamento'
+} from '@/dominios/planejamento/service'
 import { formatarData, normalizar } from '@/utils/format'
-import type { ConteudoPlano } from '@/types/planejamento'
+import type { ConteudoPlano } from '@/dominios/planejamento/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
 import { CamposCabecalho } from './styles'

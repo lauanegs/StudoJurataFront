@@ -1,5 +1,5 @@
 import type { QuestaoEditavel } from '@/components/simulados/QuestaoEditor/types'
-import type { AlternativaResponse, QuestaoResponse, SimuladoQuestaoResponse } from '@/types/simulados'
+import type { AlternativaResponse, QuestaoResponse, SimuladoQuestaoResponse } from '@/dominios/simulados/types'
 
 /** Questões do simulado ainda PENDENTES de aprovação, por id, com as alternativas em ordem. */
 export function questoesPendentesDoSimulado(

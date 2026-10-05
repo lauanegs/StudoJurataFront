@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import { escolas } from '@/services/curriculo'
+import { escolas } from '@/dominios/curriculo/service'
 import { useRequisicao } from './useRequisicao'
 
 /**

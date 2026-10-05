@@ -14,8 +14,8 @@ import { useConfirm } from '@/contexts/confirm/confirmContexto'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { alternativas as servicoAlternativas, questoes as servicoQuestoes } from '@/services/simulados'
+import { ApiError } from '@/dominios/comum/api'
+import { alternativas as servicoAlternativas, questoes as servicoQuestoes } from '@/dominios/simulados/service'
 import { ROTULO_ORIGEM_QUESTAO } from '@/utils/labels'
 
 export default function RevisarQuestao() {

@@ -13,12 +13,12 @@ import { ErroCarregamento } from '@/components/feedback/ErroCarregamento'
 import { EstadoVazio } from '@/components/feedback/EstadoVazio'
 import { SkeletonCartao } from '@/components/feedback/Skeleton'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { alunos as servicoAlunos } from '@/services/pessoas'
+import { alunos as servicoAlunos } from '@/dominios/pessoas/service'
 import {
   questaoAlunos,
   simuladoAlunos,
   simulados as servicoSimulados,
-} from '@/services/simulados'
+} from '@/dominios/simulados/service'
 import { formatarTempo, letraAlternativa } from '@/utils/format'
 
 import { Alternativas, QuestaoCabecalho, QuestaoTitulo, Enunciado } from './styles'

@@ -1,4 +1,4 @@
-import type { Turma } from '@/types/turmas'
+import type { Turma } from '@/dominios/turmas/types'
 
 export interface LinhaTurma {
   turma: Turma

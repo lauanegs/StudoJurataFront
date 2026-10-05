@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Stack } from '@/components/ui/Stack'
 import { OPCOES_ATIVA_INATIVA } from '@/utils/labels'
-import type { StatusAtivoInativo } from '@/types/comum'
+import type { StatusAtivoInativo } from '@/dominios/comum/types'
 
 import { Grade } from './styles'
 import type { DadosTurmaProps } from './types'

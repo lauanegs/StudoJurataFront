@@ -25,18 +25,18 @@ import { useConfirm } from '@/contexts/confirm/confirmContexto'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { disciplinas as servicoDisciplinas } from '@/services/curriculo'
-import { ia as servicoIa } from '@/services/ia'
-import { alunos as servicoAlunos } from '@/services/pessoas'
-import { planosEnsino } from '@/services/planejamento'
+import { ApiError } from '@/dominios/comum/api'
+import { disciplinas as servicoDisciplinas } from '@/dominios/curriculo/service'
+import { ia as servicoIa } from '@/dominios/ia/service'
+import { alunos as servicoAlunos } from '@/dominios/pessoas/service'
+import { planosEnsino } from '@/dominios/planejamento/service'
 import {
   alternativas as servicoAlternativas,
   questoes as servicoQuestoes,
   simuladoQuestoes,
   simulados as servicoSimulados,
-} from '@/services/simulados'
-import { turmas as servicoTurmas } from '@/services/turmas'
+} from '@/dominios/simulados/service'
+import { turmas as servicoTurmas } from '@/dominios/turmas/service'
 import { formatarData, paraInputDataHora } from '@/utils/format'
 import { questoesPendentesDoSimulado } from '@/pages/professor/Reforco/comum/aprovacaoDeQuestoes'
 import { OPCOES_DESTINACAO, ROTULO_MOTIVO_RECOMENDACAO } from '@/utils/labels'

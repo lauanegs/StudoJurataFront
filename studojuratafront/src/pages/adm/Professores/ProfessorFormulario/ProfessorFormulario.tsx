@@ -14,12 +14,12 @@ import { useConfirm } from '@/contexts/confirm/confirmContexto'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
+import { ApiError } from '@/dominios/comum/api'
 import { OPCOES_ATIVO_INATIVO } from '@/utils/labels'
-import type { StatusAtivoInativo } from '@/types/comum'
-import { pessoas as servicoPessoas, professores as servicoProfessores } from '@/services/pessoas'
+import type { StatusAtivoInativo } from '@/dominios/comum/types'
+import { pessoas as servicoPessoas, professores as servicoProfessores } from '@/dominios/pessoas/service'
 import { PessoaCampos } from '@/components/pessoas/PessoaCampos'
-import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '@/formularios/pessoas'
+import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '@/dominios/pessoas/formulario'
 
 export default function ProfessorFormulario() {
   const { id } = useParams()

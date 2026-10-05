@@ -13,10 +13,10 @@ import { useToast } from '@/contexts/toast/toastContexto'
 import { useDebounce } from '@/hooks/useDebounce'
 import { usePaginacao } from '@/hooks/usePaginacao'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { responsaveis as servicoResponsaveis } from '@/services/pessoas'
+import { ApiError } from '@/dominios/comum/api'
+import { responsaveis as servicoResponsaveis } from '@/dominios/pessoas/service'
 import { formatarCpf, formatarTelefone, normalizar } from '@/utils/format'
-import type { Responsavel } from '@/types/pessoas'
+import type { Responsavel } from '@/dominios/pessoas/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
 export default function Responsaveis() {

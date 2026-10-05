@@ -15,20 +15,20 @@ import { useToast } from '@/contexts/toast/toastContexto'
 import { usePaginacao } from '@/hooks/usePaginacao'
 import { useProfessorLogado } from '@/hooks/usePerfilLogado'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { disciplinas as servicoDisciplinas } from '@/services/curriculo'
-import { ia as servicoIa } from '@/services/ia'
-import { professores as servicoProfessores } from '@/services/pessoas'
+import { ApiError } from '@/dominios/comum/api'
+import { disciplinas as servicoDisciplinas } from '@/dominios/curriculo/service'
+import { ia as servicoIa } from '@/dominios/ia/service'
+import { professores as servicoProfessores } from '@/dominios/pessoas/service'
 import {
   questoes as servicoQuestoes,
   simuladoAlunos,
   simuladoQuestoes,
   simulados as servicoSimulados,
-} from '@/services/simulados'
-import { turmas as servicoTurmas } from '@/services/turmas'
+} from '@/dominios/simulados/service'
+import { turmas as servicoTurmas } from '@/dominios/turmas/service'
 import { ROTULO_STATUS_SIMULADO, STATUS_SIMULADO_VARIANT } from '@/utils/labels'
 import { theme as tokens } from '@/styles/theme'
-import type { SimuladoResponse } from '@/types/simulados'
+import type { SimuladoResponse } from '@/dominios/simulados/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
 import { LinhaFiltrosFlutuante, CampoLargura } from './styles'

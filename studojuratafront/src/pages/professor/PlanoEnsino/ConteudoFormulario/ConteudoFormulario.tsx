@@ -16,9 +16,9 @@ import { SkeletonCartao } from '@/components/feedback/Skeleton'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { conteudosPlano, planosEnsino } from '@/services/planejamento'
-import { useFormularioConteudo } from '@/formularios/planejamento'
+import { ApiError } from '@/dominios/comum/api'
+import { conteudosPlano, planosEnsino } from '@/dominios/planejamento/service'
+import { useFormularioConteudo } from '@/dominios/planejamento/formulario'
 
 /**
  * A qualidade da descrição importa: é a partir dela que a IA gera as questões

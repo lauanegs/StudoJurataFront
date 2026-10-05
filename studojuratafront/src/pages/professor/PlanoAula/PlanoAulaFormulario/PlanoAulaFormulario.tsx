@@ -16,11 +16,11 @@ import { useConfirm } from '@/contexts/confirm/confirmContexto'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { planosAula as servicoPlanosAula } from '@/services/planejamento'
+import { ApiError } from '@/dominios/comum/api'
+import { planosAula as servicoPlanosAula } from '@/dominios/planejamento/service'
 import { formatarCargaHoraria } from '@/utils/format'
 import { OPCOES_STATUS_PLANO } from '@/utils/labels'
-import type { StatusPlano } from '@/types/planejamento'
+import type { StatusPlano } from '@/dominios/planejamento/types'
 
 export default function PlanoAulaFormulario() {
   const { id } = useParams()

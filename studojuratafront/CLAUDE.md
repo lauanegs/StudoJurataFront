@@ -27,7 +27,7 @@ Backend irmão: `../StudoJurataApi` (ver o `CLAUDE.md`/`docs/` dele para a API c
 - **styled-components 6** — ainda em uso parcial; o projeto está em **migração ativa para Mantine** (ver seção "Estilização" abaixo)
 - **dayjs** (locale `pt-br`) para datas
 - **lucide-react** para ícones
-- Sem axios — cliente HTTP próprio sobre `fetch` (`services/api.ts`)
+- Sem axios — cliente HTTP próprio sobre `fetch` (`dominios/comum/api.ts`)
 - Sem Redux/Zustand/Jotai/React Query/SWR — estado local + Context API + hooks próprios de busca de dados
 - Sem testes automatizados: os testes (Vitest) foram removidos de propósito. Validar com `tsc -b`, `npm run lint`, `npm run build` e verificação manual no navegador
 - ESLint (`js` recommended + `typescript-eslint` recommended + `react-hooks` flat recommended + `react-refresh` vite) — sem Prettier configurado
@@ -41,7 +41,7 @@ Camadas: `pages/` (por perfil: `adm/professor/aluno/auth`) → compõe `componen
 - **Imports com alias `@/`** (= `src/`): nunca `../`; só `./` para arquivo da mesma pasta.
 - **Pasta por componente/página**: `Nome/Nome.tsx` + `styles.ts` (styled-components) + `types.ts` (props e tipos) + `index.ts` (componentes reexportam). Estilos e tipos nunca ficam dentro do `.tsx`.
 - Páginas com subcomponentes próprios ficam numa pasta da página (`TurmaFormulario/`, `SimuladoFormulario/`, `Simulado/`); helpers compartilhados de um grupo de páginas em `comum/` (ex.: `professor/Reforco/comum/`).
-- Arquivos que não são componente (`hooks`, `utils`, `services`, `types`) em camelCase; contextos em `contexts/<nome>/` (`XProvider.tsx` + `xContexto.ts`).
+- Arquivos que não são componente (`hooks`, `utils`) em camelCase; código de domínio em `dominios/<domínio>/{types,service,formulario}.ts`; contextos em `contexts/<nome>/` (`XProvider.tsx` + `xContexto.ts`).
 
 ## Estrutura de pastas
 ```
@@ -52,10 +52,8 @@ src/
 ├── components/<domínio>/   — graficos, simulados, desempenho, gamificacao, planejamento, pessoas, eventos
 ├── pages/{adm,professor,aluno,auth}/ — telas por perfil de usuário
 ├── routes/                 — rotas lazy + guard de perfil
-├── services/               — api.ts (cliente HTTP) + um arquivo por domínio (autenticacao, pessoas, curriculo, turmas, planejamento, notas, eventos, simulados, gamificacao, ia)
-├── types/                  — tipos espelhando os DTOs do back, um arquivo por domínio + comum.ts
-├── formularios/            — hooks de formulário (@mantine/form + schemas yup), por domínio
-├── contexts/               — AuthContext, ToastContext, ConfirmContext
+├── dominios/<domínio>/     — por domínio (autenticacao, curriculo, eventos, gamificacao, ia, notas, pessoas, planejamento, simulados, turmas): types.ts (DTOs do back), service.ts (chamadas HTTP) e formulario.ts (@mantine/form + yup); dominios/comum/ tem api.ts (cliente HTTP), types.ts e formulario.ts compartilhados
+├── contexts/               — auth/, toast/, confirm/ (Provider + contexto)
 ├── hooks/                  — useRequisicao, useAcao, usePaginacao, useDebounce, useHidratar, usePerfilLogado, useAuth, useEscola
 ├── utils/                  — format.ts, labels.ts, aniversariantes.ts, corComOpacidade.ts, redimensionarIcone.tsx, skins.ts, exportacao/
 └── styles/                 — theme.ts (styled-components) + mantineTheme.ts (mesmos tokens p/ Mantine) + global.ts
@@ -65,8 +63,8 @@ src/
 
 - **Design system próprio sobre Mantine**: componentes de `components/ui/` mantêm uma API estável (props em português/domínio) e delegam a implementação para Mantine por baixo — troca de biblioteca não obriga a mudar telas consumidoras. Ver `docs/mantine-guidelines.md`.
 - **Hooks como unidade de reuso de lógica**, não HOCs nem render props: `useRequisicao` (busca com cancelamento de corrida), `useAcao` (estado de mutação), `usePaginacao` (paginação client-side, porque o backend não pagina nenhuma listagem).
-- **Formulários com `@mantine/form` + yup**: cada formulário tem um hook em `formularios/<domínio>.ts` (`useForm` + `schemaResolver(schema)`); a validação é assíncrona (`await form.validate()`). CPF, CEP, telefone e busca de endereço por CEP usam `@brazilian-utils/brazilian-utils`; gráficos usam `@mantine/charts`; exportação usa `jspdf`/`jspdf-autotable` e `exceljs`.
-- **Camada de serviço tipada**: `services/<domínio>.ts` é o único lugar que conhece as rotas HTTP reais; páginas nunca montam URL/`fetch` diretamente.
+- **Formulários com `@mantine/form` + yup**: cada formulário tem um hook em `dominios/<domínio>/formulario.ts` (`useForm` + `schemaResolver(schema)`); a validação é assíncrona (`await form.validate()`). CPF, CEP, telefone e busca de endereço por CEP usam `@brazilian-utils/brazilian-utils`; gráficos usam `@mantine/charts`; exportação usa `jspdf`/`jspdf-autotable` e `exceljs`.
+- **Camada de serviço tipada**: `dominios/<domínio>/service.ts` é o único lugar que conhece as rotas HTTP reais; páginas nunca montam URL/`fetch` diretamente.
 - **Autenticação por sessão de cookie**, cache local em `localStorage` só para evitar flash de tela (fonte de verdade é sempre `/auth/me`), com pub/sub próprio (`aoExpirarSessao`) para reagir a 401 de qualquer lugar da aplicação sem lib de interceptor.
 - **Páginas por perfil**, espelhando os papéis do backend (`ADMINISTRADOR`/`PROFESSOR`/`ALUNO`) — guard de rota no front é proteção de UX, a autorização real é sempre imposta pelo backend.
 
@@ -93,10 +91,10 @@ O padrão de wrapper fino sobre Mantine (`components/ui/Button` etc.) **não** �
 Ver [`docs/clean-code.md`](docs/clean-code.md). Resumo: nomes de domínio em português consistentes com o resto do código; componente/hook com uma responsabilidade clara; duplicação de *estrutura* (padrão listagem: busca+filtro+paginação) é aceita, duplicação de *regra* (validação/formatação reimplementada) não é; comentários explicam o porquê, nunca repetem o nome; sem `try/catch` silencioso — erro sempre vira toast ou `error` de hook.
 
 ## Regras de React
-Ver [`docs/react-guidelines.md`](docs/react-guidelines.md). Resumo: estado derivado é `useMemo`/cálculo direto, nunca `useState`+`useEffect` sincronizando; `useEffect` só para sistemas externos (busca, assinatura de evento, debounce), nunca para calcular algo já disponível; `useMemo`/`useCallback` só quando há custo real ou necessidade de estabilidade referencial — não por hábito; `key` de lista sempre um id estável, nunca índice em lista que reordena/filtra; formulário com mais de 2-3 campos usa `@mantine/form` + schema yup (hooks em `formularios/`).
+Ver [`docs/react-guidelines.md`](docs/react-guidelines.md). Resumo: estado derivado é `useMemo`/cálculo direto, nunca `useState`+`useEffect` sincronizando; `useEffect` só para sistemas externos (busca, assinatura de evento, debounce), nunca para calcular algo já disponível; `useMemo`/`useCallback` só quando há custo real ou necessidade de estabilidade referencial — não por hábito; `key` de lista sempre um id estável, nunca índice em lista que reordena/filtra; formulário com mais de 2-3 campos usa `@mantine/form` + schema yup (hooks em `dominios/<domínio>/formulario.ts`).
 
 ## Regras de TypeScript
-Ver [`docs/typescript-guidelines.md`](docs/typescript-guidelines.md). Resumo: `any` só com justificativa comentada (padrão: 1 caso em todo o projeto); `import type` para importações só de tipo (`verbatimModuleSyntax` exige); enum do backend vira union de string literal no front, não `enum` do TS; tipo de domínio definido uma vez em `types/<domínio>.ts`, nunca duplicado; anotar tipo só quando a inferência não seria suficiente ou é assinatura pública.
+Ver [`docs/typescript-guidelines.md`](docs/typescript-guidelines.md). Resumo: `any` só com justificativa comentada (padrão: 1 caso em todo o projeto); `import type` para importações só de tipo (`verbatimModuleSyntax` exige); enum do backend vira union de string literal no front, não `enum` do TS; tipo de domínio definido uma vez em `dominios/<domínio>/types.ts`, nunca duplicado; anotar tipo só quando a inferência não seria suficiente ou é assinatura pública.
 
 ## Regras de Mantine
 Ver [`docs/mantine-guidelines.md`](docs/mantine-guidelines.md). Resumo: verificar sempre se o Mantine já resolve antes de criar/CSS customizar; seguir o padrão de wrapper fino já estabelecido em `components/ui/`; páginas importam de `components/ui/`, não de `@mantine/core` diretamente; migração styled-components → Mantine é decisão por componente, não obrigação automática em toda mudança; **usar Mantine nunca justifica um resultado visual diferente do Figma — personalizar o componente até bater, não o contrário.**
@@ -105,14 +103,14 @@ Ver [`docs/mantine-guidelines.md`](docs/mantine-guidelines.md). Resumo: verifica
 Ver [`docs/code-review.md`](docs/code-review.md) — checklist cobrindo componentes grandes, responsabilidades, duplicação, props excessivas, estado desnecessário, `useEffect`, hooks, `any`/casts, tipos duplicados, CSS, Mantine, **fidelidade ao Figma**, acessibilidade, responsividade, performance, imports, código morto, possíveis bugs e regressões.
 
 ## Processo de refatoração
-Ver [`docs/refactoring-guidelines.md`](docs/refactoring-guidelines.md): entender → identificar comportamento atual → identificar problemas → classificar por gravidade → planejar a menor mudança → aplicar → `tsc -b --noEmit` + `npm run lint` + `npm test` (+ `npm run build` quando a mudança for ampla) → verificar regressão manualmente no navegador (sem testes automatizados) → revisar de novo → simplificar se necessário.
+Ver [`docs/refactoring-guidelines.md`](docs/refactoring-guidelines.md): entender → identificar comportamento atual → identificar problemas → classificar por gravidade → planejar a menor mudança → aplicar → `tsc -b --noEmit` + `npm run lint` + (+ `npm run build` quando a mudança for ampla) → verificar regressão manualmente no navegador (sem testes automatizados) → revisar de novo → simplificar se necessário.
 
 ## Preservação de comportamento
 
 Ao refatorar ou revisar código existente:
 - **Preservar comportamento, layout e responsividade.**
 - **Preservar fidelidade ao Figma** — se a tela batia com o protótipo antes, continua batendo depois; refatoração "só de código" não é desculpa para mudança visual acidental (ver [`docs/figma-fidelity.md`](docs/figma-fidelity.md)).
-- **Preservar contratos de API** — `types/<domínio>.ts`/`services/<domínio>.ts` continuam batendo com o backend real; front e back são repositórios separados, um campo renomeado sem coordenação quebra em silêncio.
+- **Preservar contratos de API** — `dominios/<domínio>/types.ts`/`dominios/<domínio>/service.ts` continuam batendo com o backend real; front e back são repositórios separados, um campo renomeado sem coordenação quebra em silêncio.
 - **Preservar regras de negócio** (validação, formatação, permissão de tela).
 - **Não remover funcionalidade existente.**
 - **Não substituir uma solução funcional apenas por preferência pessoal** (trocar `useState` por `@mantine/form`, ou styled-components por Mantine, sem que isso resolva um problema real identificado) — e não substituir/simplificar um elemento visual do Figma apenas porque uma implementação mais simples existe.

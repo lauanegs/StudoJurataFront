@@ -19,19 +19,19 @@ import { useToast } from '@/contexts/toast/toastContexto'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useProfessorLogado } from '@/hooks/usePerfilLogado'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { planosEnsino } from '@/services/planejamento'
-import { professores as servicoProfessores } from '@/services/pessoas'
+import { ApiError } from '@/dominios/comum/api'
+import { planosEnsino } from '@/dominios/planejamento/service'
+import { professores as servicoProfessores } from '@/dominios/pessoas/service'
 import {
   alternativas as servicoAlternativas,
   questoes as servicoQuestoes,
   simuladoQuestoes,
   simulados as servicoSimulados,
-} from '@/services/simulados'
-import { matriculas, turmas as servicoTurmas } from '@/services/turmas'
+} from '@/dominios/simulados/service'
+import { matriculas, turmas as servicoTurmas } from '@/dominios/turmas/service'
 import { deInputDataHora, formatarDataHora, paraInputDataHora } from '@/utils/format'
-import type { QuestaoResponse } from '@/types/simulados'
-import { dataFimSimuladoValida, MENSAGEM_DATA_FIM_SIMULADO, useFormularioSimulado } from '@/formularios/simulados'
+import type { QuestaoResponse } from '@/dominios/simulados/types'
+import { dataFimSimuladoValida, MENSAGEM_DATA_FIM_SIMULADO, useFormularioSimulado } from '@/dominios/simulados/formulario'
 import { AbaQuestoes } from './AbaQuestoes'
 import { ConfiguracaoSimulado } from './ConfiguracaoSimulado'
 import { ModalImportarQuestoes } from './ModalImportarQuestoes'

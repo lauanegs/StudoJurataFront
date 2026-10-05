@@ -20,22 +20,22 @@ import { useToast } from '@/contexts/toast/toastContexto'
 import { useProfessorLogado } from '@/hooks/usePerfilLogado'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
+import { ApiError } from '@/dominios/comum/api'
 import {
   cursoDisciplinas as servicoCursoDisciplinas,
   cursos as servicoCursos,
-} from '@/services/curriculo'
-import { professores as servicoProfessores } from '@/services/pessoas'
+} from '@/dominios/curriculo/service'
+import { professores as servicoProfessores } from '@/dominios/pessoas/service'
 import {
   conteudosPlano as servicoConteudos,
   planosAula,
   planosEnsino as servicoPlanos,
-} from '@/services/planejamento'
+} from '@/dominios/planejamento/service'
 import { formatarData } from '@/utils/format'
 import { OPCOES_STATUS_PLANO } from '@/utils/labels'
-import type { CursoDisciplina } from '@/types/curriculo'
-import type { StatusPlano } from '@/types/planejamento'
-import { useFormularioPlanoEnsino } from '@/formularios/planejamento'
+import type { CursoDisciplina } from '@/dominios/curriculo/types'
+import type { StatusPlano } from '@/dominios/planejamento/types'
+import { useFormularioPlanoEnsino } from '@/dominios/planejamento/formulario'
 
 import type { Aba } from './types'
 

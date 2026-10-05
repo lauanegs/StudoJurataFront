@@ -1,4 +1,4 @@
-import type { ConferenciaDaQuestao, ProvaDaTentativa } from '@/types/simulados'
+import type { ConferenciaDaQuestao, ProvaDaTentativa } from '@/dominios/simulados/types'
 import type { QuestaoDaProva } from './types'
 
 export type RespostasAlternativa = Record<number, number | null>

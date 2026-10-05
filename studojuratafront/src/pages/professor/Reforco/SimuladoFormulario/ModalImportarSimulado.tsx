@@ -9,9 +9,9 @@ import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { Stack } from '@/components/ui/Stack'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { simuladoQuestoes, simulados as servicoSimulados } from '@/services/simulados'
+import { simuladoQuestoes, simulados as servicoSimulados } from '@/dominios/simulados/service'
 import type { Coluna } from '@/components/ui/DataTable/types'
-import type { SimuladoResponse } from '@/types/simulados'
+import type { SimuladoResponse } from '@/dominios/simulados/types'
 
 import type { ModalImportarSimuladoProps } from './types'
 

@@ -1,5 +1,5 @@
 import { questaoVazia, type QuestaoEditavel } from '@/components/simulados/QuestaoEditor/types'
-import type { AlternativaResponse, QuestaoResponse, SimuladoQuestaoResponse } from '@/types/simulados'
+import type { AlternativaResponse, QuestaoResponse, SimuladoQuestaoResponse } from '@/dominios/simulados/types'
 
 /** Regra de negócio: um simulado nunca pode ter mais que 10 questões (ver SimuladoQuestaoService no back). */
 export const MAXIMO_QUESTOES = 10

@@ -1,4 +1,4 @@
-import type { NivelDificuldade, StatusQuestao, TipoQuestao } from '@/types/simulados'
+import type { NivelDificuldade, StatusQuestao, TipoQuestao } from '@/dominios/simulados/types'
 
 export interface AlternativaEditavel {
   /** Presente quando a alternativa já existe no back. */

@@ -12,9 +12,9 @@ import { ErroCarregamento } from '@/components/feedback/ErroCarregamento'
 import { useAvisosDispensados } from '@/hooks/useAvisosDispensados'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { matriculas, turmas as servicoTurmas } from '@/services/turmas'
+import { matriculas, turmas as servicoTurmas } from '@/dominios/turmas/service'
 import { formatarCargaHoraria, formatarData, formatarIdade, normalizar } from '@/utils/format'
-import type { AlunoTurma } from '@/types/turmas'
+import type { AlunoTurma } from '@/dominios/turmas/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
 export default function TurmaDetalhada() {

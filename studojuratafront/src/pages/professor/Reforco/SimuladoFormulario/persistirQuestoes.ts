@@ -2,7 +2,7 @@ import {
   alternativas as servicoAlternativas,
   questoes as servicoQuestoes,
   simuladoQuestoes,
-} from '@/services/simulados'
+} from '@/dominios/simulados/service'
 import type { QuestaoEditavel } from '@/components/simulados/QuestaoEditor/types'
 
 /** Chamadas ao back usadas ao salvar as questões; injetáveis para testar a ordem sem rede. */

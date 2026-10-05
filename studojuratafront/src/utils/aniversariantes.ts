@@ -1,4 +1,4 @@
-import type { Pessoa } from '@/types/pessoas'
+import type { Pessoa } from '@/dominios/pessoas/types'
 
 export interface Aniversariante {
   id: number

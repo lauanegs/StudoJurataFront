@@ -22,17 +22,17 @@ import { useToast } from '@/contexts/toast/toastContexto'
 import { useEscola } from '@/hooks/useEscola'
 import { useHidratar } from '@/hooks/useHidratar'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
+import { ApiError } from '@/dominios/comum/api'
 import {
   cursoDisciplinas as servicoCursoDisciplinas,
   cursos as servicoCursos,
   disciplinas as servicoDisciplinas,
-} from '@/services/curriculo'
+} from '@/dominios/curriculo/service'
 import { formatarCargaHoraria } from '@/utils/format'
-import { useFormularioCurso, useFormularioGradeCurso } from '@/formularios/curriculo'
+import { useFormularioCurso, useFormularioGradeCurso } from '@/dominios/curriculo/formulario'
 import { OPCOES_ATIVO_INATIVO } from '@/utils/labels'
-import type { StatusAtivoInativo } from '@/types/comum'
-import type { CursoDisciplina } from '@/types/curriculo'
+import type { StatusAtivoInativo } from '@/dominios/comum/types'
+import type { CursoDisciplina } from '@/dominios/curriculo/types'
 
 import { Grade, LinhaVinculo } from './styles'
 import type { Aba } from './types'

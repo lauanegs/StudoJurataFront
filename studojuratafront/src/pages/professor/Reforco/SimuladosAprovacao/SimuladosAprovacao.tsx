@@ -15,19 +15,19 @@ import { useConfirm } from '@/contexts/confirm/confirmContexto'
 import { useToast } from '@/contexts/toast/toastContexto'
 import { useProfessorLogado } from '@/hooks/usePerfilLogado'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { ia as servicoIa } from '@/services/ia'
-import { alunos as servicoAlunos, professores as servicoProfessores } from '@/services/pessoas'
-import { conteudosPlano } from '@/services/planejamento'
+import { ApiError } from '@/dominios/comum/api'
+import { ia as servicoIa } from '@/dominios/ia/service'
+import { alunos as servicoAlunos, professores as servicoProfessores } from '@/dominios/pessoas/service'
+import { conteudosPlano } from '@/dominios/planejamento/service'
 import {
   questoes as servicoQuestoes,
   simuladoQuestoes,
   simulados as servicoSimulados,
-} from '@/services/simulados'
-import { matriculas } from '@/services/turmas'
+} from '@/dominios/simulados/service'
+import { matriculas } from '@/dominios/turmas/service'
 import { formatarData, formatarPorcentagem } from '@/utils/format'
 import { ROTULO_MOTIVO_RECOMENDACAO } from '@/utils/labels'
-import type { MotivoRecomendacao } from '@/types/ia'
+import type { MotivoRecomendacao } from '@/dominios/ia/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
 import type { TipoFiltro, Aba, FiltroAplicado, LinhaAprovacao, ProximaGeracaoIA } from './types'

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 
-import { ApiError, aoExpirarSessao } from '@/services/api'
-import { autenticacao } from '@/services/autenticacao'
+import { ApiError, aoExpirarSessao } from '@/dominios/comum/api'
+import { autenticacao } from '@/dominios/autenticacao/service'
 import { esquecerCursoEscolhido } from '@/utils/cursoEscolhido'
 import { ROTULO_TIPO_USUARIO } from '@/utils/labels'
-import type { LoginResponse } from '@/types/autenticacao'
+import type { LoginResponse } from '@/dominios/autenticacao/types'
 import {
   AuthContexto,
   CHAVE_USUARIO,

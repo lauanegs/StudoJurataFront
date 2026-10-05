@@ -14,10 +14,10 @@ import { useToast } from '@/contexts/toast/toastContexto'
 import { useDebounce } from '@/hooks/useDebounce'
 import { usePaginacao } from '@/hooks/usePaginacao'
 import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/services/api'
-import { alunos as servicoAlunos } from '@/services/pessoas'
+import { ApiError } from '@/dominios/comum/api'
+import { alunos as servicoAlunos } from '@/dominios/pessoas/service'
 import { formatarCpf, formatarIdade, normalizar } from '@/utils/format'
-import type { Aluno } from '@/types/pessoas'
+import type { Aluno } from '@/dominios/pessoas/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
 export default function Alunos() {
