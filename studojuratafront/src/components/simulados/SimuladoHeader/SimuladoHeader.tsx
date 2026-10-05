@@ -19,7 +19,7 @@ export function SimuladoHeader({
   return (
     <Container>
       <Esquerda>
-        <Logo src="/images/logo.png" alt="Studo Jurata" />
+        <Logo src="/images/marca/logo.png" alt="Studo Jurata" />
         <Titulo>{titulo}</Titulo>
       </Esquerda>
 

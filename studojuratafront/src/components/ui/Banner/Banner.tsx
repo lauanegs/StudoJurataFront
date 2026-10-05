@@ -4,7 +4,7 @@ import type { BannerProps } from './types'
 export function Banner({
   titulo = 'Bem-vindo ao Studo Jurata!',
   subtitulo = 'Vamos estudar muito juntos, aprender nunca foi tão fácil!',
-  mascoteSrc = '/images/mascote.png',
+  mascoteSrc = '/images/mascote/mascote.png',
   extra,
 }: BannerProps) {
   return (

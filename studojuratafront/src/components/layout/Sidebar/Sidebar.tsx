@@ -116,7 +116,7 @@ export function Sidebar({
           </S.BotaoSair>
 
           <S.Marca $colapsada={colapsada}>
-            <S.LogoMarca src="/images/logo.png" alt="Studo Jurata" />
+            <S.LogoMarca src="/images/marca/logo.png" alt="Studo Jurata" />
 
             {!colapsada && (
               <S.TextoMarca>

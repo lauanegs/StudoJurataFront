@@ -8,7 +8,7 @@ import type { MoedaIconeProps } from './types'
 export function MoedaIcone({ size = 16, className, ...rest }: MoedaIconeProps) {
   return (
     <img
-      src="/images/moeda.png"
+      src="/images/gamificacao/moeda.png"
       alt=""
       width={size}
       height={size}

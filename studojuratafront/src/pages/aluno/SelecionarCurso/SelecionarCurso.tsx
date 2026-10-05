@@ -36,7 +36,7 @@ export default function SelecionarCurso() {
   return (
     <TelaComBanner>
       <Bloco>
-        <Logo src="/images/logo.png" alt="Studo Jurata" />
+        <Logo src="/images/marca/logo.png" alt="Studo Jurata" />
 
         <Titulos>
           <Titulo>Studo Jurata</Titulo>

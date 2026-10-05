@@ -1,14 +1,14 @@
 const MAPA_SKIN_ASSET: Record<string, string> = {
-  classico: 'skin1',
-  explorador: 'skin2',
-  cientista: 'skin3',
+  classico: 'jura',
+  explorador: 'bit',
+  cientista: 'lia',
 }
 
 export type ReacaoSkin = 'neutro' | 'feliz' | 'triste'
 
-/** Sufixo do arquivo por reação — "" mantém o nome-base (skin1.png). */
-const SUFIXO_REACAO: Record<ReacaoSkin, string> = {
-  neutro: '',
+/** Nome do arquivo de cada reação dentro da pasta da skin. */
+const ARQUIVO_REACAO: Record<ReacaoSkin, string> = {
+  neutro: 'padrao',
   feliz: 'feliz',
   triste: 'triste',
 }
@@ -16,9 +16,9 @@ const SUFIXO_REACAO: Record<ReacaoSkin, string> = {
 /**
  * O back devolve `Skin.urlAsset` como um caminho relativo (ex.: "skins/classico.png")
  * que não corresponde a nenhum arquivo servido pelo front. Mapeamos pelo nome
- * do arquivo para as imagens reais em `public/images` (skin1/skin2/skin3).
+ * do arquivo para as imagens reais em `public/images/gamificacao/skins/<skin>/`.
  *
- * Cada skin tem 3 variantes de reação (skin1.png, skin1feliz.png, skin1triste.png)
+ * Cada skin tem 3 variantes de reação (padrao.png, feliz.png, triste.png)
  * — usadas no simulado para o mascote reagir de acordo com a resposta do aluno.
  */
 export function resolverImagemSkin(
@@ -29,7 +29,7 @@ export function resolverImagemSkin(
     ? Object.keys(MAPA_SKIN_ASSET).find((nome) => urlAsset.includes(nome))
     : undefined
 
-  const base = chave ? MAPA_SKIN_ASSET[chave] : 'skin1'
+  const base = chave ? MAPA_SKIN_ASSET[chave] : 'jura'
 
-  return `/images/${base}${SUFIXO_REACAO[reacao]}.png`
+  return `/images/gamificacao/skins/${base}/${ARQUIVO_REACAO[reacao]}.png`
 }

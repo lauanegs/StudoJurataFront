@@ -12,7 +12,7 @@ import type { EnunciadoSimuladoCardProps } from './types'
  */
 export function EnunciadoSimuladoCard({
   enunciado,
-  mascoteSrc = '/images/mascoteEnunciado.png',
+  mascoteSrc = '/images/mascote/mascote-enunciado.png',
 }: EnunciadoSimuladoCardProps) {
   const [falando, setFalando] = useState(false)
 

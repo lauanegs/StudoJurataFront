@@ -1,7 +1,7 @@
 import { Tela, Banner, Gradiente, ImagemBanner, Recorte, Conteudo } from './styles'
 import type { TelaComBannerProps } from './types'
 
-const bannerLogin = '/images/bannerLogin.png'
+const bannerLogin = '/images/marca/banner-login.png'
 
 /*
  * Recorte da mordida branca ao redor do logo, extraído do próprio asset do
@@ -11,7 +11,7 @@ const bannerLogin = '/images/bannerLogin.png'
  * com a responsividade — só o retângulo por baixo é que acompanha a largura
  * da tela; a mordida em si mantém sempre a proporção original do Figma.
  */
-const curvaLogoRecorte = '/images/curvaLogoRecorte.png'
+const curvaLogoRecorte = '/images/marca/curva-logo-recorte.png'
 
 /** Casca das telas de entrada (login e escolha do curso): faixa colorida com a mordida do logo e conteúdo centralizado. */
 export function TelaComBanner({ children }: TelaComBannerProps) {

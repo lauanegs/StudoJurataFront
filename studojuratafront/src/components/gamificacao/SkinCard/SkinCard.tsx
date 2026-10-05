@@ -29,7 +29,7 @@ export function SkinCard({
   return (
     <Container $ativa={state === 'equipped'}>
       <Moldura $bloqueada={locked}>
-        <img src={imagem ?? '/images/skin1.png'} alt={nome} />
+        <img src={imagem ?? '/images/gamificacao/skins/jura/padrao.png'} alt={nome} />
       </Moldura>
 
       <Nome>{nome}</Nome>
