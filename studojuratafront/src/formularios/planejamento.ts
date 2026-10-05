@@ -3,8 +3,8 @@ import { schemaResolver, useForm } from '@mantine/form'
 import * as yup from 'yup'
 
 import { dataFimNaoAnterior, inteiroPositivoOpcional, numeroPositivoOpcional } from './comum'
-import { horaParaMinutos } from '../utils/format'
-import type { StatusPlano } from '../types/planejamento'
+import { horaParaMinutos } from '@/utils/format'
+import type { StatusPlano } from '@/types/planejamento'
 
 export interface DadosConteudo {
   ordem: string

@@ -2,9 +2,9 @@ import { useNavigate } from 'react-router-dom'
 import { useTheme } from 'styled-components'
 import { Compass } from 'lucide-react'
 
-import { Button } from '../../components/ui/Button'
-import { ROTA_INICIAL_POR_PERFIL } from '../../contexts/authContexto'
-import { useAuth } from '../../hooks/useAuth'
+import { Button } from '@/components/ui/Button'
+import { ROTA_INICIAL_POR_PERFIL } from '@/contexts/authContexto'
+import { useAuth } from '@/hooks/useAuth'
 import { TelaAviso } from './TelaAviso'
 
 export default function NaoEncontrada() {

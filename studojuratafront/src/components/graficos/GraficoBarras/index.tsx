@@ -1,8 +1,8 @@
 import { BarChart } from '@mantine/charts'
 
-import { theme as tokens } from '../../../styles/theme'
-import { CORES_NIVEL_DESEMPENHO, nivelDesempenho } from '../../../utils/desempenho'
-import { formatarPorcentagem } from '../../../utils/format'
+import { theme as tokens } from '@/styles/theme'
+import { CORES_NIVEL_DESEMPENHO, nivelDesempenho } from '@/utils/desempenho'
+import { formatarPorcentagem } from '@/utils/format'
 
 export interface ItemGraficoBarras {
   chave: string

@@ -1,6 +1,6 @@
 import { BookOpen, CalendarClock, GraduationCap, Users } from 'lucide-react'
 
-import { ListaInfo } from '../../../components/ui/ListaInfo'
+import { ListaInfo } from '@/components/ui/ListaInfo'
 import { resumoFiltrosTexto, type RecorteDesempenho } from './resumoFiltrosTexto'
 
 /** Descreve o recorte atual dos gráficos (ícone + texto, um por linha). */

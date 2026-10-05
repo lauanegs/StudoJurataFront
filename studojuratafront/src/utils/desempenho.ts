@@ -1,4 +1,4 @@
-import { theme as tokens } from '../styles/theme'
+import { theme as tokens } from '@/styles/theme'
 
 export type NivelDesempenho = 'baixo' | 'medio' | 'alto'
 

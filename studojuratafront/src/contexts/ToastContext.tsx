@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 
-import { ToastViewport } from '../components/feedback/Toast'
+import { ToastViewport } from '@/components/feedback/Toast'
 import { ToastContexto, type ContextoToast, type Toast } from './toastContexto'
 
 const DURACAO_MS = 5000

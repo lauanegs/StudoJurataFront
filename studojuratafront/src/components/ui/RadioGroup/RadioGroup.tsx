@@ -1,8 +1,8 @@
 import { Group, Radio, Stack } from '@mantine/core'
 
-import { Field } from '../Field'
-import { theme as tokens } from '../../../styles/theme'
-import { corComOpacidade } from '../../../utils/corComOpacidade'
+import { Field } from '@/components/ui/Field'
+import { theme as tokens } from '@/styles/theme'
+import { corComOpacidade } from '@/utils/corComOpacidade'
 import type { RadioGroupProps } from './types'
 
 export function RadioGroup<V extends string = string>({

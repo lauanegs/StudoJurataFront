@@ -1,9 +1,9 @@
 import { useId, useState } from 'react'
 import { Textarea as MantineTextarea } from '@mantine/core'
 
-import { Field } from '../Field'
-import { theme as tokens } from '../../../styles/theme'
-import { corComOpacidade } from '../../../utils/corComOpacidade'
+import { Field } from '@/components/ui/Field'
+import { theme as tokens } from '@/styles/theme'
+import { corComOpacidade } from '@/utils/corComOpacidade'
 import type { TextAreaProps } from './types'
 
 export function TextArea({

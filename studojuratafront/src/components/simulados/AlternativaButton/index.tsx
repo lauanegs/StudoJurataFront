@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components'
 
-import { LetterBadge } from '../LetterBadge'
-import type { LetterState } from '../LetterBadge/types'
+import { LetterBadge } from '@/components/simulados/LetterBadge'
+import type { LetterState } from '@/components/simulados/LetterBadge/types'
 
 /**
  * A letra fica fundida na borda esquerda (quem tem padding é o texto), por

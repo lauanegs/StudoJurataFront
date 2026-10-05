@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
-import { CORES_NIVEL_DESEMPENHO, nivelDesempenho } from '../../../utils/desempenho'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { CORES_NIVEL_DESEMPENHO, nivelDesempenho } from '@/utils/desempenho'
+import { comTamanho } from '@/utils/redimensionarIcone'
 
 /* Vertical: grade compacta. Horizontal: lista de largura total, um card por linha. */
 const Container = styled.article<{ $clicavel: boolean; $horizontal: boolean }>`

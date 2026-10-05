@@ -1,4 +1,4 @@
-import type { TipoDestinacaoSimulado } from '../../../../types/simulados'
+import type { TipoDestinacaoSimulado } from '@/types/simulados'
 
 export type AcaoAoSalvar = 'lancar-agora' | 'publicacao-automatica' | 'rascunho'
 

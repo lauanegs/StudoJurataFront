@@ -1,6 +1,6 @@
 import styled, { css } from 'styled-components'
 
-import { corComOpacidade } from '../../../utils/corComOpacidade'
+import { corComOpacidade } from '@/utils/corComOpacidade'
 
 export const Overlay = styled.div`
   position: fixed;

@@ -1,21 +1,21 @@
 import { Download, Plus, Trash2 } from 'lucide-react'
 
-import { theme as tokens } from '../../../styles/theme'
-import { Button } from '../../ui/Button'
-import { Card } from '../../ui/Card'
-import { IconButton } from '../../ui/IconButton'
-import { Input } from '../../ui/Input'
-import { Select } from '../../ui/Select'
-import { SeletorOpcoes } from '../../ui/SeletorOpcoes'
-import { Tag } from '../../ui/Tag'
-import { TextArea } from '../../ui/TextArea'
-import { letraAlternativa } from '../../../utils/format'
+import { theme as tokens } from '@/styles/theme'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { IconButton } from '@/components/ui/IconButton'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { SeletorOpcoes } from '@/components/ui/SeletorOpcoes'
+import { Tag } from '@/components/ui/Tag'
+import { TextArea } from '@/components/ui/TextArea'
+import { letraAlternativa } from '@/utils/format'
 import {
   OPCOES_NIVEL_DIFICULDADE,
   ROTULO_STATUS_QUESTAO,
   STATUS_QUESTAO_VARIANT,
-} from '../../../utils/labels'
-import type { NivelDificuldade, TipoQuestao } from '../../../types/simulados'
+} from '@/utils/labels'
+import type { NivelDificuldade, TipoQuestao } from '@/types/simulados'
 import * as S from './styles'
 import {
   MAXIMO_ALTERNATIVAS,

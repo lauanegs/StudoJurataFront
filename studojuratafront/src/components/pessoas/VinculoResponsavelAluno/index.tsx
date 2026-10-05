@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { Eye, Plus, Trash2 } from 'lucide-react'
 
-import { Button } from '../../ui/Button'
-import { Card } from '../../ui/Card'
-import { DataTable } from '../../ui/DataTable'
-import { IconButton } from '../../ui/IconButton'
-import { LinhaCampos } from '../../ui/LinhaCampos'
-import { Select } from '../../ui/Select'
-import { OPCOES_PARENTESCO, ROTULO_PARENTESCO } from '../../../utils/labels'
-import type { Parentesco } from '../../../types/pessoas'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { DataTable } from '@/components/ui/DataTable'
+import { IconButton } from '@/components/ui/IconButton'
+import { LinhaCampos } from '@/components/ui/LinhaCampos'
+import { Select } from '@/components/ui/Select'
+import { OPCOES_PARENTESCO, ROTULO_PARENTESCO } from '@/utils/labels'
+import type { Parentesco } from '@/types/pessoas'
 
 export interface ItemVinculo {
   chave: string

@@ -1,8 +1,8 @@
 import { schemaResolver, useForm } from '@mantine/form'
 import * as yup from 'yup'
 
-import { paraInputDataHora } from '../utils/format'
-import type { Evento } from '../types/eventos'
+import { paraInputDataHora } from '@/utils/format'
+import type { Evento } from '@/types/eventos'
 
 export interface DadosEvento {
   dataHorario: string

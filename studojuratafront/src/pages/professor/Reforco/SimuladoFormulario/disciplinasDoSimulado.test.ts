@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { disciplinaCompativelComTurma, disciplinasDaTurma } from './disciplinasDoSimulado'
-import type { TurmaDisciplina } from '../../../../types/turmas'
+import type { TurmaDisciplina } from '@/types/turmas'
 
 function vinculo(
   turmaId: number,

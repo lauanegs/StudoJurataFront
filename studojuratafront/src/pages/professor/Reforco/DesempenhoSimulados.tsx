@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react'
 import { ClipboardList, TrendingUp } from 'lucide-react'
 
-import { Layout } from '../../../components/layout'
-import { Button } from '../../../components/ui/Button'
-import { DataTable } from '../../../components/ui/DataTable'
-import { Header } from '../../../components/ui/Header'
-import { Tag } from '../../../components/ui/Tag'
+import { Layout } from '@/components/layout'
+import { Button } from '@/components/ui/Button'
+import { DataTable } from '@/components/ui/DataTable'
+import { Header } from '@/components/ui/Header'
+import { Tag } from '@/components/ui/Tag'
 import { DetalheSimuladoModal } from './DetalheSimuladoModal'
 import { FiltrosDesempenho } from './FiltrosDesempenho'
 import { useDesempenhoDados, type DesempenhoSimulado } from './useDesempenhoDados'
-import { nivelDesempenho } from '../../../utils/desempenho'
-import type { TagVariant } from '../../../components/ui/Tag'
-import type { Coluna } from '../../../components/ui/DataTable/types'
+import { nivelDesempenho } from '@/utils/desempenho'
+import type { TagVariant } from '@/components/ui/Tag'
+import type { Coluna } from '@/components/ui/DataTable/types'
 
 // Padronizado com as outras telas que mostram nível de desempenho em tabela
 // (ex.: Notas) — mesma paleta success/warning/error do gráfico e do card.

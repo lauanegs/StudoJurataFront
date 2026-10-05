@@ -9,7 +9,7 @@ import type {
   GerarAulasLoteRequest,
   PlanoAula,
   PlanoEnsino,
-} from '../types/planejamento'
+} from '@/types/planejamento'
 
 export const planosEnsino = {
   listar: () => api.get<PlanoEnsino[]>('/plano-ensino'),

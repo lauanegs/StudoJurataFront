@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { Curso, CursoDisciplina, Disciplina, Escola } from '../types/curriculo'
+import type { Curso, CursoDisciplina, Disciplina, Escola } from '@/types/curriculo'
 
 export const escolas = {
   listar: () => api.get<Escola[]>('/escolas'),

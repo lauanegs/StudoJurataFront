@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
-import { animacaoFlutuar } from '../../../styles/animations'
+import { animacaoFlutuar } from '@/styles/animations'
 
 const Container = styled.section`
   position: relative;

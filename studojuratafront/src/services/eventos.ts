@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { Evento } from '../types/eventos'
+import type { Evento } from '@/types/eventos'
 
 export const eventos = {
   listar: () => api.get<Evento[]>('/eventos'),

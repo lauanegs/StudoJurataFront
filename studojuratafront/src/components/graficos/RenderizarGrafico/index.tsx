@@ -2,8 +2,8 @@ import { createRoot } from 'react-dom/client'
 import { MantineProvider } from '@mantine/core'
 import type { ReactElement } from 'react'
 
-import { mantineTheme } from '../../../styles/mantineTheme'
-import { theme as tokens } from '../../../styles/theme'
+import { mantineTheme } from '@/styles/mantineTheme'
+import { theme as tokens } from '@/styles/theme'
 
 export interface ImagemGrafico {
   dataUrl: string

@@ -1,8 +1,8 @@
 import styled, { css, keyframes } from 'styled-components'
 import { Clock, LogOut } from 'lucide-react'
 
-import { Button } from '../../ui/Button'
-import { formatarTempo } from '../../../utils/format'
+import { Button } from '@/components/ui/Button'
+import { formatarTempo } from '@/utils/format'
 
 const pulsar = keyframes`
   0%, 100% { opacity: 1; }

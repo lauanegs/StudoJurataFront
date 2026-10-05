@@ -14,8 +14,8 @@ import type {
   SimuladoQuestaoResponse,
   SimuladoRequest,
   SimuladoResponse,
-} from '../types/simulados'
-import type { ProvaDaTentativa } from '../types/simulados'
+} from '@/types/simulados'
+import type { ProvaDaTentativa } from '@/types/simulados'
 
 export const questoes = {
   listar: () => api.get<QuestaoResponse[]>('/questoes'),

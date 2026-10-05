@@ -1,4 +1,4 @@
-import type { TurmaDisciplina } from '../../../../types/turmas'
+import type { TurmaDisciplina } from '@/types/turmas'
 
 export interface OpcaoDisciplina {
   value: number

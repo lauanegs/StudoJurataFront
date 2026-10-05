@@ -2,8 +2,8 @@ import { useCallback, useState } from 'react'
 import styled from 'styled-components'
 import { Volume2, VolumeX } from 'lucide-react'
 
-import { animacaoFlutuar } from '../../../styles/animations'
-import { theme as tokens } from '../../../styles/theme'
+import { animacaoFlutuar } from '@/styles/animations'
+import { theme as tokens } from '@/styles/theme'
 
 const Container = styled.div`
   display: flex;

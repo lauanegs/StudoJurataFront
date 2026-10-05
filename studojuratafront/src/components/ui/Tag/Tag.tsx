@@ -1,8 +1,8 @@
 import { Badge } from '@mantine/core'
 
-import { theme as tokens } from '../../../styles/theme'
-import { corComOpacidade } from '../../../utils/corComOpacidade'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { theme as tokens } from '@/styles/theme'
+import { corComOpacidade } from '@/utils/corComOpacidade'
+import { comTamanho } from '@/utils/redimensionarIcone'
 import type { TagProps, TagVariant } from './types'
 
 /**

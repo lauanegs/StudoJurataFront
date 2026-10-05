@@ -2,28 +2,28 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Archive, ArchiveRestore, Save } from 'lucide-react'
 
-import { Layout } from '../../../components/layout'
-import { Button } from '../../../components/ui/Button'
-import { Card } from '../../../components/ui/Card'
-import { Header } from '../../../components/ui/Header'
-import { Tab } from '../../../components/ui/Tab'
-import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
-import { SkeletonCartao } from '../../../components/feedback/Skeleton'
-import { useConfirm } from '../../../contexts/confirmContexto'
-import { useToast } from '../../../contexts/toastContexto'
-import { useHidratar } from '../../../hooks/useHidratar'
-import { useAcao, useRequisicao } from '../../../hooks/useRequisicao'
-import { ApiError } from '../../../services/api'
+import { Layout } from '@/components/layout'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Header } from '@/components/ui/Header'
+import { Tab } from '@/components/ui/Tab'
+import { ErroCarregamento } from '@/components/feedback/ErroCarregamento'
+import { SkeletonCartao } from '@/components/feedback/Skeleton'
+import { useConfirm } from '@/contexts/confirmContexto'
+import { useToast } from '@/contexts/toastContexto'
+import { useHidratar } from '@/hooks/useHidratar'
+import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
+import { ApiError } from '@/services/api'
 import {
   alunos as servicoAlunos,
   pessoas as servicoPessoas,
   responsaveis as servicoResponsaveis,
   vinculosResponsavel,
-} from '../../../services/pessoas'
-import type { Parentesco } from '../../../types/pessoas'
-import { VinculoResponsavelAluno } from '../../../components/pessoas/VinculoResponsavelAluno'
-import { PessoaCampos } from '../../../components/pessoas/PessoaCampos'
-import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '../../../formularios/pessoas'
+} from '@/services/pessoas'
+import type { Parentesco } from '@/types/pessoas'
+import { VinculoResponsavelAluno } from '@/components/pessoas/VinculoResponsavelAluno'
+import { PessoaCampos } from '@/components/pessoas/PessoaCampos'
+import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '@/formularios/pessoas'
 
 export default function ResponsavelFormulario() {
   const { id } = useParams()

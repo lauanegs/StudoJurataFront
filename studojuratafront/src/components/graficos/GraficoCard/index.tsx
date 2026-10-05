@@ -2,13 +2,13 @@ import { useState, type ReactNode } from 'react'
 import styled from 'styled-components'
 import { FileDown, FileSpreadsheet, Maximize2 } from 'lucide-react'
 
-import { Button } from '../../ui/Button'
-import { Card } from '../../ui/Card'
-import { Modal } from '../../ui/Modal'
-import type { ItemTabelaResumo } from '../TabelaResumo'
-import { exportarExcel } from '../../../utils/exportacao/exportarPlanilha'
-import { exportarPdfSecaoUnica } from '../../../utils/exportacao/exportarPdf'
-import { renderizarGraficoComoImagem } from '../RenderizarGrafico'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Modal } from '@/components/ui/Modal'
+import type { ItemTabelaResumo } from '@/components/graficos/TabelaResumo'
+import { exportarExcel } from '@/utils/exportacao/exportarPlanilha'
+import { exportarPdfSecaoUnica } from '@/utils/exportacao/exportarPdf'
+import { renderizarGraficoComoImagem } from '@/components/graficos/RenderizarGrafico'
 
 /* Cada seção do modal é um card próprio, como em DetalheSimuladoModal. */
 const SecaoDetalhe = styled.div`

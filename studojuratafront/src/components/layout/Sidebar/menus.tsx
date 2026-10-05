@@ -15,7 +15,7 @@ import {
   Users,
 } from 'lucide-react'
 
-import type { TipoUsuario } from '../../../types/comum'
+import type { TipoUsuario } from '@/types/comum'
 import type { ItemMenu } from './types'
 
 /**

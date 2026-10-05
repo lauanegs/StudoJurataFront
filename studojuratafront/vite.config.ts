@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'node:url'
 
 /**
  * O front roda em http://localhost:5173 e a API em http://localhost:8080 —
@@ -24,6 +25,7 @@ const proxy = {
 
 export default defineConfig({
   plugins: [react()],
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   server: { port: 5173, proxy },
   preview: { port: 4173, proxy },
   optimizeDeps: {

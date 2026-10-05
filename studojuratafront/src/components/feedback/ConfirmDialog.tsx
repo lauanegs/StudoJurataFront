@@ -1,8 +1,8 @@
 import styled from 'styled-components'
 import { AlertTriangle } from 'lucide-react'
 
-import { Button } from '../ui/Button'
-import { Modal } from '../ui/Modal'
+import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
 
 const Corpo = styled.div`
   display: flex;

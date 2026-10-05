@@ -1,6 +1,6 @@
 import { Paper, Stepper as MantineStepper } from '@mantine/core'
 
-import { theme as tokens } from '../../../styles/theme'
+import { theme as tokens } from '@/styles/theme'
 import type { StepperProps } from './types'
 
 /**

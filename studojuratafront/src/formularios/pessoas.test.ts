@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, pessoaSchema, PESSOA_VAZIA } from './pessoas'
 import { errosDoSchema } from './errosDoSchema.test-utils'
-import type { Pessoa } from '../types/pessoas'
+import type { Pessoa } from '@/types/pessoas'
 
 const VALIDA = { ...PESSOA_VAZIA, nome: 'Rafael Torres Mendes', cpf: '800.000.001-67', sexo: 'FEMININO' as const }
 

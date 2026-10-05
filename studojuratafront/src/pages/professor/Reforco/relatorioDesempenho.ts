@@ -1,4 +1,4 @@
-import { formatarPorcentagem } from '../../../utils/format'
+import { formatarPorcentagem } from '@/utils/format'
 import type { DesempenhoSimulado } from './agregacoesDesempenho'
 
 interface LinhaRelatorio {

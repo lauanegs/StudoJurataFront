@@ -3,24 +3,24 @@ import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { Clock, GraduationCap, Target } from 'lucide-react'
 
-import { Layout } from '../../../components/layout'
-import { AlternativaCard } from '../../../components/simulados/AlternativaCard'
-import { AlternativaVerdadeiroFalso } from '../../../components/simulados/AlternativaVerdadeiroFalso'
-import { Card } from '../../../components/ui/Card'
-import { Header, SubtituloItem } from '../../../components/ui/Header'
-import { Tag } from '../../../components/ui/Tag'
-import { Stack } from '../../../components/ui/Stack'
-import { ErroCarregamento } from '../../../components/feedback/ErroCarregamento'
-import { EstadoVazio } from '../../../components/feedback/EstadoVazio'
-import { SkeletonCartao } from '../../../components/feedback/Skeleton'
-import { useRequisicao } from '../../../hooks/useRequisicao'
-import { alunos as servicoAlunos } from '../../../services/pessoas'
+import { Layout } from '@/components/layout'
+import { AlternativaCard } from '@/components/simulados/AlternativaCard'
+import { AlternativaVerdadeiroFalso } from '@/components/simulados/AlternativaVerdadeiroFalso'
+import { Card } from '@/components/ui/Card'
+import { Header, SubtituloItem } from '@/components/ui/Header'
+import { Tag } from '@/components/ui/Tag'
+import { Stack } from '@/components/ui/Stack'
+import { ErroCarregamento } from '@/components/feedback/ErroCarregamento'
+import { EstadoVazio } from '@/components/feedback/EstadoVazio'
+import { SkeletonCartao } from '@/components/feedback/Skeleton'
+import { useRequisicao } from '@/hooks/useRequisicao'
+import { alunos as servicoAlunos } from '@/services/pessoas'
 import {
   questaoAlunos,
   simuladoAlunos,
   simulados as servicoSimulados,
-} from '../../../services/simulados'
-import { formatarTempo, letraAlternativa } from '../../../utils/format'
+} from '@/services/simulados'
+import { formatarTempo, letraAlternativa } from '@/utils/format'
 
 const Alternativas = styled.div`
   display: flex;

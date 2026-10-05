@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { disponibilidadeDoSimulado } from './disponibilidadeSimulado'
-import type { SimuladoResponse } from '../types/simulados'
+import type { SimuladoResponse } from '@/types/simulados'
 
 const AGORA = new Date('2026-10-02T12:00:00').getTime()
 const base = { id: 1, titulo: 'S', status: 'PUBLICADO' } as SimuladoResponse

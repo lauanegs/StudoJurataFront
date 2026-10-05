@@ -3,9 +3,9 @@ import { schemaResolver, useForm } from '@mantine/form'
 import { useMemo } from 'react'
 import * as yup from 'yup'
 
-import { formatarCpf } from '../utils/format'
-import type { TipoUsuario } from '../types/comum'
-import type { Pessoa, Sexo } from '../types/pessoas'
+import { formatarCpf } from '@/utils/format'
+import type { TipoUsuario } from '@/types/comum'
+import type { Pessoa, Sexo } from '@/types/pessoas'
 
 export interface DadosPessoa {
   nome: string

@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
-import { theme as tokens } from '../../../styles/theme'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { theme as tokens } from '@/styles/theme'
+import { comTamanho } from '@/utils/redimensionarIcone'
 
 const Container = styled.article`
   display: flex;

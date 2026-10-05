@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
-import { Button } from '../Button'
+import { Button } from '@/components/ui/Button'
 
 const Linha = styled.div`
   display: flex;

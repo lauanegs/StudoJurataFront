@@ -1,8 +1,8 @@
 import { BarChart } from '@mantine/charts'
 import { Rectangle, type BarShapeProps } from 'recharts'
 
-import { theme as tokens } from '../../../styles/theme'
-import { calcularFaixasHistograma } from '../../../utils/desempenho'
+import { theme as tokens } from '@/styles/theme'
+import { calcularFaixasHistograma } from '@/utils/desempenho'
 
 interface HistogramaProps {
   /** Uma nota (0-100) por aluno/tentativa — o histograma agrupa em faixas de 20 pontos. */

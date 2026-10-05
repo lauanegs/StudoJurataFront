@@ -3,10 +3,10 @@
  * (ex.: "IRMAO_IRMA"), sempre o rótulo daqui.
  */
 
-import type { StatusAtivoInativo, TipoUsuario } from '../types/comum'
-import type { MotivoRecomendacao } from '../types/ia'
-import type { Parentesco, Sexo } from '../types/pessoas'
-import type { StatusPlano } from '../types/planejamento'
+import type { StatusAtivoInativo, TipoUsuario } from '@/types/comum'
+import type { MotivoRecomendacao } from '@/types/ia'
+import type { Parentesco, Sexo } from '@/types/pessoas'
+import type { StatusPlano } from '@/types/planejamento'
 import type {
   NivelDificuldade,
   OrigemQuestao,
@@ -14,9 +14,9 @@ import type {
   StatusSimulado,
   TipoDestinacaoSimulado,
   TipoQuestao,
-} from '../types/simulados'
-import type { DiaSemana, StatusMatricula, StatusTurma } from '../types/turmas'
-import type { TagVariant } from '../components/ui/Tag/types'
+} from '@/types/simulados'
+import type { DiaSemana, StatusMatricula, StatusTurma } from '@/types/turmas'
+import type { TagVariant } from '@/components/ui/Tag/types'
 
 export type { TagVariant }
 

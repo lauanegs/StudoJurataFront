@@ -1,8 +1,8 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
-import { Avatar } from '../../ui/Avatar'
-import { Select } from '../../ui/Select'
+import { Avatar } from '@/components/ui/Avatar'
+import { Select } from '@/components/ui/Select'
 import * as S from './styles'
 import type { ItemMenu, SidebarProps } from './types'
 

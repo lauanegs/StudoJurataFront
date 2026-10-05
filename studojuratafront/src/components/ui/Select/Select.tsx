@@ -2,10 +2,10 @@ import { useId, useMemo, useState } from 'react'
 import { Select as MantineSelect, Group, Text } from '@mantine/core'
 import { Check } from 'lucide-react'
 
-import { Field } from '../Field'
-import { theme as tokens } from '../../../styles/theme'
-import { corComOpacidade } from '../../../utils/corComOpacidade'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { Field } from '@/components/ui/Field'
+import { theme as tokens } from '@/styles/theme'
+import { corComOpacidade } from '@/utils/corComOpacidade'
+import { comTamanho } from '@/utils/redimensionarIcone'
 import type { SelectOption, SelectProps } from './types'
 
 export function Select<V extends string | number = string | number>({

@@ -2,12 +2,12 @@ import { useState } from 'react'
 import styled from 'styled-components'
 import { Filter, Search, X } from 'lucide-react'
 
-import { Button } from '../../../components/ui/Button'
-import { DatePicker } from '../../../components/ui/DatePicker'
-import { Modal } from '../../../components/ui/Modal'
-import { Select } from '../../../components/ui/Select'
-import type { SelectOption } from '../../../components/ui/Select'
-import { Stack } from '../../../components/ui/Stack'
+import { Button } from '@/components/ui/Button'
+import { DatePicker } from '@/components/ui/DatePicker'
+import { Modal } from '@/components/ui/Modal'
+import { Select } from '@/components/ui/Select'
+import type { SelectOption } from '@/components/ui/Select'
+import { Stack } from '@/components/ui/Stack'
 
 /* Campos num modal: cinco numa linha do Header ficavam apertados. Só filtra ao clicar "Buscar". */
 const GradePeriodo = styled.div`

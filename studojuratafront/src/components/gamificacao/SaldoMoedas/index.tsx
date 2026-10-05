@@ -1,7 +1,7 @@
 import styled from 'styled-components'
 
-import { MoedaIcone } from '../MoedaIcone'
-import { formatarMoedas } from '../../../utils/format'
+import { MoedaIcone } from '@/components/gamificacao/MoedaIcone'
+import { formatarMoedas } from '@/utils/format'
 
 /** Badge translúcido pensado para fundo roxo (Banner da Home, cabeçalho do Perfil). */
 const Container = styled.div`

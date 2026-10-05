@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom'
 import styled, { css, keyframes } from 'styled-components'
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react'
 
-import type { Toast as ToastModel, TipoToast } from '../../contexts/toastContexto'
+import type { Toast as ToastModel, TipoToast } from '@/contexts/toastContexto'
 
 const entrar = keyframes`
   from { opacity: 0; transform: translateX(24px); }

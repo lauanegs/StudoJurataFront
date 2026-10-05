@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 
-import { gamificacao } from '../services/gamificacao'
-import { alunos, professores } from '../services/pessoas'
-import { resolverImagemSkin } from '../utils/skins'
+import { gamificacao } from '@/services/gamificacao'
+import { alunos, professores } from '@/services/pessoas'
+import { resolverImagemSkin } from '@/utils/skins'
 import { useAuth } from './useAuth'
 import { useRequisicao } from './useRequisicao'
 

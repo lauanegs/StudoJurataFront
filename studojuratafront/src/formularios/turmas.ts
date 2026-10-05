@@ -2,8 +2,8 @@ import { schemaResolver, useForm } from '@mantine/form'
 import * as yup from 'yup'
 
 import { dataFimNaoAnterior, inteiroPositivoObrigatorio } from './comum'
-import { horaParaMinutos } from '../utils/format'
-import type { DiaSemana, StatusMatricula } from '../types/turmas'
+import { horaParaMinutos } from '@/utils/format'
+import type { DiaSemana, StatusMatricula } from '@/types/turmas'
 
 export interface DadosMatricula {
   dataInicio: string

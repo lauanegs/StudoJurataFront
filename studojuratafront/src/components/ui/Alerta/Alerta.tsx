@@ -2,8 +2,8 @@ import type { ReactNode } from 'react'
 import { Alert } from '@mantine/core'
 import { Info } from 'lucide-react'
 
-import { theme as tokens } from '../../../styles/theme'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { theme as tokens } from '@/styles/theme'
+import { comTamanho } from '@/utils/redimensionarIcone'
 
 interface AlertaProps {
   titulo?: string

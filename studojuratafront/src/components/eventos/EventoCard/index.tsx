@@ -1,9 +1,9 @@
 import styled from 'styled-components'
 import { CalendarClock, Check, Pencil, Trash2 } from 'lucide-react'
 
-import { IconButton } from '../../ui/IconButton'
-import { Tag } from '../../ui/Tag'
-import { formatarDataHora } from '../../../utils/format'
+import { IconButton } from '@/components/ui/IconButton'
+import { Tag } from '@/components/ui/Tag'
+import { formatarDataHora } from '@/utils/format'
 
 const Container = styled.article<{ $concluido: boolean }>`
   display: flex;

@@ -1,6 +1,6 @@
 import { AlertTriangle, RotateCcw } from 'lucide-react'
 
-import { Button } from '../ui/Button'
+import { Button } from '@/components/ui/Button'
 import { Container, Descricao, Icone, Titulo } from './styles'
 
 interface ErroCarregamentoProps {

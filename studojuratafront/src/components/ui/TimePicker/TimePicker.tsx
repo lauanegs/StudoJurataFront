@@ -2,9 +2,9 @@ import { useRef, type ChangeEvent } from 'react'
 import { TimePicker as MantineTimePicker } from '@mantine/dates'
 import { Clock } from 'lucide-react'
 
-import { Field } from '../Field'
-import { theme as tokens } from '../../../styles/theme'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { Field } from '@/components/ui/Field'
+import { theme as tokens } from '@/styles/theme'
+import { comTamanho } from '@/utils/redimensionarIcone'
 import type { TimePickerProps } from './types'
 
 /** Seletor de hora (HH:mm) com dropdown de rolagem. */

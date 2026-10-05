@@ -1,7 +1,7 @@
 import { Avatar as MantineAvatar } from '@mantine/core'
 
-import { iniciais } from '../../../utils/format'
-import { theme as tokens } from '../../../styles/theme'
+import { iniciais } from '@/utils/format'
+import { theme as tokens } from '@/styles/theme'
 import type { AvatarProps } from './types'
 
 const TAMANHOS: Record<NonNullable<AvatarProps['size']>, string> = {

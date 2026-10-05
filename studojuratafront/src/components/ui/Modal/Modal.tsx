@@ -1,6 +1,6 @@
 import { Group, Modal as MantineModal, Text } from '@mantine/core'
 
-import { theme as tokens } from '../../../styles/theme'
+import { theme as tokens } from '@/styles/theme'
 import type { ModalProps } from './types'
 
 /** Componentes compostos em vez de <Modal> para o rodapé ficar fora da área que rola. */

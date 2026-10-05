@@ -1,7 +1,7 @@
 import { ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { comTamanho } from '@/utils/redimensionarIcone'
 import * as S from './styles'
 import type { HeaderProps, SubtituloItemProps } from './types'
 

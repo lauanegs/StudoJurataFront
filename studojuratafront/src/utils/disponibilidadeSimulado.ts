@@ -1,5 +1,5 @@
 import { formatarDataHora } from './format'
-import type { SimuladoResponse } from '../types/simulados'
+import type { SimuladoResponse } from '@/types/simulados'
 
 export interface DisponibilidadeSimulado {
   indisponivel: boolean

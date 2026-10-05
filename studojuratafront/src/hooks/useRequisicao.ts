@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { ApiError } from '../services/api'
+import { ApiError } from '@/services/api'
 
 interface RequestState<T> {
   data: T | null

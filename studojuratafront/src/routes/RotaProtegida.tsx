@@ -1,8 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom'
 
-import { CarregandoTela } from '../components/feedback/CarregandoTela'
-import { useAuth } from '../hooks/useAuth'
-import type { TipoUsuario } from '../types/comum'
+import { CarregandoTela } from '@/components/feedback/CarregandoTela'
+import { useAuth } from '@/hooks/useAuth'
+import type { TipoUsuario } from '@/types/comum'
 
 interface RotaProtegidaProps {
   children: React.ReactNode

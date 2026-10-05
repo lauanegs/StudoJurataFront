@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { salvarQuestoesDoSimulado, type ApiDasQuestoes } from './persistirQuestoes'
-import type { QuestaoEditavel } from '../../../../components/simulados/QuestaoEditor/types'
+import type { QuestaoEditavel } from '@/components/simulados/QuestaoEditor/types'
 
 function apiFalsa() {
   const chamadas: string[] = []

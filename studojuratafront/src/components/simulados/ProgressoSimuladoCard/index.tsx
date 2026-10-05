@@ -1,7 +1,7 @@
 import styled from 'styled-components'
 
-import { theme as tokens } from '../../../styles/theme'
-import { corComOpacidade } from '../../../utils/corComOpacidade'
+import { theme as tokens } from '@/styles/theme'
+import { corComOpacidade } from '@/utils/corComOpacidade'
 
 export type QuestionProgressStatus = 'correct' | 'incorrect' | 'current' | 'answered' | 'pending'
 

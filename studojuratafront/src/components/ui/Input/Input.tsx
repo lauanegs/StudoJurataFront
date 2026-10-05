@@ -2,10 +2,10 @@ import { forwardRef, useId, useState } from 'react'
 import { CloseButton, Input as MantineInput, PasswordInput as MantinePasswordInput } from '@mantine/core'
 import { Eye, EyeOff } from 'lucide-react'
 
-import { Field } from '../Field'
-import { theme as tokens } from '../../../styles/theme'
-import { corComOpacidade } from '../../../utils/corComOpacidade'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { Field } from '@/components/ui/Field'
+import { theme as tokens } from '@/styles/theme'
+import { corComOpacidade } from '@/utils/corComOpacidade'
+import { comTamanho } from '@/utils/redimensionarIcone'
 import type { InputProps } from './types'
 
 /**

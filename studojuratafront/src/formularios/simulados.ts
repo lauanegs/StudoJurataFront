@@ -2,7 +2,7 @@ import { schemaResolver, useForm } from '@mantine/form'
 import * as yup from 'yup'
 
 import { inteiroPositivoOpcional, numeroPositivoOpcional } from './comum'
-import type { TipoDestinacaoSimulado } from '../types/simulados'
+import type { TipoDestinacaoSimulado } from '@/types/simulados'
 
 export const MENSAGEM_DATA_FIM_SIMULADO = 'A data final deve ser posterior à inicial'
 

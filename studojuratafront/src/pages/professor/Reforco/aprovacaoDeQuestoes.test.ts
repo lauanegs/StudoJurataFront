@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { questoesPendentesDoSimulado } from './aprovacaoDeQuestoes'
-import type { AlternativaResponse, QuestaoResponse, SimuladoQuestaoResponse } from '../../../types/simulados'
+import type { AlternativaResponse, QuestaoResponse, SimuladoQuestaoResponse } from '@/types/simulados'
 
 const vinculos = [
   { id: 1, simuladoId: 5, questaoId: 20 },

@@ -3,9 +3,9 @@ import { DateInput, TimePicker } from '@mantine/dates'
 import dayjs from 'dayjs'
 import { Calendar, Clock } from 'lucide-react'
 
-import { Field } from '../Field'
-import { theme as tokens } from '../../../styles/theme'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { Field } from '@/components/ui/Field'
+import { theme as tokens } from '@/styles/theme'
+import { comTamanho } from '@/utils/redimensionarIcone'
 import { FORMATO_API_DATA, FORMATO_API_DATA_HORA, dataDigitadaParaIso, dataIsoParaExibicao, mascararData } from './conversaoData'
 import type { DatePickerProps } from './types'
 

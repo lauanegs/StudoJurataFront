@@ -1,7 +1,7 @@
-import type { ItemGraficoBarras } from '../../../components/graficos/GraficoBarras'
-import type { PontoGraficoLinha } from '../../../components/graficos/GraficoLinha'
-import { formatarData } from '../../../utils/format'
-import type { TentativaDesempenho, TipoDestinacaoSimulado } from '../../../types/simulados'
+import type { ItemGraficoBarras } from '@/components/graficos/GraficoBarras'
+import type { PontoGraficoLinha } from '@/components/graficos/GraficoLinha'
+import { formatarData } from '@/utils/format'
+import type { TentativaDesempenho, TipoDestinacaoSimulado } from '@/types/simulados'
 
 export interface DesempenhoSimulado {
   simuladoId: number

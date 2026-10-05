@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { LoginRequest, LoginResponse } from '../types/autenticacao'
+import type { LoginRequest, LoginResponse } from '@/types/autenticacao'
 
 export const autenticacao = {
   entrar: (dados: LoginRequest) => api.post<LoginResponse>('/auth/login', dados),

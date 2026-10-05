@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react'
 import { FolderInput } from 'lucide-react'
 
-import { Button } from '../../../../components/ui/Button'
-import { CheckBox } from '../../../../components/ui/CheckBox'
-import { DataTable } from '../../../../components/ui/DataTable'
-import { GradeAutoAjuste } from '../../../../components/ui/GradeAutoAjuste'
-import { Modal } from '../../../../components/ui/Modal'
-import { Select, type SelectOption } from '../../../../components/ui/Select'
-import { Stack } from '../../../../components/ui/Stack'
-import { useRequisicao } from '../../../../hooks/useRequisicao'
-import { simuladoQuestoes, simulados as servicoSimulados } from '../../../../services/simulados'
-import type { Coluna } from '../../../../components/ui/DataTable/types'
-import type { SimuladoResponse } from '../../../../types/simulados'
+import { Button } from '@/components/ui/Button'
+import { CheckBox } from '@/components/ui/CheckBox'
+import { DataTable } from '@/components/ui/DataTable'
+import { GradeAutoAjuste } from '@/components/ui/GradeAutoAjuste'
+import { Modal } from '@/components/ui/Modal'
+import { Select, type SelectOption } from '@/components/ui/Select'
+import { Stack } from '@/components/ui/Stack'
+import { useRequisicao } from '@/hooks/useRequisicao'
+import { simuladoQuestoes, simulados as servicoSimulados } from '@/services/simulados'
+import type { Coluna } from '@/components/ui/DataTable/types'
+import type { SimuladoResponse } from '@/types/simulados'
 
 interface ModalImportarSimuladoProps {
   aberto: boolean

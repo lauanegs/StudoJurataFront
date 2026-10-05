@@ -1,8 +1,8 @@
 import { LineChart } from '@mantine/charts'
 
-import { theme as tokens } from '../../../styles/theme'
-import { LIMIAR_BAIXO_DESEMPENHO } from '../../../utils/desempenho'
-import { formatarPorcentagem } from '../../../utils/format'
+import { theme as tokens } from '@/styles/theme'
+import { LIMIAR_BAIXO_DESEMPENHO } from '@/utils/desempenho'
+import { formatarPorcentagem } from '@/utils/format'
 
 export interface PontoGraficoLinha {
   chave: string

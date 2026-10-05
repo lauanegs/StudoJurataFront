@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { agruparPorSimulado, mediaPorDisciplina, tendenciaPorDisciplina } from './agregacoesDesempenho'
-import type { TentativaDesempenho } from '../../../types/simulados'
+import type { TentativaDesempenho } from '@/types/simulados'
 
 function tentativa(dados: Partial<TentativaDesempenho>): TentativaDesempenho {
   return {

@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { PontuacaoAluno, Skin, SkinAluno } from '../types/gamificacao'
+import type { PontuacaoAluno, Skin, SkinAluno } from '@/types/gamificacao'
 
 export const gamificacao = {
   pontuacao: (alunoId: number) => api.get<PontuacaoAluno>(`/gamificacao/aluno/${alunoId}/pontuacao`),

@@ -1,8 +1,8 @@
 import styled, { css } from 'styled-components'
 import { Check } from 'lucide-react'
 
-import { Button } from '../../ui/Button'
-import { MoedaIcone } from '../MoedaIcone'
+import { Button } from '@/components/ui/Button'
+import { MoedaIcone } from '@/components/gamificacao/MoedaIcone'
 
 const Container = styled.article<{ $ativa: boolean }>`
   display: flex;

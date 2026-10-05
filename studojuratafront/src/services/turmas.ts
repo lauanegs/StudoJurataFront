@@ -5,7 +5,7 @@ import type {
   ResumoFrequenciaAluno,
   Turma,
   TurmaDisciplina,
-} from '../types/turmas'
+} from '@/types/turmas'
 
 export const turmas = {
   listar: () => api.get<Turma[]>('/turmas'),

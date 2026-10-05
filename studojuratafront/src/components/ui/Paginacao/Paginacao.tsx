@@ -1,8 +1,8 @@
 import { Group } from '@mantine/core'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-import { IconButton } from '../IconButton'
-import { theme as tokens } from '../../../styles/theme'
+import { IconButton } from '@/components/ui/IconButton'
+import { theme as tokens } from '@/styles/theme'
 import type { PaginacaoProps } from './types'
 
 export function Paginacao({

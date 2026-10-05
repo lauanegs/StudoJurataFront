@@ -8,8 +8,8 @@ import {
   questoesDoSimulado,
   simuladoTemQuestaoPendente,
 } from './questoes'
-import { questaoVazia } from '../../../../components/simulados/QuestaoEditor/types'
-import type { AlternativaResponse, QuestaoResponse, SimuladoQuestaoResponse } from '../../../../types/simulados'
+import { questaoVazia } from '@/components/simulados/QuestaoEditor/types'
+import type { AlternativaResponse, QuestaoResponse, SimuladoQuestaoResponse } from '@/types/simulados'
 
 const questao = {
   id: 10,

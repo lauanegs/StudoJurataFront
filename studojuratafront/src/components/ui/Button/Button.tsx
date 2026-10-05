@@ -1,7 +1,7 @@
 import { Button as MantineButton } from '@mantine/core'
 
-import { theme as tokens } from '../../../styles/theme'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { theme as tokens } from '@/styles/theme'
+import { comTamanho } from '@/utils/redimensionarIcone'
 import type { ButtonProps, ButtonSize, ButtonVariant } from './types'
 
 const SIZE_STYLES: Record<ButtonSize, { height: string; paddingInline: string; fontSize: string }> = {

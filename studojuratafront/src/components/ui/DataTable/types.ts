@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import type { PaginacaoProps } from '../Paginacao/types'
+import type { PaginacaoProps } from '@/components/ui/Paginacao/types'
 
 export interface Coluna<T> {
   key: string

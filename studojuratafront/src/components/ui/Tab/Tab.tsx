@@ -1,7 +1,7 @@
 import { Paper, Tabs } from '@mantine/core'
 
-import { theme as tokens } from '../../../styles/theme'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { theme as tokens } from '@/styles/theme'
+import { comTamanho } from '@/utils/redimensionarIcone'
 import type { TabProps } from './types'
 
 /**

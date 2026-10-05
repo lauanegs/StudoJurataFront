@@ -1,10 +1,10 @@
 import styled from 'styled-components'
 
-import { Button } from '../../../../components/ui/Button'
-import { CheckBox } from '../../../../components/ui/CheckBox'
-import { Modal } from '../../../../components/ui/Modal'
-import { EstadoVazio } from '../../../../components/feedback/EstadoVazio'
-import type { AlunoTurma } from '../../../../types/turmas'
+import { Button } from '@/components/ui/Button'
+import { CheckBox } from '@/components/ui/CheckBox'
+import { Modal } from '@/components/ui/Modal'
+import { EstadoVazio } from '@/components/feedback/EstadoVazio'
+import type { AlunoTurma } from '@/types/turmas'
 
 const ListaAlunos = styled.div`
   display: flex;

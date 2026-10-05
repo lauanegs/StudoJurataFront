@@ -2,8 +2,8 @@ import { Children, useState, type ReactNode } from 'react'
 import styled from 'styled-components'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-import { Card } from '../Card'
-import { IconButton } from '../IconButton'
+import { Card } from '@/components/ui/Card'
+import { IconButton } from '@/components/ui/IconButton'
 
 const Setas = styled.div`
   display: flex;

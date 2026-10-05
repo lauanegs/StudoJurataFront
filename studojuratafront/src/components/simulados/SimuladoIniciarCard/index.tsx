@@ -1,8 +1,8 @@
 import styled from 'styled-components'
 import { Play } from 'lucide-react'
 
-import { Button } from '../../ui/Button'
-import { Tag } from '../../ui/Tag'
+import { Button } from '@/components/ui/Button'
+import { Tag } from '@/components/ui/Tag'
 
 const Container = styled.article`
   display: flex;

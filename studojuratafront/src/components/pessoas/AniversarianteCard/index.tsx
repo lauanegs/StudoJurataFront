@@ -1,7 +1,7 @@
 import styled from 'styled-components'
 import { Cake } from 'lucide-react'
 
-import { Avatar } from '../../ui/Avatar'
+import { Avatar } from '@/components/ui/Avatar'
 
 const Container = styled.article`
   display: flex;

@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 
-import { matriculas as servicoMatriculas } from '../services/turmas'
-import type { AlunoTurma } from '../types/turmas'
-import { chaveDoCursoEscolhido } from '../utils/cursoEscolhido'
+import { matriculas as servicoMatriculas } from '@/services/turmas'
+import type { AlunoTurma } from '@/types/turmas'
+import { chaveDoCursoEscolhido } from '@/utils/cursoEscolhido'
 import { useAuth } from './useAuth'
 import { useAlunoLogado } from './usePerfilLogado'
 import { useRequisicao } from './useRequisicao'

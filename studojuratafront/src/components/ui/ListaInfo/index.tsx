@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import styled from 'styled-components'
 
-import { SubtituloItem } from '../Header'
+import { SubtituloItem } from '@/components/ui/Header'
 
 const Lista = styled.div`
   display: flex;

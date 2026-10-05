@@ -1,5 +1,5 @@
-import type { SelectOption } from '../../../components/ui/Select'
-import { formatarData } from '../../../utils/format'
+import type { SelectOption } from '@/components/ui/Select'
+import { formatarData } from '@/utils/format'
 
 interface RecorteDesempenho {
   opcoesTurmas: SelectOption<number>[]

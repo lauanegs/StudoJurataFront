@@ -1,7 +1,7 @@
 import { Pill } from '@mantine/core'
 
-import { theme as tokens } from '../../../styles/theme'
-import { comTamanho } from '../../../utils/redimensionarIcone'
+import { theme as tokens } from '@/styles/theme'
+import { comTamanho } from '@/utils/redimensionarIcone'
 import type { ChipProps } from './types'
 
 const CORES: Record<

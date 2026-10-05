@@ -1,13 +1,13 @@
 import styled from 'styled-components'
 
-import { Card } from '../../../../components/ui/Card'
-import { DatePicker } from '../../../../components/ui/DatePicker'
-import { Input } from '../../../../components/ui/Input'
-import { Select, type SelectOption } from '../../../../components/ui/Select'
-import { Stack } from '../../../../components/ui/Stack'
-import { OPCOES_ATIVA_INATIVA } from '../../../../utils/labels'
-import type { FormularioTurma } from '../../../../formularios/turmas'
-import type { StatusAtivoInativo } from '../../../../types/comum'
+import { Card } from '@/components/ui/Card'
+import { DatePicker } from '@/components/ui/DatePicker'
+import { Input } from '@/components/ui/Input'
+import { Select, type SelectOption } from '@/components/ui/Select'
+import { Stack } from '@/components/ui/Stack'
+import { OPCOES_ATIVA_INATIVA } from '@/utils/labels'
+import type { FormularioTurma } from '@/formularios/turmas'
+import type { StatusAtivoInativo } from '@/types/comum'
 
 /* Três campos por linha fixos: com auto-fit o número de colunas variaria com a tela. */
 const Grade = styled.div`

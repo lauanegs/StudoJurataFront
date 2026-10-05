@@ -1,6 +1,6 @@
 import { Paper } from '@mantine/core'
 
-import { theme as tokens } from '../../../styles/theme'
+import { theme as tokens } from '@/styles/theme'
 import type { CardProps } from './types'
 
 const ELEVACAO: Record<NonNullable<CardProps['elevacao']>, { shadow?: string; border?: string }> = {

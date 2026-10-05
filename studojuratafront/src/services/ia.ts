@@ -4,8 +4,8 @@ import type {
   Recomendacao,
   RevisaoConteudoResponse,
   SimuladoGeradoIAResponse,
-} from '../types/ia'
-import type { SimuladoResponse } from '../types/simulados'
+} from '@/types/ia'
+import type { SimuladoResponse } from '@/types/simulados'
 
 export const ia = {
   gerarSimulado: (dados: GerarSimuladoIARequest) =>

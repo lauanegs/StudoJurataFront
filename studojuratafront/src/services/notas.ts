@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { Nota } from '../types/notas'
+import type { Nota } from '@/types/notas'
 
 export const notas = {
   /** Restrito a PROFESSOR/ADMINISTRADOR no SecurityConfig. */

@@ -6,9 +6,9 @@ import type {
   Responsavel,
   ResponsavelAluno,
   Usuario,
-} from '../types/pessoas'
-import type { TurmaDisciplina } from '../types/turmas'
-import type { TentativaDesempenho } from '../types/simulados'
+} from '@/types/pessoas'
+import type { TurmaDisciplina } from '@/types/turmas'
+import type { TentativaDesempenho } from '@/types/simulados'
 
 export const pessoas = {
   listar: () => api.get<Pessoa[]>('/pessoas'),

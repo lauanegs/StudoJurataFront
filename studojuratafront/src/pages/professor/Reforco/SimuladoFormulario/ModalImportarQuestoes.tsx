@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react'
 import { ClipboardCheck } from 'lucide-react'
 
-import { Button } from '../../../../components/ui/Button'
-import { CheckBox } from '../../../../components/ui/CheckBox'
-import { DataTable } from '../../../../components/ui/DataTable'
-import { Modal } from '../../../../components/ui/Modal'
-import { Select, type SelectOption } from '../../../../components/ui/Select'
-import { Stack } from '../../../../components/ui/Stack'
-import { ROTULO_TIPO_QUESTAO } from '../../../../utils/labels'
-import type { Coluna } from '../../../../components/ui/DataTable/types'
-import type { QuestaoResponse } from '../../../../types/simulados'
+import { Button } from '@/components/ui/Button'
+import { CheckBox } from '@/components/ui/CheckBox'
+import { DataTable } from '@/components/ui/DataTable'
+import { Modal } from '@/components/ui/Modal'
+import { Select, type SelectOption } from '@/components/ui/Select'
+import { Stack } from '@/components/ui/Stack'
+import { ROTULO_TIPO_QUESTAO } from '@/utils/labels'
+import type { Coluna } from '@/components/ui/DataTable/types'
+import type { QuestaoResponse } from '@/types/simulados'
 
 interface ModalImportarQuestoesProps {
   aberto: boolean

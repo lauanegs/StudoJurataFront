@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 
-import { LetterBadge } from '../LetterBadge'
+import { LetterBadge } from '@/components/simulados/LetterBadge'
 
 export type AlternativeStatus = 'neutral' | 'correct' | 'incorrect'
 

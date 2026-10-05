@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 
-import { ConfirmDialog } from '../components/feedback/ConfirmDialog'
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
 import { ConfirmContexto, type PedidoConfirmacao } from './confirmContexto'
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {

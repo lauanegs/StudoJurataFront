@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 
-import { useProfessorLogado } from '../../../hooks/usePerfilLogado'
-import { useRequisicao } from '../../../hooks/useRequisicao'
-import { professores as servicoProfessores } from '../../../services/pessoas'
-import { matriculas } from '../../../services/turmas'
+import { useProfessorLogado } from '@/hooks/usePerfilLogado'
+import { useRequisicao } from '@/hooks/useRequisicao'
+import { professores as servicoProfessores } from '@/services/pessoas'
+import { matriculas } from '@/services/turmas'
 import { agruparPorSimulado, mediaPorDisciplina, tendenciaPorDisciplina } from './agregacoesDesempenho'
 
 export type { DesempenhoSimulado } from './agregacoesDesempenho'

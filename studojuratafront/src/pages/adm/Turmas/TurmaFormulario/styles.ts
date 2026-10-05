@@ -10,4 +10,4 @@ export const LinhaAcaoFlutuante = styled.div`
   flex-wrap: wrap;
 `
 
-export { LinhaCampos } from '../../../../components/ui/LinhaCampos'
+export { LinhaCampos } from '@/components/ui/LinhaCampos'

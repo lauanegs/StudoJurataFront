@@ -3,14 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { LogIn } from 'lucide-react'
 
-import { TelaComBanner } from '../../components/layout/TelaComBanner'
-import { Button } from '../../components/ui/Button'
-import { Input } from '../../components/ui/Input'
-import { ROTA_INICIAL_POR_PERFIL } from '../../contexts/authContexto'
-import { useAuth } from '../../hooks/useAuth'
-import { ApiError } from '../../services/api'
-import { theme as tokens } from '../../styles/theme'
-import { useFormularioLogin } from '../../formularios/autenticacao'
+import { TelaComBanner } from '@/components/layout/TelaComBanner'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { ROTA_INICIAL_POR_PERFIL } from '@/contexts/authContexto'
+import { useAuth } from '@/hooks/useAuth'
+import { ApiError } from '@/services/api'
+import { theme as tokens } from '@/styles/theme'
+import { useFormularioLogin } from '@/formularios/autenticacao'
 
 const Cartao = styled.form`
   display: flex;
