@@ -29,12 +29,19 @@ Backend irmão: `../StudoJurataApi` (ver o `CLAUDE.md`/`docs/` dele para a API c
 - **lucide-react** para ícones
 - Sem axios — cliente HTTP próprio sobre `fetch` (`services/api.ts`)
 - Sem Redux/Zustand/Jotai/React Query/SWR — estado local + Context API + hooks próprios de busca de dados
-- **Vitest** para testes unitários da lógica pura (`npm test`): schemas yup, formatação e helpers. Arquivos `*.test.ts` ao lado do código testado; sem testes de componente/tela
+- Sem testes automatizados: os testes (Vitest) foram removidos de propósito. Validar com `tsc -b`, `npm run lint`, `npm run build` e verificação manual no navegador
 - ESLint (`js` recommended + `typescript-eslint` recommended + `react-hooks` flat recommended + `react-refresh` vite) — sem Prettier configurado
 
 ## Arquitetura atual
 
 Camadas: `pages/` (por perfil: `adm/professor/aluno/auth`) → compõe `components/ui/` + `components/layout/` → usa `hooks/` (busca/estado) → que usam `services/` (chamada HTTP tipada) → tipado por `types/`. Estado verdadeiramente global só em `contexts/` (Auth, Toast, Confirm). Ver [`docs/architecture.md`](docs/architecture.md) para o detalhamento completo, incluindo os "Problemas arquiteturais identificados" — **não corrigir esses problemas silenciosamente**; existem para orientar decisões futuras que exigem confirmação do usuário.
+
+## Convenções de organização
+
+- **Imports com alias `@/`** (= `src/`): nunca `../`; só `./` para arquivo da mesma pasta.
+- **Pasta por componente/página**: `Nome/Nome.tsx` + `styles.ts` (styled-components) + `types.ts` (props e tipos) + `index.ts` (componentes reexportam). Estilos e tipos nunca ficam dentro do `.tsx`.
+- Páginas com subcomponentes próprios ficam numa pasta da página (`TurmaFormulario/`, `SimuladoFormulario/`, `Simulado/`); helpers compartilhados de um grupo de páginas em `comum/` (ex.: `professor/Reforco/comum/`).
+- Arquivos que não são componente (`hooks`, `utils`, `services`, `types`) em camelCase; contextos em `contexts/<nome>/` (`XProvider.tsx` + `xContexto.ts`).
 
 ## Estrutura de pastas
 ```
