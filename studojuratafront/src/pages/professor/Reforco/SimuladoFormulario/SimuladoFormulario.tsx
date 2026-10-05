@@ -1,22 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ClipboardCheck, FolderInput, Lock, Plus, Rocket, Save, Sparkles } from 'lucide-react'
+import { ClipboardCheck, FolderInput, Lock, Rocket, Save } from 'lucide-react'
 
 import { Layout } from '../../../../components/layout'
 import { Button } from '../../../../components/ui/Button'
 import { Header, SubtituloItem } from '../../../../components/ui/Header'
-import { QuestaoEditor } from '../../../../components/simulados/QuestaoEditor'
-import { VinculoConteudoQuestao } from '../../../../components/planejamento/VinculoConteudo'
 import {
   questaoVazia,
   validarQuestao,
   type ErrosQuestao,
   type QuestaoEditavel,
 } from '../../../../components/simulados/QuestaoEditor/types'
-import { StatusBadge } from '../../../../components/simulados/StatusBadge'
 import { Tab } from '../../../../components/ui/Tab'
 import { ErroCarregamento } from '../../../../components/feedback/ErroCarregamento'
-import { EstadoVazio } from '../../../../components/feedback/EstadoVazio'
 import { SkeletonCartao } from '../../../../components/feedback/Skeleton'
 import { useConfirm } from '../../../../contexts/confirmContexto'
 import { useToast } from '../../../../contexts/toastContexto'
@@ -36,11 +32,20 @@ import { matriculas, turmas as servicoTurmas } from '../../../../services/turmas
 import { deInputDataHora, formatarDataHora, paraInputDataHora } from '../../../../utils/format'
 import type { QuestaoResponse } from '../../../../types/simulados'
 import { dataFimSimuladoValida, MENSAGEM_DATA_FIM_SIMULADO, useFormularioSimulado } from '../../../../formularios/simulados'
+import { AbaQuestoes } from './AbaQuestoes'
 import { ConfiguracaoSimulado } from './ConfiguracaoSimulado'
 import { ModalImportarQuestoes } from './ModalImportarQuestoes'
 import { ModalImportarSimulado } from './ModalImportarSimulado'
 import { ModalSelecionarAlunos } from './ModalSelecionarAlunos'
-import { carregarQuestao, copiarQuestao, MAXIMO_QUESTOES } from './questoes'
+import {
+  copiarQuestao,
+  MAXIMO_QUESTOES,
+  planejarImportacaoDeQuestoes,
+  questoesDoSimulado,
+  simuladoTemQuestaoPendente,
+} from './questoes'
+import { salvarQuestoesDoSimulado } from './persistirQuestoes'
+import { planejarPublicacao } from './publicacaoAoSalvar'
 import { removerQuestaoDoSimulado } from './remocaoQuestao'
 import { disciplinaCompativelComTurma, disciplinasDaTurma } from './disciplinasDoSimulado'
 
@@ -123,11 +128,7 @@ export default function SimuladoFormulario() {
   const temQuestaoPendente = useMemo(() => {
     if (!edicao || !requisicaoVinculosSimulado.data || !requisicaoBancoQuestoes.data) return false
 
-    const bancoQuestoesPorId = new Map(requisicaoBancoQuestoes.data.map((questao) => [questao.id, questao]))
-
-    return requisicaoVinculosSimulado.data
-      .filter((vinculo) => vinculo.simuladoId === simuladoId && vinculo.status !== 'REMOVIDA')
-      .some((vinculo) => bancoQuestoesPorId.get(vinculo.questaoId)?.status === 'PENDENTE')
+    return simuladoTemQuestaoPendente(requisicaoVinculosSimulado.data, requisicaoBancoQuestoes.data, simuladoId)
   }, [edicao, requisicaoVinculosSimulado.data, requisicaoBancoQuestoes.data, simuladoId])
 
   useEffect(() => {
@@ -198,19 +199,10 @@ export default function SimuladoFormulario() {
   }, [edicao, requisicaoVinculosSimulado.data, requisicaoBancoQuestoes.data, requisicaoBancoAlternativas.data])
 
   useHidratar(dadosParaHidratarQuestoes, ({ vinculos, bancoQuestoes, bancoAlternativas }) => {
-    const vinculosDesteSimulado = vinculos
-      .filter((vinculo) => vinculo.simuladoId === simuladoId && vinculo.status !== 'REMOVIDA')
-      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
+    const carregadas = questoesDoSimulado(vinculos, bancoQuestoes, bancoAlternativas, simuladoId)
 
-    // Rascunho recém-criado, ainda sem questão salva: mantém o
-    // questaoVazia() inicial em vez de esvaziar a lista.
-    if (vinculosDesteSimulado.length === 0) return
-
-    const carregadas = vinculosDesteSimulado
-      .map((vinculo) => bancoQuestoes.find((item) => item.id === vinculo.questaoId))
-      .filter((item): item is QuestaoResponse => Boolean(item))
-      .map((original) => carregarQuestao(original, bancoAlternativas))
-
+    // Rascunho recém-criado, ainda sem questão salva: mantém o questaoVazia() inicial
+    // em vez de esvaziar a lista.
     if (carregadas.length > 0) {
       setQuestoes(carregadas)
       setQuestaoAtiva(0)
@@ -326,76 +318,22 @@ export default function SimuladoFormulario() {
         ? await servicoSimulados.atualizar(simuladoId as number, corpo)
         : await servicoSimulados.criar(corpo)
 
-      const pontuacaoPorQuestao = corpo.notaMaxima
-        ? Number((corpo.notaMaxima / questoes.length).toFixed(2))
-        : undefined
+      await salvarQuestoesDoSimulado({
+        simuladoId: simulado.id,
+        questoes,
+        disciplinaId,
+        notaMaxima: corpo.notaMaxima,
+      })
 
-      for (const [indice, questao] of questoes.entries()) {
-        const questaoSalva = questao.id
-          ? await servicoQuestoes.atualizar(questao.id, {
-              enunciado: questao.enunciado.trim(),
-              tipo: questao.tipo,
-              disciplinaId: questao.disciplinaId ?? disciplinaId,
-              nivelDificuldade: questao.nivelDificuldade,
-              origem: 'PROFESSOR',
-            })
-          : await servicoQuestoes.criar({
-              enunciado: questao.enunciado.trim(),
-              tipo: questao.tipo,
-              disciplinaId: questao.disciplinaId ?? disciplinaId,
-              nivelDificuldade: questao.nivelDificuldade,
-              origem: 'PROFESSOR',
-            })
+      // Publicação e encerramento seguem as datas informadas (ver planejarPublicacao).
+      const { acao, inicioJaChegou } = planejarPublicacao({
+        tipoDestinacao,
+        quantidadeAlunosEscolhidos: alunosSelecionados.length,
+        dataInicio: corpo.dataInicio as string,
+        dataFim: corpo.dataFim,
+      })
 
-        for (const [posicao, alternativa] of questao.alternativas.entries()) {
-          if (!alternativa.texto.trim()) continue
-
-          const corpoAlternativa = {
-            questaoId: questaoSalva.id,
-            texto: alternativa.texto.trim(),
-            correta: alternativa.correta,
-            ordem: posicao + 1,
-          }
-
-          if (alternativa.id) {
-            await servicoAlternativas.atualizar(alternativa.id, corpoAlternativa)
-          } else {
-            await servicoAlternativas.criar(corpoAlternativa)
-          }
-        }
-
-        // Vincula a questão ao simulado só na primeira vez.
-        if (!questao.id) {
-          // Conteúdos primeiro: o back só aceita no simulado questão com conteúdo já
-          // ministrado, então o vínculo com o simulado precisa vir depois deles.
-          if (questao.conteudoPlanoIdsPendentes && questao.conteudoPlanoIdsPendentes.length > 0) {
-            await Promise.all(
-              questao.conteudoPlanoIdsPendentes.map((conteudoPlanoId) =>
-                servicoQuestoes.vincularConteudo(questaoSalva.id, conteudoPlanoId),
-              ),
-            )
-          }
-
-          await simuladoQuestoes.criar({
-            simuladoId: simulado.id,
-            questaoId: questaoSalva.id,
-            ordem: indice + 1,
-            pontuacao: pontuacaoPorQuestao,
-          })
-        }
-      }
-
-      // Publicação e encerramento seguem as datas informadas. Janela já aberta: lança agora.
-      // Alunos específicos só são conhecidos neste momento, então esse simulado é lançado
-      // já (os alunos o iniciam a partir da data de início). Simulado para a turma toda com
-      // início futuro fica em rascunho e o sistema o publica sozinho quando a data chegar.
-      const agora = Date.now()
-      const inicioJaChegou = new Date(corpo.dataInicio as string).getTime() <= agora
-      const janelaVencida = Boolean(corpo.dataFim) && new Date(corpo.dataFim as string).getTime() <= agora
-      const especificoComAlunos = tipoDestinacao === 'ESPECIFICO' && alunosSelecionados.length > 0
-      const lancarAgora = !janelaVencida && (inicioJaChegou ? tipoDestinacao === 'TODOS' || especificoComAlunos : especificoComAlunos)
-
-      if (lancarAgora) {
+      if (acao === 'lancar-agora') {
         await servicoSimulados.lancar(simulado.id, {
           alunoIds: tipoDestinacao === 'ESPECIFICO' ? alunosSelecionados : undefined,
         })
@@ -405,7 +343,7 @@ export default function SimuladoFormulario() {
             ? 'A disponibilidade já começou, então os alunos já podem fazê-lo.'
             : `Os alunos poderão iniciá-lo a partir de ${formatarDataHora(corpo.dataInicio)}.`,
         )
-      } else if (tipoDestinacao === 'TODOS' && !janelaVencida) {
+      } else if (acao === 'publicacao-automatica') {
         toast.success(
           edicao ? 'Simulado atualizado' : 'Simulado criado',
           `Será publicado automaticamente em ${formatarDataHora(corpo.dataInicio)} e encerrado na data final.`,
@@ -537,31 +475,26 @@ export default function SimuladoFormulario() {
   }
 
   function importarQuestoes(todasEscolhidas: QuestaoResponse[]) {
-    const primeiraVaziaAntes = questoes.length === 1 && !questoes[0].enunciado.trim() && !questoes[0].id
-    const espacoDisponivel = MAXIMO_QUESTOES - (primeiraVaziaAntes ? 0 : questoes.length)
-    const escolhidas = todasEscolhidas.slice(0, Math.max(0, espacoDisponivel))
+    const { questoes: questoesFinal, importadas, cortadas } = planejarImportacaoDeQuestoes(
+      questoes,
+      todasEscolhidas,
+      requisicaoBancoAlternativas.data ?? [],
+      disciplinaId,
+    )
 
-    if (escolhidas.length === 0) {
+    if (!questoesFinal) {
       toast.warning('Limite de questões atingido', `Um simulado pode ter no máximo ${MAXIMO_QUESTOES} questões.`)
       return false
     }
-
-    const importadas = escolhidas.map((escolhida) =>
-      copiarQuestao(escolhida, requisicaoBancoAlternativas.data ?? [], disciplinaId),
-    )
-
-    // Descartar a primeira questão vazia encurta o array; o índice vem do resultado.
-    const questoesFinal = primeiraVaziaAntes ? importadas : [...questoes, ...importadas]
-    const cortadasPeloLimite = todasEscolhidas.length - escolhidas.length
 
     setQuestoes(questoesFinal)
     setQuestaoAtiva(Math.max(0, questoesFinal.length - 1))
     setErrosQuestoes({})
     setModalImportar(false)
     toast.success(
-      `${importadas.length} questão(ões) importada(s)`,
-      cortadasPeloLimite > 0
-        ? `${cortadasPeloLimite} não coube(ram) — limite de ${MAXIMO_QUESTOES} questões por simulado. Revise antes de salvar.`
+      `${importadas} questão(ões) importada(s)`,
+      cortadas > 0
+        ? `${cortadas} não coube(ram) — limite de ${MAXIMO_QUESTOES} questões por simulado. Revise antes de salvar.`
         : 'Revise o conteúdo antes de salvar.',
     )
     return true
@@ -578,8 +511,6 @@ export default function SimuladoFormulario() {
       </Layout>
     )
   }
-
-  const questao = questoes[questaoAtiva]
 
   return (
     <Layout>
@@ -674,70 +605,20 @@ export default function SimuladoFormulario() {
           onTrocarTurma={() => setAlunosSelecionados([])}
         />
       ) : (
-        <>
-          {questao && (
-            <QuestaoEditor
-              questao={questao}
-              indice={questaoAtiva}
-              total={questoes.length}
-              somenteLeitura={somenteLeitura}
-              erros={errosQuestoes[questaoAtiva]}
-              onChange={(atualizada) =>
-                setQuestoes((atuais) =>
-                  atuais.map((item, i) => (i === questaoAtiva ? atualizada : item)),
-                )
-              }
-              onRemove={() => {
-                void removerQuestao(questaoAtiva)
-              }}
-              onImport={() => setModalImportar(true)}
-              conteudo={
-                <VinculoConteudoQuestao
-                  questaoId={questao.id}
-                  disciplinaId={questao.disciplinaId ?? disciplinaId}
-                  somenteLeitura={somenteLeitura}
-                  conteudoPlanoIdsPendentes={questao.conteudoPlanoIdsPendentes}
-                  onChangePendentes={(ids) =>
-                    setQuestoes((atuais) =>
-                      atuais.map((item, i) => (i === questaoAtiva ? { ...item, conteudoPlanoIdsPendentes: ids } : item)),
-                    )
-                  }
-                />
-              }
-              navegador={
-                <>
-                  {questoes.map((_, indice) => (
-                    <StatusBadge
-                      key={indice}
-                      shape="square"
-                      color={errosQuestoes[indice] ? 'red' : indice === questaoAtiva ? 'purple' : 'gray'}
-                      selected={indice === questaoAtiva}
-                      ariaLabel={`Ir para a questão ${indice + 1}`}
-                      onClick={() => setQuestaoAtiva(indice)}
-                    >
-                      {indice + 1}
-                    </StatusBadge>
-                  ))}
-
-                  {!somenteLeitura && questoes.length < MAXIMO_QUESTOES && (
-                    <Button variant="secondary" size="small" icon={<Plus />} onClick={adicionarQuestao}>
-                      Nova questão
-                    </Button>
-                  )}
-                </>
-              }
-            />
-          )}
-
-          {questoes.length === 0 && (
-            <EstadoVazio
-              titulo="Nenhuma questão"
-              descricao="Adicione ao menos uma questão para o simulado."
-              icon={<Sparkles />}
-              acao={<Button icon={<Plus />} onClick={adicionarQuestao}>Adicionar questão</Button>}
-            />
-          )}
-        </>
+        <AbaQuestoes
+          questoes={questoes}
+          questaoAtiva={questaoAtiva}
+          errosQuestoes={errosQuestoes}
+          somenteLeitura={somenteLeitura}
+          disciplinaId={disciplinaId}
+          onSelecionar={setQuestaoAtiva}
+          onAlterar={(indice, atualizada) =>
+            setQuestoes((atuais) => atuais.map((item, i) => (i === indice ? atualizada : item)))
+          }
+          onAdicionar={adicionarQuestao}
+          onRemover={(indice) => void removerQuestao(indice)}
+          onImportar={() => setModalImportar(true)}
+        />
       )}
 
       <ModalSelecionarAlunos
