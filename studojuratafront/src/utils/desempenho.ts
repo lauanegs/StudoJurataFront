@@ -1,25 +1,14 @@
 import { theme as tokens } from '@/styles/theme'
 
 import type { NivelDesempenho } from './types'
-/**
- * Percentual abaixo do qual o desempenho é considerado baixo — o mesmo valor
- * que o back usa para recomendar reforço (RecomendacaoService.LIMIAR_BAIXO_APROVEITAMENTO).
- * Também é o gatilho de reforço manual: turma com essa % de alunos abaixo dele.
- */
 export const LIMIAR_BAIXO_DESEMPENHO = 60
 
-/**
- * Classifica uma porcentagem (0 a 100) de desempenho — mesmos limiares usados
- * pelos gráficos de desempenho (DesempenhoCard), para que qualquer indicador
- * de nota/desempenho na aplicação use sempre a mesma regra de cor.
- */
 export function nivelDesempenho(porcentagem: number): NivelDesempenho {
   if (porcentagem < 40) return 'baixo'
   if (porcentagem < 70) return 'medio'
   return 'alto'
 }
 
-/** Cor de cada faixa — os mesmos vermelho/amarelo/verde dos tokens de feedback do tema. */
 export const CORES_NIVEL_DESEMPENHO: Record<NivelDesempenho, string> = {
   baixo: tokens.colors.error,
   medio: tokens.colors.warning,
@@ -34,19 +23,12 @@ const FAIXAS_HISTOGRAMA = [
   { min: 80, max: 100, rotulo: '80-100' },
 ]
 
-/** Testa se uma nota (0-100) cai na faixa de 20 pontos identificada pelo rótulo (ex.: "40-60"). */
 export function estaNaFaixaHistograma(valor: number, rotuloFaixa: string): boolean {
   const faixa = FAIXAS_HISTOGRAMA.find((item) => item.rotulo === rotuloFaixa)
   if (!faixa) return false
   return valor >= faixa.min && (faixa.max === 100 ? valor <= faixa.max : valor < faixa.max)
 }
 
-/**
- * Agrupa notas (0-100) em faixas de 20 pontos — mesma regra usada pelo
- * gráfico de histograma (Histograma) e pelo detalhamento de quem está em
- * cada faixa (ex.: clique numa coluna do gráfico), para não duplicar a regra
- * em dois lugares.
- */
 export function calcularFaixasHistograma(valores: number[]) {
   return FAIXAS_HISTOGRAMA.map((faixa) => ({
     rotulo: faixa.rotulo,

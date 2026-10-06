@@ -1,19 +1,8 @@
-/**
- * Degradê de marca azul-sobre-roxo — a Sidebar e o realce do segmento "questão
- * atual" da navegação de questões usam o mesmo valor, então ele fica numa
- * constante só (o `gradients` guarda uma chave por finalidade).
- */
 const gradienteAzulMarca = 'linear-gradient(180deg, #049DBF 0%, rgba(4, 157, 191, 0.8) 100%), #662E9B'
 
-/**
- * Tons dos degradês de perigo e sucesso, que existem em dois formatos: a string
- * CSS de `gradients` (styled-components) e o par from/to exigido pelos botões da
- * Mantine (`gradientPairs`). O valor de cada tom fica aqui, uma única vez.
- */
 const tonsDePerigo = { from: '#DB5461', to: '#CF505C' }
 const tonsDeSucesso = { from: '#3DCB63', to: '#34C759' }
 
-/** Cinza-azulado neutro da página — é também a cor das bordas suaves. */
 const fundoNeutro = '#E6EAF2'
 
 export const theme = {
@@ -34,8 +23,6 @@ export const theme = {
 
     white: '#FFFFFF',
     background: fundoNeutro,
-    // Véu escuro por cima da tela quando o menu abre no celular (mesmo tom
-    // escuro de shadow.card, com opacidade maior).
     scrim: '#18274B',
     border: fundoNeutro,
     borderStrong: '#D5DCE8',
@@ -62,15 +49,11 @@ export const theme = {
 
     orange: '#FF8D28',
 
-    // Cinza neutro (textTertiary) a 15%: borda dos cards de alternativa e do cabeçalho do simulado.
     borderSoft: 'rgba(115, 115, 115, 0.15)',
-    // Véus brancos translúcidos sobre fundo de marca ou de card.
     whiteVeil: 'rgba(255, 255, 255, 0.2)',
     whiteVeilSoft: 'rgba(255, 255, 255, 0.18)',
-    // Tons do fundo neutro da página usados em chips e abas.
     neutralTint: 'rgba(230, 234, 242, 0.6)',
     neutralTintSoft: 'rgba(230, 234, 242, 0.3)',
-    // Brilho do esqueleto de carregamento.
     skeletonShine: '#EEF1F7',
   },
 
@@ -78,26 +61,16 @@ export const theme = {
     primary: 'linear-gradient(180deg, #8148B7 0%, #9256CC 100%)',
     primaryHover: 'linear-gradient(180deg, #6E3B9E 0%, #8148B7 100%)',
     sidebar: gradienteAzulMarca,
-    // Mesmo degradê do `sidebar` — realce azul de marca, usado fora do menu.
     blue: gradienteAzulMarca,
     banner: 'linear-gradient(180deg, #8148B7 0%, #9256CC 100%)',
     danger: `linear-gradient(180deg, ${tonsDePerigo.from} 0%, ${tonsDePerigo.to} 100%)`,
-    // Mesmo verde de colors.success, para não haver dois verdes na UI.
     success: `linear-gradient(180deg, ${tonsDeSucesso.from} 0%, ${tonsDeSucesso.to} 100%)`,
-    // Moldura azul das telas do aluno (enunciado da questão e card de
-    // resultado): azul sobre o fundo neutro da página.
     frame: `linear-gradient(90deg, #049DBF 0%, rgba(4, 157, 191, 0.5) 100%), ${fundoNeutro}`,
-    // Acerto/erro da navegação de questões: verde e laranja próprios, mais
-    // vivos que colors.success/colors.error de propósito.
     correct: 'linear-gradient(90deg, #0CCA4A 0%, #46A665 100%)',
     incorrect: 'linear-gradient(90deg, #F95738 0%, #F86624 100%)',
     border: 'linear-gradient(135deg, #662E9B 0%, #049DBF 100%)',
   },
 
-  /**
-   * Pares from/to dos mesmos degradês de perigo e sucesso — a Mantine recebe o
-   * degradê de um botão em duas cores, não em uma string CSS.
-   */
   gradientPairs: {
     danger: tonsDePerigo,
     success: tonsDeSucesso,
@@ -147,7 +120,6 @@ export const theme = {
   },
 
   shadow: {
-    // Suave de propósito: telas com muitos cards cansavam a vista com sombra mais forte.
     base: '0 2px 10px rgba(0, 0, 0, 0.05)',
     light: '0 2px 4px rgba(0, 0, 0, 0.08)',
     medium: '0 4px 8px rgba(0, 0, 0, 0.08)',

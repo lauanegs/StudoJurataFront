@@ -43,11 +43,7 @@ import { OPCOES_DESTINACAO, ROTULO_MOTIVO_RECOMENDACAO } from '@/utils/labels'
 
 import type { Aba } from './types'
 
-/**
- * Configuração: os campos de um simulado normal, com "Disponível a partir de"
- * sugerida pelo prazo de revisão. Questões: aprovação das pendentes.
- * Aluno-alvo e motivo vêm da geração e são só informativos.
- */
+/** Configuração: os campos de um simulado normal, com "Disponível a partir de" sugerida pelo prazo de revisão */
 export default function AprovarSimulado() {
   const { simuladoId } = useParams()
   const navegar = useNavigate()
@@ -65,7 +61,7 @@ export default function AprovarSimulado() {
   const [processando, setProcessando] = useState(false)
   const [processandoLote, setProcessandoLote] = useState(false)
 
-  // --- Configuração do simulado ---------------------------------------------
+  // --- Configuração do simulado --------------------------------------------
   const [titulo, setTitulo] = useState('')
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
   const [turmaId, setTurmaId] = useState<number | null>(null)
@@ -86,8 +82,7 @@ export default function AprovarSimulado() {
   const requisicaoVinculosIA = useRequisicao(() => servicoIa.listarSimuladosGerados(), [])
   const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [])
 
-  // Vínculo aluno/conteúdo/motivo/prazo criado na geração automática — só
-  // existe pra simulados de reforço via IA (ver SimuladoGeradoIA no back).
+  // Vínculo aluno/conteúdo/motivo/prazo criado na geração automática
   const vinculoIA = useMemo(
     () => (requisicaoVinculosIA.data ?? []).find((item) => item.simuladoId === idSimulado) ?? null,
     [requisicaoVinculosIA.data, idSimulado],
@@ -123,7 +118,7 @@ export default function AprovarSimulado() {
     setNotaMaxima(simulado.notaMaxima?.toString() ?? '10')
   })
 
-  // Sugere o prazo de revisão sem sobrescrever uma data já definida.
+  // Sugere o prazo de revisão sem sobrescrever uma data já definida
   useEffect(() => {
     if (!vinculoIA) return
     setDataInicio((atual) => atual || `${vinculoIA.prazoLancamento}T08:00`)
@@ -265,7 +260,7 @@ export default function AprovarSimulado() {
             await servicoSimulados.lancar(idSimulado)
             toast.success('Simulado aprovado e lançado', 'Os alunos já podem iniciar as tentativas.')
           } catch (erroLancar) {
-            // A aprovação vale mesmo se o lançamento falhar; o professor lança depois.
+            // A aprovação vale mesmo se o lançamento falhar; o professor lança depois
             toast.warning(
               'Questões aprovadas, mas não foi possível lançar automaticamente',
               erroLancar instanceof ApiError ? erroLancar.message : 'Lance manualmente na tela de Simulados.',
@@ -424,7 +419,7 @@ export default function AprovarSimulado() {
                 onChange={setPlanoEnsinoId}
               />
 
-              {/* Não editáveis: o reforço automático nasce ESPECIFICO para o aluno da recomendação. */}
+              {/* Não editáveis: o reforço automático nasce ESPECIFICO para o aluno da recomendação */}
               <Select
                 label="Destinação"
                 options={OPCOES_DESTINACAO.map((opcao) => ({ value: opcao.value, label: opcao.label }))}
@@ -454,7 +449,7 @@ export default function AprovarSimulado() {
               />
             </GradeAutoAjuste>
 
-            {/* O DatePicker de data e hora tem dois campos internos e corta o texto em colunas mais estreitas. */}
+            {/* O DatePicker de data e hora tem dois campos internos e corta o texto em colunas mais estreitas */}
             <GradeAutoAjuste $larguraMinima="320px">
               <DatePicker
                 label="Disponível a partir de"

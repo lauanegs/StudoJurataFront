@@ -2,11 +2,7 @@ import type { ConferenciaDaQuestao, ProvaDaTentativa } from '@/dominios/simulado
 import type { QuestaoDaProva } from './types'
 
 import type { RespostasAlternativa, RespostasVerdadeiroFalso } from './types'
-/**
- * Prova no formato que a tela usa. O `correta` de cada alternativa vem do
- * gabarito do servidor (só existe depois de concluir) ou da conferência da
- * própria questão — durante a prova nenhuma alternativa chega marcada como correta.
- */
+/** Prova no formato que a tela usa */
 export function montarQuestoesDaProva(
   prova: ProvaDaTentativa | null | undefined,
   conferencias: Record<number, ConferenciaDaQuestao>,
@@ -27,7 +23,7 @@ export function montarQuestoesDaProva(
   }))
 }
 
-/** V/F só conta como respondida com todas as afirmações julgadas. */
+/** V/F só conta como respondida com todas as afirmações julgadas */
 export function questaoRespondida(
   questao: QuestaoDaProva,
   respostas: RespostasAlternativa,
@@ -40,7 +36,7 @@ export function questaoRespondida(
   return typeof respostas[questao.questaoId] === 'number'
 }
 
-/** Só acerta a questão V/F quando TODAS as afirmações batem com o gabarito. */
+/** Só acerta a questão V/F quando TODAS as afirmações batem com o gabarito */
 export function questaoAcertada(
   questao: QuestaoDaProva,
   respostas: RespostasAlternativa,

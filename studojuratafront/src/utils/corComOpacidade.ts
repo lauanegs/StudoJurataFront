@@ -1,7 +1,3 @@
-/**
- * As cores de `theme.ts` são hex sólido; converte para rgba, usado na borda
- * esmaecida dos campos fora do foco.
- */
 export function corComOpacidade(hex: string, alpha: number): string {
   const valor = hex.replace('#', '')
   const r = parseInt(valor.slice(0, 2), 16)

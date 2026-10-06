@@ -5,7 +5,6 @@ export const Container = styled.article<{ $clicavel: boolean; $horizontal: boole
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
 
-  /* Mesma altura entre cards também fora de um grid (ex.: dentro de flex). */
   width: 100%;
   height: 100%;
   padding: ${({ theme }) => theme.spacing.md};
@@ -89,8 +88,6 @@ export const BarraPorcentagem = styled.div<{ $cor: string; $horizontal: boolean 
   border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ $cor }) => $cor};
 
-  /* margin-top:auto mantém a barra na base mesmo quando o cabeçalho de outro
-     card da linha é mais alto. */
   ${({ $horizontal }) =>
     $horizontal
       ? `

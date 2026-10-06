@@ -37,12 +37,11 @@ export default function AulaFormulario() {
   const edicao = Boolean(aulaId)
   const idAula = aulaId ? Number(aulaId) : null
 
-  // Vindo de "Registrar aula", salvar volta para lá em vez da lista de aulas do plano.
+  // Vindo de "Registrar aula", salvar volta para lá em vez da lista de aulas do plano
   const [searchParams] = useSearchParams()
   const retornarPara = searchParams.get('retornarPara')
   const destinoPadrao = retornarPara || `/professor/plano-aula/${idPlano}/aulas`
-
-  // Conteúdos escolhidos antes de a aula existir, vinculados em salvar().
+  // Conteúdos escolhidos antes de a aula existir, vinculados em salvar()
   const [conteudoPlanoIdsPendentes, setConteudoPlanoIdsPendentes] = useState<number[]>([])
 
   const requisicaoPlano = useRequisicao(() => planosAula.buscar(idPlano), [idPlano])
@@ -70,7 +69,7 @@ export default function AulaFormulario() {
     [requisicaoHorarios.data],
   )
 
-  // Turma sem nenhum horário cadastrado: a carga horária é digitada (HH:mm) em vez de escolhida.
+  // Turma sem nenhum horário cadastrado
   const semHorarioCadastrado = !requisicaoHorarios.loading && opcoesHorarios.length === 0
 
   const proximaOrdem = useMemo(() => {
@@ -123,8 +122,7 @@ export default function AulaFormulario() {
         ordem: ordemExibida ? Number(ordemExibida) : undefined,
         dataPrevista: dataPrevista || undefined,
         dataPublicacao: dataPublicacao || undefined,
-        // Com horário, o back recalcula a carga horária de qualquer forma; sem
-        // horário cadastrado, vale o que o professor digitou (HH:mm em horas).
+        // Com horário, o back recalcula a carga horária de qualquer forma; sem horário cadastrado
         horarioTurma: semHorarioCadastrado ? null : (horarioSelecionado ?? null),
         cargaHoraria: semHorarioCadastrado
           ? horaParaMinutos(cargaHorariaManual) / 60
@@ -138,8 +136,7 @@ export default function AulaFormulario() {
       } else {
         const aulaCriada = await servicoAulas.criar(corpo)
 
-        // Conteúdos escolhidos antes de a aula existir (VinculoConteudoAula
-        // em modo local) — comitados agora que ela finalmente tem id.
+        // Conteúdos escolhidos antes de a aula existir (VinculoConteudoAula em modo local)
         if (conteudoPlanoIdsPendentes.length > 0) {
           await Promise.all(
             conteudoPlanoIdsPendentes.map((conteudoPlanoId) =>

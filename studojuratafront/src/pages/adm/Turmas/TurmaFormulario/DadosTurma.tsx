@@ -68,7 +68,7 @@ export function DadosTurma({ form, salvando, opcoesCursos, carregandoCursos }: D
             label="Data de término"
             value={dataFim}
             error={erros.dataFim}
-            // Turma ativa não tem data de término; só ganha uma ao ser encerrada.
+            // Turma ativa não tem data de término; só ganha uma ao ser encerrada
             disabled={salvando || ativa}
             hint={ativa ? 'Só é definida ao encerrar a turma (Situação: Inativa).' : undefined}
             onChange={(evento) => form.setFieldValue('dataFim', evento.target.value)}

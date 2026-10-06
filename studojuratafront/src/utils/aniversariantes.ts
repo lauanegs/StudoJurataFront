@@ -1,12 +1,6 @@
 import type { Pessoa } from '@/dominios/pessoas/types'
 
 import type { Aniversariante } from './types'
-/**
- * Aniversariantes da semana.
- *
- * Não existe endpoint para isso no back — a lista é derivada de
- * `Pessoa.dataNascimento` dentro dos próximos `dias` dias, ignorando o ano.
- */
 export function aniversariantesDaSemana(pessoas: Pessoa[], dias = 7): Aniversariante[] {
   const hoje = new Date()
   hoje.setHours(0, 0, 0, 0)
@@ -18,7 +12,6 @@ export function aniversariantesDaSemana(pessoas: Pessoa[], dias = 7): Aniversari
       const nascimento = new Date(`${pessoa.dataNascimento.slice(0, 10)}T00:00:00`)
       if (Number.isNaN(nascimento.getTime())) return []
 
-      // Próxima ocorrência do aniversário a partir de hoje.
       const proximo = new Date(hoje.getFullYear(), nascimento.getMonth(), nascimento.getDate())
       if (proximo < hoje) proximo.setFullYear(proximo.getFullYear() + 1)
 

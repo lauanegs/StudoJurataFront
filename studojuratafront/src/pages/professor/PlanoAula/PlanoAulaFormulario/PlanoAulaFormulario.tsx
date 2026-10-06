@@ -99,7 +99,7 @@ export default function PlanoAulaFormulario() {
         rotuloVoltar="Planos de aula"
         actions={
           <>
-            {/* O plano de aula referencia o plano de ensino de origem, não o contrário. */}
+            {/* O plano de aula referencia o plano de ensino de origem, não o contrário */}
             {plano?.planoEnsino && (
               <Button
                 size="large"

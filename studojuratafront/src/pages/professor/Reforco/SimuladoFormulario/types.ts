@@ -13,7 +13,6 @@ export interface AbaQuestoesProps {
   questaoAtiva: number
   errosQuestoes: Record<number, ErrosQuestao>
   somenteLeitura: boolean
-  /** Disciplina do simulado: padrão para filtrar os conteúdos de uma questão sem disciplina própria. */
   disciplinaId: number | null
   onSelecionar: (indice: number) => void
   onAlterar: (indice: number, questao: QuestaoEditavel) => void
@@ -35,7 +34,6 @@ export interface ConfiguracaoSimuladoProps {
   alunosSelecionados: { id: number; nome: string }[]
   onSelecionarAlunos: () => void
   onRemoverAluno: (alunoId: number) => void
-  /** Trocar de turma invalida os alunos já escolhidos. */
   onTrocarTurma: () => void
 }
 
@@ -46,19 +44,16 @@ export interface ModalImportarQuestoesProps {
   bancoQuestoes: QuestaoResponse[]
   carregando: boolean
   idsJaNoSimulado: Set<number>
-  /** Retorna false quando nada pôde ser importado, mantendo a seleção. */
   onImportar: (escolhidas: QuestaoResponse[]) => boolean
 }
 
 export interface ModalImportarSimuladoProps {
   aberto: boolean
   onClose: () => void
-  /** Simulado em edição, que não aparece na lista. */
   simuladoId: number | null
   opcoesTurmas: SelectOption<number>[]
   opcoesDisciplinas: SelectOption<number>[]
   carregandoBanco: boolean
-  /** Ids das questões do simulado de origem, na ordem do vínculo. */
   onImportar: (questaoIds: number[]) => void
 }
 
@@ -72,17 +67,6 @@ export interface ModalSelecionarAlunosProps {
   onChange: (selecionados: number[]) => void
 }
 
-/**
- * Criação e edição de simulado.
- *
- * O back modela isso em três entidades: Simulado, Questao (+ Alternativa) e
- * SimuladoQuestao. A tela junta tudo em um fluxo só e, ao salvar, executa a
- * sequência: cria/atualiza o Simulado → cria cada Questao com suas
- * Alternativas → liga tudo via SimuladoQuestao.
- *
- * Edição só é permitida enquanto o simulado está em RASCUNHO — depois de
- * lançado existem tentativas de alunos apontando para as questões.
- */
 export type Aba = 'configuracao' | 'questoes'
 
 export interface OpcaoDisciplina {
@@ -90,7 +74,6 @@ export interface OpcaoDisciplina {
   label: string
 }
 
-/** Chamadas ao back usadas ao salvar as questões; injetáveis para testar a ordem sem rede. */
 export interface ApiDasQuestoes {
   criarQuestao: typeof servicoQuestoes.criar
   atualizarQuestao: typeof servicoQuestoes.atualizar
@@ -104,14 +87,11 @@ export type AcaoAoSalvar = 'lancar-agora' | 'publicacao-automatica' | 'rascunho'
 
 export interface PlanoDePublicacao {
   acao: AcaoAoSalvar
-  /** A data de início já passou (a disponibilidade já começou). */
   inicioJaChegou: boolean
 }
 
 export interface ResultadoDaImportacao {
-  /** Lista final do formulário; null quando não coube nenhuma questão. */
   questoes: QuestaoEditavel[] | null
   importadas: number
-  /** Escolhidas que não couberam no limite de questões. */
   cortadas: number
 }

@@ -15,10 +15,10 @@ import { Alternativas, CINZA_ESMAECIDO, Conteudo, Tela } from './styles'
 import { FrameResultado, Mascote, CardResultado, ColunaResultado, TextoSecundario, Etiquetas, Etiqueta, ValorMoedas, NomeParabens, DescricaoParabens, QuestaoCabecalho, QuestaoEnunciado, QuestaoTitulo } from './styles'
 import type { ResultadoDoSimuladoProps } from './types'
 
-/** Espelha PontuacaoAlunoService.MOEDAS_POR_SIMULADO_CONCLUIDO no back. */
+/** Espelha PontuacaoAlunoService.MOEDAS_POR_SIMULADO_CONCLUIDO no back */
 const MOEDAS_POR_SIMULADO = 10
 
-/** Tela de resultado: frase pelo desempenho, nota, moedas, próxima revisão e a correção questão a questão. */
+/** Tela de resultado: frase pelo desempenho, nota, moedas, próxima revisão e a correção questão a questão */
 export function ResultadoDoSimulado({
   tentativa,
   simulado,
@@ -73,8 +73,7 @@ export function ResultadoDoSimulado({
             </div>
 
             <Etiquetas>
-              {/* Mesmo verde/vermelho das alternativas (LetterBadge correct/incorrect) —
-                  tokens.gradients.success/danger, não um verde/vermelho à parte. */}
+              {/* Mesmo verde/vermelho das alternativas (LetterBadge correct/incorrect) */}
               <Etiqueta $fundo={CINZA_ESMAECIDO} $claro>
                 Nota: {formatarNota(tentativa?.nota)}/{formatarNota(simulado?.notaMaxima ?? 10)}
               </Etiqueta>
@@ -131,8 +130,7 @@ export function ResultadoDoSimulado({
 
           const ehVF = questao.tipo === 'VERDADEIRO_FALSO'
           const marcadasVerdadeiras = new Set(resposta?.alternativasVerdadeirasIds ?? [])
-          // Tentativas antigas têm `respondida` nulo: sem fallback apareceriam
-          // "Em branco". Em ALTERNATIVAS, alternativaId presente é confiável.
+          // Tentativas antigas têm `respondida` nulo: sem fallback apareceriam "Em branco"
           const respondida =
             resposta?.respondida ??
             (ehVF ? (resposta?.alternativasVerdadeirasIds?.length ?? 0) > 0 : resposta?.alternativaId != null)

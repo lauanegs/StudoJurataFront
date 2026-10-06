@@ -10,7 +10,7 @@ import { Stack } from '@/components/ui/Stack'
 import { GradePeriodo } from './styles'
 import type { FiltrosDesempenhoProps } from './types'
 
-/** Filtros compartilhados pelas telas de detalhamento de desempenho. */
+/** Filtros compartilhados pelas telas de detalhamento de desempenho */
 export function FiltrosDesempenho({
   opcoesTurmas,
   opcoesDisciplinas,

@@ -2,7 +2,6 @@ import { formatarDataHora } from './format'
 import type { SimuladoResponse } from '@/dominios/simulados/types'
 
 import type { DisponibilidadeSimulado } from './types'
-/** Fora da janela de datas (ou encerrado) o simulado não pode ser iniciado. */
 export function disponibilidadeDoSimulado(simulado?: SimuladoResponse, agora = Date.now()): DisponibilidadeSimulado {
   if (!simulado) return { indisponivel: true, motivo: 'Simulado indisponível' }
 

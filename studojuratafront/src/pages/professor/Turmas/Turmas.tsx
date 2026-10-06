@@ -19,12 +19,7 @@ import type { Coluna } from '@/components/ui/DataTable/types'
 
 import type { LinhaTurma } from './types'
 
-/**
- * Turmas do professor logado — uma linha por turma (não por vínculo
- * turma+disciplina: um professor pode lecionar mais de uma disciplina na
- * mesma turma, mas a lista do Figma é por turma; a disciplina entra em jogo
- * só na hora de registrar aula).
- */
+/** Turmas do professor logado — uma linha por turma (não por vínculo turma+disciplina */
 export default function TurmasProfessor() {
   const navegar = useNavigate()
   const { professorId, loading: carregandoProfessor, error: erroProfessor } = useProfessorLogado()

@@ -42,6 +42,7 @@ Camadas: `pages/` (por perfil: `adm/professor/aluno/auth`) → compõe `componen
 - **Pasta por componente/página**: `Nome/Nome.tsx` + `styles.ts` (styled-components) + `types.ts` (props e tipos) + `index.ts` (componentes reexportam). Estilos e tipos nunca ficam dentro do `.tsx`.
 - Páginas com subcomponentes próprios ficam numa pasta da página (`TurmaFormulario/`, `SimuladoFormulario/`, `Simulado/`); helpers compartilhados de um grupo de páginas em `comum/` (ex.: `professor/Reforco/comum/`).
 - **Estilo só em `styles.ts`**: nada de `style={{...}}` nem objeto `styles={{...}}` do Mantine dentro do `.tsx` (styled-components ou funções `estilosX()` exportadas do `styles.ts`). Cores só vêm de `styles/theme.ts` (nunca hex/rgb solto); regras do eslint ficam em `eslint.config.js`, sem `eslint-disable` de estilização.
+- **Comentários**: só em páginas, rotas, hooks, contextos e `dominios/` (funcionamento das telas e chamadas à API), em uma linha. Nada de comentário em `styles.ts`, `types.ts`, componentes ou utils.
 - **Tipos só em `types.ts`**: `interface`/`type` nunca ficam em `.tsx`, hooks, utils ou helpers (única exceção: `Theme` em `styles/theme.ts`).
 - Arquivos que não são componente (`hooks`, `utils`) em camelCase; código de domínio em `dominios/<domínio>/{types,service,formulario}.ts`; contextos em `contexts/<nome>/` (`XProvider.tsx` + `xContexto.ts`).
 

@@ -37,18 +37,14 @@ import { useFormularioMatricula } from '@/dominios/turmas/formulario'
 import { Aviso, LinhaRodape, ListaResponsaveis } from './styles'
 import type { Passo } from './types'
 
-/* Não há transferência entre turmas. Reativar uma matrícula CONCLUIDA também é feito aqui. */
+// Não há transferência entre turmas
 const OPCOES_STATUS_MATRICULA_EDITAVEL: { value: StatusMatricula; label: string }[] = [
   { value: 'ATIVA', label: 'Ativa' },
   { value: 'CONCLUIDA', label: 'Concluída' },
   { value: 'CANCELADA', label: 'Cancelada' },
 ]
 
-/**
- * Nada é gravado até "Concluir matrícula": só então aluno, responsável e
- * matrícula são criados em sequência, evitando registro órfão se o fluxo for
- * abandonado. Editar uma matrícula existente usa um formulário simples.
- */
+/** Nada é gravado até "Concluir matrícula" */
 export default function MatricularAluno() {
   const { turmaId, matriculaId } = useParams()
   const navegar = useNavigate()
@@ -60,22 +56,22 @@ export default function MatricularAluno() {
 
   const [passo, setPasso] = useState<Passo>('aluno')
 
-  // --- Passo 1: aluno -------------------------------------------------------
+  // --- Passo 1: aluno ------------------------------------------------------
   const [modoAluno, setModoAluno] = useState<'existente' | 'novo'>('existente')
   const [alunoIdExistente, setAlunoIdExistente] = useState<number | null>(null)
-  // Aluno exige data de nascimento: é ela que define a exigência de responsável.
+  // Aluno exige data de nascimento: é ela que define a exigência de responsável
   const formularioAluno = useFormularioPessoa({ exigirDataNascimento: true })
 
-  // --- Passo 2: responsável ---------------------------------------------------
+  // --- Passo 2: responsável --------------------------------------------------
   const [modoResponsavel, setModoResponsavel] = useState<'existente' | 'novo'>('existente')
   const [responsavelIdExistente, setResponsavelIdExistente] = useState<number | null>(null)
   const [parentesco, setParentesco] = useState<Parentesco | null>(null)
-  // Erros no próprio campo: só o toast passava despercebido e o botão parecia não fazer nada.
+  // Erros no próprio campo: só o toast passava despercebido e o botão parecia não fazer nada
   const [erroParentesco, setErroParentesco] = useState<string>()
   const [erroResponsavel, setErroResponsavel] = useState<string>()
   const formularioResponsavel = useFormularioPessoa()
 
-  // --- Passo 3: matrícula ------------------------------------------------------
+  // --- Passo 3: matrícula -----------------------------------------------------
   const formularioMatricula = useFormularioMatricula()
 
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(idTurma), [idTurma])
@@ -88,8 +84,7 @@ export default function MatricularAluno() {
     { ativo: Boolean(idMatricula) },
   )
 
-  // Responsáveis já vinculados ao aluno EXISTENTE selecionado — se já tem
-  // pelo menos um, o passo "Responsável" fica opcional (só informativo).
+  // Responsáveis já vinculados ao aluno EXISTENTE selecionado
   const requisicaoVinculosDoAluno = useRequisicao(
     () => vinculosResponsavel.porAluno(alunoIdExistente as number),
     [alunoIdExistente],
@@ -136,10 +131,7 @@ export default function MatricularAluno() {
   const lotada = Boolean(turma?.capacidadeMaxima && ativos.length >= turma.capacidadeMaxima)
 
   const responsaveisDoAlunoExistente = requisicaoVinculosDoAluno.data ?? []
-  // Passo "Responsável" é obrigatório pra aluno novo (nunca teve nenhum) ou
-  // pra aluno existente que ainda não tem nenhum responsável vinculado.
-  // Só menor de 18 anos exige responsável (mesma regra do back); aluno sem data de
-  // nascimento conhecida segue exigindo, por cautela.
+  // Passo "Responsável" é obrigatório pra aluno novo
   const nascimentoDoAluno =
     modoAluno === 'novo'
       ? formularioAluno.values.dataNascimento
@@ -216,13 +208,13 @@ export default function MatricularAluno() {
     const { dataInicio, dataFim } = formularioMatricula.getValues()
 
     try {
-      // 1) Aluno — usa o existente ou cria Pessoa + Aluno.
+      // 1) Aluno — usa o existente ou cria Pessoa + Aluno
       let alunoFinal = (requisicaoAlunos.data ?? []).find((item) => item.id === alunoIdExistente)
 
       if (modoAluno === 'novo') {
         const payloadPessoa = paraPayloadPessoa(formularioAluno.getValues())
         const pessoaSalva = await servicoPessoas.criar(payloadPessoa)
-        // A matrícula é gerada pelo backend (ano + sequência).
+        // A matrícula é gerada pelo backend (ano + sequência)
         alunoFinal = await servicoAlunos.criar({ pessoa: pessoaSalva })
       }
 
@@ -231,7 +223,7 @@ export default function MatricularAluno() {
         return
       }
 
-      // 2) Responsável — só quando o passo era obrigatório.
+      // 2) Responsável — só quando o passo era obrigatório
       if (responsavelObrigatorio) {
         let responsavelFinal = (requisicaoResponsaveis.data ?? []).find(
           (item) => item.id === responsavelIdExistente,
@@ -255,7 +247,7 @@ export default function MatricularAluno() {
         })
       }
 
-      // 3) Matrícula.
+      // 3) Matrícula
       await matriculas.matricular({
         aluno: alunoFinal,
         turma,
@@ -294,7 +286,7 @@ export default function MatricularAluno() {
     </>
   )
 
-  // Editar matrícula existente: formulário simples, sem os passos.
+  // Editar matrícula existente: formulário simples, sem os passos
   if (edicao) {
     return (
       <Layout>

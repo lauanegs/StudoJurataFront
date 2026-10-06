@@ -35,8 +35,7 @@ export default function ResultadoAluno() {
     () => questaoAlunos.listarPorSimuladoAluno(idTentativa),
     [idTentativa],
   )
-  // Prova da própria tentativa (questões + gabarito): o catálogo geral de
-  // questões é recortado por disciplina e não traz tudo que o aluno respondeu.
+  // Prova da própria tentativa (questões + gabarito)
   const requisicaoProva = useRequisicao(() => simuladoAlunos.questoesDaTentativa(idTentativa), [idTentativa])
   const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [])
 
@@ -59,7 +58,7 @@ export default function ResultadoAluno() {
       const ehVF = questao.tipo === 'VERDADEIRO_FALSO'
       const marcadasVerdadeiras = new Set(resposta?.alternativasVerdadeirasIds ?? [])
 
-      // Tentativas antigas têm `respondida` nulo (mesmo fallback de Simulado.tsx).
+      // Tentativas antigas têm `respondida` nulo (mesmo fallback de Simulado.tsx)
       const respondida =
         resposta?.respondida ??
         (ehVF ? (resposta?.alternativasVerdadeirasIds?.length ?? 0) > 0 : resposta?.alternativaId != null)

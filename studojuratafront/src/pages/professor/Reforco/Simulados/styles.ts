@@ -1,6 +1,5 @@
 import styled from 'styled-components'
 
-/* Filtros fora do card da tabela, à direita, como LinhaAcaoFlutuante de TurmaFormulario. */
 export const LinhaFiltrosFlutuante = styled.div`
   display: flex;
   align-items: center;

@@ -20,7 +20,7 @@ export function useAvisosDispensados() {
       try {
         localStorage.setItem(CHAVE_ARMAZENAMENTO, JSON.stringify(novos))
       } catch {
-        // localStorage indisponível (ex.: modo privado) — o aviso só não persiste entre sessões.
+        // localStorage indisponível (ex.: modo privado) — o aviso só não persiste entre sessões
       }
       return novos
     })

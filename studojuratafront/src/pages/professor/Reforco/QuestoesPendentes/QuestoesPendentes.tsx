@@ -32,16 +32,7 @@ import type { Coluna } from '@/components/ui/DataTable/types'
 import type { Aba } from './types'
 import { TextoLimitado } from './styles'
 
-/**
- * Fila de moderação de questões — e, nas abas "Aprovadas"/"Todas", o banco
- * de questões do professor (reaproveita a mesma tela em vez de uma rota
- * nova pra cada recorte de status).
- *
- * O back marca como PENDENTE tudo que a IA gera (StatusQuestao.PENDENTE); só
- * depois de aprovada a questão pode compor um simulado visível ao aluno —
- * "Aprovadas" é o recorte que interessa pra reaproveitar questão em um
- * simulado novo.
- */
+/** Fila de moderação de questões — e, nas abas "Aprovadas"/"Todas", o banco de questões do professor */
 export default function QuestoesPendentes() {
   const navegar = useNavigate()
   const toast = useToast()
@@ -57,8 +48,7 @@ export default function QuestoesPendentes() {
   const buscaAtrasada = useDebounce(busca)
   const [processando, setProcessando] = useState<number | null>(null)
 
-  // Sem endpoint dedicado pra "só aprovadas" no back — lista tudo e filtra
-  // no cliente, igual à aba "Todas".
+  // Sem endpoint dedicado pra "só aprovadas" no back
   const { data, loading, error, reload } = useRequisicao(
     () => (aba === 'pendentes' ? servicoQuestoes.listarPendentes() : servicoQuestoes.listar()),
     [aba],

@@ -29,8 +29,7 @@ export default function PlanosEnsino() {
 
   const { data, loading, error, reload } = useRequisicao(() => servicoPlanos.listar(), [])
 
-  // Sem requisição própria pra turmas — reaproveita as que já aparecem nos
-  // planos carregados (evita mais uma chamada só pra montar o filtro).
+  // Sem requisição própria pra turmas
   const opcoesTurmas = useMemo(() => {
     const unicas = new Map<number, string>()
     for (const plano of data ?? []) {
@@ -40,7 +39,7 @@ export default function PlanosEnsino() {
     return [...unicas.entries()].map(([value, label]) => ({ value, label }))
   }, [data])
 
-  // Planos sem professor vinculado caem em "Outros", para não atribuir autoria errada.
+  // Planos sem professor vinculado caem em "Outros", para não atribuir autoria errada
   const meus = useMemo(
     () => (data ?? []).filter((plano) => plano.professor?.id === professorId),
     [data, professorId],
@@ -79,8 +78,7 @@ export default function PlanosEnsino() {
       cabecalho: 'Curso',
       render: (plano) => plano.curso?.nome ?? '—',
     },
-    // Só faz sentido mostrar de quem é o plano na aba "Outros" — na aba
-    // "Meus" seria sempre a mesma pessoa (redundante).
+    // Só faz sentido mostrar de quem é o plano na aba "Outros"
     ...(visao === 'outros'
       ? [
           {
@@ -162,7 +160,7 @@ export default function PlanosEnsino() {
         loading={loading}
         error={error}
         onReload={reload}
-        // Muitas colunas: sem quebra, as ações empurram a tabela para o scroll horizontal.
+        // Muitas colunas: sem quebra, as ações empurram a tabela para o scroll horizontal
         quebrarAcoes
         paginacao={{
           pagina: paginacao.pagina,

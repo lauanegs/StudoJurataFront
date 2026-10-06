@@ -4,8 +4,6 @@ import { corComOpacidade } from '@/utils/corComOpacidade'
 
 import styled from 'styled-components'
 
-/* Só o conteúdo abaixo do SimuladoHeader tem padding e largura limitada. */
-/* Cinza esmaecido das molduras e das etiquetas neutras (mesmo tom dos cards). */
 export const CINZA_ESMAECIDO = corComOpacidade(theme.colors.textTertiary, 0.15)
 
 export const Tela = styled.div`
@@ -42,8 +40,6 @@ export const Rodape = styled.div`
   flex-wrap: wrap;
 `
 
-/* Mascote ao lado do card, que estica para acompanhar a altura da imagem. */
-/* Moldura com o mesmo degradê do EnunciadoSimuladoCard. */
 export const FrameResultado = styled.div`
   display: flex;
   align-items: center;
@@ -162,7 +158,6 @@ export const QuestaoEnunciado = styled.p`
   color: ${({ theme }) => theme.colors.textSecondary};
 `
 
-/* Sem herdar o preto padrão do texto do card — cinza, como o resto dos textos desta tela. */
 export const QuestaoTitulo = styled.strong`
   color: ${({ theme }) => theme.colors.textSecondary};
 `

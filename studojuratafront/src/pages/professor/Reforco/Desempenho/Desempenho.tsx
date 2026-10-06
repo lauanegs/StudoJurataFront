@@ -54,7 +54,7 @@ import { montarSecoesRelatorio } from '@/pages/professor/Reforco/comum/relatorio
 
 import { GradeDesempenho, InfoSimulado } from './styles'
 
-/** Base: tentativas concluídas dos simulados das turmas do professor (GET /professores/{id}/desempenho). */
+/** Base: tentativas concluídas dos simulados das turmas do professor (GET /professores/{id}/desempenho) */
 export default function Desempenho() {
   const navegar = useNavigate()
 
@@ -62,8 +62,7 @@ export default function Desempenho() {
 
   const [simuladoDetalhado, setSimuladoDetalhado] = useState<DesempenhoSimulado | null>(null)
 
-  // Sem filtro de aluno, que não cabe na visão agregada por simulado. Só
-  // refiltra ao clicar "Buscar".
+  // Sem filtro de aluno, que não cabe na visão agregada por simulado
   const [modalFiltrosAberto, setModalFiltrosAberto] = useState(false)
   const [turmaIdForm, setTurmaIdForm] = useState<number | null>(null)
   const [disciplinaIdForm, setDisciplinaIdForm] = useState<number | null>(null)
@@ -117,7 +116,7 @@ export default function Desempenho() {
   const desempenhosTotais = useMemo(
     () =>
       agruparPorSimulado(requisicaoTentativas.data ?? []).sort((a, b) => {
-        // Mais recente primeiro; sem data, o item fica no fim.
+        // Mais recente primeiro; sem data, o item fica no fim
         if (!a.data && !b.data) return 0
         if (!a.data) return 1
         if (!b.data) return -1
@@ -126,7 +125,7 @@ export default function Desempenho() {
     [requisicaoTentativas.data],
   )
 
-  // O recorte (turma/disciplina aplicados) vale para os gráficos E para os cards do topo.
+  // O recorte (turma/disciplina aplicados) vale para os gráficos E para os cards do topo
   const desempenhos = useMemo(
     () =>
       desempenhosTotais.filter(
@@ -153,7 +152,7 @@ export default function Desempenho() {
 
   const criticos = desempenhos.filter((item) => item.percentual < 50)
 
-  // O card mostra só os 4 mais recentes; a lista completa fica no detalhamento.
+  // O card mostra só os 4 mais recentes; a lista completa fica no detalhamento
   const desempenhosRecentes = desempenhos.slice(0, 4)
 
   const notasGeraisPercentuais = useMemo(() => {
@@ -163,7 +162,7 @@ export default function Desempenho() {
       .map((tentativa) => tentativa.percentual)
   }, [desempenhos, requisicaoTentativas.data])
 
-  // Valores exatos do histograma, exportados junto com o gráfico no PDF e no Excel.
+  // Valores exatos do histograma, exportados junto com o gráfico no PDF e no Excel
   const tabelaDistribuicaoGeral = useMemo(
     () =>
       calcularFaixasHistograma(notasGeraisPercentuais).map((faixa) => ({
@@ -177,8 +176,7 @@ export default function Desempenho() {
   const desempenhoPorDisciplina = useMemo(() => mediaPorDisciplina(desempenhos), [desempenhos])
   const tendenciaPorDisciplina = useMemo(() => calcularTendencia(desempenhos), [desempenhos])
 
-  // Valores exatos do gráfico de desempenho por disciplina (mesma linha de
-  // raciocínio da tabela de distribuição acima).
+  // Valores exatos do gráfico de desempenho por disciplina
   const tabelaDesempenhoPorDisciplina = useMemo(
     () =>
       desempenhoPorDisciplina.map((item) => ({
@@ -189,7 +187,7 @@ export default function Desempenho() {
     [desempenhoPorDisciplina],
   )
 
-  // Cards do topo: acompanham o recorte aplicado, como os gráficos.
+  // Cards do topo: acompanham o recorte aplicado, como os gráficos
   const tentativasNoRecorte = useMemo(() => {
     const idsNoRecorte = new Set(desempenhos.map((item) => item.simuladoId))
     return (requisicaoTentativas.data ?? []).filter((tentativa) => idsNoRecorte.has(tentativa.simuladoId))
@@ -226,7 +224,7 @@ export default function Desempenho() {
     ],
   )
 
-  // Casa o desenho de cada gráfico com a seção de mesmo título do relatório.
+  // Casa o desenho de cada gráfico com a seção de mesmo título do relatório
   const capturarImagensRelatorio = async (): Promise<Map<string, ImagemGrafico | null>> => {
     const alturaDisciplina = Math.max(120, desempenhoPorDisciplina.length * 44)
 

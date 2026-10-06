@@ -31,11 +31,7 @@ export default function Turmas() {
 
   const { data, loading, error, reload } = useRequisicao(() => servicoTurmas.listar(), [])
 
-  /**
-   * A quantidade de alunos ativos é derivada das matrículas (Turma não
-   * persiste esse número). Carregamos todas as matrículas uma vez e contamos
-   * no cliente — mais barato que um GET /turmas/{id}/alunos-ativos por linha.
-   */
+  /** A quantidade de alunos ativos é derivada das matrículas (Turma não persiste esse número) */
   const requisicaoMatriculas = useRequisicao(() => matriculas.listar(), [])
 
   const ativosPorTurma = useMemo(() => {

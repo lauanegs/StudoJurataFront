@@ -24,12 +24,11 @@ function gravarCache(usuario: LoginResponse | null) {
       window.localStorage.removeItem(CHAVE_USUARIO)
     }
   } catch {
-    // Ambiente sem localStorage: a sessão segue apenas em memória.
+    // Ambiente sem localStorage: a sessão segue apenas em memória
   }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-
   const [usuario, setUsuario] = useState<LoginResponse | null>(() => lerCache())
   const [loading, setCarregando] = useState(true)
 

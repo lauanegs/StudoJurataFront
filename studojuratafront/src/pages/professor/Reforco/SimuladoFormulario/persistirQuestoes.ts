@@ -15,13 +15,7 @@ const apiReal: ApiDasQuestoes = {
   vincularAoSimulado: simuladoQuestoes.criar,
 }
 
-/**
- * Grava cada questão do formulário (cria ou atualiza), suas alternativas e,
- * para as questões novas, os conteúdos e o vínculo com o simulado.
- *
- * Na questão nova, os conteúdos vêm antes do vínculo com o simulado: o back só
- * aceita no simulado questão com conteúdo já ministrado.
- */
+/** Grava cada questão do formulário (cria ou atualiza), suas alternativas e, para as questões novas */
 export async function salvarQuestoesDoSimulado(
   params: {
     simuladoId: number
@@ -64,7 +58,7 @@ export async function salvarQuestoesDoSimulado(
       }
     }
 
-    // Vincula a questão ao simulado só na primeira vez.
+    // Vincula a questão ao simulado só na primeira vez
     if (!questao.id) {
       if (questao.conteudoPlanoIdsPendentes && questao.conteudoPlanoIdsPendentes.length > 0) {
         await Promise.all(

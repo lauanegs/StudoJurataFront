@@ -20,10 +20,7 @@ import { ApiError } from '@/dominios/comum/api'
 import { conteudosPlano, planosEnsino } from '@/dominios/planejamento/service'
 import { useFormularioConteudo } from '@/dominios/planejamento/formulario'
 
-/**
- * A qualidade da descrição importa: é a partir dela que a IA gera as questões
- * dos simulados de reforço.
- */
+/** A qualidade da descrição importa */
 export default function ConteudoFormulario() {
   const { planoId, conteudoId } = useParams()
   const navegar = useNavigate()
@@ -61,7 +58,7 @@ export default function ConteudoFormulario() {
     form.resetDirty()
   })
 
-  // useHidratar aplica uma vez por resposta, sem sobrescrever o que foi digitado.
+  // useHidratar aplica uma vez por resposta, sem sobrescrever o que foi digitado
   useHidratar(!edicao ? requisicaoConteudos.data : null, () => {
     if (!form.getValues().ordem) form.setFieldValue('ordem', String(proximaOrdem))
   })

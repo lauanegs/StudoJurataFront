@@ -9,7 +9,7 @@ import { MAXIMO_QUESTOES } from './questoes'
 
 import type { AbaQuestoesProps } from './types'
 
-/** Aba "Questões" do formulário: editor da questão ativa com a navegação entre as questões do simulado. */
+/** Aba "Questões" do formulário: editor da questão ativa com a navegação entre as questões do simulado */
 export function AbaQuestoes({
   questoes,
   questaoAtiva,

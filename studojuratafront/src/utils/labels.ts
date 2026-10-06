@@ -1,8 +1,3 @@
-/**
- * Rótulos legíveis para os enums do back-end. A UI nunca exibe o valor cru
- * (ex.: "IRMAO_IRMA"), sempre o rótulo daqui.
- */
-
 import type { StatusAtivoInativo, TipoUsuario } from '@/dominios/comum/types'
 import type { MotivoRecomendacao } from '@/dominios/ia/types'
 import type { Parentesco, Sexo } from '@/dominios/pessoas/types'
@@ -23,8 +18,6 @@ export type { TagVariant }
 function opcoes<T extends string>(mapa: Record<T, string>) {
   return (Object.keys(mapa) as T[]).map((value) => ({ value, label: mapa[value] }))
 }
-
-// --- Usuário / cadastro ----------------------------------------------------
 
 export const ROTULO_TIPO_USUARIO: Record<TipoUsuario, string> = {
   ADMINISTRADOR: 'Administrador',
@@ -49,20 +42,16 @@ export const ROTULO_PARENTESCO: Record<Parentesco, string> = {
   OUTRO: 'Outro',
 }
 
-// --- Status ----------------------------------------------------------------
-
 export const ROTULO_ATIVO_INATIVO: Record<StatusAtivoInativo, string> = {
   ATIVO: 'Ativo',
   INATIVO: 'Inativo',
 }
 
-/** Variante feminina (Turma, Disciplina) — mesmo enum, concordância de gênero diferente. */
 export const ROTULO_ATIVA_INATIVA: Record<StatusAtivoInativo, string> = {
   ATIVO: 'Ativa',
   INATIVO: 'Inativa',
 }
 
-/** Plano de Ensino/Plano de Aula: não "inativa", conclui o ciclo (matrícula cíclica). */
 export const ROTULO_STATUS_PLANO: Record<StatusPlano, string> = {
   ATIVO: 'Ativo',
   CONCLUIDO: 'Concluído',
@@ -96,8 +85,6 @@ export const ROTULO_STATUS_SIMULADO: Record<StatusSimulado, string> = {
   ENCERRADO: 'Encerrado',
 }
 
-// --- Simulado / questão ----------------------------------------------------
-
 export const ROTULO_TIPO_QUESTAO: Record<TipoQuestao, string> = {
   ALTERNATIVAS: 'Alternativas',
   VERDADEIRO_FALSO: 'Verdadeiro / Falso',
@@ -118,8 +105,6 @@ export const ROTULO_DESTINACAO: Record<TipoDestinacaoSimulado, string> = {
   TODOS: 'Toda a turma',
   ESPECIFICO: 'Alunos específicos',
 }
-
-// --- Agenda / IA -----------------------------------------------------------
 
 export const ROTULO_DIA_SEMANA: Record<DiaSemana, string> = {
   SEGUNDA: 'Segunda-feira',
@@ -145,8 +130,6 @@ export const ROTULO_MOTIVO_RECOMENDACAO: Record<MotivoRecomendacao, string> = {
   REPETICAO_ESPACADA: 'Repetição espaçada',
   BAIXO_APROVEITAMENTO: 'Baixo aproveitamento',
 }
-
-// --- Cor semântica por status ---------------------------------------------
 
 export const STATUS_MATRICULA_VARIANT: Record<StatusMatricula, TagVariant> = {
   ATIVA: 'success',
@@ -177,8 +160,6 @@ export const NIVEL_DIFICULDADE_VARIANT: Record<NivelDificuldade, TagVariant> = {
   DIFICIL: 'error',
 }
 
-// --- Listas prontas para <Select /> ---------------------------------------
-
 export const OPCOES_SEXO = opcoes(ROTULO_SEXO)
 export const OPCOES_PARENTESCO = opcoes(ROTULO_PARENTESCO)
 export const OPCOES_ATIVO_INATIVO = opcoes(ROTULO_ATIVO_INATIVO)
@@ -189,9 +170,6 @@ export const OPCOES_DESTINACAO = opcoes(ROTULO_DESTINACAO)
 export const OPCOES_DIA_SEMANA = opcoes(ROTULO_DIA_SEMANA)
 export const OPCOES_TIPO_USUARIO = opcoes(ROTULO_TIPO_USUARIO)
 
-// --- Endereço ----------------------------------------------------------------
-
-/** As 27 UFs do Brasil, para o Select do bloco de Endereço. */
 export const OPCOES_UF = [
   { value: 'AC', label: 'AC' },
   { value: 'AL', label: 'AL' },

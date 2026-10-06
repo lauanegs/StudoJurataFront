@@ -86,8 +86,7 @@ export default function SimuladoFormulario() {
     { ativo: Boolean(simuladoId) },
   )
   const requisicaoTurmas = useRequisicao(() => servicoTurmas.listar(), [])
-  // Vínculos turma × disciplina do professor: é a oferta dele — mesma fonte que
-  // a tela de Simulados usa para montar o escopo.
+  // Vínculos turma × disciplina do professor
   const requisicaoVinculos = useRequisicao(
     () => servicoProfessores.turmasLecionadas(professorId as number),
     [professorId],
@@ -100,7 +99,7 @@ export default function SimuladoFormulario() {
     { ativo: Boolean(turmaId) },
   )
 
-  // Na edição, o banco de questões resolve o conteúdo das questões já vinculadas.
+  // Na edição, o banco de questões resolve o conteúdo das questões já vinculadas
   const requisicaoBancoQuestoes = useRequisicao(() => servicoQuestoes.listar(), [], {
     ativo: modalImportar || modalImportarSimulado || edicao,
   })
@@ -109,8 +108,7 @@ export default function SimuladoFormulario() {
   })
   const requisicaoVinculosSimulado = useRequisicao(() => simuladoQuestoes.listar(), [], { ativo: edicao })
 
-  // Com questão ATIVA ainda PENDENTE, o simulado só pode ser mexido na tela de
-  // aprovação; cobre também o acesso direto pela URL.
+  // Com questão ATIVA ainda PENDENTE, o simulado só pode ser mexido na tela de aprovação
   const carregandoTravaAprovacao =
     edicao && (requisicaoVinculosSimulado.loading || requisicaoBancoQuestoes.loading)
 
@@ -140,7 +138,7 @@ export default function SimuladoFormulario() {
       return
     }
 
-    // Simulados antigos podem ter mais questões que o limite atual.
+    // Simulados antigos podem ter mais questões que o limite atual
     const cortadas = Math.max(0, importadas.length - MAXIMO_QUESTOES)
     const importadasFinal = importadas.slice(0, MAXIMO_QUESTOES)
 
@@ -173,8 +171,7 @@ export default function SimuladoFormulario() {
     form.setFieldValue('notaMaxima', simulado.notaMaxima?.toString() ?? '10')
   })
 
-  // Questões já salvas do simulado. As 3 requisições viram uma referência
-  // estável porque useHidratar aplica por referência e precisa das 3 prontas.
+  // Questões já salvas do simulado
   const dadosParaHidratarQuestoes = useMemo(() => {
     if (!edicao) return null
     if (!requisicaoVinculosSimulado.data || !requisicaoBancoQuestoes.data || !requisicaoBancoAlternativas.data) {
@@ -190,8 +187,7 @@ export default function SimuladoFormulario() {
   useHidratar(dadosParaHidratarQuestoes, ({ vinculos, bancoQuestoes, bancoAlternativas }) => {
     const carregadas = questoesDoSimulado(vinculos, bancoQuestoes, bancoAlternativas, simuladoId)
 
-    // Rascunho recém-criado, ainda sem questão salva: mantém o questaoVazia() inicial
-    // em vez de esvaziar a lista.
+    // Rascunho recém-criado, ainda sem questão salva
     if (carregadas.length > 0) {
       setQuestoes(carregadas)
       setQuestaoAtiva(0)
@@ -214,15 +210,12 @@ export default function SimuladoFormulario() {
   const opcoesPlanos = useMemo(
     () =>
       (requisicaoPlanos.data ?? [])
-        // Plano sem turma/disciplina (genérico) não tem escopo verificável e o
-        // back recusa vinculá-lo a um simulado de professor — não faz sentido
-        // oferecê-lo aqui.
+        // Plano sem turma/disciplina (genérico) não tem escopo verificável
         .filter((plano) => plano.turmaDisciplina)
-        // O plano precisa ser o da turma E da disciplina escolhidas: o back
-        // valida a mesma combinação (garantirPlanoCompativel).
+        // O plano precisa ser o da turma E da disciplina escolhidas
         .filter((plano) => !turmaId || plano.turmaDisciplina?.turma?.id === turmaId)
         .filter((plano) => !disciplinaId || plano.turmaDisciplina?.disciplina?.id === disciplinaId)
-        // Ciclo encerrado não recebe simulado novo.
+        // Ciclo encerrado não recebe simulado novo
         .filter((plano) => plano.status !== 'CONCLUIDO')
         .map((plano) => ({
           value: plano.id,
@@ -232,8 +225,7 @@ export default function SimuladoFormulario() {
     [requisicaoPlanos.data, turmaId, disciplinaId],
   )
 
-  // Turma/disciplina trocadas: o plano escolhido pode ter deixado de pertencer
-  // à combinação — limpa em vez de deixar um valor que o back vai recusar.
+  // Turma/disciplina trocadas: o plano escolhido pode ter deixado de pertencer à combinação
   useEffect(() => {
     if (!requisicaoPlanos.data || requisicaoPlanos.loading || !planoEnsinoId) return
     if (opcoesPlanos.some((opcao) => opcao.value === planoEnsinoId)) return
@@ -241,14 +233,14 @@ export default function SimuladoFormulario() {
     form.setFieldValue('planoEnsinoId', null)
   }, [opcoesPlanos, planoEnsinoId, requisicaoPlanos.data, requisicaoPlanos.loading, form])
 
-  // Turma + disciplina escolhidas com um único plano ativo: já vem selecionado.
+  // Turma + disciplina escolhidas com um único plano ativo: já vem selecionado
   useEffect(() => {
     if (edicao || planoEnsinoId || !turmaId || !disciplinaId || opcoesPlanos.length !== 1) return
 
     form.setFieldValue('planoEnsinoId', opcoesPlanos[0].value)
   }, [edicao, planoEnsinoId, turmaId, disciplinaId, opcoesPlanos, form])
 
-  // Turma trocada: a disciplina escolhida pode não ser ofertada nela.
+  // Turma trocada: a disciplina escolhida pode não ser ofertada nela
   useEffect(() => {
     if (!requisicaoVinculos.data || requisicaoVinculos.loading) return
     if (disciplinaCompativelComTurma(requisicaoVinculos.data, turmaId, disciplinaId)) return
@@ -257,7 +249,7 @@ export default function SimuladoFormulario() {
   }, [requisicaoVinculos.data, requisicaoVinculos.loading, turmaId, disciplinaId, form])
 
   const somenteLeitura = edicao && requisicaoSimulado.data?.status !== 'RASCUNHO'
-  // Mesmo em somenteLeitura, um simulado PUBLICADO pode ter a disponibilidade estendida.
+  // Mesmo em somenteLeitura, um simulado PUBLICADO pode ter a disponibilidade estendida
   const podeEstenderDisponibilidade = requisicaoSimulado.data?.status === 'PUBLICADO'
 
   function validarQuestoes() {
@@ -281,8 +273,7 @@ export default function SimuladoFormulario() {
     const questoesOk = validarQuestoes()
 
     if (!cabecalhoOk || !questoesOk) {
-      // Troca pra aba onde está o problema — sem isso, o erro fica escondido
-      // numa aba que o professor nem está vendo.
+      // Troca pra aba onde está o problema
       setAba(!cabecalhoOk ? 'configuracao' : 'questoes')
       toast.warning('Revise o simulado', 'Há campos obrigatórios pendentes.')
       return
@@ -314,7 +305,7 @@ export default function SimuladoFormulario() {
         notaMaxima: corpo.notaMaxima,
       })
 
-      // Publicação e encerramento seguem as datas informadas (ver planejarPublicacao).
+      // Publicação e encerramento seguem as datas informadas (ver planejarPublicacao)
       const { acao, inicioJaChegou } = planejarPublicacao({
         tipoDestinacao,
         quantidadeAlunosEscolhidos: alunosSelecionados.length,
@@ -355,7 +346,7 @@ export default function SimuladoFormulario() {
     }
   }
 
-  /** Endpoint dedicado: o `salvar()` geral é rejeitado pelo back fora do RASCUNHO. */
+  /** Endpoint dedicado: o `salvar()` geral é rejeitado pelo back fora do RASCUNHO */
   async function salvarDisponibilidade() {
     if (!simuladoId) return
 
@@ -386,8 +377,7 @@ export default function SimuladoFormulario() {
       return
     }
 
-    // Mesmo com destinação "Todos", os elegíveis são "os ativos da turma" —
-    // sem turma definida não há como o back saber quem recebe o simulado.
+    // Mesmo com destinação "Todos", os elegíveis são "os ativos da turma"
     if (!turmaId) {
       toast.warning('Selecione a turma', 'É preciso informar a turma para saber quem vai receber o simulado.')
       return
@@ -437,10 +427,7 @@ export default function SimuladoFormulario() {
     setQuestaoAtiva(questoes.length)
   }
 
-  /**
-   * Questão já vinculada sai do back antes de sair da tela: sem isso, a
-   * remoção valia só no formulário e a questão continuava no simulado.
-   */
+  /** Questão já vinculada sai do back antes de sair da tela */
   async function removerQuestao(indice: number) {
     if (questoes.length <= 1) return
 

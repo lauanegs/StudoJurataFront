@@ -29,11 +29,7 @@ import type { StatusAtivoInativo, TipoUsuario } from '@/dominios/comum/types'
 
 import { Grade } from './styles'
 
-/**
- * Cria um login vinculado a uma Pessoa já cadastrada (Aluno/Professor/
- * Responsável), não um fluxo de pessoa+login do zero: a Pessoa em si é
- * cadastrada nas telas de Alunos/Professores/Responsáveis.
- */
+/** Cria um login vinculado a uma Pessoa já cadastrada (Aluno/Professor/ Responsável) */
 export default function UsuarioFormulario() {
   const { id } = useParams()
   const navegar = useNavigate()
@@ -66,8 +62,7 @@ export default function UsuarioFormulario() {
     form.resetDirty()
   })
 
-  // Só pessoas sem login ainda podem ser escolhidas — exceto a que já está
-  // vinculada a este usuário (senão ela desapareceria do Select ao editar).
+  // Só pessoas sem login ainda podem ser escolhidas
   const opcoesPessoas = useMemo(() => {
     const pessoasComLogin = new Set(
       (requisicaoUsuarios.data ?? [])
@@ -93,7 +88,7 @@ export default function UsuarioFormulario() {
     try {
       const pessoaEscolhida = (requisicaoPessoas.data ?? []).find((p) => p.id === pessoaId)
 
-      // Usuario referencia o Aluno/Professor da pessoa escolhida, quando o tipo exigir.
+      // Usuario referencia o Aluno/Professor da pessoa escolhida, quando o tipo exigir
       const alunoVinculado =
         tipoUsuario === 'ALUNO'
           ? (requisicaoAlunos.data ?? []).find((a) => a.pessoa?.id === pessoaId)
@@ -117,12 +112,12 @@ export default function UsuarioFormulario() {
       if (edicao) {
         await servicoUsuarios.atualizar(usuarioId as number, corpo)
         toast.success('Usuário atualizado', username.trim())
-        // Permanece na tela: só recarrega o que o back gravou.
+        // Permanece na tela: só recarrega o que o back gravou
         await requisicao.reload()
       } else {
         const criado = await servicoUsuarios.criar(corpo)
         toast.success('Usuário cadastrado', username.trim())
-        // Continua no formulário, agora em modo de edição.
+        // Continua no formulário, agora em modo de edição
         navegar(`/adm/usuarios/${criado.id}`, { replace: true })
       }
     } catch (erroSalvar) {

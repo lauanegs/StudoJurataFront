@@ -29,7 +29,7 @@ export default function AlunoHome() {
   const { usuario } = useAuth()
   const { alunoId, loading: carregandoAluno, error: erroAluno } = useAlunoLogado()
   const { imagemSkin } = useSkinEquipadaDoAluno(alunoId)
-  // O portal mostra um curso por vez: o que o aluno escolheu após o login.
+  // O portal mostra um curso por vez: o que o aluno escolheu após o login
   const { turmaId } = useCursoAluno()
 
   const requisicaoTentativas = useRequisicao(
@@ -55,7 +55,7 @@ export default function AlunoHome() {
       (requisicaoTentativas.data ?? [])
         .filter((tentativa) => porSimulado.get(tentativa.simuladoId)?.turmaId === turmaId)
         .filter((tentativa) => tentativa.status !== 'CONCLUIDO')
-        // Simulado encerrado, vencido ou ainda fechado não é "para fazer agora".
+        // Simulado encerrado, vencido ou ainda fechado não é "para fazer agora"
         .filter((tentativa) => !disponibilidadeDoSimulado(porSimulado.get(tentativa.simuladoId)).indisponivel)
         .slice(0, 4),
     [requisicaoTentativas.data, porSimulado, turmaId],

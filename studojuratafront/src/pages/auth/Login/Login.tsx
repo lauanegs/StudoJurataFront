@@ -21,7 +21,7 @@ export default function Login() {
   const [erroGeral, setErroGeral] = useState('')
   const [enviando, setEnviando] = useState(false)
 
-  // Quem já está logado não precisa ver o login de novo.
+  // Quem já está logado não precisa ver o login de novo
   useEffect(() => {
     if (!loading && usuario) {
       navegar(ROTA_INICIAL_POR_PERFIL[usuario.tipoUsuario], { replace: true })
@@ -35,7 +35,7 @@ export default function Login() {
     try {
       const logado = await entrar(username.trim(), senha)
 
-      // O destino vem do tipoUsuario devolvido pelo back, nunca de escolha na tela.
+      // O destino vem do tipoUsuario devolvido pelo back, nunca de escolha na tela
       const destino =
         (localizacao.state as { de?: string } | null)?.de ??
         ROTA_INICIAL_POR_PERFIL[logado.tipoUsuario]

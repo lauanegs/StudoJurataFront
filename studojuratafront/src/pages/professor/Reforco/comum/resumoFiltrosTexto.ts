@@ -1,14 +1,7 @@
 import { formatarData } from '@/utils/format'
 
 import type { RecorteDesempenho } from './types'
-/**
- * Monta as 4 linhas de texto do recorte aplicado (turma/disciplina/aluno/
- * período) — em arquivo próprio (não dentro de ResumoFiltrosDesempenho.tsx)
- * porque um arquivo de componente só pode exportar componentes (Fast
- * Refresh). Reaproveitado tanto na tela (ResumoFiltrosDesempenho, com
- * ícone) quanto no PDF exportado (GraficoCard.contextoTexto), que só aceita
- * texto puro.
- */
+/** Monta as 4 linhas de texto do recorte aplicado (turma/disciplina/aluno/ período) */
 export function resumoFiltrosTexto({
   opcoesTurmas,
   opcoesDisciplinas,

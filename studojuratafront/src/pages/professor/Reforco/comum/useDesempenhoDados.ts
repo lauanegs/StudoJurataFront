@@ -9,20 +9,11 @@ import { agruparPorSimulado, mediaPorDisciplina, tendenciaPorDisciplina } from '
 import type { NotaDetalhada } from './types'
 export type { DesempenhoSimulado } from './types'
 
-/**
- * Dados e filtros das telas de detalhamento de desempenho: o mesmo cálculo do
- * painel (Desempenho.tsx), parametrizado pelos filtros.
- *
- * Filtrar por aluno muda o que "desempenho" significa: em vez da média da
- * turma em cada simulado, cada `DesempenhoSimulado` passa a refletir só a
- * nota daquele aluno — é o que permite às 3 telas mostrarem o desempenho
- * individual sem precisar de um caminho de cálculo separado.
- */
+/** Dados e filtros das telas de detalhamento de desempenho */
 export function useDesempenhoDados() {
   const { professorId } = useProfessorLogado()
 
-  // Estado do formulário, separado de filtrosAplicados (só muda em "Buscar").
-  // turmaId é reativo porque alimenta as opções de disciplina e aluno.
+  // Estado do formulário, separado de filtrosAplicados (só muda em "Buscar")
   const [turmaId, setTurmaId] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
   const [alunoId, setAlunoId] = useState<number | null>(null)
@@ -71,7 +62,7 @@ export function useDesempenhoDados() {
     return [...unicas.entries()].map(([value, label]) => ({ value, label }))
   }, [requisicaoVinculos.data, turmaId])
 
-  // Matrícula é por turma: sem turma não há alunos a oferecer.
+  // Matrícula é por turma: sem turma não há alunos a oferecer
   const opcoesAlunos = useMemo(() => {
     if (!turmaId) return []
     return (requisicaoMatriculas.data ?? []).map((matricula) => ({
@@ -80,7 +71,7 @@ export function useDesempenhoDados() {
     }))
   }, [requisicaoMatriculas.data, turmaId])
 
-  // Base única já filtrada para todas as agregações abaixo.
+  // Base única já filtrada para todas as agregações abaixo
   const tentativasFiltradas = useMemo(() => {
     const { turmaId: turmaAplicada, disciplinaId: disciplinaAplicada, alunoId: alunoAplicado, dataInicio: deAplicado, dataFim: ateAplicado } =
       filtrosAplicados
@@ -98,7 +89,7 @@ export function useDesempenhoDados() {
     })
   }, [requisicaoTentativas.data, filtrosAplicados])
 
-  // Guarda aluno/simulado para detalhar a faixa clicada no histograma.
+  // Guarda aluno/simulado para detalhar a faixa clicada no histograma
   const notasDetalhadas = useMemo<NotaDetalhada[]>(
     () =>
       tentativasFiltradas.map((tentativa) => ({
@@ -123,12 +114,12 @@ export function useDesempenhoDados() {
   const loading = requisicaoTentativas.loading || requisicaoVinculos.loading
   const error = requisicaoTentativas.error ?? requisicaoVinculos.error
 
-  /** Copia o formulário para os filtros aplicados: só aqui os gráficos refiltram. */
+  /** Copia o formulário para os filtros aplicados: só aqui os gráficos refiltram */
   function buscar() {
     setFiltrosAplicados({ turmaId, disciplinaId, alunoId, dataInicio, dataFim })
   }
 
-  /** "Limpar" é diferente de "Buscar vazio": reseta o formulário E já aplica na hora, sem precisar clicar em Buscar de novo. */
+  /** "Limpar" é diferente de "Buscar vazio" */
   function limparFiltros() {
     setTurmaId(null)
     setDisciplinaId(null)

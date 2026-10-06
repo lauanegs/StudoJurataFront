@@ -16,8 +16,6 @@ export const QuestaoCabecalho = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.xs};
 `
 
-/* Sem herdar o preto padrão do texto do card — mesmo cinza usado no título
-   da revisão do lado aluno (Simulado.tsx). */
 export const QuestaoTitulo = styled.strong`
   color: ${({ theme }) => theme.colors.textSecondary};
 `

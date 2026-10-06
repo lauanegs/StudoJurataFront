@@ -60,7 +60,7 @@ export default function Eventos() {
       )
     }
 
-    // Mais próximos primeiro — o back devolve sem ordenação garantida.
+    // Mais próximos primeiro — o back devolve sem ordenação garantida
     return [...lista].sort(
       (a, b) => new Date(a.dataHorario).getTime() - new Date(b.dataHorario).getTime(),
     )
@@ -82,7 +82,7 @@ export default function Eventos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtro, buscaAtrasada])
 
-  // replace limpa o state para o "voltar" não reabrir o modal.
+  // replace limpa o state para o "voltar" não reabrir o modal
   useEffect(() => {
     if ((localizacao.state as { abrirNovo?: boolean } | null)?.abrirNovo) {
       abrirNovo()

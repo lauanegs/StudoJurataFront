@@ -31,7 +31,7 @@ export default function TurmaDetalhada() {
   const requisicaoHistorico = useRequisicao(() => matriculas.historicoPorTurma(idTurma), [idTurma])
 
   const { dispensados: avisosDispensados, dispensar: dispensarAviso } = useAvisosDispensados()
-  /** Aviso informativo de matrícula concluída automaticamente por carga horária (FrequenciaService). */
+  /** Aviso informativo de matrícula concluída automaticamente por carga horária (FrequenciaService) */
   const avisosCargaHoraria = useMemo(
     () =>
       (requisicaoHistorico.data ?? []).filter(
@@ -69,7 +69,7 @@ export default function TurmaDetalhada() {
     },
     {
       key: 'cargaHoraria',
-      // Soma todas as disciplinas da turma, não só uma.
+      // Soma todas as disciplinas da turma, não só uma
       cabecalho: 'Carga horária atingida (curso)',
       ocultarEmTelaPequena: true,
       render: (matricula) => formatarCargaHoraria(frequenciaPorAluno.get(matricula.aluno.id)?.cargaHoraria ?? 0),

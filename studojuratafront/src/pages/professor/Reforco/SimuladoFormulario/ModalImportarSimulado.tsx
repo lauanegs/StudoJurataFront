@@ -15,7 +15,7 @@ import type { SimuladoResponse } from '@/dominios/simulados/types'
 
 import type { ModalImportarSimuladoProps } from './types'
 
-/** O pai remonta o modal (via `key`) a cada abertura para começar com os filtros limpos. */
+/** O pai remonta o modal (via `key`) a cada abertura para começar com os filtros limpos */
 export function ModalImportarSimulado({
   aberto,
   onClose,
@@ -27,7 +27,7 @@ export function ModalImportarSimulado({
 }: ModalImportarSimuladoProps) {
   const [turmaId, setTurmaId] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
-  // Filtros aplicados: só mudam ao clicar "Buscar".
+  // Filtros aplicados: só mudam ao clicar "Buscar"
   const [turmaIdAplicada, setTurmaIdAplicada] = useState<number | null>(null)
   const [disciplinaIdAplicada, setDisciplinaIdAplicada] = useState<number | null>(null)
   const [filtroAplicado, setFiltroAplicado] = useState(false)

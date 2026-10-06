@@ -9,7 +9,6 @@ export interface DesempenhoSimulado {
   turma: string
   disciplinaId: number | null
   disciplina: string
-  /** Nota média das tentativas sobre a nota máxima, de 0 a 100. */
   percentual: number
   tentativas: number
   notaMaxima: number
@@ -56,6 +55,5 @@ export interface NotaDetalhada {
   alunoId: number
   simuladoId: number
   simuladoTitulo: string
-  /** 0 a 100. */
   percentual: number
 }

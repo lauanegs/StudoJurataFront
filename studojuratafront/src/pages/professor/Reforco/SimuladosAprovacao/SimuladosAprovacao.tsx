@@ -37,7 +37,7 @@ function rotuloMotivos(motivos?: MotivoRecomendacao[]): string {
   return motivos.map((motivo) => ROTULO_MOTIVO_RECOMENDACAO[motivo]).join(', ')
 }
 
-/** Dias corridos após o prazo, ou null se ainda não venceu (ou não tem prazo). */
+/** Dias corridos após o prazo, ou null se ainda não venceu (ou não tem prazo) */
 function atrasoEmDias(prazoLancamento?: string): number | null {
   if (!prazoLancamento) return null
 
@@ -119,13 +119,12 @@ export default function SimuladosAprovacao() {
     setFiltro({ turmaId, tipo, especificoId })
   }
 
-  // Sempre ativas — a tela abre com a lista completa (todas as turmas do
-  // professor), sem exigir filtro antes de mostrar algo.
+  // Sempre ativas — a tela abre com a lista completa (todas as turmas do professor)
   const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
   const requisicaoPendentes = useRequisicao(() => servicoQuestoes.listarPendentes(), [])
   const requisicaoSimuladoQuestoes = useRequisicao(() => simuladoQuestoes.listar(), [])
   const requisicaoAlunos = useRequisicao(() => servicoAlunos.listar(), [])
-  // Pendente, o simulado ainda não tem SimuladoAluno: esta é a única fonte do aluno.
+  // Pendente, o simulado ainda não tem SimuladoAluno: esta é a única fonte do aluno
   const requisicaoVinculosIA = useRequisicao(() => servicoIa.listarSimuladosGerados(), [])
 
   const linhas = useMemo<LinhaAprovacao[]>(() => {
@@ -188,7 +187,7 @@ export default function SimuladosAprovacao() {
     requisicaoVinculos.data,
   ])
 
-  // Só existem endpoints por aluno.
+  // Só existem endpoints por aluno
   const requisicaoMatriculasGerais = useRequisicao(() => matriculas.listar(), [])
   const requisicaoConteudos = useRequisicao(() => conteudosPlano.listar(), [])
 
@@ -217,9 +216,7 @@ export default function SimuladosAprovacao() {
       const conteudos = requisicaoConteudos.data ?? []
       const tituloConteudo = (conteudoPlanoId: number) =>
         conteudos.find((conteudo) => conteudo.id === conteudoPlanoId)?.titulo ?? `Conteúdo ${conteudoPlanoId}`
-
-      // Mesma chave dos jobs do back (aluno+conteúdo+prazo): dataProximoReforco
-      // só muda quando o professor revisa, então sem isto o item nunca sairia da lista.
+      // Mesma chave dos jobs do back (aluno+conteúdo+prazo)
       const jaGerado = new Set(
         (requisicaoVinculosIA.data ?? []).map((vinculo) => `${vinculo.alunoId}-${vinculo.conteudoPlanoId}-${vinculo.prazoLancamento}`),
       )
@@ -228,7 +225,7 @@ export default function SimuladosAprovacao() {
       const porChave = new Map<string, ProximaGeracaoIA>()
 
       entradas.forEach(([alunoId, alunoNome], indice) => {
-        // Revisões dominadas (dataProximoReforco null) não entram.
+        // Revisões dominadas (dataProximoReforco null) não entram
         revisoesPorAluno[indice]
           .filter((revisao) => revisao.dataProximoReforco && !jaGerado.has(`${alunoId}-${revisao.conteudoPlanoId}-${revisao.dataProximoReforco}`))
           .forEach((revisao) => {
@@ -242,7 +239,7 @@ export default function SimuladosAprovacao() {
             })
           })
 
-        // Baixo aproveitamento não tem agenda: entra para hoje.
+        // Baixo aproveitamento não tem agenda: entra para hoje
         recomendacoesPorAluno[indice].forEach((recomendacao) => {
           const dataPrevista = recomendacao.dataProximoReforco ?? hoje
           if (jaGerado.has(`${alunoId}-${recomendacao.conteudoPlanoId}-${dataPrevista}`)) return
@@ -285,7 +282,7 @@ export default function SimuladosAprovacao() {
     },
   )
 
-  // "Próximas gerações" também respeita o filtro aplicado (turma e disciplina/aluno), como a outra aba.
+  // "Próximas gerações" também respeita o filtro aplicado (turma e disciplina/aluno), como a outra aba
   const proximasGeracoes = useMemo(() => {
     const lista = requisicaoProximasGeracoes.data ?? []
     if (!filtro) return lista
@@ -339,10 +336,9 @@ export default function SimuladosAprovacao() {
     },
   ]
 
-  /** Adianta a geração de um item sem esperar a data prevista; o resultado vai para "Aguardando aprovação". */
+  /** Adianta a geração de um item sem esperar a data prevista; o resultado vai para "Aguardando aprovação" */
   async function gerarAgora(item: ProximaGeracaoIA) {
     const chave = `${item.alunoId}-${item.conteudoPlanoId}`
-
     await confirmar({
       titulo: 'Gerar simulado agora?',
       descricao: `Um simulado de reforço para ${item.alunoNome} (${item.conteudoTitulo}) será gerado imediatamente, sem esperar a data prevista. Ele entra na aba "Aguardando aprovação" para revisão.`,
@@ -368,7 +364,7 @@ export default function SimuladosAprovacao() {
           ])
           setAba('aprovacao')
         } catch (erroGerar) {
-          // 409 é regra de negócio (ex.: baixo aproveitamento coletivo), não falha: o texto orienta o professor.
+          // 409 é regra de negócio (ex.: baixo aproveitamento coletivo), não falha: o texto orienta o professor
           if (erroGerar instanceof ApiError && erroGerar.status === 409) {
             toast.warning('Geração não recomendada', erroGerar.message)
           } else {

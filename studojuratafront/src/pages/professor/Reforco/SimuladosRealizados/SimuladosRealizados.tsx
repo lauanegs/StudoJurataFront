@@ -86,8 +86,7 @@ export default function SimuladosRealizados() {
     setFiltro({ turmaId, tipo, especificoId })
   }
 
-  // Sempre ativas — a tela abre com a lista completa (todas as turmas do
-  // professor), sem exigir filtro antes de mostrar algo.
+  // Sempre ativas — a tela abre com a lista completa (todas as turmas do professor)
   const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
   const requisicaoTentativas = useRequisicao(() => simuladoAlunos.listar(), [])
 
@@ -118,8 +117,7 @@ export default function SimuladosRealizados() {
         (!filtro || simulado.turmaId === filtro.turmaId),
     )
 
-    // Sem filtro aplicado: lista todos os simulados realizados do professor,
-    // um por linha, mostrando a própria disciplina de cada um.
+    // Sem filtro aplicado: lista todos os simulados realizados do professor, um por linha
     if (!filtro) {
       return simulados.map((simulado) => {
         const metricas = metricasDoSimulado(simulado.id, simulados)
@@ -150,7 +148,7 @@ export default function SimuladosRealizados() {
         })
     }
 
-    // Por aluno: uma linha por simulado em que o aluno tem tentativa, dentro da turma filtrada.
+    // Por aluno: uma linha por simulado em que o aluno tem tentativa, dentro da turma filtrada
     const tentativasDoAluno = tentativas.filter((tentativa) => tentativa.alunoId === filtro.especificoId)
 
     return tentativasDoAluno
@@ -199,7 +197,7 @@ export default function SimuladosRealizados() {
         ),
     },
     {
-      // O cabeçalho não muda com o filtro; só o conteúdo da célula.
+      // O cabeçalho não muda com o filtro; só o conteúdo da célula
       key: 'participacaoAcertos',
       cabecalho: 'Participação/Acertos',
       alinhamento: 'center',

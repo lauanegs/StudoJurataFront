@@ -25,20 +25,7 @@ import type { Coluna } from '@/components/ui/DataTable/types'
 import { ColunaConteudo, EnvolveContexto, ListaAlunos, LinhaAluno } from './styles'
 import type { DetalheSimuladoModalProps } from './types'
 
-/**
- * Histograma de notas, alunos abaixo do limiar (gatilho de reforço manual) e
- * desempenho por questão. Os dados só são buscados quando o modal abre, para
- * não pesar a tela que lista todos os simulados.
- *
- * Com `alunoFiltrado` definido, `tentativas` já vem filtrada só daquele
- * aluno (ver DesempenhoSimulados.tsx) — todo o conteúdo abaixo reflete isso
- * automaticamente, mas os textos/alertas mudam de "turma" pra "aluno" pra
- * não sugerir uma estatística de turma sobre o dado de uma pessoa só.
- *
- * Exportar PDF/Excel gera os TRÊS blocos de dados da tela (distribuição de
- * notas, alunos abaixo do limiar e desempenho por questão) — não só o
- * histograma — cada um vira uma seção/aba própria.
- */
+/** Histograma de notas, alunos abaixo do limiar (gatilho de reforço manual) e desempenho por questão */
 export function DetalheSimuladoModal({
   aberto,
   onClose,
@@ -85,8 +72,7 @@ export function DetalheSimuladoModal({
       .sort((a, b) => a.percentual - b.percentual)
   }, [tentativas, notaMaxima, requisicaoAlunos.data])
 
-  // Valores exatos de cada bloco da tela — a mesma base usada pra desenhar
-  // os gráficos/listas vira as seções/abas exportadas (PDF e Excel).
+  // Valores exatos de cada bloco da tela
   const tabelaDistribuicao = useMemo(
     () =>
       calcularFaixasHistograma(notasPercentuais).map((faixa) => ({
@@ -110,7 +96,7 @@ export function DetalheSimuladoModal({
   const percentualTurmaAbaixo =
     notasPercentuais.length > 0 ? (alunosAbaixoDoLimiar.length / notasPercentuais.length) * 100 : 0
 
-  // Turma com >= 60% abaixo do limiar pede reforço manual; a IA fica para casos individuais.
+  // Turma com >= 60% abaixo do limiar pede reforço manual; a IA fica para casos individuais
   const pedeReforcoManual = percentualTurmaAbaixo >= LIMIAR_BAIXO_DESEMPENHO
 
   const mediaAluno =
@@ -192,7 +178,7 @@ export function DetalheSimuladoModal({
     [desempenhoPorQuestao],
   )
 
-  // Só o histograma tem desenho para capturar; "alunos abaixo" some com aluno filtrado.
+  // Só o histograma tem desenho para capturar; "alunos abaixo" some com aluno filtrado
   const capturarImagemHistograma = () =>
     renderizarGraficoComoImagem(
       <Histograma valores={notasPercentuais} rotuloAcessivel={`Distribuição de notas de ${titulo}`} />,

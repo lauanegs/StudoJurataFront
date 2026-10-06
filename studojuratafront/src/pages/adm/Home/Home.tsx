@@ -45,7 +45,7 @@ export default function AdmHome() {
     [requisicaoPessoas.data],
   )
 
-  /** Só os eventos mais próximos entram na Home; a lista completa fica em /adm/eventos. */
+  /** Só os eventos mais próximos entram na Home; a lista completa fica em /adm/eventos */
   const proximosEventos = useMemo(
     () =>
       [...(requisicaoEventos.data ?? [])]

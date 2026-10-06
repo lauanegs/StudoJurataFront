@@ -47,8 +47,7 @@ export default function TurmaFormulario() {
 
   const estadoDaRota = localizacao.state as { aba?: Aba; passoAPasso?: boolean } | null
   const [aba, setAba] = useState<Aba>(estadoDaRota?.aba ?? 'data')
-  // Turma nova é montada em passos (cada um libera o seguinte depois de salvar); a
-  // edição de uma turma existente continua em abas, que também têm alunos e histórico.
+  // Turma nova é montada em passos (cada um libera o seguinte depois de salvar)
   const [emPassos, setEmPassos] = useState(!edicao || Boolean(estadoDaRota?.passoAPasso))
 
   const form = useFormularioTurma()
@@ -60,7 +59,7 @@ export default function TurmaFormulario() {
   })
   const requisicaoCursos = useRequisicao(() => servicoCursos.listar(), [])
 
-  // Carregadas aqui porque os contadores das abas precisam delas.
+  // Carregadas aqui porque os contadores das abas precisam delas
   const requisicaoHorarios = useRequisicao(() => horariosTurma.listarPorTurma(turmaId as number), [turmaId], {
     ativo: Boolean(turmaId),
   })
@@ -81,7 +80,7 @@ export default function TurmaFormulario() {
     form.setFieldValue('ativa', turma.status !== 'INATIVA')
   })
 
-  /** turmaDisciplinas.excluir() é soft-delete, então o vínculo inativo precisa ser filtrado. */
+  /** turmaDisciplinas.excluir() é soft-delete, então o vínculo inativo precisa ser filtrado */
   const vinculosDaTurma = useMemo(
     () =>
       (requisicaoVinculos.data ?? []).filter((vinculo) => vinculo.turma?.id === turmaId && vinculo.status !== 'INATIVO'),
@@ -117,10 +116,10 @@ export default function TurmaFormulario() {
         escola,
         curso,
         titulo: titulo.trim(),
-        // Capacidade e data de início são obrigatórias na tela (e no schema).
+        // Capacidade e data de início são obrigatórias na tela (e no schema)
         capacidadeMaxima: Number(capacidadeMaxima),
         dataInicio,
-        // Turma ativa nunca tem data de término.
+        // Turma ativa nunca tem data de término
         dataFim: ativa ? undefined : dataFim || undefined,
         status: ativa ? ('ATIVA' as const) : ('INATIVA' as const),
       }
@@ -128,8 +127,7 @@ export default function TurmaFormulario() {
       if (edicao) {
         await servicoTurmas.atualizar(turmaId as number, corpo)
         toast.success('Turma atualizada', corpo.titulo)
-        // Permanece na mesma tela e na aba atual; o reload traz o que o back
-        // gravou (inclusive Situação) sem descartar o formulário.
+        // Permanece na mesma tela e na aba atual; o reload traz o que o back gravou
         await requisicaoTurma.reload()
       } else {
         const criada = await servicoTurmas.criar(corpo)
@@ -284,7 +282,7 @@ export default function TurmaFormulario() {
               iconeAvancar={<ArrowRight />}
               carregando={salvando}
               aoAvancar={async () => {
-                // Na criação o próprio salvar leva ao passo seguinte (navegação); na edição basta avançar.
+                // Na criação o próprio salvar leva ao passo seguinte (navegação); na edição basta avançar
                 if ((await salvar()) && edicao) setAba('horarios')
               }}
             />

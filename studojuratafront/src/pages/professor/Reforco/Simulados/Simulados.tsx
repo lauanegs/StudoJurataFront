@@ -55,7 +55,7 @@ export default function Simulados() {
     [professorId],
     { ativo: Boolean(professorId) },
   )
-  // Usado só para detectar simulados da IA atrasados.
+  // Usado só para detectar simulados da IA atrasados
   const requisicaoVinculosIA = useRequisicao(() => servicoIa.listarSimuladosGerados(), [])
 
   const turmasDoProfessor = useMemo(
@@ -63,14 +63,13 @@ export default function Simulados() {
     [requisicaoVinculos.data],
   )
 
-  // Cada professor vê só os simulados das turmas em que leciona. Rascunho sem
-  // turma fica visível até ter turma definida.
+  // Cada professor vê só os simulados das turmas em que leciona
   const simuladosDoProfessor = useMemo(
     () => (data ?? []).filter((simulado) => !simulado.turmaId || turmasDoProfessor.has(simulado.turmaId)),
     [data, turmasDoProfessor],
   )
 
-  // Com questão pendente, o simulado só pode ser mexido pela tela de aprovação.
+  // Com questão pendente, o simulado só pode ser mexido pela tela de aprovação
   const simuladosComPendencia = useMemo(() => {
     const idsQuestoesPendentes = new Set((requisicaoQuestoesPendentes.data ?? []).map((questao) => questao.id))
 
@@ -81,14 +80,13 @@ export default function Simulados() {
     )
   }, [requisicaoQuestoesPendentes.data, requisicaoSimuladoQuestoes.data])
 
-  // Conta simulados (não questões), com o mesmo agrupamento da tela de aprovação.
+  // Conta simulados (não questões), com o mesmo agrupamento da tela de aprovação
   const pendentes = useMemo(
     () => simuladosDoProfessor.filter((simulado) => simuladosComPendencia.has(simulado.id)).length,
     [simuladosDoProfessor, simuladosComPendencia],
   )
 
-  // Simulados gerados pela IA que passaram do prazo de revisão sem terem
-  // sido lançados (Simulado.status ainda RASCUNHO).
+  // Simulados gerados pela IA que passaram do prazo de revisão sem terem sido lançados
   const simuladosAtrasados = useMemo(() => {
     const hojeISO = new Date().toISOString().slice(0, 10)
     const simuladosPorId = new Map(simuladosDoProfessor.map((simulado) => [simulado.id, simulado]))
@@ -105,7 +103,7 @@ export default function Simulados() {
   const nomeTurma = (id?: number | null) =>
     (requisicaoTurmas.data ?? []).find((turma) => turma.id === id)?.titulo ?? '—'
 
-  /** Participação = tentativas concluídas / tentativas criadas no lançamento. */
+  /** Participação = tentativas concluídas / tentativas criadas no lançamento */
   const participacao = useMemo(() => {
     const mapa = new Map<number, { concluidas: number; total: number }>()
 
@@ -121,8 +119,7 @@ export default function Simulados() {
     return mapa
   }, [requisicaoTentativas.data])
 
-  // Os contadores das abas respeitam os filtros de turma e disciplina (só a aba de status fica de fora,
-  // porque é justamente o que os números comparam).
+  // Os contadores das abas respeitam os filtros de turma e disciplina (só a aba de status fica de fora
   const contadores = useMemo(() => {
     const lista = simuladosDoProfessor
       .filter((simulado) => !turmaFiltroId || simulado.turmaId === turmaFiltroId)
@@ -260,7 +257,7 @@ export default function Simulados() {
       render: (simulado) => {
         if (!simulado.status) return '—'
 
-        // Rascunho cuja janela já abriu: os alunos ainda não veem nada até o professor lançar.
+        // Rascunho cuja janela já abriu: os alunos ainda não veem nada até o professor lançar
         const janelaJaAberta =
           simulado.status === 'RASCUNHO' &&
           Boolean(simulado.dataInicio) &&
@@ -422,7 +419,7 @@ export default function Simulados() {
                 >
                   Editar
                 </Button>
-                {/* ESPECIFICO precisa da lista de alunos, que só o SimuladoFormulario tem. */}
+                {/* ESPECIFICO precisa da lista de alunos, que só o SimuladoFormulario tem */}
                 {simulado.tipoDestinacao === 'TODOS' && (
                   <Button
                     variant="subtle"
@@ -439,7 +436,7 @@ export default function Simulados() {
 
             {simulado.status === 'PUBLICADO' && (
               <>
-                {/* "Disponível até" continua editável mesmo depois de lançado. */}
+                {/* "Disponível até" continua editável mesmo depois de lançado */}
                 <Button
                   variant="subtle"
                   size="small"

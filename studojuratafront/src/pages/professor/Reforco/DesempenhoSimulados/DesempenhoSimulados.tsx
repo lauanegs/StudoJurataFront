@@ -13,18 +13,14 @@ import { nivelDesempenho } from '@/utils/desempenho'
 import type { TagVariant } from '@/components/ui/Tag'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-// Padronizado com as outras telas que mostram nível de desempenho em tabela
-// (ex.: Notas) — mesma paleta success/warning/error do gráfico e do card.
+// Padronizado com as outras telas que mostram nível de desempenho em tabela (ex
 const VARIANTE_POR_NIVEL: Record<'baixo' | 'medio' | 'alto', TagVariant> = {
   baixo: 'error',
   medio: 'warning',
   alto: 'success',
 }
 
-/**
- * Versão filtrável, em tabela, do card "Desempenho por simulado" do painel de
- * Desempenho. "Detalhar" abre o DetalheSimuladoModal respeitando o aluno filtrado.
- */
+/** Versão filtrável, em tabela, do card "Desempenho por simulado" do painel de Desempenho */
 export default function DesempenhoSimulados() {
   const {
     turmaId,
@@ -54,14 +50,14 @@ export default function DesempenhoSimulados() {
 
   const [simuladoDetalhado, setSimuladoDetalhado] = useState<DesempenhoSimulado | null>(null)
 
-  // Usa o filtro aplicado, não o formulário ainda não buscado.
+  // Usa o filtro aplicado, não o formulário ainda não buscado
   const alunoFiltrado = filtrosAplicados.alunoId
     ? opcoesAlunos.find((opcao) => opcao.value === filtrosAplicados.alunoId)?.label
     : undefined
 
-  // O modal não recebe o resumo de filtros: ele já mostra os dados do próprio simulado.
+  // O modal não recebe o resumo de filtros: ele já mostra os dados do próprio simulado
 
-  // Mais recente primeiro; sem dataInicio nem createdAt, o item fica no fim.
+  // Mais recente primeiro; sem dataInicio nem createdAt, o item fica no fim
   const desempenhosPorData = useMemo(
     () =>
       [...desempenhos].sort((a, b) => {

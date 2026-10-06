@@ -22,16 +22,13 @@ import { formatarNota } from '@/utils/format'
 
 const VARIANTE_POR_NIVEL = { baixo: 'error', medio: 'warning', alto: 'success' } as const
 
-/**
- * O back devolve a Nota consolidada por disciplina e turma; os simulados que a
- * compõem são reconstruídos aqui a partir das tentativas concluídas.
- */
+/** O back devolve a Nota consolidada por disciplina e turma */
 export default function AlunoNotas() {
   const { alunoId, loading: carregandoAluno, error: erroAluno } = useAlunoLogado()
-  // O curso vem da escolha feita após o login; não há seletor de turma nesta tela.
+  // O curso vem da escolha feita após o login; não há seletor de turma nesta tela
   const { turmaId } = useCursoAluno()
 
-  // O filtro só se aplica ao clicar em "Buscar"; a lista começa completa.
+  // O filtro só se aplica ao clicar em "Buscar"; a lista começa completa
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
 
@@ -71,7 +68,7 @@ export default function AlunoNotas() {
     )
   }, [requisicaoNotas.data, disciplinaId, turmaId])
 
-  // Filtra também por turma: com repetência, a mesma disciplina teria simulados duplicados.
+  // Filtra também por turma: com repetência, a mesma disciplina teria simulados duplicados
   function tentativasDaDisciplina(disciplinaFiltroId?: number, turmaFiltroId?: number) {
     return (requisicaoTentativas.data ?? [])
       .filter((tentativa) => {
@@ -89,7 +86,7 @@ export default function AlunoNotas() {
     }))
   }
 
-  // Pontos já distribuídos (simulados concluídos); nota.total é sobre essa base.
+  // Pontos já distribuídos (simulados concluídos); nota.total é sobre essa base
   function pontosDistribuidos(disciplinaFiltroId?: number, turmaFiltroId?: number) {
     return tentativasDaDisciplina(disciplinaFiltroId, turmaFiltroId).reduce(
       (soma, { simulado }) => soma + (simulado?.notaMaxima ?? 0),

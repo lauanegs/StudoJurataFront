@@ -1,6 +1,6 @@
 import { formatarPorcentagem } from '@/utils/format'
 import type { SecaoRelatorio, EntradaRelatorio } from './types'
-/** Seções exportadas no "Exportar tudo": uma aba por seção no Excel, uma tabela por seção no PDF. */
+/** Seções exportadas no "Exportar tudo" */
 export function montarSecoesRelatorio(entrada: EntradaRelatorio): SecaoRelatorio[] {
   const { desempenhos, tendenciaPorDisciplina } = entrada
 

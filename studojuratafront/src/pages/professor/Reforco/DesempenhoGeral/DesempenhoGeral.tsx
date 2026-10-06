@@ -24,7 +24,7 @@ import { useDesempenhoDados } from '@/pages/professor/Reforco/comum/useDesempenh
 
 import { PreenchidoDetalhe, CabecalhoDetalhe, TituloDetalhe } from './styles'
 
-/** Versão filtrável do card "Visão geral" do painel de Desempenho. */
+/** Versão filtrável do card "Visão geral" do painel de Desempenho */
 export default function DesempenhoGeral() {
   const {
     turmaId,
@@ -95,7 +95,7 @@ export default function DesempenhoGeral() {
     { key: 'valor', cabecalho: 'Desempenho médio', alinhamento: 'right', render: (item) => item.valor },
   ]
 
-  // Valores exatos do histograma, exportados junto com o gráfico no PDF e no Excel.
+  // Valores exatos do histograma, exportados junto com o gráfico no PDF e no Excel
   const tabelaDistribuicao = useMemo(
     () =>
       calcularFaixasHistograma(notasPercentuais).map((faixa) => ({
@@ -106,7 +106,7 @@ export default function DesempenhoGeral() {
     [notasPercentuais],
   )
 
-  // O recorte aplicado aparece só no modal "Detalhar" de cada gráfico.
+  // O recorte aplicado aparece só no modal "Detalhar" de cada gráfico
   const recorteAplicado = {
     opcoesTurmas,
     opcoesDisciplinas,
@@ -119,7 +119,6 @@ export default function DesempenhoGeral() {
   }
   const resumoFiltros = <ResumoFiltrosDesempenho {...recorteAplicado} />
   // Mesmo recorte, em texto puro — vai no PDF exportado de cada gráfico
-  // (que não sabe renderizar o ReactNode acima).
   const resumoFiltrosTextoAtual = resumoFiltrosTexto(recorteAplicado)
 
   return (

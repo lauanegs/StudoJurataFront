@@ -94,7 +94,7 @@ export function DatePicker({
   }
 
   function dispararHora(novaHora: string) {
-    if (!dataParte) return // hora sozinha, sem data, não forma um valor válido — ver disabled abaixo
+    if (!dataParte) return
     disparar(dayjs(`${dataParte} ${novaHora || '00:00'}`, 'YYYY-MM-DD HH:mm').format(FORMATO_SAIDA.dataHora))
   }
 

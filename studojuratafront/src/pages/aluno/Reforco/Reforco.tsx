@@ -33,7 +33,7 @@ export default function AlunoReforco() {
   const { turmaId } = useCursoAluno()
 
   const [aba, setAba] = useState<Aba>('aFazer')
-  // O filtro só se aplica ao clicar em "Buscar"; a seleção do campo fica separada do aplicado.
+  // O filtro só se aplica ao clicar em "Buscar"; a seleção do campo fica separada do aplicado
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null)
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
 
@@ -54,7 +54,7 @@ export default function AlunoReforco() {
     (requisicaoDisciplinas.data ?? []).find((disciplina) => disciplina.id === id)?.titulo
 
   const filtradas = useMemo(() => {
-    // Só o curso escolhido após o login.
+    // Só o curso escolhido após o login
     const lista = (requisicaoTentativas.data ?? []).filter(
       (tentativa) => porSimulado.get(tentativa.simuladoId)?.turmaId === turmaId,
     )

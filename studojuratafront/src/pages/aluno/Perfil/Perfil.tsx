@@ -23,11 +23,7 @@ import { resolverImagemSkin } from '@/utils/skins'
 import { Grade } from './styles'
 import type { Conquista } from './types'
 
-/**
- * Moedas e skins vêm de /gamificacao. As conquistas não existem como
- * entidade no back — são derivadas aqui do histórico de tentativas, e o
- * critério de cada uma está explícito no código.
- */
+/** Moedas e skins vêm de /gamificacao */
 export default function Perfil() {
   const toast = useToast()
   const { usuario } = useAuth()

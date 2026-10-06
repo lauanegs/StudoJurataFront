@@ -26,7 +26,6 @@ export function GraficoCard({
 }: GraficoCardProps) {
   const [aberto, setAberto] = useState(false)
 
-  // Cópia fora da tela, capturada como imagem para o relatório exportado.
   const capturarImagem = () => renderizarGraficoComoImagem(<>{renderGrafico(280, false)}</>, 640, 280)
 
   return (

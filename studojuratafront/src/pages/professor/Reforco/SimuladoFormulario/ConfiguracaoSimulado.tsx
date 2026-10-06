@@ -130,7 +130,7 @@ export function ConfiguracaoSimulado({
           />
         </GradeAutoAjuste>
 
-        {/* O DatePicker de data e hora tem dois campos internos e corta o texto em colunas mais estreitas. */}
+        {/* O DatePicker de data e hora tem dois campos internos e corta o texto em colunas mais estreitas */}
         <GradeAutoAjuste $larguraMinima="320px">
           <DatePicker
             label="Disponível a partir de"

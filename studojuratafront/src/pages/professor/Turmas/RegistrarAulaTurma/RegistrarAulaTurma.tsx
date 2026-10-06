@@ -38,11 +38,7 @@ import { GradeAutoAjuste } from '@/components/ui/GradeAutoAjuste'
 import { CamposCabecalho, CampoLargura, BotoesFlutuantes, BotaoSalvar, ColunaCargaHoraria, TrilhaCargaHoraria, PreenchimentoCargaHoraria } from './styles'
 import type { Aba, LinhaChamada } from './types'
 
-/**
- * O professor escolhe a disciplina e a aula do plano; sem escolha, a próxima
- * aula pendente vem pré-selecionada. Vindo de PlanoAula/Aulas.tsx, a aula
- * clicada chega por ?aulaId=&vinculoId=.
- */
+/** O professor escolhe a disciplina e a aula do plano; sem escolha, a próxima aula pendente vem pré-selecionada */
 export default function RegistrarAulaTurma() {
   const { turmaId } = useParams()
   const toast = useToast()
@@ -57,7 +53,7 @@ export default function RegistrarAulaTurma() {
   const [aba, setAba] = useState<Aba>('conteudo')
   const [turmaDisciplinaId, setTurmaDisciplinaId] = useState<number | null>(vinculoIdDaUrl)
   const [aulaSelecionadaManualId, setAulaSelecionadaManualId] = useState<number | null>(aulaIdDaUrl)
-  // Como em AulaFormulario: cargaHorariaManual só quando a turma não tem horário cadastrado.
+  // Como em AulaFormulario: cargaHorariaManual só quando a turma não tem horário cadastrado
   const [horarioTurmaId, setHorarioTurmaId] = useState<number | null>(null)
   const [cargaHorariaManual, setCargaHorariaManual] = useState('')
   const [dataPrevista, setDataPrevista] = useState('')
@@ -65,7 +61,7 @@ export default function RegistrarAulaTurma() {
   const [observacoes, setObservacoes] = useState('')
   const [edicoesChamada, setEdicoesChamada] = useState<Record<number, boolean>>({})
   const [titulo, setTitulo] = useState('')
-  // Conteúdos escolhidos antes de a aula existir, vinculados em salvar().
+  // Conteúdos escolhidos antes de a aula existir, vinculados em salvar()
   const [conteudoPlanoIdsPendentes, setConteudoPlanoIdsPendentes] = useState<number[]>([])
 
   const requisicaoTurma = useRequisicao(() => servicoTurmas.buscar(idTurma), [idTurma])
@@ -84,7 +80,7 @@ export default function RegistrarAulaTurma() {
     [requisicaoVinculos.data, idTurma],
   )
 
-  // Só a primeira disciplina lecionada nessa turma vem pré-selecionada — nunca decidir por conta própria quando há mais de uma.
+  // Só a primeira disciplina lecionada nessa turma vem pré-selecionada
   const disciplinaAtiva = turmaDisciplinaId ?? disciplinasDaTurma[0]?.value ?? null
 
   const requisicaoPlanos = useRequisicao(
@@ -93,10 +89,10 @@ export default function RegistrarAulaTurma() {
     { ativo: Boolean(disciplinaAtiva) },
   )
 
-  // listarPorTurmaDisciplina traz também planos concluídos; só vale o ATIVO.
+  // listarPorTurmaDisciplina traz também planos concluídos; só vale o ATIVO
   const planoAtual = (requisicaoPlanos.data ?? []).find((plano) => plano.status === 'ATIVO') ?? null
 
-  // Carga horária total da disciplina na grade, para a barra de progresso.
+  // Carga horária total da disciplina na grade, para a barra de progresso
   const cursoId = requisicaoTurma.data?.curso?.id ?? null
   const requisicaoGradeCurricular = useRequisicao(
     () => cursoDisciplinas.listarPorCurso(cursoId as number),
@@ -117,8 +113,7 @@ export default function RegistrarAulaTurma() {
 
   const aulasDoPlano = useMemo(() => requisicaoAulasPlano.data ?? [], [requisicaoAulasPlano.data])
 
-  // Sem escolha manual: a próxima aula pendente (sem dataPublicacao) do
-  // plano, por ordem — o caso comum de "a próxima aula a dar".
+  // Sem escolha manual: a próxima aula pendente (sem dataPublicacao) do plano, por ordem
   const aulaSugerida = useMemo(
     () =>
       [...aulasDoPlano]
@@ -131,7 +126,7 @@ export default function RegistrarAulaTurma() {
     ? (aulasDoPlano.find((aula) => aula.id === aulaSelecionadaManualId) ?? null)
     : aulaSugerida
 
-  // Compara valor em vez de flag: o StrictMode roda o efeito duas vezes e perderia ?aulaId=.
+  // Compara valor em vez de flag: o StrictMode roda o efeito duas vezes e perderia ?aulaId=
   const disciplinaAnterior = useRef(disciplinaAtiva)
   useEffect(() => {
     if (disciplinaAnterior.current === disciplinaAtiva) return
@@ -159,11 +154,10 @@ export default function RegistrarAulaTurma() {
     ? (horaParaMinutos(horarioSelecionado.horaFim) - horaParaMinutos(horarioSelecionado.horaInicio)) / 60
     : null
 
-  // Turma sem NENHUM horário cadastrado: não há o que selecionar, a carga
-  // horária é digitada (TimePicker, HH:mm) em vez do Select.
+  // Turma sem NENHUM horário cadastrado
   const semHorarioCadastrado = !requisicaoHorarios.loading && opcoesHorarios.length === 0
 
-  // A chamada depende da carga horária da aula escolhida.
+  // A chamada depende da carga horária da aula escolhida
   const chamadaLiberada = semHorarioCadastrado
     ? horaParaMinutos(cargaHorariaManual || '00:00') > 0
     : Boolean(horarioTurmaId)
@@ -206,8 +200,7 @@ export default function RegistrarAulaTurma() {
 
   const requisicaoMatriculas = useRequisicao(() => matriculas.ativosPorTurma(idTurma), [idTurma])
 
-  // Carga horária acumulada de cada aluno nesta disciplina — soma das aulas
-  // ministradas (com data de publicação) em que ele foi marcado presente.
+  // Carga horária acumulada de cada aluno nesta disciplina
   const requisicaoCargaHoraria = useRequisicao(
     async () => {
       const alunos = requisicaoMatriculas.data ?? []
@@ -243,10 +236,7 @@ export default function RegistrarAulaTurma() {
     }))
   }, [requisicaoMatriculas.data, requisicaoCargaHoraria.data, edicoesChamada])
 
-  /**
-   * Um único Salvar: sem aula, cria no plano (o back barra se estourar a carga
-   * horária) e registra chamada e conteúdos; com aula, atualiza e registra.
-   */
+  /** Um único Salvar: sem aula, cria no plano (o back barra se estourar a carga horária) e registra chamada */
   const { executar: salvar, executando: salvando } = useAcao(async () => {
     if (!planoAtual) {
       toast.warning('Sem plano de aula', 'Esta disciplina ainda não tem um plano de aula nesta turma.')
@@ -278,7 +268,7 @@ export default function RegistrarAulaTurma() {
           ).id
 
       if (aulaAlvo) {
-        // AulaService.atualizar sobrescreve tudo: parte da aula carregada.
+        // AulaService.atualizar sobrescreve tudo: parte da aula carregada
         await servicoAulas.atualizar(idAula, {
           ...aulaAlvo,
           titulo: titulo.trim() || aulaAlvo.titulo,
@@ -291,7 +281,7 @@ export default function RegistrarAulaTurma() {
           observacoes: observacoes.trim() || undefined,
         })
       } else if (conteudoPlanoIdsPendentes.length > 0) {
-        // Conteúdos escolhidos antes de a aula existir — comitados agora que ela finalmente tem id.
+        // Conteúdos escolhidos antes de a aula existir — comitados agora que ela finalmente tem id
         await Promise.all(
           conteudoPlanoIdsPendentes.map((conteudoPlanoId) => servicoAulas.vincularConteudo(idAula, conteudoPlanoId)),
         )

@@ -13,10 +13,7 @@ import { ROTULO_STATUS_MATRICULA, STATUS_MATRICULA_VARIANT } from '@/utils/label
 
 import { Bloco, Logo, Titulos, Titulo, Subtitulo, Lista, CartaoCurso, IconeQuadrado, Textos, SituacaoDaMatricula, NomeCurso, NomeTurma, BotaoVoltar } from './styles'
 
-/**
- * Logo após o login, quando o aluno tem mais de um curso (ativo ou concluído):
- * mesma casca do login, com os cursos como cards no lugar dos campos.
- */
+/** Logo após o login, quando o aluno tem mais de um curso (ativo ou concluído) */
 export default function SelecionarCurso() {
   const navegar = useNavigate()
   const { sair } = useAuth()
@@ -27,7 +24,7 @@ export default function SelecionarCurso() {
     navegar('/aluno', { replace: true })
   }
 
-  // Voltar ao login encerra a sessão: sem isso o login redirecionaria de volta para o portal.
+  // Voltar ao login encerra a sessão: sem isso o login redirecionaria de volta para o portal
   async function voltarParaOLogin() {
     await sair()
     navegar('/', { replace: true })

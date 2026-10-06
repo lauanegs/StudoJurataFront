@@ -37,7 +37,7 @@ export default function Aulas() {
   const [busca, setBusca] = useState('')
   const buscaAtrasada = useDebounce(busca)
 
-  // Geração em lote pelos horários da turma (AulaService.gerarLote).
+  // Geração em lote pelos horários da turma (AulaService.gerarLote)
   const [modalGerarAberto, setModalGerarAberto] = useState(false)
   const [quantidadeGerar, setQuantidadeGerar] = useState('10')
   const [dataInicioGerar, setDataInicioGerar] = useState(() => new Date().toISOString().slice(0, 10))
@@ -56,8 +56,7 @@ export default function Aulas() {
     [requisicaoAulas.data],
   )
 
-  // Conteúdos vinculados de cada aula — pra montar a coluna "Conteúdo" da
-  // tabela (bullet list), uma busca por aula ativa.
+  // Conteúdos vinculados de cada aula
   const requisicaoConteudosPorAula = useRequisicao(
     async () => {
       const listas = await Promise.all(aulasAtivas.map((aula) => servicoAulas.listarConteudos(aula.id)))

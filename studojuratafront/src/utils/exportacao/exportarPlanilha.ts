@@ -4,7 +4,6 @@ import { theme as tokens } from '@/styles/theme'
 import type { ImagemGrafico } from '@/components/graficos/RenderizarGrafico'
 
 import type { LinhaPlanilha, AbaPlanilha } from './types'
-/** Formato ARGB que o exceljs pede: a cor do tema sem o "#" e com o alpha "FF" na frente. */
 const paraArgb = (hex: string) => `FF${hex.replace('#', '')}`
 
 const ROXO_MARCA_ARGB = paraArgb(tokens.colors.purple)
@@ -14,9 +13,7 @@ const BORDA_ARGB = paraArgb(tokens.colors.borderStrong)
 
 const LARGURA_COLUNA_ROTULO = 52
 const LARGURA_COLUNA_VALOR = 20
-/** Altura de linha padrão do Excel em px (~15pt a 96dpi) — usada só pra estimar quantas linhas em branco reservar sob a imagem. */
 const ALTURA_LINHA_PADRAO_PX = 20
-/** Largura de exibição da imagem embutida, em px — a altura é calculada mantendo a proporção capturada. */
 const LARGURA_IMAGEM_PX = 520
 const ALTURA_MAXIMA_IMAGEM_PX = 280
 
@@ -58,7 +55,6 @@ function adicionarAba(workbook: ExcelJS.Workbook, nomeAba: string, aba: AbaPlani
 
   let linhaAtual = 1
 
-  // Reserva linhas para o gráfico: a imagem flutua e não empurra células.
   if (aba.imagem) {
     const proporcao = aba.imagem.largura / aba.imagem.altura
     let larguraImg = LARGURA_IMAGEM_PX
@@ -90,12 +86,6 @@ function adicionarAba(workbook: ExcelJS.Workbook, nomeAba: string, aba: AbaPlani
   worksheet.views = [{ state: 'frozen', ySplit: linhaCabecalho.number }]
 }
 
-/**
- * Exporta os valores exatos por trás de UM gráfico como .xlsx de verdade
- * (ExcelJS) — cabeçalho roxo da marca, listras alternadas e bordas, mesmo
- * padrão visual do PDF exportado ao lado. Opcionalmente inclui o desenho do
- * gráfico (não só a legenda/tabela) acima dos dados.
- */
 export function exportarExcel(
   nomeArquivo: string,
   colunaRotulo: string,
@@ -106,7 +96,6 @@ export function exportarExcel(
   return exportarExcelAbas(nomeArquivo, [{ nome: 'Dados', colunaRotulo, colunaValor, linhas, imagem }])
 }
 
-/** Várias tabelas num único .xlsx, uma aba por seção (relatório completo). */
 export async function exportarExcelAbas(nomeArquivo: string, abas: AbaPlanilha[]) {
   const workbook = new ExcelJS.Workbook()
   workbook.creator = 'StudoJurata'

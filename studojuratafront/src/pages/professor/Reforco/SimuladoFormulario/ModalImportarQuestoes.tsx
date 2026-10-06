@@ -23,7 +23,7 @@ export function ModalImportarQuestoes({
   onImportar,
 }: ModalImportarQuestoesProps) {
   const [disciplinaId, setDisciplinaId] = useState<number | null>(null)
-  // Filtro aplicado: só muda ao clicar "Buscar".
+  // Filtro aplicado: só muda ao clicar "Buscar"
   const [disciplinaIdAplicada, setDisciplinaIdAplicada] = useState<number | null>(null)
   const [filtroAplicado, setFiltroAplicado] = useState(false)
   const [selecionadas, setSelecionadas] = useState<Set<number>>(new Set())

@@ -128,12 +128,12 @@ export default function ResponsavelFormulario() {
       if (edicao) {
         await servicoResponsaveis.atualizar(responsavelId as number, { pessoa: pessoaSalva })
         toast.success('Responsável atualizado', pessoaSalva.nome)
-        // Permanece na tela: só recarrega o que o back gravou.
+        // Permanece na tela: só recarrega o que o back gravou
         await requisicao.reload()
       } else {
         const criado = await servicoResponsaveis.criar({ pessoa: pessoaSalva })
         toast.success('Responsável cadastrado', pessoaSalva.nome)
-        // Continua no formulário, agora em modo de edição.
+        // Continua no formulário, agora em modo de edição
         navegar(`/adm/responsaveis/${criado.id}`, { replace: true })
       }
     } catch (erroSalvar) {

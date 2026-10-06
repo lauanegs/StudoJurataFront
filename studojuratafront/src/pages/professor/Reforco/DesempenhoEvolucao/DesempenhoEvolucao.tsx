@@ -24,11 +24,7 @@ const colunasPontos: Coluna<PontoTabela>[] = [
   { key: 'valor', cabecalho: 'Nota', alinhamento: 'right', render: (item) => item.valor },
 ]
 
-/**
- * Versão filtrável do card "Evolução ao longo do tempo" do painel de
- * Desempenho. Filtrando por aluno, cada linha mostra a evolução dele, não a
- * média da turma.
- */
+/** Versão filtrável do card "Evolução ao longo do tempo" do painel de Desempenho */
 export default function DesempenhoEvolucao() {
   const {
     turmaId,
@@ -55,7 +51,7 @@ export default function DesempenhoEvolucao() {
     reload,
   } = useDesempenhoDados()
 
-  // O recorte aplicado aparece só no modal "Detalhar" de cada gráfico.
+  // O recorte aplicado aparece só no modal "Detalhar" de cada gráfico
   const recorteAplicado = {
     opcoesTurmas,
     opcoesDisciplinas,

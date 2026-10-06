@@ -4,13 +4,7 @@ import { CarregandoTela } from '@/components/feedback/CarregandoTela'
 import { useAuth } from '@/hooks/useAuth'
 
 import type { RotaProtegidaProps } from './types'
-/**
- * Guarda de rota.
- *
- * Enquanto o /auth/me não responde, nada é renderizado (evita mandar o usuário
- * para o login em um simples F5). Sem sessão → login; com sessão de outro
- * perfil → tela de "não autorizado".
- */
+/** Guarda de rota */
 export function RotaProtegida({ children, perfis }: RotaProtegidaProps) {
   const { usuario, loading } = useAuth()
   const localizacao = useLocation()

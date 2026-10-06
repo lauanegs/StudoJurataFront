@@ -5,12 +5,10 @@ import { theme as tokens } from '@/styles/theme'
 import type { ImagemGrafico } from '@/components/graficos/RenderizarGrafico'
 
 import type { LinhaPdf, SecaoPdf } from './types'
-/** Altura máxima reservada pro desenho do gráfico numa seção, em mm — imagens muito altas (gráfico bem estreito e alto) ficam limitadas por isso, não pela largura. */
 const ALTURA_MAXIMA_IMAGEM_MM = 90
 
 const MARGEM = 14
 
-/** Roxo da marca em RGB — jsPDF-autotable pede a cor assim, não em hex. */
 const ROXO_MARCA = hexParaRgb(tokens.colors.purple)
 
 function hexParaRgb(hex: string): [number, number, number] {
@@ -18,11 +16,6 @@ function hexParaRgb(hex: string): [number, number, number] {
   return [(numero >> 16) & 255, (numero >> 8) & 255, numero & 255]
 }
 
-/**
- * PDF gerado a partir dos dados (jsPDF + autoTable), sem depender do
- * navegador paginar o SVG do gráfico, o que cortava ou distorcia. Cada seção
- * vira uma tabela com título e contexto; páginas numeradas no rodapé.
- */
 export function exportarPdf(nomeArquivo: string, titulo: string, contexto: string[], secoes: SecaoPdf[]) {
   const doc = new jsPDF()
   const larguraPagina = doc.internal.pageSize.getWidth()
@@ -50,15 +43,11 @@ export function exportarPdf(nomeArquivo: string, titulo: string, contexto: strin
   cursorY += 4
 
   secoes.forEach((secao) => {
-    // Seção nova sem espaço na página atual: pula pra próxima em vez de
-    // começar o título colado no rodapé.
     if (cursorY > alturaPagina - 40) {
       doc.addPage()
       cursorY = 18
     }
 
-    // Relatório de seção única cujo título já é o próprio título do PDF —
-    // não repete o mesmo texto duas vezes.
     if (secoes.length > 1 || secao.titulo !== titulo) {
       doc.setFontSize(12)
       doc.setFont('helvetica', 'bold')
@@ -78,7 +67,6 @@ export function exportarPdf(nomeArquivo: string, titulo: string, contexto: strin
         larguraImagem = alturaImagem * proporcao
       }
 
-      // Imagem nova sem espaço na página atual: pula pra próxima em vez de cortar.
       if (cursorY + alturaImagem > alturaPagina - 20) {
         doc.addPage()
         cursorY = 18
@@ -112,7 +100,6 @@ export function exportarPdf(nomeArquivo: string, titulo: string, contexto: strin
   doc.save(`${nomeArquivo}.pdf`)
 }
 
-/** Atalho pra PDF de uma seção só — mesmo formato, sem precisar montar o array de seções na mão. */
 export function exportarPdfSecaoUnica(
   nomeArquivo: string,
   titulo: string,

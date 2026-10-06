@@ -5,8 +5,6 @@ const INVALIDO = '—'
 function paraData(valor?: string | Date | null): Date | null {
   if (!valor) return null
 
-  // "2026-07-20" sem horário é interpretado como UTC pelo Date; forçamos
-  // horário local para não exibir o dia anterior.
   const data =
     typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor)
       ? new Date(`${valor}T00:00:00`)
@@ -41,7 +39,6 @@ function formatarMesAno(valor?: string | Date | null): string {
   return data ? `${MESES_ABREVIADOS[data.getMonth()]}/${data.getFullYear()}` : INVALIDO
 }
 
-/** Período de um plano de ensino/aula: "mês/aaaa – mês/aaaa" — só mês/ano, o dia é ruído visual pra essa granularidade. */
 export function formatarPeriodo(dataInicio?: string | null, dataFim?: string | null): string {
   const inicio = formatarMesAno(dataInicio)
   const fim = formatarMesAno(dataFim)
@@ -53,17 +50,14 @@ export function formatarPeriodo(dataInicio?: string | null, dataFim?: string | n
 
 export function formatarHora(valor?: string | null): string {
   if (!valor) return INVALIDO
-  // LocalTime chega como "08:00:00".
   return valor.slice(0, 5)
 }
 
-/** "08:00:00" ou "08:00" (LocalTime) -> minutos desde 00:00 — usado pra calcular a duração de um HorarioTurma. */
 export function horaParaMinutos(valor: string): number {
   const [horas, minutos] = valor.split(':').map(Number)
   return horas * 60 + minutos
 }
 
-/** 1.5 -> "01:30" — carga horária (número de horas, aceita fração) pro formato do TimePicker, usado quando a turma ainda não tem horário cadastrado (única situação em que a duração é digitada, não escolhida). */
 export function horasParaHHmm(horas: number): string {
   const horasInteiras = Math.floor(horas)
   const minutos = Math.round((horas - horasInteiras) * 60)
@@ -75,7 +69,6 @@ export function paraInputDataHora(valor?: string | null): string {
   return valor.slice(0, 16)
 }
 
-/** Converte "2026-07-20T11:00" para o formato que o back espera (LocalDateTime). */
 export function deInputDataHora(valor?: string | null): string | null {
   if (!valor) return null
   return valor.length === 16 ? `${valor}:00` : valor
@@ -150,7 +143,6 @@ export function formatarMoedas(valor?: number | null): string {
   return valor.toLocaleString('pt-BR')
 }
 
-/** "1h30" em vez de "1.5h": a carga horária aceita fração. */
 export function formatarCargaHoraria(horas?: number | null): string {
   if (horas === null || horas === undefined) return INVALIDO
 
@@ -190,7 +182,6 @@ export function letraAlternativa(indice: number): string {
   return String.fromCharCode(65 + indice)
 }
 
-/** Data de hoje (ou de `data`) no fuso local, em YYYY-MM-DD. toISOString converte para UTC e, à noite, devolveria o dia seguinte. */
 export function dataLocalIso(data: Date = new Date()): string {
   return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`
 }

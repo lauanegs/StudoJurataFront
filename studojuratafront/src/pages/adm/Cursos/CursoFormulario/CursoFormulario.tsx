@@ -55,8 +55,7 @@ export default function CursoFormulario() {
 
   const estadoDaRota = localizacao.state as { aba?: Aba; passoAPasso?: boolean } | null
   const [aba, setAba] = useState<Aba>(estadoDaRota?.aba ?? 'dados')
-  // Curso novo é montado em passos (a grade só existe depois de salvar os dados); a edição
-  // de um curso existente continua em abas.
+  // Curso novo é montado em passos (a grade só existe depois de salvar os dados)
   const [emPassos, setEmPassos] = useState(!edicao || Boolean(estadoDaRota?.passoAPasso))
   const form = useFormularioCurso()
 
@@ -68,8 +67,7 @@ export default function CursoFormulario() {
     ativo: Boolean(cursoId),
   })
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
-  // A grade restringe as disciplinas das turmas do curso e pré-preenche a
-  // carga horária do plano de ensino.
+  // A grade restringe as disciplinas das turmas do curso e pré-preenche a carga horária do plano de ensino
   const requisicaoGrade = useRequisicao(
     () => servicoCursoDisciplinas.listarPorCurso(cursoId as number),
     [cursoId],
@@ -107,12 +105,12 @@ export default function CursoFormulario() {
       if (edicao) {
         await servicoCursos.atualizar(cursoId as number, corpo)
         toast.success('Curso atualizado', nome.trim())
-        // Permanece na tela: só recarrega o que o back gravou.
+        // Permanece na tela: só recarrega o que o back gravou
         await requisicao.reload()
       } else {
         const criado = await servicoCursos.criar(corpo)
         toast.success('Curso cadastrado', 'Agora defina a grade curricular.')
-        // Continua no formulário, agora em modo de edição.
+        // Continua no formulário, agora em modo de edição
         navegar(`/adm/cursos/${criado.id}`, { replace: true, state: { aba: 'grade', passoAPasso: true } })
       }
       return true
@@ -357,7 +355,7 @@ export default function CursoFormulario() {
               iconeAvancar={<ArrowRight />}
               carregando={salvando}
               aoAvancar={async () => {
-                // Na criação o próprio salvar leva à grade (navegação); na edição basta avançar.
+                // Na criação o próprio salvar leva à grade (navegação); na edição basta avançar
                 if ((await salvar()) && edicao) setAba('grade')
               }}
             />

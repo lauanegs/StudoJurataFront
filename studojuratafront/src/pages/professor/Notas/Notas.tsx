@@ -35,13 +35,7 @@ import type { AlunoTurma } from '@/dominios/turmas/types'
 import { Lista } from './styles'
 import type { TipoFiltro, Visao, FiltroAplicado, LinhaAcordeao } from './types'
 
-/**
- * Notas por turma, filtradas por disciplina ou por aluno, em acordeão: cada
- * linha expande os simulados que compõem a nota. A nota é sempre derivada,
- * sem lançamento manual. Como o escopo da nota é a turma, cada linha carrega a
- * própria turma. "Histórico" mostra só matrículas encerradas (concluídas ou
- * canceladas).
- */
+/** Notas por turma, filtradas por disciplina ou por aluno, em acordeão */
 export default function Notas() {
   const toast = useToast()
   const { professorId } = useProfessorLogado()
@@ -81,7 +75,7 @@ export default function Notas() {
     [requisicaoVinculos.data, turmaId],
   )
 
-  // Matrículas ATIVAS ficam só na outra aba.
+  // Matrículas ATIVAS ficam só na outra aba
   async function matriculasDaVisao(idTurma: number, visaoAtual: Visao): Promise<AlunoTurma[]> {
     if (visaoAtual === 'ativos') return matriculas.ativosPorTurma(idTurma)
 
@@ -108,7 +102,7 @@ export default function Notas() {
     return []
   }, [tipo, disciplinasDaTurma, requisicaoMatriculasTurma.data])
 
-  // Trocar de aba limpa os filtros, já que o conjunto de alunos muda.
+  // Trocar de aba limpa os filtros, já que o conjunto de alunos muda
   function trocarVisao(nova: Visao) {
     setVisao(nova)
     setTurmaId(null)
@@ -126,8 +120,7 @@ export default function Notas() {
     setFiltro({ turmaId, tipo, especificoId })
   }
 
-  // Só monta os acordeões depois de um filtro aplicado: sem filtro a lista
-  // completa fica grande demais.
+  // Só monta os acordeões depois de um filtro aplicado
   const requisicaoMatriculasResultado = useRequisicao(
     () => matriculasDaVisao(filtro?.turmaId as number, visao),
     [filtro?.turmaId, visao],
@@ -136,8 +129,7 @@ export default function Notas() {
   const requisicaoNotas = useRequisicao(() => servicoNotas.listar(), [])
   const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
 
-  // Situação da matrícula no título — só aparece no Histórico (na aba
-  // Ativos já é redundante, todo mundo ali está com a mesma situação).
+  // Situação da matrícula no título
   const sufixoSituacao = useCallback(
     (matricula: AlunoTurma) =>
       visao === 'historico' && matricula.status ? ` (${ROTULO_STATUS_MATRICULA[matricula.status]})` : '',
@@ -166,7 +158,7 @@ export default function Notas() {
     }))
   }, [filtro, disciplinasDaTurma, requisicaoMatriculasResultado.data, sufixoSituacao])
 
-  // Tentativas de simulado de cada aluno envolvido, buscadas uma vez por aluno distinto.
+  // Tentativas de simulado de cada aluno envolvido, buscadas uma vez por aluno distinto
   const alunosEnvolvidos = useMemo(
     () => [...new Set(linhasAcordeao.map((linha) => linha.alunoId))],
     [linhasAcordeao],
@@ -216,8 +208,7 @@ export default function Notas() {
     }))
   }
 
-  // Pontos já distribuídos pela disciplina nos simulados concluídos: nota.total
-  // é sobre essa base (mesma regra de pages/aluno/Notas.tsx).
+  // Pontos já distribuídos pela disciplina nos simulados concluídos
   function pontosDistribuidosDaLinha(alunoId: number, disciplinaId: number, turmaId: number) {
     return tentativasDaLinha(alunoId, disciplinaId, turmaId).reduce(
       (soma, { simulado }) => soma + (simulado?.notaMaxima ?? 0),
@@ -242,8 +233,7 @@ export default function Notas() {
       <Header
         titulo="Notas"
         filtros={
-          // 211px vem do Figma: 830px de linha inteira (3 campos + botão)
-          // menos os 150px do botão e os 3 gaps de 16px, dividido por 3.
+          // 211px vem do Figma: 830px de linha inteira (3 campos + botão) menos os 150px do botão e os 3 gaps de 16px
           <CamposFiltro>
             <CampoFiltro $largura="211px">
               <Select

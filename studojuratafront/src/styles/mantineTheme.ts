@@ -2,11 +2,6 @@ import { createTheme, type MantineColorsTuple } from '@mantine/core'
 
 import { theme as tokens } from './theme'
 
-/**
- * Tuplas de 10 tons geradas a partir das cores de marca em `theme.ts`
- * (HSL, mantendo o índice 6 fixo no hex de origem — convenção da Mantine
- * para a shade "base" usada por padrão no modo claro).
- */
 const brandPurple: MantineColorsTuple = [
   '#f7f4fa',
   '#dfd2ec',
@@ -59,14 +54,6 @@ const brandSuccess: MantineColorsTuple = [
   '#195e2a',
 ]
 
-/**
- * Cinza/azul neutro do tema (mesma família de `background`/`borderStrong`
- * em `theme.ts`) — usado por botões de ação discretos (ex.: linhas de
- * tabela) para que o hover siga a paleta neutra da página, não o roxo de
- * marca. A Mantine deriva `--button-hover` (fundo) e a cor do texto do par
- * shade[1]/shade[6] da `color` passada — não dá pra só sobrescrever a CSS
- * var, porque ela é recalculada depois a partir da `color`.
- */
 const brandNeutral: MantineColorsTuple = [
   '#fafbfc',
   '#eef1f6',
@@ -80,11 +67,6 @@ const brandNeutral: MantineColorsTuple = [
   '#202020',
 ]
 
-/**
- * Tema Mantine espelhando `theme.ts` (styled-components) — mesma paleta,
- * mesma escala de raio/sombra. Os dois convivem enquanto os componentes
- * são migrados um a um; nada muda visualmente para quem olha o app.
- */
 export const mantineTheme = createTheme({
   primaryColor: 'brandPurple',
   primaryShade: { light: 6, dark: 4 },
@@ -131,17 +113,6 @@ export const mantineTheme = createTheme({
     xl: tokens.typography.sizes.xl,
   },
 
-  /**
-   * A Mantine exige as 5 chaves (xs/sm/md/lg/xl); o projeto só define 3
-   * breakpoints conceituais em `theme.ts` (mobile/tablet/desktop, usados
-   * pelo `styled-components` em `.oculta-tela-pequena` e nas media queries
-   * das telas). Sem isso, qualquer componente que viesse a usar os
-   * breakpoints responsivos nativos da Mantine (`hiddenFrom`/`visibleFrom`/
-   * `span={{ base, sm, md }}`) cairia nos breakpoints padrão dela
-   * (576/768/992/1200/1400px), diferentes dos do resto do app — nenhum
-   * componente usa isso hoje (conferido), mas o gap ficava pronto para gerar
-   * uma divergência silenciosa no primeiro que usasse.
-   */
   breakpoints: {
     xs: tokens.breakpoints.mobile,
     sm: tokens.breakpoints.mobile,

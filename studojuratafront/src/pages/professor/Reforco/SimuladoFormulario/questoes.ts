@@ -2,7 +2,7 @@ import { questaoVazia, type QuestaoEditavel } from '@/components/simulados/Quest
 import type { AlternativaResponse, QuestaoResponse, SimuladoQuestaoResponse } from '@/dominios/simulados/types'
 
 import type { ResultadoDaImportacao } from './types'
-/** Regra de negócio: um simulado nunca pode ter mais que 10 questões (ver SimuladoQuestaoService no back). */
+/** Regra de negócio: um simulado nunca pode ter mais que 10 questões (ver SimuladoQuestaoService no back) */
 export const MAXIMO_QUESTOES = 10
 
 function alternativasDaQuestao(questaoId: number, alternativas: AlternativaResponse[]) {
@@ -11,10 +11,7 @@ function alternativasDaQuestao(questaoId: number, alternativas: AlternativaRespo
     .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
 }
 
-/**
- * Cópia de uma questão existente, sem `id`: com id, `salvar()` assumiria que já
- * está vinculada a este simulado e não criaria o SimuladoQuestao.
- */
+/** Cópia de uma questão existente, sem `id` */
 export function copiarQuestao(
   original: QuestaoResponse,
   alternativas: AlternativaResponse[],
@@ -34,7 +31,7 @@ export function copiarQuestao(
   }
 }
 
-/** Questão já vinculada a este simulado, mantendo os ids para atualizar no lugar. */
+/** Questão já vinculada a este simulado, mantendo os ids para atualizar no lugar */
 export function carregarQuestao(original: QuestaoResponse, alternativas: AlternativaResponse[]): QuestaoEditavel {
   return {
     id: original.id,
@@ -51,14 +48,14 @@ export function carregarQuestao(original: QuestaoResponse, alternativas: Alterna
   }
 }
 
-/** Vínculos ativos (não removidos) de um simulado, na ordem de montagem. */
+/** Vínculos ativos (não removidos) de um simulado, na ordem de montagem */
 function vinculosAtivosDoSimulado(vinculos: SimuladoQuestaoResponse[], simuladoId: number | null) {
   return vinculos
     .filter((vinculo) => vinculo.simuladoId === simuladoId && vinculo.status !== 'REMOVIDA')
     .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
 }
 
-/** Questões já salvas do simulado, com ids preservados para atualizar no lugar. */
+/** Questões já salvas do simulado, com ids preservados para atualizar no lugar */
 export function questoesDoSimulado(
   vinculos: SimuladoQuestaoResponse[],
   bancoQuestoes: QuestaoResponse[],
@@ -71,7 +68,7 @@ export function questoesDoSimulado(
     .map((original) => carregarQuestao(original, bancoAlternativas))
 }
 
-/** Questão ATIVA ainda PENDENTE: o simulado só pode ser mexido na tela de aprovação. */
+/** Questão ATIVA ainda PENDENTE: o simulado só pode ser mexido na tela de aprovação */
 export function simuladoTemQuestaoPendente(
   vinculos: SimuladoQuestaoResponse[],
   bancoQuestoes: QuestaoResponse[],
@@ -84,10 +81,7 @@ export function simuladoTemQuestaoPendente(
   )
 }
 
-/**
- * Acrescenta questões do banco à lista atual, respeitando o limite. A primeira
- * questão em branco do formulário novo é descartada para dar lugar às importadas.
- */
+/** Acrescenta questões do banco à lista atual, respeitando o limite */
 export function planejarImportacaoDeQuestoes(
   atuais: QuestaoEditavel[],
   escolhidas: QuestaoResponse[],

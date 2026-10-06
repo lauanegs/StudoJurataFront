@@ -57,7 +57,7 @@ export default function PlanoEnsinoFormulario() {
   const requisicaoPlano = useRequisicao(() => servicoPlanos.buscar(planoId as number), [planoId], {
     ativo: Boolean(planoId),
   })
-  // O back gera o plano de aula junto (PlanoAulaService.gerarSeNecessario) quando há turmaDisciplina.
+  // O back gera o plano de aula junto (PlanoAulaService.gerarSeNecessario) quando há turmaDisciplina
   const requisicaoPlanoAula = useRequisicao(
     () => planosAula.listarPorPlanoEnsino(planoId as number),
     [planoId],
@@ -70,7 +70,7 @@ export default function PlanoEnsinoFormulario() {
     [professorId],
     { ativo: Boolean(professorId) },
   )
-  // Grade do curso: só sugere a carga horária ao criar.
+  // Grade do curso: só sugere a carga horária ao criar
   const requisicaoGradeCurricular = useRequisicao(
     () => servicoCursoDisciplinas.listarPorCurso(cursoId as number),
     [cursoId],
@@ -90,7 +90,7 @@ export default function PlanoEnsinoFormulario() {
     form.setFieldValue('status', plano.status ?? 'ATIVO')
   })
 
-  // Curso e turma se filtram mutuamente, para não salvar turma de outro curso.
+  // Curso e turma se filtram mutuamente, para não salvar turma de outro curso
   const opcoesCursos = useMemo(() => {
     const cursos = requisicaoCursos.data ?? []
     if (!turmaId) return cursos.map((curso) => ({ value: curso.id, label: curso.nome }))
@@ -104,7 +104,7 @@ export default function PlanoEnsinoFormulario() {
       .map((curso) => ({ value: curso.id, label: curso.nome }))
   }, [requisicaoCursos.data, requisicaoVinculos.data, turmaId])
 
-  // Dois selects (Figma): a disciplina é filtrada pela turma escolhida.
+  // Dois selects (Figma): a disciplina é filtrada pela turma escolhida
   const opcoesTurmas = useMemo(() => {
     const unicas = new Map<number, string>()
     for (const vinculo of requisicaoVinculos.data ?? []) {
@@ -120,12 +120,7 @@ export default function PlanoEnsinoFormulario() {
     [requisicaoGradeCurricular.data],
   )
 
-  /**
-   * Só vínculos utilizáveis: vínculo ativo, disciplina ativa e — no cadastro de
-   * um plano novo, quando a grade do curso já chegou — disciplina ainda na grade
-   * ativa. Disciplina inativada não some do histórico: na edição a lista
-   * continua completa, e o plano que já existe segue com o vínculo dele.
-   */
+  /** Só vínculos utilizáveis: vínculo ativo, disciplina ativa e */
   const filtrarPelaGradeAtiva = !edicao && !requisicaoGradeCurricular.loading && Boolean(cursoId)
 
   const opcoesDisciplinas = useMemo(() => {
@@ -146,8 +141,7 @@ export default function PlanoEnsinoFormulario() {
     [requisicaoVinculos.data, turmaId, disciplinaId],
   )
 
-  // Se a turma/disciplina já teve um plano CONCLUIDO, avisa de onde o ciclo
-  // anterior parou, sem pré-preencher nada.
+  // Se a turma/disciplina já teve um plano CONCLUIDO, avisa de onde o ciclo anterior parou
   const requisicaoPlanosExistentes = useRequisicao(() => servicoPlanos.listar(), [], {
     ativo: !edicao,
   })
@@ -179,7 +173,7 @@ export default function PlanoEnsinoFormulario() {
       : `Ciclo anterior concluído em ${fim}.`
   }, [planoAnteriorConcluido, requisicaoConteudosExistentes.data])
 
-  /** A carga horária vem da grade curricular do curso e é só para observação: acompanha a disciplina escolhida. */
+  /** A carga horária vem da grade curricular do curso e é só para observação */
   function sugerirCargaHoraria(disciplinaSelecionada: number | null, grade: CursoDisciplina[]) {
     const encontrado = grade.find(
       (item) => item.disciplina?.id === disciplinaSelecionada && item.status !== 'INATIVO',
@@ -196,8 +190,7 @@ export default function PlanoEnsinoFormulario() {
     try {
       const corpo = {
         curso,
-        // O responsável é sempre quem cria/edita, sem seleção, para ninguém
-        // assinar o plano de outro professor.
+        // O responsável é sempre quem cria/edita, sem seleção, para ninguém assinar o plano de outro professor
         professor: professor ?? undefined,
         turmaDisciplina: vinculoSelecionado ?? undefined,
         cargaHoraria: cargaHoraria ? Number(cargaHoraria) : undefined,
@@ -289,8 +282,7 @@ export default function PlanoEnsinoFormulario() {
                 Plano de aula
               </Button>
             )}
-            {/* Cancelar só existe enquanto o plano ainda não foi salvo — depois
-                de salvo, desfazer é Encerrar (soft-delete), não Cancelar. */}
+            {/* Cancelar só existe enquanto o plano ainda não foi salvo */}
             {edicao ? (
               <Button
                 size="large"
@@ -343,9 +335,9 @@ export default function PlanoEnsinoFormulario() {
           {aba === 'identificacao' && (
           <Card titulo="Identificação">
             <Stack gap="md">
-              {/* 280px garante no máximo 2 campos por linha, como no restante do formulário. */}
+              {/* 280px garante no máximo 2 campos por linha, como no restante do formulário */}
               <GradeAutoAjuste $larguraMinima="280px">
-                {/* A identificação do plano é o próprio id; não existe ainda ao criar. */}
+                {/* A identificação do plano é o próprio id; não existe ainda ao criar */}
                 <Input
                   label="Número do plano"
                   value={edicao && requisicaoPlano.data ? `Nº ${requisicaoPlano.data.id}` : 'Gerado automaticamente ao salvar'}
@@ -364,8 +356,7 @@ export default function PlanoEnsinoFormulario() {
                   placeholder="Selecionar curso..."
                   onChange={(valor) => {
                     form.setFieldValue('cursoId', valor)
-                    // A turma escolhida pode não pertencer mais ao curso novo —
-                    // limpa em vez de deixar uma combinação inconsistente.
+                    // A turma escolhida pode não pertencer mais ao curso novo
                     if (
                       valor &&
                       turmaId &&
@@ -403,8 +394,7 @@ export default function PlanoEnsinoFormulario() {
                   onChange={(valor) => {
                     form.setFieldValue('turmaId', valor)
                     form.setFieldValue('disciplinaId', null)
-                    // A turma só pertence a um curso — escolher a turma já
-                    // resolve o curso, sem exigir escolher os dois à parte.
+                    // A turma só pertence a um curso
                     const cursoDaTurma = valor
                       ? (requisicaoVinculos.data ?? []).find((vinculo) => vinculo.turma?.id === valor)?.turma?.curso
                           ?.id

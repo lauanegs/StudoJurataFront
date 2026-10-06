@@ -31,13 +31,6 @@ export interface DataTableProps<T> {
   onRowClick?: (item: T) => void
   actions?: (item: T) => ReactNode
   rotuloColunaAcoes?: string
-  /**
-   * Deixa os botões da coluna de ações quebrarem pra uma linha extra quando
-   * não cabem mais, em vez de reservar espaço pra todos numa linha só (o que
-   * empurra a tabela pro scroll horizontal do wrapper). Usar só em tabelas
-   * com muitas colunas (a partir de ~7) — nas demais, o scroll horizontal
-   * discreto da própria tabela é preferível a espremer a coluna de ações.
-   */
   quebrarAcoes?: boolean
   paginacao?: PaginacaoProps
   densidade?: Densidade

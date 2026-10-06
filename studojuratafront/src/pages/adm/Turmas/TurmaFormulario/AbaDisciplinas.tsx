@@ -32,7 +32,7 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
 
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
   const requisicaoProfessores = useRequisicao(() => servicoProfessores.listar(), [])
-  // Só disciplinas da grade curricular do curso podem ser vinculadas à turma.
+  // Só disciplinas da grade curricular do curso podem ser vinculadas à turma
   const requisicaoGradeCurricular = useRequisicao(
     () => cursoDisciplinas.listarPorCurso(cursoId as number),
     [cursoId],
@@ -55,14 +55,14 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
       .map((disciplina) => ({ value: disciplina.id, label: disciplina.titulo ?? '—' }))
   }, [requisicaoDisciplinas.data, gradeCurricularAtiva, vinculosDaTurma])
 
-  /** Grade toda vinculada: distinto de "curso sem disciplinas na grade" — ver Select abaixo. */
+  /** Grade toda vinculada: distinto de "curso sem disciplinas na grade" — ver Select abaixo */
   const gradeTotalmenteVinculada =
     !requisicaoGradeCurricular.loading &&
     !requisicaoDisciplinas.loading &&
     gradeCurricularAtiva.length > 0 &&
     opcoesDisciplinas.length === 0
 
-  /** Disciplinas da grade sem vínculo ou sem professor: só sinaliza, não bloqueia o salvamento. */
+  /** Disciplinas da grade sem vínculo ou sem professor: só sinaliza, não bloqueia o salvamento */
   const disciplinasIncompletas = useMemo(
     () =>
       gradeCurricularAtiva

@@ -26,13 +26,13 @@ export function AbaAlunos({ turmaId, requisicaoAtivos, historico, vinculos }: Ab
   const buscaAtrasada = useDebounce(busca)
 
   const { dispensados, dispensar } = useAvisosDispensados()
-  /** Aviso informativo de matrícula concluída automaticamente por carga horária (FrequenciaService). */
+  /** Aviso informativo de matrícula concluída automaticamente por carga horária (FrequenciaService) */
   const avisosCargaHoraria = useMemo(
     () => historico.filter((matricula) => matricula.status === 'CONCLUIDA' && !dispensados.includes(matricula.id)),
     [historico, dispensados],
   )
 
-  // Recalcula quando matrículas ou disciplinas da turma mudam, já que as duas alteram a carga horária.
+  // Recalcula quando matrículas ou disciplinas da turma mudam, já que as duas alteram a carga horária
   const requisicaoFrequencia = useRequisicao(
     () => servicoTurmas.frequenciaAlunos(turmaId),
     [turmaId, requisicaoAtivos.data, vinculos],

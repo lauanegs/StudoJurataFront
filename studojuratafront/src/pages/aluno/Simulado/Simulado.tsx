@@ -33,16 +33,7 @@ import { ResultadoDoSimulado } from './ResultadoDoSimulado'
 import { Alternativas, Conteudo, Rodape, Tela } from './styles'
 import type { QuestaoDaProva } from './types'
 
-/**
- * Execução do simulado pelo aluno.
- *
- * O back só calcula acertos e nota no POST /simulado-aluno/{id}/finalizar —
- * por isso a tela não revela se a resposta está certa durante a prova. A
- * correção completa aparece depois de finalizar, na mesma tela.
- *
- * Questões não respondidas são enviadas com `alternativaId: null`; o back as
- * trata como em branco (contam como error, mas não impedem a finalização).
- */
+/** Execução do simulado pelo aluno */
 export default function Simulado() {
   const { simuladoAlunoId } = useParams()
   const navegar = useNavigate()
@@ -56,20 +47,19 @@ export default function Simulado() {
 
   const [indiceAtual, setIndiceAtual] = useState(0)
   const [respostas, setRespostas] = useState<Record<number, number | null>>({})
-  // V/F: cada afirmação é julgada à parte (true = Verdadeiro).
+  // V/F: cada afirmação é julgada à parte (true = Verdadeiro)
   const [respostasVF, setRespostasVF] = useState<Record<number, Record<number, boolean>>>({})
-  // Até confirmar, a seleção pode ser trocada e nada é revelado.
+  // Até confirmar, a seleção pode ser trocada e nada é revelado
   const [confirmadas, setConfirmadas] = useState<Record<number, boolean>>({})
-  // Retorno de POST /conferir-questao: acerto e alternativas corretas de cada questão confirmada.
+  // Retorno de POST /conferir-questao
   const [conferencias, setConferencias] = useState<Record<number, ConferenciaDaQuestao>>({})
   const [temposPorQuestao, setTemposPorQuestao] = useState<Record<number, number>>({})
   const [segundos, setSegundos] = useState(0)
   const [finalizando, setFinalizando] = useState(false)
-  // Só vem no POST /finalizar; o GET de recarregamento não traz.
+  // Só vem no POST /finalizar; o GET de recarregamento não traz
   const [diasProximaRevisao, setDiasProximaRevisao] = useState<number | null>(null)
 
-  // Marca quando o aluno entrou na questão atual. Começa em 0 e é ajustado no
-  // primeiro efeito, para não ler o relógio durante a renderização.
+  // Marca quando o aluno entrou na questão atual
   const inicioQuestaoRef = useRef(0)
 
   const requisicaoTentativa = useRequisicao(() => simuladoAlunos.buscar(idTentativa), [idTentativa])
@@ -82,8 +72,7 @@ export default function Simulado() {
     [simuladoId],
     { ativo: Boolean(simuladoId) },
   )
-  // Prova da própria tentativa: substitui o catálogo global de questões e
-  // alternativas (que expunha o gabarito) por uma chamada escopada.
+  // Prova da própria tentativa: substitui o catálogo global de questões e alternativas
   const requisicaoProva = useRequisicao(() => simuladoAlunos.questoesDaTentativa(idTentativa), [idTentativa])
   const requisicaoRespostas = useRequisicao(
     () => questaoAlunos.listarPorSimuladoAluno(idTentativa),
@@ -106,7 +95,7 @@ export default function Simulado() {
   const estaRespondida = (questao: QuestaoDaProva) => questaoRespondida(questao, respostas, respostasVF)
   const acertouQuestao = (questao: QuestaoDaProva) => questaoAcertada(questao, respostas, respostasVF)
 
-  // 'saida' finaliza como 'manual' no back; só muda o aviso e não mostra a correção.
+  // 'saida' finaliza como 'manual' no back; só muda o aviso e não mostra a correção
   const finalizar = useCallback(
     async (motivo: 'manual' | 'tempo' | 'saida') => {
       if (finalizando) return
@@ -118,7 +107,7 @@ export default function Simulado() {
           respostas: questoes.map((questao) => ({
             questaoId: questao.questaoId,
             alternativaId: questao.tipo === 'VERDADEIRO_FALSO' ? null : (respostas[questao.questaoId] ?? null),
-            // Afirmação sem resposta: a questão inteira vai em branco, sem lista parcial.
+            // Afirmação sem resposta: a questão inteira vai em branco, sem lista parcial
             alternativasVerdadeiras:
               questao.tipo === 'VERDADEIRO_FALSO' && estaRespondida(questao)
                 ? questao.alternativas
@@ -173,8 +162,7 @@ export default function Simulado() {
   useEffect(() => {
     if (concluido || restante === null || restante > 0 || finalizando) return
 
-    // A prova precisa ser encerrada mesmo sem ação do aluno — este é o único
-    // caminho possível para isso.
+    // A prova precisa ser encerrada mesmo sem ação do aluno
     void finalizar('tempo')
   }, [restante, concluido, finalizando, finalizar])
 
@@ -197,12 +185,11 @@ export default function Simulado() {
   const respostasVFAtual = questaoAtual ? (respostasVF[questaoAtual.questaoId] ?? {}) : {}
   const temSelecao = questaoAtual ? estaRespondida(questaoAtual) : false
   const revelada = questaoAtual ? Boolean(confirmadas[questaoAtual.questaoId]) : false
-  // Em V/F há várias corretas: acerta se a escolhida for uma delas.
+  // Em V/F há várias corretas: acerta se a escolhida for uma delas
   const alternativaEscolhidaAtual = questaoAtual?.alternativas.find(
     (item) => item.id === respostaAtualId,
   )
-  // Durante a prova o gabarito de cada questão chega na conferência (confirmar
-  // resposta); depois de finalizar, vem no GET da prova.
+  // Durante a prova o gabarito de cada questão chega na conferência (confirmar resposta); depois de finalizar
   const conferenciaAtual = questaoAtual ? conferencias[questaoAtual.questaoId] : undefined
   const temGabarito = Boolean(conferenciaAtual) || correcaoDisponivel(provaTentativa?.gabarito)
   const mostrarCorrecao = revelada && temGabarito
@@ -220,8 +207,7 @@ export default function Simulado() {
       ? 'Você acertou, parabéns!'
       : 'Não foi dessa vez...'
 
-  // Mesma revelação que troca a frase do balão troca a imagem do mascote:
-  // feliz quando acerta, triste quando erra — volta ao normal na próxima questão.
+  // Mesma revelação que troca a frase do balão troca a imagem do mascote
   const mascoteReacao = !mostrarCorrecao
     ? imagemSkin
     : resolverImagemSkin(skinEquipada?.urlAsset, acertouAtual ? 'feliz' : 'triste')
@@ -284,8 +270,7 @@ export default function Simulado() {
     })
   }
 
-  // O "voltar" do navegador não passa pelo beforeunload: sem esta trava o aluno
-  // sairia da prova sem finalizar e poderia reabri-la com o tempo zerado.
+  // O "voltar" do navegador não passa pelo beforeunload
   const pedirSaidaRef = useRef(pedirSaida)
   useEffect(() => {
     pedirSaidaRef.current = pedirSaida
@@ -321,8 +306,7 @@ export default function Simulado() {
     })
   }
 
-  // Confirmada só vira verde/vermelho quando o gabarito chega; antes disso fica
-  // apenas marcada como respondida.
+  // Confirmada só vira verde/vermelho quando o gabarito chega; antes disso fica apenas marcada como respondida
   const statusProgresso = useMemo<QuestionProgressStatus[]>(
     () =>
       questoes.map((questao, indice) => {
@@ -439,8 +423,7 @@ export default function Simulado() {
                 onSelect={(valor) => {
                   if (revelada) return
 
-                  // Pode trocar livremente antes de confirmar — só trava depois
-                  // de clicar em "Confirmar resposta".
+                  // Pode trocar livremente antes de confirmar
                   setRespostasVF((atuais) => ({
                     ...atuais,
                     [questaoAtual.questaoId]: { ...(atuais[questaoAtual.questaoId] ?? {}), [alternativa.id]: valor },
@@ -462,8 +445,7 @@ export default function Simulado() {
                 onSelect={() => {
                   if (revelada) return
 
-                  // Pode trocar livremente antes de confirmar — só trava depois
-                  // de clicar em "Confirmar resposta".
+                  // Pode trocar livremente antes de confirmar
                   setRespostas((atuais) => ({ ...atuais, [questaoAtual.questaoId]: alternativa.id }))
                 }}
               />
@@ -483,8 +465,7 @@ export default function Simulado() {
         </Button>
 
         {temSelecao && !revelada ? (
-          // Trava a resposta escolhida — dá a chance de trocar se o toque na
-          // alternativa foi sem querer. O acerto/erro só aparece com o gabarito.
+          // Trava a resposta escolhida — dá a chance de trocar se o toque na alternativa foi sem querer
           <Button
             variant="info"
             size="large"

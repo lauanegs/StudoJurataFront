@@ -27,13 +27,7 @@ import type { Coluna } from '@/components/ui/DataTable/types'
 import { Resumo, SemValor, ResumoDaChamada } from './styles'
 import type { Aba, LinhaChamada } from './types'
 
-/**
- * Tela de registro da aula: chamada (POST em lote) e conteúdos ministrados.
- *
- * A chamada é enviada de uma vez só via /aulas/{id}/frequencias/chamada — o
- * back cria/atualiza uma Frequencia por aluno respeitando a unique
- * (aluno_id, aula_id).
- */
+/** Tela de registro da aula: chamada (POST em lote) e conteúdos ministrados */
 export default function RegistrarAula() {
   const { aulaId } = useParams()
   const toast = useToast()
@@ -55,21 +49,13 @@ export default function RegistrarAula() {
     { ativo: Boolean(turmaId) },
   )
   const requisicaoFrequencias = useRequisicao(() => servicoAulas.listarFrequencias(idAula), [idAula])
-  // Só pro contador da aba "Registrar conteúdo" abaixo — a lista em si (e
-  // vincular/desvincular) fica com VinculoConteudoAula, que busca por conta própria.
+  // Só pro contador da aba "Registrar conteúdo" abaixo
   const requisicaoConteudosAula = useRequisicao(() => servicoAulas.listarConteudos(idAula), [idAula])
 
-  // Data de referência da aula, para não chamar quem matriculou depois dela.
+  // Data de referência da aula, para não chamar quem matriculou depois dela
   const dataAula = requisicaoAula.data?.dataPrevista ?? requisicaoAula.data?.dataPublicacao ?? null
 
-  /**
-   * A chamada é derivada dos alunos ativos + frequências já lançadas, e só o
-   * que o professor alterou nesta sessão fica em estado (`edicoes`). Assim, um
-   * recarregamento dos data não apaga o que ele acabou de marcar.
-   *
-   * Um aluno cuja matrícula começou depois da data desta aula não deveria
-   * aparecer na chamada — ele ainda não fazia parte da turma naquele dia.
-   */
+  /** A chamada é derivada dos alunos ativos + frequências já lançadas */
   const linhas = useMemo<LinhaChamada[]>(() => {
     const lancadas = new Map(
       (requisicaoFrequencias.data ?? []).map((frequencia) => [frequencia.aluno?.id, frequencia]),
@@ -87,7 +73,7 @@ export default function RegistrarAula() {
       return {
         alunoId: matricula.aluno.id,
         nome: matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`,
-        // Sem lançamento anterior, o padrão é presente — é o caso comum.
+        // Sem lançamento anterior, o padrão é presente — é o caso comum
         presente: edicao?.presente ?? (existente ? Boolean(existente.presente) : true),
         justificativa: edicao?.justificativa ?? existente?.justificativa ?? '',
       }
@@ -151,7 +137,7 @@ export default function RegistrarAula() {
     }
   })
 
-  // Já vem com a data de hoje, mas o professor pode corrigir (ex.: registrar uma aula de ontem).
+  // Já vem com a data de hoje, mas o professor pode corrigir (ex
   const [dataRealizacao, setDataRealizacao] = useState(() => dataLocalIso())
 
   const { executar: publicar, executando: publicando } = useAcao(async () => {

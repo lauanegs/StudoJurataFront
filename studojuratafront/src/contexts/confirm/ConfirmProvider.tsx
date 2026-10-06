@@ -46,7 +46,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           try {
             await pedido.aoConfirmar()
           } catch {
-            // Rede de segurança para o modal não ficar preso aberto.
+            // Rede de segurança para o modal não ficar preso aberto
           } finally {
             fechar()
           }

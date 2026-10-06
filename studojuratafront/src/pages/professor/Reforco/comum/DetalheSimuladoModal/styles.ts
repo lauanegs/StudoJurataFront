@@ -6,7 +6,6 @@ export const ColunaConteudo = styled.div`
   gap: ${({ theme }) => theme.spacing.lg};
 `
 
-/* ListaInfo não tem margem própria; cada tela define o espaçamento. */
 export const EnvolveContexto = styled.div`
   margin-bottom: ${({ theme }) => theme.spacing.lg};
 `

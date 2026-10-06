@@ -56,7 +56,7 @@ export default function ConteudosPlano() {
     [requisicaoConteudos.data, idPlano],
   )
 
-  // Todos os planos de aula contam, não só o ativo.
+  // Todos os planos de aula contam, não só o ativo
   const planosAulaDoEnsino = useMemo(
     () => (requisicaoPlanosAula.data ?? []).filter((plano) => plano.planoEnsino?.id === idPlano),
     [requisicaoPlanosAula.data, idPlano],
@@ -73,7 +73,7 @@ export default function ConteudosPlano() {
     { ativo: planosAulaDoEnsino.length > 0 },
   )
 
-  // Ministrado = vinculado a uma aula já publicada.
+  // Ministrado = vinculado a uma aula já publicada
   const requisicaoVinculosConteudo = useRequisicao(
     async () => {
       const todasAulas = requisicaoAulasDosPlanos.data ?? []
@@ -84,7 +84,7 @@ export default function ConteudosPlano() {
     { ativo: Boolean(requisicaoAulasDosPlanos.data) },
   )
 
-  // Guarda todas as datas: um conteúdo pode ser retomado em várias aulas.
+  // Guarda todas as datas: um conteúdo pode ser retomado em várias aulas
   const datasMinistracaoPorConteudo = useMemo(() => {
     const mapa = new Map<number, string[]>()
     for (const vinculo of requisicaoVinculosConteudo.data ?? []) {
@@ -110,7 +110,7 @@ export default function ConteudosPlano() {
     )
   }, [conteudos, buscaAtrasada])
 
-  // Importa conteúdos de outros planos do mesmo curso.
+  // Importa conteúdos de outros planos do mesmo curso
   const conteudosImportaveis = useMemo(() => {
     const cursoId = requisicaoPlano.data?.curso?.id
     if (!cursoId) return []

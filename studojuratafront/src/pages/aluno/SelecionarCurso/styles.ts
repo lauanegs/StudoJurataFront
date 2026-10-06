@@ -32,7 +32,6 @@ export const Subtitulo = styled.p`
   color: ${({ theme }) => theme.colors.textSecondary};
 `
 
-/* Se houver muitos cursos a lista rola, sem fazer a tela inteira rolar. */
 export const Lista = styled.div`
   display: flex;
   flex-direction: column;
@@ -70,7 +69,6 @@ export const CartaoCurso = styled.button`
 
 `
 
-/* Quadrado azul na altura útil do card (até o padding), com o símbolo em branco. */
 export const IconeQuadrado = styled.span`
   display: inline-flex;
   align-items: center;

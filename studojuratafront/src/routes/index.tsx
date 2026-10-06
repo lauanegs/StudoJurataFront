@@ -5,20 +5,14 @@ import { GuardaCursoAluno } from './GuardaCursoAluno'
 import { RotaProtegida } from './RotaProtegida'
 import { CarregandoTela } from '@/components/feedback/CarregandoTela'
 
-/**
- * Rotas da aplicação.
- *
- * As páginas são carregadas sob demanda (lazy) para que o bundle inicial
- * contenha apenas o login. Cada área é protegida pelo perfil correspondente,
- * espelhando as regras do SecurityConfig do back.
- */
+/** Rotas da aplicação */
 
-// --- Autenticação ----------------------------------------------------------
+// --- Autenticação ---------------------------------------------------------
 const Login = lazy(() => import('@/pages/auth/Login/Login'))
 const NaoAutorizado = lazy(() => import('@/pages/auth/NaoAutorizado/NaoAutorizado'))
 const NaoEncontrada = lazy(() => import('@/pages/auth/NaoEncontrada/NaoEncontrada'))
 
-// --- Administrador ---------------------------------------------------------
+// --- Administrador --------------------------------------------------------
 const AdmHome = lazy(() => import('@/pages/adm/Home/Home'))
 const AdmTurmas = lazy(() => import('@/pages/adm/Turmas/Turmas'))
 const AdmTurmaFormulario = lazy(() => import('@/pages/adm/Turmas/TurmaFormulario/TurmaFormulario'))
@@ -41,7 +35,7 @@ const AdmEventos = lazy(() => import('@/pages/adm/Eventos/Eventos'))
 const AdmUsuarios = lazy(() => import('@/pages/adm/Usuarios/Usuarios'))
 const AdmUsuarioFormulario = lazy(() => import('@/pages/adm/Usuarios/UsuarioFormulario/UsuarioFormulario'))
 
-// --- Professor -------------------------------------------------------------
+// --- Professor ------------------------------------------------------------
 const ProfessorHome = lazy(() => import('@/pages/professor/Home/Home'))
 const ProfessorTurmas = lazy(() => import('@/pages/professor/Turmas/Turmas'))
 const ProfessorTurmaDetalhada = lazy(() => import('@/pages/professor/Turmas/TurmaDetalhada/TurmaDetalhada'))
@@ -90,7 +84,7 @@ const ProfessorQuestoesPendentes = lazy(
 )
 const ProfessorRevisarQuestao = lazy(() => import('@/pages/professor/Reforco/RevisarQuestao/RevisarQuestao'))
 
-// --- Aluno -----------------------------------------------------------------
+// --- Aluno ----------------------------------------------------------------
 const AlunoHome = lazy(() => import('@/pages/aluno/Home/Home'))
 const AlunoReforco = lazy(() => import('@/pages/aluno/Reforco/Reforco'))
 const AlunoSimulado = lazy(() => import('@/pages/aluno/Simulado/Simulado'))
@@ -396,7 +390,7 @@ export function AppRoutes() {
             </RotaProtegida>
           }
         />
-        {/* Sem rota "/novo": o plano de aula nasce junto com o plano de ensino. */}
+        {/* Sem rota "/novo": o plano de aula nasce junto com o plano de ensino */}
         <Route
           path="/professor/plano-aula/:id"
           element={

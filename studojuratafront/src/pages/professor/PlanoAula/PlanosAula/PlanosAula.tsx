@@ -73,7 +73,7 @@ export default function PlanosAula() {
       render: (plano) => plano.turmaDisciplina?.disciplina?.titulo ?? '—',
     },
     {
-      // O plano de aula referencia o plano de ensino de origem.
+      // O plano de aula referencia o plano de ensino de origem
       key: 'planoEnsino',
       cabecalho: 'Plano de ensino',
       ocultarEmTelaPequena: true,
@@ -83,7 +83,7 @@ export default function PlanosAula() {
       key: 'periodo',
       cabecalho: 'Período',
       ocultarEmTelaPequena: true,
-      // Herdado do plano de ensino (nível macro) — PlanoAula não duplica datas.
+      // Herdado do plano de ensino (nível macro) — PlanoAula não duplica datas
       render: (plano) => formatarPeriodo(plano.planoEnsino?.dataInicio, plano.planoEnsino?.dataFim),
     },
     {

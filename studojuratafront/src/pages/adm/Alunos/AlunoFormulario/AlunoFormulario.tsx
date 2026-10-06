@@ -40,7 +40,7 @@ export default function AlunoFormulario() {
 
   const [aba, setAba] = useState<'dados' | 'endereco' | 'responsaveis'>('dados')
 
-  // Aluno exige data de nascimento: é ela que define a exigência de responsável.
+  // Aluno exige data de nascimento: é ela que define a exigência de responsável
   const form = useFormularioPessoa({ exigirDataNascimento: true })
   const [matricula, setMatricula] = useState('')
   const [vinculos, setVinculos] = useState<VinculoForm[]>([])
@@ -94,7 +94,7 @@ export default function AlunoFormulario() {
   const itensVinculos = useMemo(
     () =>
       vinculos.map((vinculo) => ({
-        // O id do responsável vira a chave para o botão "Ver" e para remover.
+        // O id do responsável vira a chave para o botão "Ver" e para remover
         chave: String(vinculo.responsavelId),
         nome: opcoesResponsaveis.find((opcao) => opcao.value === vinculo.responsavelId)?.label ?? `Responsável ${vinculo.responsavelId}`,
         parentesco: vinculo.parentesco,
@@ -102,7 +102,7 @@ export default function AlunoFormulario() {
     [vinculos, opcoesResponsaveis],
   )
 
-  // Os vínculos ficam na tela e só vão para o back ao salvar o aluno.
+  // Os vínculos ficam na tela e só vão para o back ao salvar o aluno
   function vincularResponsavel(responsavelId: number, parentesco: Parentesco) {
     setVinculos((atuais) => [...atuais, { chave: crypto.randomUUID(), responsavelId, parentesco }])
   }
@@ -154,8 +154,7 @@ export default function AlunoFormulario() {
     try {
       const payloadPessoa = paraPayloadPessoa(form.getValues())
 
-      // Aluno e Pessoa são entidades separadas no back (@OneToOne), então a
-      // Pessoa é gravada primeiro e o Aluno referencia o id retornado.
+      // Aluno e Pessoa são entidades separadas no back (@OneToOne), então a Pessoa é gravada primeiro
       const pessoaSalva = edicao
         ? await servicoPessoas.atualizar(requisicaoAluno.data!.pessoa.id, payloadPessoa)
         : await servicoPessoas.criar(payloadPessoa)
@@ -172,11 +171,11 @@ export default function AlunoFormulario() {
 
       if (edicao) {
         toast.success('Aluno atualizado', `${pessoaSalva.nome} foi salvo com sucesso.`)
-        // Permanece na tela: só recarrega o que o back gravou.
+        // Permanece na tela: só recarrega o que o back gravou
         await requisicaoAluno.reload()
       } else {
         toast.success('Aluno cadastrado', `${pessoaSalva.nome} foi salvo com sucesso.`)
-        // Continua no formulário, agora em modo de edição (com matrícula gerada).
+        // Continua no formulário, agora em modo de edição (com matrícula gerada)
         navegar(`/adm/alunos/${alunoSalvo.id}`, { replace: true })
       }
     } catch (erroSalvar) {

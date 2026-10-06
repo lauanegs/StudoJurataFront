@@ -1,12 +1,4 @@
-/**
- * Remove a questão da lista do formulário do simulado.
- *
- * <p>Questão já vinculada ao simulado sai do back primeiro
- * (`DELETE /simulado-questao/simulado/{id}/questao/{id}`): se a API falhar, a
- * lista não muda e o erro sobe para a tela — a questão continua visível.
- * Questão nova (sem id) ou formulário de criação existe só no rascunho local,
- * então sai direto da lista.
- */
+/** Remove a questão da lista do formulário do simulado */
 export async function removerQuestaoDoSimulado<T extends { id?: number }>({
   questoes,
   indice,

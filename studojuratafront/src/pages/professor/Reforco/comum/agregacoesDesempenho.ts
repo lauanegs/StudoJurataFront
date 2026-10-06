@@ -4,7 +4,7 @@ import { formatarData } from '@/utils/format'
 import type { TentativaDesempenho } from '@/dominios/simulados/types'
 
 import type { DesempenhoSimulado } from './types'
-/** Uma linha por simulado, na ordem em que aparecem nas tentativas. */
+/** Uma linha por simulado, na ordem em que aparecem nas tentativas */
 export function agruparPorSimulado(tentativas: TentativaDesempenho[]): DesempenhoSimulado[] {
   const porSimulado = new Map<number, { primeira: TentativaDesempenho; soma: number; quantidade: number }>()
 
@@ -33,7 +33,7 @@ export function agruparPorSimulado(tentativas: TentativaDesempenho[]): Desempenh
   }))
 }
 
-/** Média dos percentuais por simulado, do pior para o melhor. */
+/** Média dos percentuais por simulado, do pior para o melhor */
 export function mediaPorDisciplina(desempenhos: DesempenhoSimulado[]): ItemGraficoBarras[] {
   const acumulado = new Map<string, { soma: number; quantidade: number }>()
 
@@ -47,7 +47,7 @@ export function mediaPorDisciplina(desempenhos: DesempenhoSimulado[]): ItemGrafi
     .sort((a, b) => a.valor - b.valor)
 }
 
-/** Simulados de cada disciplina em ordem cronológica; só disciplinas com 2+ simulados, pois tendência não existe com um ponto só. */
+/** Simulados de cada disciplina em ordem cronológica; só disciplinas com 2+ simulados */
 export function tendenciaPorDisciplina(desempenhos: DesempenhoSimulado[]) {
   const porDisciplina = new Map<string, DesempenhoSimulado[]>()
 

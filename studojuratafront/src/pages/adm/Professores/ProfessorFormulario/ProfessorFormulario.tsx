@@ -68,12 +68,12 @@ export default function ProfessorFormulario() {
       if (edicao) {
         await servicoProfessores.atualizar(professorId as number, corpo)
         toast.success('Professor atualizado', pessoaSalva.nome)
-        // Permanece na tela: só recarrega o que o back gravou.
+        // Permanece na tela: só recarrega o que o back gravou
         await requisicao.reload()
       } else {
         const criado = await servicoProfessores.criar(corpo)
         toast.success('Professor cadastrado', pessoaSalva.nome)
-        // Continua no formulário, agora em modo de edição.
+        // Continua no formulário, agora em modo de edição
         navegar(`/adm/professores/${criado.id}`, { replace: true })
       }
     } catch (erroSalvar) {

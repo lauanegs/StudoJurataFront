@@ -9,7 +9,6 @@ export const Grade = styled.div`
   }
 `
 
-/* Select + Input + botão numa linha, como em TurmaFormulario. */
 export const LinhaVinculo = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr auto;

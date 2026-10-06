@@ -1,20 +1,7 @@
 import type { Parametros, OpcoesRequisicao } from './types'
-/**
- * Cliente HTTP do StudoJurata.
- *
- * O back usa sessão via cookie (Spring Security com HttpSessionSecurityContext
- * Repository), então toda requisição precisa de `credentials: 'include'` — sem
- * isso o servidor devolve 401 mesmo depois do login.
- */
+/** Cliente HTTP do StudoJurata */
 
-/**
- * Base das requisições.
- *
- * O padrão `/api` é servido pelo proxy do Vite (ver vite.config.ts), o que
- * mantém front e back na mesma origem em desenvolvimento — sem CORS e com o
- * cookie de sessão funcionando naturalmente. Em produção, defina
- * `VITE_API_BASE_URL` com a URL absoluta da API.
- */
+/** Base das requisições */
 export const API_BASE_URL =
   (import.meta.env?.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? '/api'
 
@@ -55,9 +42,7 @@ export function aoExpirarSessao(ouvinte: () => void) {
 
 function montarUrl(caminho: string, params?: Parametros) {
   const rota = caminho.startsWith('/') ? caminho : `/${caminho}`
-
-  // `origin` é só a referência para bases relativas ("/api"); quando
-  // API_BASE_URL é absoluta, ela prevalece.
+  // `origin` é só a referência para bases relativas ("/api"); quando API_BASE_URL é absoluta, ela prevalece
   const url = new URL(
     `${API_BASE_URL}${rota}`,
     typeof window === 'undefined' ? 'http://localhost' : window.location.origin,
@@ -74,7 +59,7 @@ function montarUrl(caminho: string, params?: Parametros) {
   return url.toString()
 }
 
-/** Extrai a mensagem mais útil do corpo de erro do GlobalExceptionHandler. */
+/** Extrai a mensagem mais útil do corpo de erro do GlobalExceptionHandler */
 function mensagemDoErro(status: number, corpo: unknown): string {
   if (corpo && typeof corpo === 'object') {
     const dados = corpo as Record<string, unknown>
@@ -83,7 +68,7 @@ function mensagemDoErro(status: number, corpo: unknown): string {
     if (typeof dados.message === 'string') return dados.message
     if (typeof dados.error === 'string') return dados.error
 
-    // Erros de @Valid chegam como { campo: "mensagem" }.
+    // Erros de @Valid chegam como { campo: "mensagem" }
     const primeiro = Object.values(dados).find((v) => typeof v === 'string')
     if (typeof primeiro === 'string') return primeiro
   }

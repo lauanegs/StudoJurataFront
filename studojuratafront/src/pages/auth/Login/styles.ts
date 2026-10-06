@@ -41,7 +41,6 @@ export const Campos = styled.div`
   width: 100%;
 `
 
-/* Decorativo: não há recuperação de senha implementada. */
 export const LinkEsqueciSenha = styled.a`
   align-self: center;
 

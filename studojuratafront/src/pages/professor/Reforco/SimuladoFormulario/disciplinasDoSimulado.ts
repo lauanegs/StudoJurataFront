@@ -1,16 +1,7 @@
 import type { TurmaDisciplina } from '@/dominios/turmas/types'
 
 import type { OpcaoDisciplina } from './types'
-/**
- * Disciplinas que o professor pode escolher no simulado: as ofertadas na turma
- * escolhida (vínculo turma-disciplina ativo) — a mesma origem que o plano de
- * ensino usa. A lista vem dos vínculos do próprio professor
- * (`/professores/{id}/turmas`), então disciplina de outra turma ou fora do
- * escopo dele não aparece.
- *
- * <p>Vínculo ou disciplina inativados ficam de fora: o back recusa simulado novo
- * (criação e edição) com disciplina inativa, então não faz sentido oferecê-la.
- */
+/** Disciplinas que o professor pode escolher no simulado */
 export function disciplinasDaTurma(
   vinculos: TurmaDisciplina[],
   turmaId: number | null,
