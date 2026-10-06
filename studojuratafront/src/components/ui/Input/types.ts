@@ -11,7 +11,7 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   mask?: (value: string) => string
   maxWidth?: string
   corDestaque?: string
-  /** Altura mínima do campo. @default '56px' */
+  /** Altura mínima do campo (padrão 56px). */
   altura?: string
   bordaSolida?: boolean
   alternarVisibilidade?: boolean
@@ -19,7 +19,6 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
    * Exibe o contador "x/maxLength" abaixo do campo quando `maxLength` está
    * definido. `maxLength` continua limitando a digitação mesmo com o
    * contador escondido — só a exibição do número muda.
-   * @default true
    */
   mostrarContador?: boolean
 }

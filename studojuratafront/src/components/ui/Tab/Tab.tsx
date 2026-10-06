@@ -61,7 +61,7 @@ export function Tab<V extends string = string>({
                   fontWeight: tokens.typography.weights.semiBold,
                   letterSpacing: '-0.8px',
                   color: tokens.colors.textSecondary,
-                  background: ativa ? 'rgba(230, 234, 242, 0.3)' : 'transparent',
+                  background: ativa ? tokens.colors.neutralTintSoft : 'transparent',
                 },
               }}
             >

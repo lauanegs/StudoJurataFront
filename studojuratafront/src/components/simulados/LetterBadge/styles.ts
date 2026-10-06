@@ -12,7 +12,7 @@ export const Container = styled.span<{ $state: LetterState }>`
   padding: 0 ${({ theme }) => theme.spacing.lg};
 
   border-radius: ${({ theme }) => theme.radius.md} 0 0 ${({ theme }) => theme.radius.md};
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: ${({ theme }) => theme.shadow.badge};
 
   font-size: ${({ theme }) => theme.typography.sizes.lg};
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};

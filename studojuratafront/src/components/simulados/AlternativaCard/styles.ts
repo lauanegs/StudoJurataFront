@@ -8,7 +8,7 @@ export const Container = styled.div`
   width: 100%;
   min-height: 60px;
 
-  border: 2px solid rgba(115, 115, 115, 0.15);
+  border: 2px solid ${({ theme }) => theme.colors.borderSoft};
   border-radius: ${({ theme }) => theme.radius.md};
   background: ${({ theme }) => theme.colors.white};
   overflow: hidden;

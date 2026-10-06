@@ -37,7 +37,6 @@ export interface DataTableProps<T> {
    * empurra a tabela pro scroll horizontal do wrapper). Usar só em tabelas
    * com muitas colunas (a partir de ~7) — nas demais, o scroll horizontal
    * discreto da própria tabela é preferível a espremer a coluna de ações.
-   * @default false
    */
   quebrarAcoes?: boolean
   paginacao?: PaginacaoProps

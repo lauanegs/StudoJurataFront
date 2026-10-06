@@ -13,7 +13,7 @@ export const Skeleton = styled.div<{ $largura?: string; $altura?: string; $raio?
   background: linear-gradient(
     90deg,
     ${({ theme }) => theme.colors.background} 25%,
-    #eef1f7 37%,
+    ${({ theme }) => theme.colors.skeletonShine} 37%,
     ${({ theme }) => theme.colors.background} 63%
   );
   background-size: 200% 100%;

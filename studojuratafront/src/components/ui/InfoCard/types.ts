@@ -6,6 +6,5 @@ export interface InfoCardProps {
   value: ReactNode
   label: string
   icon?: ReactNode
-  /** @default 'purple' */
   tom?: Tom
 }

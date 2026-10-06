@@ -38,7 +38,7 @@ export const BotaoMenu = styled.button`
 
   border-radius: ${({ theme }) => theme.radius.md};
   color: ${({ theme }) => theme.colors.white};
-  background: rgba(255, 255, 255, 0.18);
+  background: ${({ theme }) => theme.colors.whiteVeilSoft};
 
   svg {
     width: 20px;

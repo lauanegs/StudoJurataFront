@@ -33,7 +33,7 @@ export function Card({
         overflow: 'hidden',
         boxShadow: el.shadow,
         border: el.border,
-        background: corpoComFundo ? 'rgba(255, 255, 255, 0.2)' : undefined,
+        background: corpoComFundo ? tokens.colors.whiteVeil : undefined,
         ...style,
       }}
       {...rest}

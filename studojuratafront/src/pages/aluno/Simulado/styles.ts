@@ -162,8 +162,7 @@ export const QuestaoEnunciado = styled.p`
   color: ${({ theme }) => theme.colors.textSecondary};
 `
 
-/* Sem herdar o preto padrão do texto do card (#202020) — cinza, como o
-   resto dos textos desta tela. */
+/* Sem herdar o preto padrão do texto do card — cinza, como o resto dos textos desta tela. */
 export const QuestaoTitulo = styled.strong`
   color: ${({ theme }) => theme.colors.textSecondary};
 `

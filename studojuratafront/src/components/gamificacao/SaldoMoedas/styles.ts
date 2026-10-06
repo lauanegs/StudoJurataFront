@@ -8,7 +8,7 @@ export const Container = styled.div`
 
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
 
-  background: rgba(255, 255, 255, 0.2);
+  background: ${({ theme }) => theme.colors.whiteVeil};
   border-radius: ${({ theme }) => theme.radius.pill};
 
   color: ${({ theme }) => theme.colors.white};

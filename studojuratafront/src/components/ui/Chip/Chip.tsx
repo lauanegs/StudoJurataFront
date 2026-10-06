@@ -8,7 +8,7 @@ const CORES: Record<
   NonNullable<ChipProps['variant']>,
   { bg: string; texto: string; borda?: string }
 > = {
-  neutral: { bg: 'rgba(230, 234, 242, 0.6)', texto: tokens.colors.textTertiary },
+  neutral: { bg: tokens.colors.neutralTint, texto: tokens.colors.textTertiary },
   purple: { bg: tokens.colors.purpleSoft, texto: tokens.colors.purple, borda: tokens.colors.purple },
   blue: { bg: tokens.colors.infoBackground, texto: tokens.colors.infoText, borda: tokens.colors.blue },
 }

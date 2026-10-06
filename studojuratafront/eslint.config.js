@@ -19,5 +19,13 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true, varsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    // Augmentation do DefaultTheme do styled-components: a interface vazia é o mecanismo.
+    files: ['src/styles/styled.d.ts'],
+    rules: { '@typescript-eslint/no-empty-object-type': 'off' },
   },
 ])

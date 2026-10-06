@@ -68,7 +68,7 @@ export const CardTexto = styled.div`
   padding: 0 ${({ theme }) => theme.spacing.md};
 
   background: ${({ theme }) => theme.colors.white};
-  border: 2px solid rgba(115, 115, 115, 0.15);
+  border: 2px solid ${({ theme }) => theme.colors.borderSoft};
   border-radius: ${({ theme }) => theme.radius.md};
 
   font-size: ${({ theme }) => theme.typography.sizes.md};

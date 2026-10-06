@@ -55,7 +55,7 @@ export const Cronometro = styled.div<{ $alerta: boolean }>`
   height: 56px;
   padding: 0 ${({ theme }) => theme.spacing.xl};
   border-radius: ${({ theme }) => theme.radius.md};
-  border: 1px solid ${({ theme, $alerta }) => ($alerta ? theme.colors.error : 'rgba(115, 115, 115, 0.15)')};
+  border: 1px solid ${({ theme, $alerta }) => ($alerta ? theme.colors.error : theme.colors.borderSoft)};
 
   font-size: ${({ theme }) => theme.typography.sizes.md};
   font-weight: ${({ theme }) => theme.typography.weights.medium};

@@ -10,8 +10,8 @@ const ALTURA_MAXIMA_IMAGEM_MM = 90
 
 const MARGEM = 14
 
-/** #662E9B (roxo da marca) em RGB — jsPDF-autotable pede a cor assim, não em hex. */
-const ROXO_MARCA: [number, number, number] = [102, 46, 155]
+/** Roxo da marca em RGB — jsPDF-autotable pede a cor assim, não em hex. */
+const ROXO_MARCA = hexParaRgb(tokens.colors.purple)
 
 function hexParaRgb(hex: string): [number, number, number] {
   const numero = parseInt(hex.replace('#', ''), 16)

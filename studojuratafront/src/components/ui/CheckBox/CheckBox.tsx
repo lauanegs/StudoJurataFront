@@ -9,7 +9,6 @@ export function CheckBox({
   indeterminate = false,
   checked = false,
   disabled,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   size: _size,
   ...rest
 }: CheckBoxProps) {

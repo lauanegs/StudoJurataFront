@@ -4,11 +4,13 @@ import { theme as tokens } from '@/styles/theme'
 import type { ImagemGrafico } from '@/components/graficos/RenderizarGrafico'
 
 import type { LinhaPlanilha, AbaPlanilha } from './types'
-/** #662E9B (roxo da marca), sem o "#" e com o alpha "FF" na frente — formato ARGB que o exceljs pede. */
-const ROXO_MARCA_ARGB = 'FF662E9B'
-const BRANCO_ARGB = 'FFFFFFFF'
-const LISTRA_ARGB = `FF${tokens.colors.background.replace('#', '')}`
-const BORDA_ARGB = `FF${tokens.colors.borderStrong.replace('#', '')}`
+/** Formato ARGB que o exceljs pede: a cor do tema sem o "#" e com o alpha "FF" na frente. */
+const paraArgb = (hex: string) => `FF${hex.replace('#', '')}`
+
+const ROXO_MARCA_ARGB = paraArgb(tokens.colors.purple)
+const BRANCO_ARGB = paraArgb(tokens.colors.white)
+const LISTRA_ARGB = paraArgb(tokens.colors.background)
+const BORDA_ARGB = paraArgb(tokens.colors.borderStrong)
 
 const LARGURA_COLUNA_ROTULO = 52
 const LARGURA_COLUNA_VALOR = 20

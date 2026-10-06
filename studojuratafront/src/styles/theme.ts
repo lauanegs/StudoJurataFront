@@ -61,6 +61,17 @@ export const theme = {
     infoText: '#04687F',
 
     orange: '#FF8D28',
+
+    // Cinza neutro (textTertiary) a 15%: borda dos cards de alternativa e do cabeçalho do simulado.
+    borderSoft: 'rgba(115, 115, 115, 0.15)',
+    // Véus brancos translúcidos sobre fundo de marca ou de card.
+    whiteVeil: 'rgba(255, 255, 255, 0.2)',
+    whiteVeilSoft: 'rgba(255, 255, 255, 0.18)',
+    // Tons do fundo neutro da página usados em chips e abas.
+    neutralTint: 'rgba(230, 234, 242, 0.6)',
+    neutralTintSoft: 'rgba(230, 234, 242, 0.3)',
+    // Brilho do esqueleto de carregamento.
+    skeletonShine: '#EEF1F7',
   },
 
   gradients: {
@@ -142,6 +153,7 @@ export const theme = {
     medium: '0 4px 8px rgba(0, 0, 0, 0.08)',
     card: '0 8px 18px rgba(24, 39, 75, 0.12)',
     floating: '0 4px 7.5px rgba(0, 0, 0, 0.08)',
+    badge: '0 4px 15px rgba(0, 0, 0, 0.08)',
     modal: '0 8px 50px rgba(0, 0, 0, 0.18)',
     focus: '0 0 0 3px rgba(102, 46, 155, 0.22)',
     focusError: '0 0 0 3px rgba(255, 56, 60, 0.20)',

@@ -9,7 +9,7 @@ export const Container = styled.button<{ $state: LetterState; $blocked: boolean 
   min-height: 60px;
 
   background: ${({ theme }) => theme.colors.white};
-  border: 1px solid rgba(115, 115, 115, 0.15);
+  border: 1px solid ${({ theme }) => theme.colors.borderSoft};
   border-radius: ${({ theme }) => theme.radius.md};
   overflow: hidden;
 
