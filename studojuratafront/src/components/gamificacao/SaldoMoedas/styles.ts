@@ -1,6 +1,5 @@
 import styled from 'styled-components'
 
-/** Badge translúcido pensado para fundo roxo (Banner da Home, cabeçalho do Perfil). */
 export const Container = styled.div`
   display: inline-flex;
   align-items: center;

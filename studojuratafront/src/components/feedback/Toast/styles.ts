@@ -1,15 +1,13 @@
-import { createPortal } from 'react-dom'
 import styled, { css, keyframes } from 'styled-components'
-import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react'
 
-import type { Toast as ToastModel, TipoToast } from '@/contexts/toast/toastContexto'
+import type { TipoToast } from '@/contexts/toast/toastContexto'
 
-const entrar = keyframes`
+export const entrar = keyframes`
   from { opacity: 0; transform: translateX(24px); }
   to   { opacity: 1; transform: translateX(0); }
 `
 
-const Viewport = styled.div`
+export const Viewport = styled.div`
   position: fixed;
   top: ${({ theme }) => theme.spacing.lg};
   right: ${({ theme }) => theme.spacing.lg};
@@ -23,7 +21,7 @@ const Viewport = styled.div`
   pointer-events: none;
 `
 
-const Item = styled.div<{ $tipo: TipoToast }>`
+export const Item = styled.div<{ $tipo: TipoToast }>`
   display: flex;
   align-items: flex-start;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -59,7 +57,7 @@ const Item = styled.div<{ $tipo: TipoToast }>`
     })[$tipo]}
 `
 
-const Icone = styled.span`
+export const Icone = styled.span`
   display: inline-flex;
   flex-shrink: 0;
   margin-top: 2px;
@@ -70,7 +68,7 @@ const Icone = styled.span`
   }
 `
 
-const Conteudo = styled.div`
+export const Conteudo = styled.div`
   flex: 1;
   min-width: 0;
   display: flex;
@@ -78,18 +76,18 @@ const Conteudo = styled.div`
   gap: 2px;
 `
 
-const Titulo = styled.strong`
+export const Titulo = styled.strong`
   font-size: ${({ theme }) => theme.typography.sizes.sm};
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};
 `
 
-const Descricao = styled.span`
+export const Descricao = styled.span`
   font-size: ${({ theme }) => theme.typography.sizes.xs};
   color: ${({ theme }) => theme.colors.textSecondary};
   overflow-wrap: anywhere;
 `
 
-const Fechar = styled.button`
+export const Fechar = styled.button`
   display: inline-flex;
   flex-shrink: 0;
   color: ${({ theme }) => theme.colors.textTertiary};
@@ -103,45 +101,3 @@ const Fechar = styled.button`
     height: 16px;
   }
 `
-
-const ICONES: Record<TipoToast, typeof Info> = {
-  success: CheckCircle2,
-  error: XCircle,
-  warning: AlertTriangle,
-  info: Info,
-}
-
-interface ToastViewportProps {
-  toasts: ToastModel[]
-  onFechar: (id: string) => void
-}
-
-export function ToastViewport({ toasts, onFechar }: ToastViewportProps) {
-  if (typeof document === 'undefined') return null
-
-  return createPortal(
-    <Viewport aria-live="polite" aria-atomic="false">
-      {toasts.map((toast) => {
-        const Icone_ = ICONES[toast.tipo]
-
-        return (
-          <Item key={toast.id} $tipo={toast.tipo} role={toast.tipo === 'error' ? 'alert' : 'status'}>
-            <Icone aria-hidden="true">
-              <Icone_ />
-            </Icone>
-
-            <Conteudo>
-              <Titulo>{toast.titulo}</Titulo>
-              {toast.descricao && <Descricao>{toast.descricao}</Descricao>}
-            </Conteudo>
-
-            <Fechar type="button" aria-label="Fechar notificação" onClick={() => onFechar(toast.id)}>
-              <X />
-            </Fechar>
-          </Item>
-        )
-      })}
-    </Viewport>,
-    document.body,
-  )
-}

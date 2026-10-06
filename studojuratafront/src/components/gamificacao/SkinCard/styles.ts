@@ -18,7 +18,6 @@ export const Container = styled.article<{ $ativa: boolean }>`
   transition: border-color ${({ theme }) => theme.transition.base};
 `
 
-/* Só na compra/equipação o personagem fica parado e sem moldura; nas demais telas ele flutua. */
 export const Moldura = styled.div<{ $bloqueada: boolean }>`
   display: flex;
   align-items: center;

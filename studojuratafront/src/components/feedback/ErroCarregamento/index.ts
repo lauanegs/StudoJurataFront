@@ -1,0 +1,1 @@
+export { ErroCarregamento } from './ErroCarregamento'

@@ -1,0 +1,1 @@
+export { CarregandoTela } from './CarregandoTela'

@@ -1,6 +1,6 @@
 import styled from 'styled-components'
 
-const Container = styled.div`
+export const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11,7 +11,3 @@ const Container = styled.div`
   font-size: ${({ theme }) => theme.typography.sizes.sm};
   color: ${({ theme }) => theme.colors.textSecondary};
 `
-
-export function CarregandoTela() {
-  return <Container role="status">Carregando...</Container>
-}

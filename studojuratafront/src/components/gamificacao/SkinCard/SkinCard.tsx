@@ -6,13 +6,6 @@ import { MoedaIcone } from '@/components/gamificacao/MoedaIcone'
 import { Container, Moldura, Nome, Preco } from './styles'
 import type { SkinCardProps } from './types'
 
-/**
- * Card de skin da gamificação.
- *
- * Os três estados vêm da combinação Skin + SkinAluno do back:
- * sem SkinAluno → bloqueada; com SkinAluno.ativa=false → adquirida;
- * com SkinAluno.ativa=true → equipada.
- */
 export function SkinCard({
   nome,
   imagem,

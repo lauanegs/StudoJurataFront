@@ -48,7 +48,7 @@ Camadas: `pages/` (por perfil: `adm/professor/aluno/auth`) → compõe `componen
 src/
 ├── components/ui/          — design system (a maioria envolve Mantine)
 ├── components/layout/      — Layout (casca da página) + Sidebar
-├── components/feedback/    — Toast, ConfirmDialog, EstadoVazio, ErroCarregamento, Skeleton
+├── components/feedback/    — Toast, ConfirmDialog, EstadoVazio, ErroCarregamento, Skeleton, CarregandoTela (uma pasta por componente)
 ├── components/<domínio>/   — graficos, simulados, desempenho, gamificacao, planejamento, pessoas, eventos
 ├── pages/{adm,professor,aluno,auth}/ — telas por perfil de usuário
 ├── routes/                 — rotas lazy + guard de perfil

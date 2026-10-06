@@ -1,6 +1,5 @@
 import styled from 'styled-components'
 
-/* Vertical: grade compacta. Horizontal: lista de largura total, um card por linha. */
 export const Container = styled.article<{ $clicavel: boolean; $horizontal: boolean }>`
   display: flex;
   flex-direction: column;
@@ -41,10 +40,6 @@ export const Container = styled.article<{ $clicavel: boolean; $horizontal: boole
     `}
 `
 
-/* Selo do ícone (28px, degradê da marca) — mesmo tratamento do ícone de
-   título do Card.tsx, só que identificando aqui do que se trata CADA card
-   (um simulado) em vez de uma seção inteira. Alinhado ao topo porque o
-   título pode quebrar em duas linhas. */
 export const Cabecalho = styled.div<{ $horizontal: boolean }>`
   display: flex;
   align-items: flex-start;
@@ -54,7 +49,6 @@ export const Cabecalho = styled.div<{ $horizontal: boolean }>`
   ${({ $horizontal }) => $horizontal && `flex: 1;`}
 `
 
-/* Sem fundo e em cinza claro para não competir com a barra de porcentagem. */
 export const IconeSelo = styled.span`
   display: flex;
   align-items: center;
@@ -74,8 +68,6 @@ export const Conteudo = styled.div`
   min-width: 0;
 `
 
-// Mesmo tamanho do título dos cards de cabeçalho com fundo transparente
-// (ver Card.tsx, corpoComFundo) — hierarquia consistente entre os dois.
 export const Titulo = styled.strong`
   font-size: ${({ theme }) => theme.typography.sizes.md};
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};
@@ -87,10 +79,6 @@ export const Descricao = styled.div`
   color: ${({ theme }) => theme.colors.textTertiary};
 `
 
-/* No layout vertical, barra cheia na base — a porcentagem é o dado
-   principal do card, então ganha destaque e largura total, sem competir
-   visualmente com o selo do cabeçalho. No horizontal, vira um bloco de
-   largura fixa à direita (não pode encolher com o cabeçalho). */
 export const BarraPorcentagem = styled.div<{ $cor: string; $horizontal: boolean }>`
   display: flex;
   align-items: center;

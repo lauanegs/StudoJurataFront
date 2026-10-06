@@ -1,6 +1,6 @@
 import styled, { keyframes } from 'styled-components'
 
-const brilhar = keyframes`
+export const brilhar = keyframes`
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 `

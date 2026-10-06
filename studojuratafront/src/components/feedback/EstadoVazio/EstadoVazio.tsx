@@ -15,10 +15,6 @@ interface EstadoVazioProps {
   acao?: ReactNode
 }
 
-/**
- * Estado vazio de listas e tabelas. Sempre explica o porquê e, quando faz
- * sentido, oferece a ação que resolve (ex.: "Cadastrar primeira turma").
- */
 export function EstadoVazio({ titulo, descricao, icon, acao }: EstadoVazioProps) {
   return (
     <Container>

@@ -1,10 +1,5 @@
 import type { MoedaIconeProps } from './types'
 
-/**
- * Substitui o ícone genérico `Coins` (lucide) nos lugares que falam de
- * moedas da gamificação — a moeda ilustrada do jogo pesa mais que um ícone
- * de contorno linear.
- */
 export function MoedaIcone({ size = 16, className, ...rest }: MoedaIconeProps) {
   return (
     <img
