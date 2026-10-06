@@ -1,6 +1,7 @@
 import { Group, Modal as MantineModal, Text } from '@mantine/core'
 
 import { theme as tokens } from '@/styles/theme'
+import { estiloRodape, estiloTitulo } from './styles'
 import type { ModalProps } from './types'
 
 export function Modal({
@@ -26,15 +27,7 @@ export function Modal({
       <MantineModal.Content>
         <MantineModal.Header>
           <div>
-            <MantineModal.Title
-              style={{
-                fontSize: tokens.typography.sizes.md,
-                fontWeight: tokens.typography.weights.semiBold,
-                color: tokens.colors.textSecondary,
-              }}
-            >
-              {titulo}
-            </MantineModal.Title>
+            <MantineModal.Title style={estiloTitulo}>{titulo}</MantineModal.Title>
             {descricao && (
               <Text size="xs" c={tokens.colors.textSecondary}>
                 {descricao}
@@ -47,11 +40,7 @@ export function Modal({
         <MantineModal.Body>{children}</MantineModal.Body>
 
         {rodape && (
-          <Group
-            justify="flex-end"
-            gap="md"
-            style={{ padding: `0 var(--mantine-spacing-md) ${tokens.spacing.xl}` }}
-          >
+          <Group justify="flex-end" gap="md" style={estiloRodape}>
             {rodape}
           </Group>
         )}

@@ -40,9 +40,11 @@ export interface DataTableProps<T> {
    */
   quebrarAcoes?: boolean
   paginacao?: PaginacaoProps
-  densidade?: 'confortavel' | 'compacta'
+  densidade?: Densidade
   descricao?: string
   linhasSkeleton?: number
 }
 
 export type Direcao = 'asc' | 'desc'
+
+export type Densidade = 'confortavel' | 'compacta'

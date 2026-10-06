@@ -28,7 +28,7 @@ import { formatarData, normalizar } from '@/utils/format'
 import type { ConteudoPlano } from '@/dominios/planejamento/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-import { CamposCabecalho } from './styles'
+import { CamposCabecalho, TextoLimitado, DatasMinistradas, ListaImportaveis } from './styles'
 
 export default function ConteudosPlano() {
   const { planoId } = useParams()
@@ -217,16 +217,7 @@ export default function ConteudosPlano() {
       cabecalho: 'Descrição',
       ocultarEmTelaPequena: true,
       render: (conteudo) => (
-        <span
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {conteudo.descricao ?? '—'}
-        </span>
+        <TextoLimitado>{conteudo.descricao ?? '—'}</TextoLimitado>
       ),
     },
     {
@@ -243,13 +234,13 @@ export default function ConteudosPlano() {
         }
 
         return (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          <DatasMinistradas>
             {datas.map((data) => (
               <Tag key={data} variant="success">
                 {formatarData(data)}
               </Tag>
             ))}
-          </div>
+          </DatasMinistradas>
         )
       },
     },
@@ -385,7 +376,7 @@ export default function ConteudosPlano() {
             icon={<Upload />}
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <ListaImportaveis>
             {conteudosImportaveis.map((conteudo) => (
               <CheckBox
                 key={conteudo.id}
@@ -394,7 +385,7 @@ export default function ConteudosPlano() {
                 onChange={() => alternarImportar(conteudo.id)}
               />
             ))}
-          </div>
+          </ListaImportaveis>
         )}
       </Modal>
     </Layout>

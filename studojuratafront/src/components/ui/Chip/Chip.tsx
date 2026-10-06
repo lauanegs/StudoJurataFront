@@ -2,6 +2,7 @@ import { Pill } from '@mantine/core'
 
 import { theme as tokens } from '@/styles/theme'
 import { comTamanho } from '@/utils/redimensionarIcone'
+import { Conteudo, estilosChip, Texto } from './styles'
 import type { ChipProps } from './types'
 
 const CORES: Record<
@@ -29,51 +30,12 @@ export function Chip({
       onRemove={onRemove}
       disabled={disabled}
       removeButtonProps={{ 'aria-label': rotuloRemover ?? `Remover ${String(children)}` }}
-      styles={{
-        root: {
-          position: 'relative',
-          backgroundColor: cor.bg,
-          color: cor.texto,
-          border: cor.borda ? `1px solid ${cor.borda}` : undefined,
-          fontWeight: tokens.typography.weights.medium,
-          fontSize: tokens.typography.sizes.sm,
-          opacity: disabled ? 0.55 : 1,
-          display: 'inline-flex',
-          alignItems: 'center',
-          height: '56px',
-          paddingInlineStart: onRemove ? tokens.spacing.xl : tokens.spacing.md,
-          paddingInlineEnd: onRemove ? tokens.spacing.xl : tokens.spacing.md,
-          maxWidth: '100%',
-        },
-        label: {
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-        },
-        remove: {
-          position: 'absolute',
-          right: tokens.spacing.xs,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: '24px',
-          height: '24px',
-          minWidth: '24px',
-        },
-      }}
+      styles={estilosChip(cor, Boolean(onRemove), disabled)}
     >
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: tokens.spacing.xs,
-          minWidth: 0,
-        }}
-      >
+      <Conteudo>
         {comTamanho(icon, 12)}
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{children}</span>
-      </span>
+        <Texto>{children}</Texto>
+      </Conteudo>
     </Pill>
   )
 }

@@ -43,7 +43,7 @@ export function CircularProgress({
             stroke={theme.colors.background}
             strokeWidth={espessura}
           />
-          <circle
+          <S.Progresso
             cx={size / 2}
             cy={size / 2}
             r={raio}
@@ -52,7 +52,6 @@ export function CircularProgress({
             strokeWidth={espessura}
             strokeLinecap="round"
             strokeDasharray={`${preenchido} ${circunferencia}`}
-            style={{ transition: 'stroke-dasharray 400ms ease' }}
           />
         </S.Svg>
 

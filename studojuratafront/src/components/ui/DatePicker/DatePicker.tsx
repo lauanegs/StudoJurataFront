@@ -4,25 +4,15 @@ import dayjs from 'dayjs'
 import { Calendar, Clock } from 'lucide-react'
 
 import { Field } from '@/components/ui/Field'
-import { theme as tokens } from '@/styles/theme'
 import { comTamanho } from '@/utils/redimensionarIcone'
 import { FORMATO_API_DATA, FORMATO_API_DATA_HORA, dataDigitadaParaIso, dataIsoParaExibicao, mascararData } from './conversaoData'
+import { estiloCampoData, estiloCampoHora, estiloLarguraMaxima, estilosCampo, IconeClicavel, LinhaDataHora } from './styles'
 import type { DatePickerProps } from './types'
 
 const FORMATO_SAIDA: Record<'data' | 'dataHora', string> = {
   data: FORMATO_API_DATA,
   dataHora: FORMATO_API_DATA_HORA,
 }
-
-const estilosCampo = (error?: string) => ({
-  input: {
-    height: '56px',
-    minHeight: '56px',
-    borderWidth: '2px',
-    borderColor: error ? tokens.colors.error : tokens.colors.buttonPurple,
-    boxShadow: tokens.shadow.base,
-  },
-})
 
 const LARGURA_ICONE = '56px'
 
@@ -40,20 +30,9 @@ function IconeCampo({
   disabled?: boolean
 }) {
   return (
-    <span
-      aria-hidden="true"
-      onClick={() => campoRef.current?.focus()}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
-        height: '100%',
-        cursor: disabled ? 'default' : 'pointer',
-      }}
-    >
+    <IconeClicavel aria-hidden="true" onClick={() => campoRef.current?.focus()} $desabilitado={disabled}>
       {comTamanho(icon, 18)}
-    </span>
+    </IconeClicavel>
   )
 }
 
@@ -96,7 +75,7 @@ export function DatePicker({
           leftSectionPointerEvents="auto"
           clearable
           radius="md"
-          style={{ maxWidth }}
+          style={estiloLarguraMaxima(maxWidth)}
           styles={estilosCampo(error)}
         />
       </Field>
@@ -121,7 +100,7 @@ export function DatePicker({
 
   return (
     <Field label={label} required={required} hint={hint} error={error}>
-      <div style={{ display: 'flex', gap: tokens.spacing.xs, maxWidth }}>
+      <LinhaDataHora $maxWidth={maxWidth}>
         <DateInput
           ref={campoDataRef}
           id={id}
@@ -138,7 +117,7 @@ export function DatePicker({
           leftSectionPointerEvents="auto"
           clearable
           radius="md"
-          style={{ flex: 2, minWidth: 0 }}
+          style={estiloCampoData}
           styles={estilosCampo(error)}
         />
         <TimePicker
@@ -155,10 +134,10 @@ export function DatePicker({
           leftSectionWidth={LARGURA_ICONE}
           leftSectionPointerEvents="auto"
           radius="md"
-          style={{ flex: 1, minWidth: '128px' }}
+          style={estiloCampoHora}
           styles={estilosCampo(error)}
         />
-      </div>
+      </LinhaDataHora>
     </Field>
   )
 }

@@ -20,6 +20,7 @@ import type { StatusAtivoInativo } from '@/dominios/comum/types'
 import { pessoas as servicoPessoas, professores as servicoProfessores } from '@/dominios/pessoas/service'
 import { PessoaCampos } from '@/components/pessoas/PessoaCampos'
 import { abaDoCampoPessoa, dePessoa, paraPayloadPessoa, useFormularioPessoa } from '@/dominios/pessoas/formulario'
+import { CamposDaSecao } from './styles'
 
 export default function ProfessorFormulario() {
   const { id } = useParams()
@@ -205,7 +206,7 @@ export default function ProfessorFormulario() {
         <SkeletonCartao />
       ) : (
         <Card titulo={aba === 'dados' ? 'Dados do professor' : 'Endereço'}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <CamposDaSecao>
             <PessoaCampos
               secao={aba}
               form={form}
@@ -223,7 +224,7 @@ export default function ProfessorFormulario() {
                 onChange={(valor) => setAtivo(valor !== 'INATIVO')}
               />
             )}
-          </div>
+          </CamposDaSecao>
         </Card>
       )}
     </Layout>

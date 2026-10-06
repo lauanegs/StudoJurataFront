@@ -2,7 +2,7 @@ import { Group, Radio, Stack } from '@mantine/core'
 
 import { Field } from '@/components/ui/Field'
 import { theme as tokens } from '@/styles/theme'
-import { corComOpacidade } from '@/utils/corComOpacidade'
+import { Descricao, estilosRadio, RotuloComDescricao } from './styles'
 import type { RadioGroupProps } from './types'
 
 export function RadioGroup<V extends string = string>({
@@ -29,22 +29,13 @@ export function RadioGroup<V extends string = string>({
               disabled={option.disabled}
               color="brandPurple"
               aria-invalid={error ? true : undefined}
-              styles={{
-                radio: {
-                  borderWidth: '2px',
-                  borderColor: error
-                    ? corComOpacidade(tokens.colors.error, 0.5)
-                    : corComOpacidade(tokens.colors.buttonPurple, 0.35),
-                },
-              }}
+              styles={estilosRadio(Boolean(error))}
               label={
                 option.description ? (
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <RotuloComDescricao>
                     <span>{option.label}</span>
-                    <span style={{ fontSize: tokens.typography.sizes.xs, color: tokens.colors.textTertiary }}>
-                      {option.description}
-                    </span>
-                  </span>
+                    <Descricao>{option.description}</Descricao>
+                  </RotuloComDescricao>
                 ) : (
                   option.label
                 )

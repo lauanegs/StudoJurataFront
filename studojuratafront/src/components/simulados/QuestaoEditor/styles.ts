@@ -137,3 +137,22 @@ export const SecaoNavegador = styled.div`
   border-top: 1px solid ${({ theme }) => theme.colors.border};
 `
 
+export const Total = styled.span`
+  opacity: 0.5;
+  font-size: 0.7em;
+`
+
+export const RotuloCampo = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.textSecondary};
+  margin-bottom: 8px;
+`
+
+export const Obrigatorio = styled.span`
+  color: ${({ theme }) => theme.colors.error};
+`
+
+export const SecaoAlternativas = styled.div`
+  margin-top: 16px;
+`

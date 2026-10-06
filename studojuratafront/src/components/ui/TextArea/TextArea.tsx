@@ -2,8 +2,7 @@ import { useId, useState } from 'react'
 import { Textarea as MantineTextarea } from '@mantine/core'
 
 import { Field } from '@/components/ui/Field'
-import { theme as tokens } from '@/styles/theme'
-import { corComOpacidade } from '@/utils/corComOpacidade'
+import { estilosCampo } from './styles'
 import type { TextAreaProps } from './types'
 
 export function TextArea({
@@ -58,18 +57,7 @@ export function TextArea({
           setEmFoco(false)
           onBlur?.(evento)
         }}
-        styles={{
-          input: {
-            minHeight: '96px',
-            padding: `${tokens.spacing.sm} ${tokens.spacing.md}`,
-            borderWidth: '2px',
-            borderColor: error
-              ? corComOpacidade(tokens.colors.error, emFoco ? 1 : 0.45)
-              : corComOpacidade(tokens.colors.buttonPurple, emFoco ? 1 : 0.45),
-            boxShadow: tokens.shadow.base,
-            transition: `border-color ${tokens.transition.base}`,
-          },
-        }}
+        styles={estilosCampo(Boolean(error), emFoco)}
         {...rest}
       />
     </Field>

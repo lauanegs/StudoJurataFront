@@ -4,8 +4,8 @@ import { Eye, EyeOff } from 'lucide-react'
 
 import { Field } from '@/components/ui/Field'
 import { theme as tokens } from '@/styles/theme'
-import { corComOpacidade } from '@/utils/corComOpacidade'
 import { comTamanho } from '@/utils/redimensionarIcone'
+import { estilosCampo, estiloLarguraMaxima } from './styles'
 import type { InputProps } from './types'
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
@@ -49,17 +49,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const showClear = Boolean(onClear) && Boolean(value) && !disabled
   const corBase = corDestaque ?? tokens.colors.buttonPurple
 
-  const estiloCampo = {
-    input: {
-      minHeight: altura,
-      borderWidth: '2px',
-      borderColor: error
-        ? corComOpacidade(tokens.colors.error, emFoco || bordaSolida ? 1 : 0.45)
-        : corComOpacidade(corBase, emFoco || bordaSolida ? 1 : 0.45),
-      boxShadow: tokens.shadow.base,
-      transition: `border-color ${tokens.transition.base}`,
-    },
-  }
+  const estiloCampo = estilosCampo({ altura, corBase, temErro: Boolean(error), destacada: emFoco || bordaSolida })
 
   const larguraSecao = altura
 
@@ -81,7 +71,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           maxLength={maxLength}
           error={Boolean(error)}
           radius="md"
-          style={{ maxWidth, ...style }}
+          style={estiloLarguraMaxima(maxWidth, style)}
           leftSection={comTamanho(icon, 18)}
           leftSectionWidth={icon ? larguraSecao : undefined}
           rightSectionWidth={larguraSecao}
@@ -123,7 +113,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         maxLength={maxLength}
         error={Boolean(error)}
         radius="md"
-        style={{ maxWidth, ...style }}
+        style={estiloLarguraMaxima(maxWidth, style)}
         leftSection={comTamanho(icon, 18)}
         leftSectionWidth={icon ? larguraSecao : undefined}
         rightSection={

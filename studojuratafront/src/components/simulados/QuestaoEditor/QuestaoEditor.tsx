@@ -1,6 +1,5 @@
 import { Download, Plus, Trash2 } from 'lucide-react'
 
-import { theme as tokens } from '@/styles/theme'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { IconButton } from '@/components/ui/IconButton'
@@ -111,7 +110,7 @@ export function QuestaoEditor({
         <S.Identificacao>
           <S.Numero>
             Questão {indice + 1}
-            <span style={{ opacity: 0.5, fontSize: '0.7em' }}> / {total}</span>
+            <S.Total> / {total}</S.Total>
           </S.Numero>
 
           {questao.status && (
@@ -143,16 +142,7 @@ export function QuestaoEditor({
 
       <S.Grade>
         <div>
-          <div
-            style={{
-              fontSize: '14px',
-              fontWeight: 500,
-              color: tokens.colors.textSecondary,
-              marginBottom: '8px',
-            }}
-          >
-            Tipo de questão
-          </div>
+          <S.RotuloCampo>Tipo de questão</S.RotuloCampo>
 
           <SeletorOpcoes<TipoQuestao>
             rotuloAcessivel="Tipo de questão"
@@ -193,17 +183,10 @@ export function QuestaoEditor({
         onChange={(evento) => atualizar({ enunciado: evento.target.value })}
       />
 
-      <div style={{ marginTop: '16px' }}>
-        <div
-          style={{
-            fontSize: '14px',
-            fontWeight: 500,
-            color: tokens.colors.textSecondary,
-            marginBottom: '8px',
-          }}
-        >
-          {rotuloLista} <span style={{ color: tokens.colors.error }}>*</span>
-        </div>
+      <S.SecaoAlternativas>
+        <S.RotuloCampo>
+          {rotuloLista} <S.Obrigatorio>*</S.Obrigatorio>
+        </S.RotuloCampo>
 
         <S.ListaAlternativas>
           {questao.alternativas.map((alternativa, posicao) => (
@@ -276,7 +259,7 @@ export function QuestaoEditor({
         </S.ListaAlternativas>
 
         {erros.alternativas && <S.MensagemErro role="alert">{erros.alternativas}</S.MensagemErro>}
-      </div>
+      </S.SecaoAlternativas>
 
       <S.Rodape>
         <S.Dica>

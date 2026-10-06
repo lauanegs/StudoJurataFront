@@ -15,3 +15,9 @@ export const LinhaRodape = styled.div`
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.sm};
 `
+
+export const ListaResponsaveis = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`

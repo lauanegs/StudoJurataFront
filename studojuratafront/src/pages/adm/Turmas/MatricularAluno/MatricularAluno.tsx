@@ -34,7 +34,7 @@ import { PessoaCampos } from '@/components/pessoas/PessoaCampos'
 import { paraPayloadPessoa, useFormularioPessoa } from '@/dominios/pessoas/formulario'
 import { useFormularioMatricula } from '@/dominios/turmas/formulario'
 
-import { Aviso, LinhaRodape } from './styles'
+import { Aviso, LinhaRodape, ListaResponsaveis } from './styles'
 import type { Passo } from './types'
 
 /* Não há transferência entre turmas. Reativar uma matrícula CONCLUIDA também é feito aqui. */
@@ -454,13 +454,13 @@ export default function MatricularAluno() {
                       : 'Aluno maior de idade: o responsável não é obrigatório. Se precisar, vincule depois na ficha do aluno.'}
                   </Aviso>
 
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  <ListaResponsaveis>
                     {responsaveisDoAlunoExistente.map((vinculo) => (
                       <Tag key={vinculo.id} variant="neutral">
                         {vinculo.responsavel?.pessoa?.nome} ({vinculo.parentesco})
                       </Tag>
                     ))}
-                  </div>
+                  </ListaResponsaveis>
                 </>
               ) : (
                 <>

@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { LogIn } from 'lucide-react'
 
 import { TelaComBanner } from '@/components/layout/TelaComBanner'
-import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ROTA_INICIAL_POR_PERFIL } from '@/contexts/auth/authContexto'
 import { useAuth } from '@/hooks/useAuth'
@@ -11,7 +10,7 @@ import { ApiError } from '@/dominios/comum/api'
 import { theme as tokens } from '@/styles/theme'
 import { useFormularioLogin } from '@/dominios/autenticacao/formulario'
 
-import { Cartao, Logo, Titulos, Titulo, Subtitulo, Campos, LinkEsqueciSenha, Alerta } from './styles'
+import { Cartao, Logo, Titulos, Titulo, Subtitulo, Campos, LinkEsqueciSenha, Alerta, BotaoEntrar } from './styles'
 
 export default function Login() {
   const navegar = useNavigate()
@@ -96,16 +95,15 @@ export default function Login() {
 
         {erroGeral && <Alerta role="alert">{erroGeral}</Alerta>}
 
-        <Button
+        <BotaoEntrar
           type="submit"
           fullWidth
           size="large"
           icon={<LogIn />}
           loading={enviando}
-          style={{ background: tokens.gradients.sidebar, borderColor: tokens.colors.blue }}
         >
           Entrar
-        </Button>
+        </BotaoEntrar>
       </Cartao>
     </TelaComBanner>
   )

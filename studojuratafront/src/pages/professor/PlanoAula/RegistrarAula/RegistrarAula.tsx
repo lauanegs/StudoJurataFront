@@ -21,11 +21,10 @@ import { aulas as servicoAulas } from '@/dominios/planejamento/service'
 import { matriculas } from '@/dominios/turmas/service'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { dataLocalIso, formatarData } from '@/utils/format'
-import { theme as tokens } from '@/styles/theme'
 import type { AlunoTurma } from '@/dominios/turmas/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-import { Resumo } from './styles'
+import { Resumo, SemValor, ResumoDaChamada } from './styles'
 import type { Aba, LinhaChamada } from './types'
 
 /**
@@ -208,7 +207,7 @@ export default function RegistrarAula() {
       cabecalho: 'Justificativa da falta',
       render: (linha) =>
         linha.presente ? (
-          <span style={{ color: tokens.colors.textDisabled }}>—</span>
+          <SemValor>—</SemValor>
         ) : (
           <Input
             placeholder="Ex.: atestado médico"
@@ -329,12 +328,12 @@ export default function RegistrarAula() {
           }
           semPadding
         >
-          <div style={{ padding: '16px 24px 0' }}>
+          <ResumoDaChamada>
             <Resumo>
               <Tag variant="success">{presentes} presente(s)</Tag>
               <Tag variant={ausentes > 0 ? 'error' : 'neutral'}>{ausentes} ausente(s)</Tag>
             </Resumo>
-          </div>
+          </ResumoDaChamada>
 
           <DataTable
             descricao="Chamada da aula"

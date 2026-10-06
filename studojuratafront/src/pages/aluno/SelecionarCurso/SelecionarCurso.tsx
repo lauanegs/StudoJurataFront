@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useCursoAluno } from '@/hooks/useCursoAluno'
 import { ROTULO_STATUS_MATRICULA, STATUS_MATRICULA_VARIANT } from '@/utils/labels'
 
-import { Bloco, Logo, Titulos, Titulo, Subtitulo, Lista, CartaoCurso, IconeQuadrado, Textos, SituacaoDaMatricula, NomeCurso, NomeTurma } from './styles'
+import { Bloco, Logo, Titulos, Titulo, Subtitulo, Lista, CartaoCurso, IconeQuadrado, Textos, SituacaoDaMatricula, NomeCurso, NomeTurma, BotaoVoltar } from './styles'
 
 /**
  * Logo após o login, quando o aluno tem mais de um curso (ativo ou concluído):
@@ -76,11 +76,11 @@ export default function SelecionarCurso() {
           </Lista>
         )}
 
-        <div style={{ width: '100%', maxWidth: '300px' }}>
+        <BotaoVoltar>
           <Button variant="secondary" size="large" fullWidth icon={<ArrowLeft />} onClick={voltarParaOLogin}>
             Voltar
           </Button>
-        </div>
+        </BotaoVoltar>
       </Bloco>
     </TelaComBanner>
   )

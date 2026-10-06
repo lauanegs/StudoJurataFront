@@ -27,11 +27,10 @@ import {
 } from '@/dominios/simulados/service'
 import { turmas as servicoTurmas } from '@/dominios/turmas/service'
 import { ROTULO_STATUS_SIMULADO, STATUS_SIMULADO_VARIANT } from '@/utils/labels'
-import { theme as tokens } from '@/styles/theme'
 import type { SimuladoResponse } from '@/dominios/simulados/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-import { LinhaFiltrosFlutuante, CampoLargura } from './styles'
+import { LinhaFiltrosFlutuante, CampoLargura, SemValor } from './styles'
 import type { Filtro } from './types'
 
 export default function Simulados() {
@@ -235,7 +234,7 @@ export default function Simulados() {
         simulado.turmaId ? (
           nomeTurma(simulado.turmaId)
         ) : (
-          <span style={{ color: tokens.colors.textDisabled }}>Sem turma</span>
+          <SemValor>Sem turma</SemValor>
         ),
     },
     {
@@ -244,7 +243,7 @@ export default function Simulados() {
       alinhamento: 'center',
       render: (simulado) => {
         const valores = participacao.get(simulado.id)
-        if (!valores || valores.total === 0) return <span style={{ color: tokens.colors.textDisabled }}>—</span>
+        if (!valores || valores.total === 0) return <SemValor>—</SemValor>
 
         const completo = valores.concluidas === valores.total
 

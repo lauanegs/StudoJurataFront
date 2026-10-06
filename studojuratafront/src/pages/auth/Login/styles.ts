@@ -1,5 +1,7 @@
 import styled from 'styled-components'
 
+import { Button } from '@/components/ui/Button'
+
 export const Cartao = styled.form`
   display: flex;
   flex-direction: column;
@@ -62,4 +64,12 @@ export const Alerta = styled.p`
   font-size: ${({ theme }) => theme.typography.sizes.xs};
   color: ${({ theme }) => theme.colors.errorText};
   text-align: center;
+`
+
+export const BotaoEntrar = styled(Button)`
+  &&,
+  &&:hover:not(:disabled) {
+    background: ${({ theme }) => theme.gradients.sidebar};
+    border-color: ${({ theme }) => theme.colors.blue};
+  }
 `

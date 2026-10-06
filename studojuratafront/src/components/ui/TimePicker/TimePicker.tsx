@@ -3,8 +3,9 @@ import { TimePicker as MantineTimePicker } from '@mantine/dates'
 import { Clock } from 'lucide-react'
 
 import { Field } from '@/components/ui/Field'
-import { theme as tokens } from '@/styles/theme'
+import { estiloLarguraMaxima, estilosCampo } from '@/components/ui/DatePicker/styles'
 import { comTamanho } from '@/utils/redimensionarIcone'
+import { BotaoRelogio } from './styles'
 import type { TimePickerProps } from './types'
 
 export function TimePicker({
@@ -18,7 +19,6 @@ export function TimePicker({
   id,
   maxWidth,
 }: TimePickerProps) {
-
   const horasRef = useRef<HTMLInputElement>(null)
 
   function disparar(novoValor: string) {
@@ -26,27 +26,9 @@ export function TimePicker({
   }
 
   const iconeRelogio = (
-    <button
-      type="button"
-      tabIndex={-1}
-      aria-hidden="true"
-      disabled={disabled}
-      onClick={() => horasRef.current?.focus()}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
-        height: '100%',
-        padding: 0,
-        background: 'none',
-        border: 'none',
-        color: 'inherit',
-        cursor: disabled ? 'default' : 'pointer',
-      }}
-    >
+    <BotaoRelogio type="button" tabIndex={-1} aria-hidden="true" disabled={disabled} onClick={() => horasRef.current?.focus()}>
       {comTamanho(<Clock />, 18)}
-    </button>
+    </BotaoRelogio>
   )
 
   return (
@@ -63,16 +45,8 @@ export function TimePicker({
         leftSectionWidth="56px"
         leftSectionPointerEvents="auto"
         radius="md"
-        style={{ maxWidth }}
-        styles={{
-          input: {
-            height: '56px',
-            minHeight: '56px',
-            borderWidth: '2px',
-            borderColor: error ? tokens.colors.error : tokens.colors.buttonPurple,
-            boxShadow: tokens.shadow.base,
-          },
-        }}
+        style={estiloLarguraMaxima(maxWidth)}
+        styles={estilosCampo(error)}
       />
     </Field>
   )

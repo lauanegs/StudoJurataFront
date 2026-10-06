@@ -111,3 +111,8 @@ export const NomeTurma = styled.small`
   font-size: ${({ theme }) => theme.typography.sizes.xs};
   color: ${({ theme }) => theme.colors.textSecondary};
 `
+
+export const BotaoVoltar = styled.div`
+  width: 100%;
+  max-width: 300px;
+`

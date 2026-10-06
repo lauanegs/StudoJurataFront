@@ -1,11 +1,12 @@
 import { Search } from 'lucide-react'
 
 import { Input } from '@/components/ui/Input'
+import { Container } from './styles'
 import type { BuscaInputProps } from './types'
 
 export function BuscaInput({ value, onChange, placeholder = 'Buscar...', ...rest }: BuscaInputProps) {
   return (
-    <div style={{ width: '320px', maxWidth: '100%' }}>
+    <Container>
       <Input
         type="search"
         icon={<Search />}
@@ -16,6 +17,6 @@ export function BuscaInput({ value, onChange, placeholder = 'Buscar...', ...rest
         aria-label={placeholder}
         {...rest}
       />
-    </div>
+    </Container>
   )
 }

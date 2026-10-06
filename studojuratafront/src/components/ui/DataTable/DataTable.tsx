@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Group, Paper, Table } from '@mantine/core'
+import { Group, Table } from '@mantine/core'
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react'
 
 import { ErroCarregamento } from '@/components/feedback/ErroCarregamento'
@@ -7,10 +7,18 @@ import { EstadoVazio } from '@/components/feedback/EstadoVazio'
 import { Skeleton } from '@/components/feedback/Skeleton'
 import { Paginacao } from '@/components/ui/Paginacao'
 import { theme as tokens } from '@/styles/theme'
-import { corComOpacidade } from '@/utils/corComOpacidade'
-import type { Coluna, DataTableProps } from './types'
-
-import type { Direcao } from './types'
+import {
+  Envelope,
+  estiloCabecalhoAcoes,
+  estiloCabecalhoColuna,
+  estiloCelula,
+  estiloCelulaAcoes,
+  estiloLinha,
+  estilosTabela,
+  RotuloOrdenavel,
+  Rolagem,
+} from './styles'
+import type { Coluna, DataTableProps, Direcao } from './types'
 
 export function DataTable<T>({
   columns,
@@ -70,44 +78,24 @@ export function DataTable<T>({
 
   const totalColunas = columns.length + (actions ? 1 : 0)
 
-  const paddingTd = `${densidade === 'compacta' ? tokens.spacing.xs : tokens.spacing.sm} ${tokens.spacing.lg}`
-
   if (error) {
     return (
-      <Paper radius="md" shadow="md" style={{ width: '100%', overflow: 'hidden' }}>
+      <Envelope>
         <ErroCarregamento mensagem={error} onRetry={onReload} />
-      </Paper>
+      </Envelope>
     )
   }
 
   return (
-    <Paper radius="md" shadow="md" style={{ width: '100%', overflow: 'hidden' }}>
-      <div style={{ width: '100%', overflowX: 'auto' }}>
+    <Envelope>
+      <Rolagem>
         <Table
           aria-label={descricao}
           aria-busy={loading || undefined}
           highlightOnHover={Boolean(onRowClick)}
           highlightOnHoverColor={tokens.colors.background}
           withRowBorders
-          styles={{
-            table: { width: '100%' },
-            thead: { background: corComOpacidade(tokens.colors.background, 0.3) },
-            th: {
-              padding: `${tokens.spacing.md} ${tokens.spacing.xl}`,
-              fontSize: tokens.typography.sizes.md,
-              fontWeight: tokens.typography.weights.semiBold,
-              letterSpacing: '-0.8px',
-              color: tokens.colors.textSecondary,
-              whiteSpace: 'nowrap',
-            },
-            tr: { borderBottom: `2px solid ${corComOpacidade(tokens.colors.textTertiary, 0.1)}` },
-            td: {
-              padding: paddingTd,
-              fontSize: tokens.typography.sizes.sm,
-              color: tokens.colors.textSecondary,
-              verticalAlign: 'middle',
-            },
-          }}
+          styles={estilosTabela(densidade)}
         >
           <Table.Thead>
             <Table.Tr>
@@ -123,18 +111,13 @@ export function DataTable<T>({
                         .filter(Boolean)
                         .join(' ') || undefined
                     }
-                    style={{
-                      width: coluna.largura,
-                      textAlign: coluna.alinhamento ?? 'left',
-                      cursor: coluna.ordenavel ? 'pointer' : undefined,
-                      userSelect: coluna.ordenavel ? 'none' : undefined,
-                    }}
+                    style={estiloCabecalhoColuna(coluna)}
                     aria-sort={
                       ativa ? (ordenacao.direcao === 'asc' ? 'ascending' : 'descending') : undefined
                     }
                     onClick={() => alternarOrdenacao(coluna)}
                   >
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: tokens.spacing.xxs }}>
+                    <RotuloOrdenavel>
                       {coluna.cabecalho}
                       {coluna.ordenavel &&
                         (ativa ? (
@@ -146,16 +129,13 @@ export function DataTable<T>({
                         ) : (
                           <ArrowUpDown size={14} opacity={0.4} />
                         ))}
-                    </span>
+                    </RotuloOrdenavel>
                   </Table.Th>
                 )
               })}
 
               {actions && (
-                <Table.Th
-                  scope="col"
-                  style={quebrarAcoes ? { textAlign: 'left' } : { textAlign: 'left', width: '1%', whiteSpace: 'nowrap' }}
-                >
+                <Table.Th scope="col" style={estiloCabecalhoAcoes(quebrarAcoes)}>
                   {rotuloColunaAcoes}
                 </Table.Th>
               )}
@@ -179,10 +159,7 @@ export function DataTable<T>({
                 <Table.Tr
                   key={rowKey(item)}
                   tabIndex={onRowClick ? 0 : undefined}
-                  style={{
-                    cursor: onRowClick ? 'pointer' : undefined,
-                    ...(indice === dadosOrdenados.length - 1 ? { borderBottom: 'none' } : null),
-                  }}
+                  style={estiloLinha(Boolean(onRowClick), indice === dadosOrdenados.length - 1)}
                   onClick={() => onRowClick?.(item)}
                   onKeyDown={(evento) => {
                     if (onRowClick && (evento.key === 'Enter' || evento.key === ' ')) {
@@ -195,17 +172,14 @@ export function DataTable<T>({
                     <Table.Td
                       key={coluna.key}
                       className={coluna.ocultarEmTelaPequena ? 'oculta-tela-pequena' : undefined}
-                      style={{ textAlign: coluna.alinhamento ?? 'left' }}
+                      style={estiloCelula(coluna)}
                     >
                       {coluna.render(item)}
                     </Table.Td>
                   ))}
 
                   {actions && (
-                    <Table.Td
-                      style={quebrarAcoes ? { textAlign: 'left' } : { textAlign: 'left', whiteSpace: 'nowrap' }}
-                      onClick={(evento) => evento.stopPropagation()}
-                    >
+                    <Table.Td style={estiloCelulaAcoes(quebrarAcoes)} onClick={(evento) => evento.stopPropagation()}>
                       <Group justify="flex-start" gap={tokens.spacing.xxs} wrap={quebrarAcoes ? 'wrap' : 'nowrap'}>
                         {actions(item)}
                       </Group>
@@ -215,7 +189,7 @@ export function DataTable<T>({
               ))}
           </Table.Tbody>
         </Table>
-      </div>
+      </Rolagem>
 
       {!loading && dadosOrdenados.length === 0 && (
         <EstadoVazio
@@ -227,6 +201,6 @@ export function DataTable<T>({
       )}
 
       {paginacao && !loading && dadosOrdenados.length > 0 && <Paginacao {...paginacao} />}
-    </Paper>
+    </Envelope>
   )
 }

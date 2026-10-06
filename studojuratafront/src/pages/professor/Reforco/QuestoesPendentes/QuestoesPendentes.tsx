@@ -30,6 +30,7 @@ import type { QuestaoResponse } from '@/dominios/simulados/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
 import type { Aba } from './types'
+import { TextoLimitado } from './styles'
 
 /**
  * Fila de moderação de questões — e, nas abas "Aprovadas"/"Todas", o banco
@@ -127,16 +128,7 @@ export default function QuestoesPendentes() {
       key: 'enunciado',
       cabecalho: 'Enunciado',
       render: (questao) => (
-        <span
-          style={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {questao.enunciado}
-        </span>
+        <TextoLimitado>{questao.enunciado}</TextoLimitado>
       ),
     },
     {

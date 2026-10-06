@@ -1,6 +1,6 @@
-import { Paper, Stepper as MantineStepper } from '@mantine/core'
+import { Stepper as MantineStepper } from '@mantine/core'
 
-import { theme as tokens } from '@/styles/theme'
+import { Envelope } from './styles'
 import type { StepperProps } from './types'
 
 export function Stepper<V extends string = string>({
@@ -12,7 +12,7 @@ export function Stepper<V extends string = string>({
   const indiceAtivo = options.findIndex((option) => option.value === value)
 
   return (
-    <Paper radius="md" shadow="md" style={{ width: '100%', padding: tokens.spacing.xl }}>
+    <Envelope>
       <MantineStepper
         active={indiceAtivo}
         onStepClick={onChange ? (indice) => onChange(options[indice].value) : undefined}
@@ -23,6 +23,6 @@ export function Stepper<V extends string = string>({
           <MantineStepper.Step key={option.value} label={option.label} description={option.description} />
         ))}
       </MantineStepper>
-    </Paper>
+    </Envelope>
   )
 }

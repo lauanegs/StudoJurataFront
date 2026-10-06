@@ -7,3 +7,22 @@ export const CamposCabecalho = styled(CamposFiltro)`
     flex-shrink: 0;
   }
 `
+
+export const TextoLimitado = styled.span`
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`
+
+export const DatasMinistradas = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+`
+
+export const ListaImportaveis = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`

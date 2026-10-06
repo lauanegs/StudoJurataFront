@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { IconButton } from '@/components/ui/IconButton'
 import { theme as tokens } from '@/styles/theme'
+import { estiloNavegacao, Rotulo } from './styles'
 import type { PaginacaoProps } from './types'
 
 export function Paginacao({
@@ -20,10 +21,7 @@ export function Paginacao({
       justify="center"
       gap={tokens.spacing.md}
       aria-label={`Paginação, página ${pagina} de ${totalPaginas}`}
-      style={{
-        padding: `${tokens.spacing.sm} ${tokens.spacing.md}`,
-        borderTop: `1px solid ${tokens.colors.border}`,
-      }}
+      style={estiloNavegacao}
     >
       <IconButton
         label="Página anterior"
@@ -32,17 +30,7 @@ export function Paginacao({
         onClick={onPrevious}
       />
 
-      <span
-        aria-live="polite"
-        style={{
-          fontSize: tokens.typography.sizes.sm,
-          fontWeight: tokens.typography.weights.semiBold,
-          color: tokens.colors.textSecondary,
-          fontVariantNumeric: 'tabular-nums',
-        }}
-      >
-        {label}
-      </span>
+      <Rotulo aria-live="polite">{label}</Rotulo>
 
       <IconButton
         label="Próxima página"

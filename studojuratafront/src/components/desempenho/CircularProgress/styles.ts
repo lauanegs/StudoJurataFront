@@ -17,6 +17,10 @@ export const Svg = styled.svg`
   transform: rotate(-90deg);
 `
 
+export const Progresso = styled.circle`
+  transition: stroke-dasharray 400ms ease;
+`
+
 export const Centro = styled.div<{ $cor: string; $size: number; $espessura: number }>`
   position: absolute;
   inset: ${({ $espessura }) => $espessura}px;
