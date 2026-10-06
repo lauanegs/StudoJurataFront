@@ -1,17 +1,6 @@
-import type { SelectOption } from '@/components/ui/Select'
 import { formatarData } from '@/utils/format'
 
-interface RecorteDesempenho {
-  opcoesTurmas: SelectOption<number>[]
-  opcoesDisciplinas: SelectOption<number>[]
-  opcoesAlunos: SelectOption<number>[]
-  turmaId: number | null
-  disciplinaId: number | null
-  alunoId: number | null
-  dataInicio: string
-  dataFim: string
-}
-
+import type { RecorteDesempenho } from './types'
 /**
  * Monta as 4 linhas de texto do recorte aplicado (turma/disciplina/aluno/
  * período) — em arquivo próprio (não dentro de ResumoFiltrosDesempenho.tsx)

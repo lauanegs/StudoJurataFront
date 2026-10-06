@@ -1,13 +1,6 @@
 import type { TipoDestinacaoSimulado } from '@/dominios/simulados/types'
 
-export type AcaoAoSalvar = 'lancar-agora' | 'publicacao-automatica' | 'rascunho'
-
-export interface PlanoDePublicacao {
-  acao: AcaoAoSalvar
-  /** A data de início já passou (a disponibilidade já começou). */
-  inicioJaChegou: boolean
-}
-
+import type { PlanoDePublicacao } from './types'
 /**
  * O que acontece com o simulado depois de salvo, conforme as datas e a destinação.
  *

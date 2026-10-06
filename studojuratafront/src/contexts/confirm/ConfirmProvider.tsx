@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
-import { ConfirmContexto, type PedidoConfirmacao } from './confirmContexto'
-
+import { ConfirmContexto } from './confirmContexto'
+import type { PedidoConfirmacao } from './types'
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [pedido, setPedido] = useState<PedidoConfirmacao | null>(null)
   const [processando, setProcessando] = useState(false)

@@ -3,21 +3,7 @@ import ExcelJS from 'exceljs'
 import { theme as tokens } from '@/styles/theme'
 import type { ImagemGrafico } from '@/components/graficos/RenderizarGrafico'
 
-export interface LinhaPlanilha {
-  rotulo: string
-  valor: string | number
-}
-
-export interface AbaPlanilha {
-  /** Vira o nome da aba no Excel — cortado em 31 caracteres (limite do formato .xlsx). */
-  nome: string
-  colunaRotulo: string
-  colunaValor: string
-  linhas: LinhaPlanilha[]
-  /** Desenho do gráfico (Histograma/GraficoBarras/GraficoLinha, capturado via renderizarGraficoComoImagem) — opcional, some acima da tabela nesta aba. */
-  imagem?: ImagemGrafico | null
-}
-
+import type { LinhaPlanilha, AbaPlanilha } from './types'
 /** #662E9B (roxo da marca), sem o "#" e com o alpha "FF" na frente — formato ARGB que o exceljs pede. */
 const ROXO_MARCA_ARGB = 'FF662E9B'
 const BRANCO_ARGB = 'FFFFFFFF'

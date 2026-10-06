@@ -1,7 +1,6 @@
 import { theme as tokens } from '@/styles/theme'
 
-export type NivelDesempenho = 'baixo' | 'medio' | 'alto'
-
+import type { NivelDesempenho } from './types'
 /**
  * Percentual abaixo do qual o desempenho é considerado baixo — o mesmo valor
  * que o back usa para recomendar reforço (RecomendacaoService.LIMIAR_BAIXO_APROVEITAMENTO).

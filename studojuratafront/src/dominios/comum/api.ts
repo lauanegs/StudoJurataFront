@@ -1,3 +1,4 @@
+import type { Parametros, OpcoesRequisicao } from './types'
 /**
  * Cliente HTTP do StudoJurata.
  *
@@ -43,13 +44,6 @@ export class ApiError extends Error {
   get erroDeNegocio() {
     return this.status === 400 || this.status === 409 || this.status === 422
   }
-}
-
-type Parametros = Record<string, string | number | boolean | undefined | null>
-
-interface OpcoesRequisicao extends Omit<RequestInit, 'body'> {
-  params?: Parametros
-  body?: unknown
 }
 
 const ouvintesSessaoExpirada = new Set<() => void>()

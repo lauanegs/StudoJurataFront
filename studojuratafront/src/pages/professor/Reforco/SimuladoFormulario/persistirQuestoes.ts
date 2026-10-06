@@ -5,16 +5,7 @@ import {
 } from '@/dominios/simulados/service'
 import type { QuestaoEditavel } from '@/components/simulados/QuestaoEditor/types'
 
-/** Chamadas ao back usadas ao salvar as questões; injetáveis para testar a ordem sem rede. */
-export interface ApiDasQuestoes {
-  criarQuestao: typeof servicoQuestoes.criar
-  atualizarQuestao: typeof servicoQuestoes.atualizar
-  vincularConteudo: typeof servicoQuestoes.vincularConteudo
-  criarAlternativa: typeof servicoAlternativas.criar
-  atualizarAlternativa: typeof servicoAlternativas.atualizar
-  vincularAoSimulado: typeof simuladoQuestoes.criar
-}
-
+import type { ApiDasQuestoes } from './types'
 const apiReal: ApiDasQuestoes = {
   criarQuestao: servicoQuestoes.criar,
   atualizarQuestao: servicoQuestoes.atualizar,

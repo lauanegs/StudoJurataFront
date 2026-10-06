@@ -1,8 +1,8 @@
 import { BookOpen, CalendarClock, GraduationCap, Users } from 'lucide-react'
 
 import { ListaInfo } from '@/components/ui/ListaInfo'
-import { resumoFiltrosTexto, type RecorteDesempenho } from '@/pages/professor/Reforco/comum/resumoFiltrosTexto'
-
+import { resumoFiltrosTexto } from '@/pages/professor/Reforco/comum/resumoFiltrosTexto'
+import type { RecorteDesempenho } from '@/pages/professor/Reforco/comum/types'
 /** Descreve o recorte atual dos gráficos (ícone + texto, um por linha). */
 export function ResumoFiltrosDesempenho(props: RecorteDesempenho) {
   const [turma, disciplina, aluno, periodo] = resumoFiltrosTexto(props)

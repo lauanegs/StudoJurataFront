@@ -1,10 +1,7 @@
 import type { ConferenciaDaQuestao, ProvaDaTentativa } from '@/dominios/simulados/types'
 import type { QuestaoDaProva } from './types'
 
-export type RespostasAlternativa = Record<number, number | null>
-/** V/F: por questão, cada afirmação julgada à parte (true = Verdadeiro). */
-export type RespostasVerdadeiroFalso = Record<number, Record<number, boolean>>
-
+import type { RespostasAlternativa, RespostasVerdadeiroFalso } from './types'
 /**
  * Prova no formato que a tela usa. O `correta` de cada alternativa vem do
  * gabarito do servidor (só existe depois de concluir) ou da conferência da

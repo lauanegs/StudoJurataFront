@@ -6,16 +6,8 @@ import { professores as servicoProfessores } from '@/dominios/pessoas/service'
 import { matriculas } from '@/dominios/turmas/service'
 import { agruparPorSimulado, mediaPorDisciplina, tendenciaPorDisciplina } from './agregacoesDesempenho'
 
-export type { DesempenhoSimulado } from './agregacoesDesempenho'
-
-export interface NotaDetalhada {
-  tentativaId: number
-  alunoId: number
-  simuladoId: number
-  simuladoTitulo: string
-  /** 0 a 100. */
-  percentual: number
-}
+import type { NotaDetalhada } from './types'
+export type { DesempenhoSimulado } from './types'
 
 /**
  * Dados e filtros das telas de detalhamento de desempenho: o mesmo cálculo do

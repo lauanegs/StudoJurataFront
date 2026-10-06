@@ -1,3 +1,5 @@
+import type { useFormularioGradeCurso } from './formulario'
+
 import type { EntidadeBase, StatusAtivoInativo } from '@/dominios/comum/types'
 
 export interface Escola extends EntidadeBase {
@@ -26,3 +28,21 @@ export interface CursoDisciplina extends EntidadeBase {
   cargaHoraria?: number
   status?: StatusAtivoInativo
 }
+
+export interface DadosDisciplina {
+  titulo: string
+  ativa: boolean
+}
+
+export interface DadosCurso {
+  nome: string
+  descricao: string
+  ativo: boolean
+}
+
+export interface DadosGradeCurso {
+  disciplinaId: number | null
+  cargaHoraria: string
+}
+
+export type FormularioGradeCurso = ReturnType<typeof useFormularioGradeCurso>

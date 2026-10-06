@@ -4,20 +4,7 @@ import autoTable from 'jspdf-autotable'
 import { theme as tokens } from '@/styles/theme'
 import type { ImagemGrafico } from '@/components/graficos/RenderizarGrafico'
 
-export interface LinhaPdf {
-  rotulo: string
-  valor: string | number
-}
-
-export interface SecaoPdf {
-  titulo: string
-  colunaRotulo: string
-  colunaValor: string
-  linhas: LinhaPdf[]
-  /** Desenho do gráfico (Histograma/GraficoBarras/GraficoLinha, capturado via renderizarGraficoComoImagem) — opcional, some acima da tabela de valores exatos. */
-  imagem?: ImagemGrafico | null
-}
-
+import type { LinhaPdf, SecaoPdf } from './types'
 /** Altura máxima reservada pro desenho do gráfico numa seção, em mm — imagens muito altas (gráfico bem estreito e alto) ficam limitadas por isso, não pela largura. */
 const ALTURA_MAXIMA_IMAGEM_MM = 90
 

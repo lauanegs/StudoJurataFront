@@ -1,3 +1,5 @@
+import type { useFormularioPessoa } from './formulario'
+
 import type { EntidadeBase, StatusAtivoInativo, TipoUsuario } from '@/dominios/comum/types'
 import type { Escola } from '@/dominios/curriculo/types'
 
@@ -64,4 +66,34 @@ export interface Usuario extends EntidadeBase {
   status?: StatusAtivoInativo
   aluno?: Aluno | null
   professor?: Professor | null
+}
+
+export interface DadosPessoa {
+  nome: string
+  cpf: string
+  dataNascimento: string
+  telefone: string
+  email: string
+  sexo: Sexo | null
+  cep: string
+  logradouro: string
+  numero: string
+  complemento: string
+  bairro: string
+  cidade: string
+  estado: string
+}
+
+export interface OpcoesFormularioPessoa {
+  exigirDataNascimento?: boolean
+}
+
+export type FormularioPessoa = ReturnType<typeof useFormularioPessoa>
+
+export interface DadosUsuario {
+  pessoaId: number | null
+  tipoUsuario: TipoUsuario | null
+  username: string
+  senha: string
+  ativo: boolean
 }

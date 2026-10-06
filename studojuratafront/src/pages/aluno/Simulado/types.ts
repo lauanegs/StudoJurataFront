@@ -20,3 +20,13 @@ export interface ResultadoDoSimuladoProps {
   diasProximaRevisao: number | null
   aoVoltar: () => void
 }
+
+export interface MensagemResultado {
+  titulo: string
+  descricao: string
+}
+
+export type RespostasAlternativa = Record<number, number | null>
+
+/** V/F: por questão, cada afirmação julgada à parte (true = Verdadeiro). */
+export type RespostasVerdadeiroFalso = Record<number, Record<number, boolean>>

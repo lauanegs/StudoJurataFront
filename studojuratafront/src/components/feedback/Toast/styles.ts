@@ -1,7 +1,6 @@
 import styled, { css, keyframes } from 'styled-components'
 
-import type { TipoToast } from '@/contexts/toast/toastContexto'
-
+import type { TipoToast } from '@/contexts/toast/types'
 export const entrar = keyframes`
   from { opacity: 0; transform: translateX(24px); }
   to   { opacity: 1; transform: translateX(0); }

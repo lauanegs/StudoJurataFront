@@ -1,18 +1,6 @@
 import { createContext, useContext } from 'react'
 
-export interface PedidoConfirmacao {
-  titulo: string
-  descricao?: string
-  rotuloConfirmar?: string
-  rotuloCancelar?: string
-  tone?: 'danger' | 'default'
-  aoConfirmar: () => Promise<void>
-}
-
-export interface ContextoConfirmacao {
-  confirmar: (pedido: PedidoConfirmacao) => Promise<void>
-}
-
+import type { ContextoConfirmacao } from './types'
 export const ConfirmContexto = createContext<ContextoConfirmacao | null>(null)
 
 export function useConfirm() {

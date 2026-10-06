@@ -1,3 +1,5 @@
+import type { useFormularioSimulado } from './formulario'
+
 import type { EntidadeBase } from '@/dominios/comum/types'
 import type { ConteudoPlano } from '@/dominios/planejamento/types'
 
@@ -169,3 +171,17 @@ export interface ProvaDaTentativa {
   questoes: QuestaoDaTentativa[]
   gabarito?: Record<string, boolean>
 }
+
+export interface DadosSimulado {
+  titulo: string
+  disciplinaId: number | null
+  turmaId: number | null
+  planoEnsinoId: number | null
+  tipoDestinacao: TipoDestinacaoSimulado
+  dataInicio: string
+  dataFim: string
+  tempoLimite: string
+  notaMaxima: string
+}
+
+export type FormularioSimulado = ReturnType<typeof useFormularioSimulado>

@@ -1,23 +1,9 @@
 import type { ItemGraficoBarras } from '@/components/graficos/GraficoBarras'
 import type { PontoGraficoLinha } from '@/components/graficos/GraficoLinha'
 import { formatarData } from '@/utils/format'
-import type { TentativaDesempenho, TipoDestinacaoSimulado } from '@/dominios/simulados/types'
+import type { TentativaDesempenho } from '@/dominios/simulados/types'
 
-export interface DesempenhoSimulado {
-  simuladoId: number
-  titulo: string
-  turmaId: number | null
-  turma: string
-  disciplinaId: number | null
-  disciplina: string
-  /** Nota média das tentativas sobre a nota máxima, de 0 a 100. */
-  percentual: number
-  tentativas: number
-  notaMaxima: number
-  data?: string
-  tipoDestinacao?: TipoDestinacaoSimulado
-}
-
+import type { DesempenhoSimulado } from './types'
 /** Uma linha por simulado, na ordem em que aparecem nas tentativas. */
 export function agruparPorSimulado(tentativas: TentativaDesempenho[]): DesempenhoSimulado[] {
   const porSimulado = new Map<number, { primeira: TentativaDesempenho; soma: number; quantidade: number }>()

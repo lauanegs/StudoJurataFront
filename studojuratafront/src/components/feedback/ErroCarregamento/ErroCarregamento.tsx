@@ -3,12 +3,7 @@ import { AlertTriangle, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Container, Descricao, Icone, Titulo } from '@/components/feedback/EstadoVazio/styles'
 
-interface ErroCarregamentoProps {
-  mensagem: string
-  onRetry?: () => void
-  titulo?: string
-}
-
+import type { ErroCarregamentoProps } from './types'
 export function ErroCarregamento({
   mensagem,
   onRetry,

@@ -1,10 +1,6 @@
 import type { TurmaDisciplina } from '@/dominios/turmas/types'
 
-export interface OpcaoDisciplina {
-  value: number
-  label: string
-}
-
+import type { OpcaoDisciplina } from './types'
 /**
  * Disciplinas que o professor pode escolher no simulado: as ofertadas na turma
  * escolhida (vínculo turma-disciplina ativo) — a mesma origem que o plano de

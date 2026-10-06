@@ -1,16 +1,6 @@
 import type { Pessoa } from '@/dominios/pessoas/types'
 
-export interface Aniversariante {
-  id: number
-  nome: string
-  /** dd/MM formatado. */
-  data: string
-  hoje: boolean
-  complemento: string
-  /** Dias até o aniversário, usado para ordenar. */
-  distancia: number
-}
-
+import type { Aniversariante } from './types'
 /**
  * Aniversariantes da semana.
  *

@@ -4,25 +4,9 @@ import { useMemo } from 'react'
 import * as yup from 'yup'
 
 import { formatarCpf } from '@/utils/format'
-import type { TipoUsuario } from '@/dominios/comum/types'
-import type { Pessoa, Sexo } from './types'
+import type { Pessoa } from './types'
 
-export interface DadosPessoa {
-  nome: string
-  cpf: string
-  dataNascimento: string
-  telefone: string
-  email: string
-  sexo: Sexo | null
-  cep: string
-  logradouro: string
-  numero: string
-  complemento: string
-  bairro: string
-  cidade: string
-  estado: string
-}
-
+import type { DadosPessoa, OpcoesFormularioPessoa, DadosUsuario } from './types'
 export const PESSOA_VAZIA: DadosPessoa = {
   nome: '',
   cpf: '',
@@ -40,10 +24,6 @@ export const PESSOA_VAZIA: DadosPessoa = {
 }
 
 const opcional = (validar: (valor: string) => boolean) => (valor?: string) => !valor || validar(valor)
-
-export interface OpcoesFormularioPessoa {
-  exigirDataNascimento?: boolean
-}
 
 export function pessoaSchema({ exigirDataNascimento = false }: OpcoesFormularioPessoa = {}) {
   return yup.object({
@@ -75,8 +55,6 @@ export function useFormularioPessoa({ exigirDataNascimento = false }: OpcoesForm
     validateInputOnBlur: true,
   })
 }
-
-export type FormularioPessoa = ReturnType<typeof useFormularioPessoa>
 
 const CAMPOS_ENDERECO = new Set<keyof DadosPessoa>(['cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado'])
 
@@ -125,14 +103,6 @@ export function dePessoa(pessoa: Pessoa): DadosPessoa {
     cidade: pessoa.endereco?.cidade ?? '',
     estado: pessoa.endereco?.estado ?? '',
   }
-}
-
-export interface DadosUsuario {
-  pessoaId: number | null
-  tipoUsuario: TipoUsuario | null
-  username: string
-  senha: string
-  ativo: boolean
 }
 
 export function useFormularioUsuario(edicao: boolean) {

@@ -8,3 +8,10 @@ export interface Evento extends EntidadeBase {
   concluido: boolean
   criadoPor?: Usuario | null
 }
+
+export interface DadosEvento {
+  dataHorario: string
+  titulo: string
+  descricao: string
+  concluido: boolean
+}

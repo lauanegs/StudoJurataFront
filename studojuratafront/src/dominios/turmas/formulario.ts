@@ -3,14 +3,8 @@ import * as yup from 'yup'
 
 import { dataFimNaoAnterior, inteiroPositivoObrigatorio } from '@/dominios/comum/formulario'
 import { horaParaMinutos } from '@/utils/format'
-import type { DiaSemana, StatusMatricula } from './types'
 
-export interface DadosMatricula {
-  dataInicio: string
-  dataFim: string
-  status: StatusMatricula
-}
-
+import type { DadosMatricula, DadosTurma, DadosHorarioTurma, DadosVinculoTurma } from './types'
 const matriculaSchema = yup.object({
   dataInicio: yup.string().required('Informe a data de início'),
   dataFim: dataFimNaoAnterior('dataInicio'),
@@ -21,15 +15,6 @@ export function useFormularioMatricula() {
     initialValues: { dataInicio: new Date().toISOString().slice(0, 10), dataFim: '', status: 'ATIVA' },
     validate: schemaResolver(matriculaSchema),
   })
-}
-
-export interface DadosTurma {
-  titulo: string
-  cursoId: number | null
-  capacidadeMaxima: string
-  dataInicio: string
-  dataFim: string
-  ativa: boolean
 }
 
 export const turmaSchema = yup.object({
@@ -45,14 +30,6 @@ export function useFormularioTurma() {
     initialValues: { titulo: '', cursoId: null, capacidadeMaxima: '', dataInicio: '', dataFim: '', ativa: true },
     validate: schemaResolver(turmaSchema),
   })
-}
-
-export type FormularioTurma = ReturnType<typeof useFormularioTurma>
-
-export interface DadosHorarioTurma {
-  diaSemana: DiaSemana | null
-  horaInicio: string
-  horaFim: string
 }
 
 export const horarioTurmaSchema = yup.object({
@@ -75,13 +52,6 @@ export function useFormularioHorarioTurma() {
   })
 }
 
-export type FormularioHorarioTurma = ReturnType<typeof useFormularioHorarioTurma>
-
-export interface DadosVinculoTurma {
-  disciplinaId: number | null
-  professorId: number | null
-}
-
 export const vinculoTurmaSchema = yup.object({
   disciplinaId: yup.number().nullable().required('Selecione a disciplina'),
 })
@@ -93,4 +63,3 @@ export function useFormularioVinculoTurma() {
   })
 }
 
-export type FormularioVinculoTurma = ReturnType<typeof useFormularioVinculoTurma>

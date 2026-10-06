@@ -1,6 +1,7 @@
 import { questaoVazia, type QuestaoEditavel } from '@/components/simulados/QuestaoEditor/types'
 import type { AlternativaResponse, QuestaoResponse, SimuladoQuestaoResponse } from '@/dominios/simulados/types'
 
+import type { ResultadoDaImportacao } from './types'
 /** Regra de negócio: um simulado nunca pode ter mais que 10 questões (ver SimuladoQuestaoService no back). */
 export const MAXIMO_QUESTOES = 10
 
@@ -81,14 +82,6 @@ export function simuladoTemQuestaoPendente(
   return vinculosAtivosDoSimulado(vinculos, simuladoId).some(
     (vinculo) => porId.get(vinculo.questaoId)?.status === 'PENDENTE',
   )
-}
-
-export interface ResultadoDaImportacao {
-  /** Lista final do formulário; null quando não coube nenhuma questão. */
-  questoes: QuestaoEditavel[] | null
-  importadas: number
-  /** Escolhidas que não couberam no limite de questões. */
-  cortadas: number
 }
 
 /**

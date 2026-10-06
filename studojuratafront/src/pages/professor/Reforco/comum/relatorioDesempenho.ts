@@ -1,29 +1,5 @@
 import { formatarPorcentagem } from '@/utils/format'
-import type { DesempenhoSimulado } from './agregacoesDesempenho'
-
-interface LinhaRelatorio {
-  chave: string
-  rotulo: string
-  valor: string
-}
-
-export interface SecaoRelatorio {
-  titulo: string
-  colunaRotulo: string
-  colunaValor: string
-  linhas: LinhaRelatorio[]
-}
-
-interface EntradaRelatorio {
-  desempenhos: DesempenhoSimulado[]
-  totalTentativasConcluidas: number
-  totalAlunosAvaliados: number
-  totalDisciplinasAvaliadas: number
-  tabelaDistribuicaoGeral: LinhaRelatorio[]
-  tabelaDesempenhoPorDisciplina: LinhaRelatorio[]
-  tendenciaPorDisciplina: { disciplina: string; pontos: { chave: string; rotulo: string; valor: number }[] }[]
-}
-
+import type { SecaoRelatorio, EntradaRelatorio } from './types'
 /** Seções exportadas no "Exportar tudo": uma aba por seção no Excel, uma tabela por seção no PDF. */
 export function montarSecoesRelatorio(entrada: EntradaRelatorio): SecaoRelatorio[] {
   const { desempenhos, tendenciaPorDisciplina } = entrada

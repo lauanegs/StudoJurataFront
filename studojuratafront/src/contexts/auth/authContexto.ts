@@ -1,18 +1,8 @@
 import { createContext, useContext } from 'react'
 
-import type { LoginResponse } from '@/dominios/autenticacao/types'
 import type { TipoUsuario } from '@/dominios/comum/types'
 
-export interface ContextoAutenticacao {
-  usuario: LoginResponse | null
-  cargo: string
-  autenticado: boolean
-  loading: boolean
-  entrar: (username: string, senha: string) => Promise<LoginResponse>
-  sair: () => Promise<void>
-  rotaInicial: (tipo?: TipoUsuario) => string
-}
-
+import type { ContextoAutenticacao } from './types'
 export const ROTA_INICIAL_POR_PERFIL: Record<TipoUsuario, string> = {
   ADMINISTRADOR: '/adm',
   PROFESSOR: '/professor',

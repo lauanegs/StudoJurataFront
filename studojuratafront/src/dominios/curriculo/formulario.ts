@@ -1,11 +1,7 @@
 import { schemaResolver, useForm } from '@mantine/form'
 import * as yup from 'yup'
 
-export interface DadosDisciplina {
-  titulo: string
-  ativa: boolean
-}
-
+import type { DadosDisciplina, DadosCurso, DadosGradeCurso } from './types'
 const disciplinaSchema = yup.object({
   titulo: yup.string().trim().required('Informe o nome da disciplina'),
 })
@@ -18,12 +14,6 @@ export function useFormularioDisciplina() {
   })
 }
 
-export interface DadosCurso {
-  nome: string
-  descricao: string
-  ativo: boolean
-}
-
 const cursoSchema = yup.object({
   nome: yup.string().trim().required('Informe o nome do curso'),
 })
@@ -34,11 +24,6 @@ export function useFormularioCurso() {
     validate: schemaResolver(cursoSchema),
     validateInputOnBlur: true,
   })
-}
-
-export interface DadosGradeCurso {
-  disciplinaId: number | null
-  cargaHoraria: string
 }
 
 export const gradeCursoSchema = yup.object({
@@ -60,4 +45,3 @@ export function useFormularioGradeCurso() {
   })
 }
 
-export type FormularioGradeCurso = ReturnType<typeof useFormularioGradeCurso>

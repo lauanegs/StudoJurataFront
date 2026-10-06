@@ -1,5 +1,4 @@
-import type { FormularioPessoa } from '@/dominios/pessoas/formulario'
-
+import type { FormularioPessoa } from '@/dominios/pessoas/types'
 export interface PessoaCamposProps {
   form: FormularioPessoa
   disabled?: boolean

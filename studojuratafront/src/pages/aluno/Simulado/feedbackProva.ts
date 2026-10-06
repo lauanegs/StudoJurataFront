@@ -1,6 +1,7 @@
 import type { LetterState } from '@/components/simulados/LetterBadge'
 import type { QuestionProgressStatus } from '@/components/simulados/ProgressoSimuladoCard'
 
+import type { MensagemResultado } from './types'
 /**
  * Feedback da prova em andamento.
  *
@@ -43,11 +44,6 @@ export function statusDaQuestaoConfirmada(params: {
 }): QuestionProgressStatus {
   if (!params.temGabarito) return 'answered'
   return params.acertou ? 'correct' : 'incorrect'
-}
-
-export interface MensagemResultado {
-  titulo: string
-  descricao: string
 }
 
 /**

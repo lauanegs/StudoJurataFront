@@ -5,13 +5,8 @@ import { autenticacao } from '@/dominios/autenticacao/service'
 import { esquecerCursoEscolhido } from '@/utils/cursoEscolhido'
 import { ROTULO_TIPO_USUARIO } from '@/utils/labels'
 import type { LoginResponse } from '@/dominios/autenticacao/types'
-import {
-  AuthContexto,
-  CHAVE_USUARIO,
-  ROTA_INICIAL_POR_PERFIL,
-  type ContextoAutenticacao,
-} from './authContexto'
-
+import { AuthContexto, CHAVE_USUARIO, ROTA_INICIAL_POR_PERFIL } from './authContexto'
+import type { ContextoAutenticacao } from './types'
 function lerCache(): LoginResponse | null {
   try {
     const bruto = window.localStorage.getItem(CHAVE_USUARIO)

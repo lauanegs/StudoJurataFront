@@ -1,3 +1,5 @@
+import type { useFormularioTurma, useFormularioHorarioTurma, useFormularioVinculoTurma } from './formulario'
+
 import type { EntidadeBase, StatusAtivoInativo } from '@/dominios/comum/types'
 import type { Curso, Disciplina, Escola } from '@/dominios/curriculo/types'
 import type { Aluno, Professor } from '@/dominios/pessoas/types'
@@ -45,3 +47,35 @@ export interface ResumoFrequenciaAluno {
   cargaHoraria: number
   faltas: number
 }
+
+export interface DadosMatricula {
+  dataInicio: string
+  dataFim: string
+  status: StatusMatricula
+}
+
+export interface DadosTurma {
+  titulo: string
+  cursoId: number | null
+  capacidadeMaxima: string
+  dataInicio: string
+  dataFim: string
+  ativa: boolean
+}
+
+export type FormularioTurma = ReturnType<typeof useFormularioTurma>
+
+export interface DadosHorarioTurma {
+  diaSemana: DiaSemana | null
+  horaInicio: string
+  horaFim: string
+}
+
+export type FormularioHorarioTurma = ReturnType<typeof useFormularioHorarioTurma>
+
+export interface DadosVinculoTurma {
+  disciplinaId: number | null
+  professorId: number | null
+}
+
+export type FormularioVinculoTurma = ReturnType<typeof useFormularioVinculoTurma>

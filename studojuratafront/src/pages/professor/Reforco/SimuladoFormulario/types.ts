@@ -1,10 +1,11 @@
+import type { alternativas as servicoAlternativas, questoes as servicoQuestoes, simuladoQuestoes } from '@/dominios/simulados/service'
+
 import type { AlunoTurma } from '@/dominios/turmas/types'
 
 import type { QuestaoResponse } from '@/dominios/simulados/types'
 
 import type { SelectOption } from '@/components/ui/Select'
-import type { FormularioSimulado } from '@/dominios/simulados/formulario'
-
+import type { FormularioSimulado } from '@/dominios/simulados/types'
 import type { ErrosQuestao, QuestaoEditavel } from '@/components/simulados/QuestaoEditor/types'
 
 export interface AbaQuestoesProps {
@@ -83,3 +84,34 @@ export interface ModalSelecionarAlunosProps {
  * lançado existem tentativas de alunos apontando para as questões.
  */
 export type Aba = 'configuracao' | 'questoes'
+
+export interface OpcaoDisciplina {
+  value: number
+  label: string
+}
+
+/** Chamadas ao back usadas ao salvar as questões; injetáveis para testar a ordem sem rede. */
+export interface ApiDasQuestoes {
+  criarQuestao: typeof servicoQuestoes.criar
+  atualizarQuestao: typeof servicoQuestoes.atualizar
+  vincularConteudo: typeof servicoQuestoes.vincularConteudo
+  criarAlternativa: typeof servicoAlternativas.criar
+  atualizarAlternativa: typeof servicoAlternativas.atualizar
+  vincularAoSimulado: typeof simuladoQuestoes.criar
+}
+
+export type AcaoAoSalvar = 'lancar-agora' | 'publicacao-automatica' | 'rascunho'
+
+export interface PlanoDePublicacao {
+  acao: AcaoAoSalvar
+  /** A data de início já passou (a disponibilidade já começou). */
+  inicioJaChegou: boolean
+}
+
+export interface ResultadoDaImportacao {
+  /** Lista final do formulário; null quando não coube nenhuma questão. */
+  questoes: QuestaoEditavel[] | null
+  importadas: number
+  /** Escolhidas que não couberam no limite de questões. */
+  cortadas: number
+}

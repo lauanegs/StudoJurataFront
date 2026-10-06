@@ -2,14 +2,8 @@ import { Navigate, useLocation } from 'react-router-dom'
 
 import { CarregandoTela } from '@/components/feedback/CarregandoTela'
 import { useAuth } from '@/hooks/useAuth'
-import type { TipoUsuario } from '@/dominios/comum/types'
 
-interface RotaProtegidaProps {
-  children: React.ReactNode
-  /** Perfis autorizados. Precisa refletir as regras do SecurityConfig. */
-  perfis: TipoUsuario[]
-}
-
+import type { RotaProtegidaProps } from './types'
 /**
  * Guarda de rota.
  *

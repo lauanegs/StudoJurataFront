@@ -2,18 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { ApiError } from '@/dominios/comum/api'
 
-interface RequestState<T> {
-  data: T | null
-  loading: boolean
-  error: string | null
-}
-
-export interface RequestResult<T> extends RequestState<T> {
-  reload: () => Promise<void>
-  setData: (updater: T | ((previous: T | null) => T | null)) => void
-  isEmpty: boolean
-}
-
+import type { RequestState, RequestResult } from './types'
 function isEmptyValue(data: unknown): boolean {
   if (data === null || data === undefined) return true
   if (Array.isArray(data)) return data.length === 0

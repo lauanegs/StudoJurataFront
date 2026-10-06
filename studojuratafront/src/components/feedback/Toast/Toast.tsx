@@ -1,8 +1,7 @@
 import { createPortal } from 'react-dom'
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react'
 
-import type { TipoToast } from '@/contexts/toast/toastContexto'
-
+import type { TipoToast } from '@/contexts/toast/types'
 import { Conteudo, Descricao, Fechar, Icone, Item, Titulo, Viewport } from './styles'
 import type { ToastViewportProps } from './types'
 

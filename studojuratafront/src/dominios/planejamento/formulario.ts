@@ -4,14 +4,8 @@ import * as yup from 'yup'
 
 import { dataFimNaoAnterior, inteiroPositivoOpcional, numeroPositivoOpcional } from '@/dominios/comum/formulario'
 import { horaParaMinutos } from '@/utils/format'
-import type { StatusPlano } from './types'
 
-export interface DadosConteudo {
-  ordem: string
-  titulo: string
-  descricao: string
-}
-
+import type { DadosConteudo, DadosAula, ContextoAula, DadosPlanoEnsino } from './types'
 const conteudoSchema = yup.object({
   ordem: inteiroPositivoOpcional('A ordem deve ser um número inteiro positivo'),
   titulo: yup.string().trim().required('Informe o título do conteúdo'),
@@ -28,22 +22,6 @@ export function useFormularioConteudo() {
     validate: schemaResolver(conteudoSchema),
     validateInputOnBlur: true,
   })
-}
-
-export interface DadosAula {
-  ordem: string
-  titulo: string
-  dataPrevista: string
-  dataPublicacao: string
-  horarioTurmaId: number | null
-  cargaHorariaManual: string
-  observacoes: string
-}
-
-interface ContextoAula {
-  semHorarioCadastrado: boolean
-  ordensOcupadas: number[]
-  ordemSugerida: string
 }
 
 export function useFormularioAula({ semHorarioCadastrado, ordensOcupadas, ordemSugerida }: ContextoAula) {
@@ -71,19 +49,6 @@ export function useFormularioAula({ semHorarioCadastrado, ordensOcupadas, ordemS
     validate,
     validateInputOnBlur: true,
   })
-}
-
-export interface DadosPlanoEnsino {
-  cursoId: number | null
-  turmaId: number | null
-  disciplinaId: number | null
-  cargaHoraria: string
-  dataInicio: string
-  dataFim: string
-  ementa: string
-  objetivoGeral: string
-  metodologia: string
-  status: StatusPlano
 }
 
 const planoEnsinoSchema = yup.object({

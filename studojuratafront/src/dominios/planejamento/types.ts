@@ -1,3 +1,4 @@
+
 import type { EntidadeBase, StatusAtivoInativo } from '@/dominios/comum/types'
 import type { Curso } from '@/dominios/curriculo/types'
 import type { Aluno, Professor } from '@/dominios/pessoas/types'
@@ -72,4 +73,39 @@ export interface ChamadaRequest {
 
 export interface EstatisticasPlanoAula {
   [chave: string]: number | string | null
+}
+
+export interface DadosConteudo {
+  ordem: string
+  titulo: string
+  descricao: string
+}
+
+export interface DadosAula {
+  ordem: string
+  titulo: string
+  dataPrevista: string
+  dataPublicacao: string
+  horarioTurmaId: number | null
+  cargaHorariaManual: string
+  observacoes: string
+}
+
+export interface ContextoAula {
+  semHorarioCadastrado: boolean
+  ordensOcupadas: number[]
+  ordemSugerida: string
+}
+
+export interface DadosPlanoEnsino {
+  cursoId: number | null
+  turmaId: number | null
+  disciplinaId: number | null
+  cargaHoraria: string
+  dataInicio: string
+  dataFim: string
+  ementa: string
+  objetivoGeral: string
+  metodologia: string
+  status: StatusPlano
 }

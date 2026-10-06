@@ -4,13 +4,7 @@ import * as yup from 'yup'
 import { paraInputDataHora } from '@/utils/format'
 import type { Evento } from './types'
 
-export interface DadosEvento {
-  dataHorario: string
-  titulo: string
-  descricao: string
-  concluido: boolean
-}
-
+import type { DadosEvento } from './types'
 const eventoSchema = yup.object({
   titulo: yup.string().trim().required('Informe o título do evento'),
   dataHorario: yup.string().required('Informe a data e o horário'),

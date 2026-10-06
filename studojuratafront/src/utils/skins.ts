@@ -1,10 +1,9 @@
+import type { ReacaoSkin } from './types'
 const MAPA_SKIN_ASSET: Record<string, string> = {
   classico: 'jura',
   explorador: 'bit',
   cientista: 'lia',
 }
-
-export type ReacaoSkin = 'neutro' | 'feliz' | 'triste'
 
 /** Nome do arquivo de cada reação dentro da pasta da skin. */
 const ARQUIVO_REACAO: Record<ReacaoSkin, string> = {

@@ -1,19 +1,12 @@
-import type { ReactNode } from 'react'
 import styled from 'styled-components'
 import { Inbox } from 'lucide-react'
 
 import { Container, Descricao, Icone, Titulo } from './styles'
 
+import type { EstadoVazioProps } from './types'
 const Acao = styled.div`
   margin-top: ${({ theme }) => theme.spacing.xs};
 `
-
-interface EstadoVazioProps {
-  titulo: string
-  descricao?: string
-  icon?: ReactNode
-  acao?: ReactNode
-}
 
 export function EstadoVazio({ titulo, descricao, icon, acao }: EstadoVazioProps) {
   return (

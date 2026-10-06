@@ -7,3 +7,10 @@ export interface EntidadeBase {
   createdAt?: string
   updatedAt?: string
 }
+
+export type Parametros = Record<string, string | number | boolean | undefined | null>
+
+export interface OpcoesRequisicao extends Omit<RequestInit, 'body'> {
+  params?: Parametros
+  body?: unknown
+}
