@@ -6,12 +6,9 @@ import { formatarPorcentagem } from '@/utils/format'
 
 import type { GraficoLinhaProps } from './types'
 
-/** Evolução ao longo do tempo, com linha de referência no limiar de baixo desempenho. */
 export function GraficoLinha({ pontos, rotuloAcessivel = 'Evolução ao longo do tempo', altura = 220 }: GraficoLinhaProps) {
   if (pontos.length < 2) return null
 
-  // O eixo X usa a chave única: simulados com o mesmo título/data têm rótulos iguais
-  // e o tooltip mostraria o valor do primeiro deles em qualquer um dos pontos.
   const data = pontos.map((ponto) => ({ chave: ponto.chave, valor: ponto.valor }))
   const rotuloDaChave = new Map(pontos.map((ponto) => [ponto.chave, ponto.rotulo]))
   const rotulo = (chave: unknown) => rotuloDaChave.get(String(chave)) ?? String(chave)
@@ -28,7 +25,6 @@ export function GraficoLinha({ pontos, rotuloAcessivel = 'Evolução ao longo do
       yAxisProps={{ domain: [0, 100] }}
       valueFormatter={(valor) => formatarPorcentagem(valor)}
       withDots
-      // A margem direita padrão da Mantine é maior e descentraliza o gráfico.
       lineChartProps={{ margin: { left: 0, right: 8, top: 8, bottom: 0 } }}
       aria-label={rotuloAcessivel}
     />

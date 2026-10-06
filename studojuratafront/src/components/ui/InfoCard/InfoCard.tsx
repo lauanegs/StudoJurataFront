@@ -4,7 +4,6 @@ import { comTamanho } from '@/utils/redimensionarIcone'
 import { Container, Icone, Textos, Valor, Selo } from './styles'
 import type { Tom, InfoCardProps } from './types'
 
-// Badge em cor sólida com ícone branco: fundo suave não destacava o suficiente.
 const CORES: Record<Tom, string> = {
   purple: tokens.colors.purple,
   blue: tokens.colors.blue,

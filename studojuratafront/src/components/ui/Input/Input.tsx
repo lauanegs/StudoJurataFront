@@ -8,11 +8,6 @@ import { corComOpacidade } from '@/utils/corComOpacidade'
 import { comTamanho } from '@/utils/redimensionarIcone'
 import type { InputProps } from './types'
 
-/**
- * A moldura (rótulo/erro/contador) é o <Field> compartilhado com os demais
- * campos. A borda fica esmaecida em repouso e sólida no foco, por isso o
- * estado de foco.
- */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   {
     label,
@@ -66,10 +61,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     },
   }
 
-  // A Mantine mede a seção do ícone por --input-height, que ignora `altura`.
   const larguraSecao = altura
 
-  // PasswordInput traz o botão de mostrar/esconder senha já acessível.
   if (type === 'password' && alternarVisibilidade) {
     return (
       <Field

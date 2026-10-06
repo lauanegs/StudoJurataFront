@@ -6,11 +6,9 @@ export interface ItemMenu {
   label: string
   caminho: string
   icon: ReactNode
-  /** Rotas filhas que também devem manter o item marcado como ativo. */
   prefixos?: string[]
 }
 
-/** Select de curso na sidebar do aluno com mais de um curso. */
 export interface SeletorCurso {
   opcoes: { value: number; label: string }[]
   valor: number | null
@@ -26,7 +24,6 @@ export interface SidebarProps {
   onToggleCollapse: () => void
   onExit: () => void
   seletorCurso?: SeletorCurso
-  /** Em telas pequenas a sidebar vira um painel sobreposto. */
   abertaNoMobile?: boolean
   onCloseOnMobile?: () => void
 }

@@ -5,7 +5,6 @@ export const pulsar = keyframes`
   50%      { opacity: 0.55; }
 `
 
-/* Cobre a largura inteira da tela, sem cantos arredondados. */
 export const Container = styled.header`
   display: flex;
   align-items: center;
@@ -53,7 +52,6 @@ export const Cronometro = styled.div<{ $alerta: boolean }>`
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.xxs};
 
-  /* 56px para bater com o botão "Sair" (size="large") ao lado. */
   height: 56px;
   padding: 0 ${({ theme }) => theme.spacing.xl};
   border-radius: ${({ theme }) => theme.radius.md};

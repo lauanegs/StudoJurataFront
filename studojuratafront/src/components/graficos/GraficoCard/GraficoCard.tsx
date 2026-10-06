@@ -11,11 +11,6 @@ import { renderizarGraficoComoImagem } from '@/components/graficos/RenderizarGra
 import { SecaoDetalhe, SecaoContexto } from './styles'
 import type { GraficoCardProps } from './types'
 
-/**
- * Card de gráfico com "Detalhar": abre o gráfico maior num modal com
- * exportação em PDF (jsPDF) e Excel (exceljs), gerada a partir dos dados e não
- * de captura de tela, que não imprimia de forma confiável.
- */
 export function GraficoCard({
   titulo,
   descricao,
@@ -83,7 +78,6 @@ export function GraficoCard({
         <Card elevacao="none">{renderGrafico(alturaDetalhe, true)}</Card>
         {detalhe && (
           <SecaoDetalhe>
-            {/* semPadding: o conteúdo costuma ser uma DataTable, que já tem margem interna. */}
             <Card elevacao="none" semPadding>
               {detalhe}
             </Card>

@@ -5,7 +5,6 @@ import type { BuscaInputProps } from './types'
 
 export function BuscaInput({ value, onChange, placeholder = 'Buscar...', ...rest }: BuscaInputProps) {
   return (
-    // Largura fixa: o pai usa max-content, onde `%` resolve para 0.
     <div style={{ width: '320px', maxWidth: '100%' }}>
       <Input
         type="search"

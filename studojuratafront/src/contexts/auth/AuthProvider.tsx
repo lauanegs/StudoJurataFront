@@ -34,8 +34,7 @@ function gravarCache(usuario: LoginResponse | null) {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // O cache local evita o "flash" de tela de login em um F5, mas a fonte da
-  // verdade continua sendo o /auth/me — se o cookie de sessão caiu, limpamos.
+
   const [usuario, setUsuario] = useState<LoginResponse | null>(() => lerCache())
   const [loading, setCarregando] = useState(true)
 
@@ -63,7 +62,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Qualquer 401 vindo de qualquer tela derruba a sessão local.
   useEffect(() => {
     const cancelar = aoExpirarSessao(() => {
       setUsuario(null)
@@ -77,7 +75,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const entrar = useCallback(async (username: string, senha: string) => {
     const logado = await autenticacao.entrar({ username, senha })
-    // Cada login recomeça pela escolha do curso.
     esquecerCursoEscolhido()
     setUsuario(logado)
     gravarCache(logado)
@@ -88,7 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await autenticacao.sair()
     } catch (erro) {
-      // Se a sessão já tinha expirado, o logout falhar não é problema.
       if (!(erro instanceof ApiError)) throw erro
     } finally {
       setUsuario(null)

@@ -14,7 +14,6 @@ import type { Sexo } from '@/dominios/pessoas/types'
 import { LinhaInteira } from './styles'
 import type { PessoaCamposProps } from './types'
 
-/** Bloco de dados pessoais compartilhado por Aluno, Professor e Responsável (todos estendem Pessoa no back). */
 export function PessoaCampos({
   form,
   disabled,

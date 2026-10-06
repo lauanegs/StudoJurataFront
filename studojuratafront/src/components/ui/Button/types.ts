@@ -12,6 +12,5 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   iconRight?: ReactNode
   loading?: boolean
   fullWidth?: boolean
-  /** Remove a borda de destaque dos gradientes; usar só quando o card ao redor já dá contraste. */
   noBorder?: boolean
 }

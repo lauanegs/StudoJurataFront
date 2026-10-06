@@ -34,19 +34,15 @@ export interface DadosAula {
   ordem: string
   titulo: string
   dataPrevista: string
-  /** Sem campo na tela, mas reenviado no PUT: AulaService.atualizar faz save() completo. */
   dataPublicacao: string
   horarioTurmaId: number | null
-  /** HH:mm, usado só quando a turma não tem horário cadastrado. */
   cargaHorariaManual: string
   observacoes: string
 }
 
 interface ContextoAula {
   semHorarioCadastrado: boolean
-  /** Ordens já usadas por outras aulas ativas do plano. */
   ordensOcupadas: number[]
-  /** Ordem usada quando o campo fica em branco numa aula nova. */
   ordemSugerida: string
 }
 

@@ -42,10 +42,6 @@ export const PESSOA_VAZIA: DadosPessoa = {
 const opcional = (validar: (valor: string) => boolean) => (valor?: string) => !valor || validar(valor)
 
 export interface OpcoesFormularioPessoa {
-  /**
-   * No cadastro de aluno a data de nascimento é obrigatória: é ela que define a
-   * exigência de responsável (menor de idade) e a idade exibida nas telas.
-   */
   exigirDataNascimento?: boolean
 }
 
@@ -63,7 +59,6 @@ export function pessoaSchema({ exigirDataNascimento = false }: OpcoesFormularioP
     telefone: yup.string().test('telefone', 'Telefone inválido', opcional(isValidPhone)),
     email: yup.string().trim().test('email', 'E-mail inválido', opcional(isValidEmail)),
     cep: yup.string().test('cep', 'CEP incompleto', opcional(isValidCep)),
-    // Obrigatório em todo cadastro: dado de identificação usado pela secretaria.
     sexo: yup.string().nullable().required('Selecione o sexo'),
   })
 }
@@ -85,7 +80,6 @@ export type FormularioPessoa = ReturnType<typeof useFormularioPessoa>
 
 const CAMPOS_ENDERECO = new Set<keyof DadosPessoa>(['cep', 'logradouro', 'numero', 'complemento', 'bairro', 'cidade', 'estado'])
 
-/** Aba em que o campo aparece, para levar o usuário até o erro em vez de só avisar por toast. */
 export function abaDoCampoPessoa(campo: string): 'dados' | 'endereco' {
   return CAMPOS_ENDERECO.has(campo as keyof DadosPessoa) ? 'endereco' : 'dados'
 }
@@ -95,7 +89,6 @@ export function paraPayloadPessoa(valores: DadosPessoa): Partial<Pessoa> {
 
   return {
     nome: valores.nome.trim(),
-    // O back guarda o CPF com máscara (length = 14).
     cpf: formatarCpf(valores.cpf),
     dataNascimento: valores.dataNascimento || undefined,
     telefone: valores.telefone ? parsePhone(valores.telefone) : undefined,
@@ -142,7 +135,6 @@ export interface DadosUsuario {
   ativo: boolean
 }
 
-/** Na edição a senha é opcional: em branco mantém a atual. */
 export function useFormularioUsuario(edicao: boolean) {
   return useForm<DadosUsuario>({
     initialValues: { pessoaId: null, tipoUsuario: null, username: '', senha: '', ativo: true },

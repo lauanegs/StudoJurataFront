@@ -1,11 +1,6 @@
 import * as S from './styles'
 import type { FieldProps } from './types'
 
-/**
- * Moldura padrão de campo de formulário: rótulo, marcação de obrigatório,
- * contador e a linha de ajuda/erro. Todos os controles (Input, Select,
- * TextArea, DatePicker...) usam este wrapper para ficarem alinhados.
- */
 export function Field({ label, htmlFor, required, hint, error, counter, children }: FieldProps) {
   return (
     <S.Container>

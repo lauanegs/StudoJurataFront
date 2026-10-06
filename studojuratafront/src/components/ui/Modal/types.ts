@@ -8,6 +8,5 @@ export interface ModalProps {
   children: ReactNode
   rodape?: ReactNode
   largura?: string
-  /** Impede fechar por Esc / clique no overlay (durante um salvamento). */
   bloqueado?: boolean
 }

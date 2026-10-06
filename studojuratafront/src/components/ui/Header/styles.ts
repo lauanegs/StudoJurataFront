@@ -8,7 +8,6 @@ export const Container = styled.header`
   width: 100%;
 `
 
-/* Título, ações e busca ficam no mesmo cartão branco da listagem. */
 export const Cartao = styled.div`
   display: flex;
   flex-direction: column;
@@ -22,14 +21,12 @@ export const Cartao = styled.div`
   box-shadow: ${({ theme }) => theme.shadow.base};
 `
 
-/* Voltar + título; o subtítulo fica abaixo, recuado para alinhar com o título. */
 export const LinhaTitulo = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-/* spacing.xxl bate com a caixa visual do título em 32px. */
 export const Voltar = styled.button`
   display: flex;
   align-items: center;
@@ -69,7 +66,6 @@ export const Titulo = styled.h1`
   }
 `
 
-/* Um item por linha; com botão de voltar, recua para alinhar com o texto do título. */
 export const Subtitulo = styled.div<{ $recuada: boolean }>`
   display: flex;
   flex-direction: column;
@@ -103,8 +99,6 @@ export const IconeSubtitulo = styled.span`
   color: ${({ theme }) => theme.colors.textSecondary};
 `
 
-/* Ações e busca ficam numa segunda linha, à direita, nunca ao lado do título.
-   flex-wrap em vez de scroll horizontal, para não esconder conteúdo. */
 export const LinhaAcoes = styled.div`
   display: flex;
   align-items: flex-end;
@@ -122,9 +116,6 @@ export const Acoes = styled.div`
   flex-wrap: wrap;
 `
 
-/* max-content: o <Field> dos campos ocupa 100% do pai. fit-content quebrava
-   cedo quando o filho tinha flex-wrap, e 100% forçava a quebra ao dividir a
-   linha com `actions`. max-width garante a quebra quando não cabe. */
 export const Filtros = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -133,7 +124,6 @@ export const Filtros = styled.div`
   max-width: 100%;
 `
 
-/* Layout de "N campos + botão Buscar" no slot de filtros do Header. */
 export const CamposFiltro = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -141,8 +131,6 @@ export const CamposFiltro = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-/* Largura fixa, informada por tela: dentro de um pai que se ajusta ao
-   conteúdo, flex: 1 colapsa o campo. */
 export const CampoFiltro = styled.div<{ $largura: string; $encolher?: boolean }>`
   width: ${({ $largura }) => $largura};
   ${({ $encolher }) => ($encolher ? 'flex-shrink: 0;' : '')}

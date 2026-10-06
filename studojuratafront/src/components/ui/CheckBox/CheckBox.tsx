@@ -13,7 +13,6 @@ export function CheckBox({
   size: _size,
   ...rest
 }: CheckBoxProps) {
-  // Descarta o `size` nativo do <input> para não colidir com o token de escala da Mantine.
   return (
     <Checkbox
       checked={checked}

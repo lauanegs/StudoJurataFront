@@ -10,13 +10,10 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   onClear?: () => void
   mask?: (value: string) => string
   maxWidth?: string
-  /** Cor de destaque da borda/foco. Sobrescreve o roxo padrão — usado na tela de login (azul). */
   corDestaque?: string
   /** Altura mínima do campo. @default '56px' */
   altura?: string
-  /** Borda sólida mesmo sem foco (tela de login). O padrão é esmaecida em repouso. */
   bordaSolida?: boolean
-  /** Só com `type="password"`: adiciona o botão de mostrar/esconder senha. */
   alternarVisibilidade?: boolean
   /**
    * Exibe o contador "x/maxLength" abaixo do campo quando `maxLength` está

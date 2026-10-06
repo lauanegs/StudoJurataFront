@@ -6,10 +6,6 @@ import { Select } from '@/components/ui/Select'
 import * as S from './styles'
 import type { ItemMenu, SidebarProps } from './types'
 
-/**
- * O item ativo é calculado pelo caminho atual: a rota exata ou qualquer rota
- * filha (`/adm/turmas/nova` mantém "Turmas" ativo).
- */
 export function Sidebar({
   usuario,
   cargo,
@@ -30,8 +26,6 @@ export function Sidebar({
 
     if (caminhoAtual === caminhoItem) return true
 
-    // A Home de cada perfil ("/adm", "/professor", "/aluno") é raiz de todas
-    // as outras rotas, então só casa exatamente.
     const ehRaizDoPerfil = caminhoItem.split('/').filter(Boolean).length === 1
     if (ehRaizDoPerfil) return false
 

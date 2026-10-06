@@ -1,9 +1,5 @@
 import styled from 'styled-components'
 
-/**
- * Seção de vínculo (título + botão, chips embaixo), usada em todo "escolher
- * itens existentes", não só conteúdos.
- */
 export const SecaoVinculo = styled.div`
   display: flex;
   flex-direction: column;

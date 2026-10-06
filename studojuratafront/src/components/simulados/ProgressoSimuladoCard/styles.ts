@@ -4,21 +4,16 @@ import { theme as tokens } from '@/styles/theme'
 import { corComOpacidade } from '@/utils/corComOpacidade'
 import type { QuestionProgressStatus } from './types'
 
-/* Cinza esmaecido das bordas e do fundo dos segmentos ainda não respondidos. */
 export const CINZA_ESMAECIDO = corComOpacidade(tokens.colors.textTertiary, 0.15)
 
-/* Acerto/erro usam degradês próprios, não os tokens success/danger. */
 export const COLORS: Record<QuestionProgressStatus, string> = {
   correct: tokens.gradients.correct,
   incorrect: tokens.gradients.incorrect,
-  // Mesmo realce azul de marca usado na Sidebar.
   current: tokens.gradients.blue,
   answered: tokens.colors.blue,
   pending: CINZA_ESMAECIDO,
 }
 
-
-/* Mais compacto que os 32px do Figma para não ocupar altura demais na prova. */
 export const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -43,7 +38,6 @@ export const Title = styled.p`
   white-space: nowrap;
 `
 
-/* Centralizado: esticado, cada segmento ficava enorme com poucas questões. */
 export const Track = styled.div`
   display: flex;
   justify-content: center;

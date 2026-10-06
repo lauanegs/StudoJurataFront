@@ -1,10 +1,6 @@
 import type { EstadoBotaoVF } from './types'
 import styled, { css } from 'styled-components'
 
-/**
- * Dois botões (V e F) em vez de uma letra, porque cada afirmação é julgada à
- * parte. Cada peça é uma caixa própria, não fundida como o badge de letra.
- */
 export const Container = styled.div`
   display: flex;
   align-items: stretch;
@@ -13,7 +9,6 @@ export const Container = styled.div`
   min-height: 60px;
 `
 
-// Largura fixa igual à do LetterBadge.
 export const BotaoJulgamento = styled.button<{ $estado: EstadoBotaoVF; $blocked: boolean }>`
   display: inline-flex;
   align-items: center;
@@ -65,8 +60,6 @@ export const BotaoJulgamento = styled.button<{ $estado: EstadoBotaoVF; $blocked:
   }
 `
 
-// Mesma caixa do AlternativaCard (borda 2px, raio, texto simples) — só que
-// sem a letra fundida à esquerda, já que aqui ela virou os dois botões ao lado.
 export const CardTexto = styled.div`
   display: flex;
   flex: 1;

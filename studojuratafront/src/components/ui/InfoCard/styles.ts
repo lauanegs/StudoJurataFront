@@ -43,7 +43,6 @@ export const Valor = styled.strong`
   font-variant-numeric: tabular-nums;
 `
 
-/* Cinza neutro: verde sugeriria "acerto" num indicador que é contagem, não taxa. */
 export const Selo = styled.span`
   display: inline-flex;
   align-items: center;

@@ -22,7 +22,6 @@ export function Header({
         <S.Titulos>
           <S.LinhaTitulo>
             {voltarPara && (
-              // Centralizado com a altura do título, não do bloco título+subtítulo.
               <S.Voltar type="button" onClick={() => navegar(voltarPara)} aria-label={rotuloVoltar}>
                 <ArrowLeft size={18} />
               </S.Voltar>
@@ -44,10 +43,6 @@ export function Header({
   )
 }
 
-/**
- * Item do subtítulo no estilo do Figma: ícone num badge cinza + texto
- * simples, um por linha (empilhados via CSS de `Subtitulo`).
- */
 export function SubtituloItem({ icon, children }: SubtituloItemProps) {
   return (
     <S.ItemSubtitulo>

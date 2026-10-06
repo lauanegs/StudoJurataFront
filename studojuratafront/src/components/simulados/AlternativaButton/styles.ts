@@ -1,10 +1,6 @@
 import styled, { css } from 'styled-components'
 import type { LetterState } from '@/components/simulados/LetterBadge/types'
 
-/**
- * A letra fica fundida na borda esquerda (quem tem padding é o texto), por
- * isso overflow:hidden clipa o canto do LetterBadge junto com o do container.
- */
 export const Container = styled.button<{ $state: LetterState; $blocked: boolean }>`
   display: flex;
   align-items: stretch;

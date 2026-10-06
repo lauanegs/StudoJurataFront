@@ -25,11 +25,6 @@ import {
   type QuestaoEditorProps,
 } from './types'
 
-/**
- * Usado na criação e na revisão de questões da IA; muda só `somenteLeitura` e
- * `actions`. V/F tem a mesma estrutura de Alternativas, só que cada afirmação
- * é julgada à parte, então só muda o controle de correção de cada linha.
- */
 export function QuestaoEditor({
   questao,
   onChange,
@@ -73,7 +68,6 @@ export function QuestaoEditor({
     })
   }
 
-  /** Alternativas: só uma pode ser a correta — marcar uma desmarca as outras. */
   function marcarCorreta(posicao: number) {
     atualizar({
       alternativas: questao.alternativas.map((alternativa, i) => ({
@@ -83,7 +77,6 @@ export function QuestaoEditor({
     })
   }
 
-  /** V/F: cada afirmação julgada à parte — não mexe nas outras linhas. */
   function julgarAfirmacao(posicao: number, valor: boolean) {
     atualizarAlternativa(posicao, { correta: valor })
   }
@@ -98,8 +91,6 @@ export function QuestaoEditor({
 
     const restantes = questao.alternativas.filter((_, i) => i !== posicao)
 
-    // Alternativas precisa de uma correta sobrando; V/F não (cada uma julga
-    // sua própria afirmação, "nenhuma verdadeira" é um estado válido).
     if (!verdadeiroFalso && !restantes.some((alternativa) => alternativa.correta)) {
       restantes[0].correta = true
     }

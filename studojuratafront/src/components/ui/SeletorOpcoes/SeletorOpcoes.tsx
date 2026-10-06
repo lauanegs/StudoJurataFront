@@ -1,7 +1,6 @@
 import { Grupo, Opcao } from './styles'
 import type { SeletorOpcoesProps } from './types'
 
-/** Escolha entre poucas opções excludentes, em botões pequenos (ex.: tipo de questão). */
 export function SeletorOpcoes<T extends string>({
   rotuloAcessivel,
   value,

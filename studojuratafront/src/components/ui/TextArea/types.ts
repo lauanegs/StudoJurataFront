@@ -5,6 +5,5 @@ export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
   required?: boolean
   hint?: string
   error?: string
-  /** Cresce sozinho conforme o conteúdo, respeitando `rows` como mínimo. */
   autoAltura?: boolean
 }

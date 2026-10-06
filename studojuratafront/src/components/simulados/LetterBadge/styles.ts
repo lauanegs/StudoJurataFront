@@ -2,10 +2,6 @@ import styled, { css } from 'styled-components'
 
 import type { LetterState } from './types'
 
-/**
- * Bloco retangular fundido à borda esquerda da linha, na altura inteira e
- * arredondado só nos cantos esquerdos.
- */
 export const Container = styled.span<{ $state: LetterState }>`
   display: inline-flex;
   align-items: center;

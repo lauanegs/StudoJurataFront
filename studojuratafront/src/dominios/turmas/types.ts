@@ -21,7 +21,6 @@ export interface Turma extends EntidadeBase {
 export interface HorarioTurma extends EntidadeBase {
   turma?: Turma
   diaSemana: DiaSemana
-  /** Formato HH:mm:ss vindo de java.time.LocalTime. */
   horaInicio: string
   horaFim: string
 }
@@ -41,7 +40,6 @@ export interface AlunoTurma extends EntidadeBase {
   status?: StatusMatricula
 }
 
-/** Resposta de GET /turmas/{id}/frequencia-alunos (FrequenciaService.ResumoFrequenciaAluno). */
 export interface ResumoFrequenciaAluno {
   alunoId: number
   cargaHoraria: number

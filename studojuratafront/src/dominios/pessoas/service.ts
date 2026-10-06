@@ -29,7 +29,6 @@ export const professores = {
   listar: () => api.get<Professor[]>('/professores'),
   buscar: (id: number) => api.get<Professor>(`/professores/${id}`),
   turmasLecionadas: (id: number) => api.get<TurmaDisciplina[]>(`/professores/${id}/turmas`),
-  /** Tentativas concluídas dos simulados das turmas do professor. */
   desempenho: (id: number) => api.get<TentativaDesempenho[]>(`/professores/${id}/desempenho`),
   criar: (dados: Partial<Professor>) => api.post<Professor>('/professores', dados),
   atualizar: (id: number, dados: Partial<Professor>) =>

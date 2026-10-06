@@ -12,10 +12,6 @@ import type { Parentesco } from '@/dominios/pessoas/types'
 
 import type { ItemVinculo, VinculoResponsavelAlunoProps } from './types'
 
-/**
- * Mesmo padrão da aba Disciplinas da turma: card com os campos e o botão
- * "Vincular" e, abaixo, a tabela dos vínculos já feitos.
- */
 export function VinculoResponsavelAluno({
   titulo,
   rotuloCampo,

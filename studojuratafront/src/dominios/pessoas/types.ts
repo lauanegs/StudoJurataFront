@@ -21,7 +21,6 @@ export interface Endereco {
   complemento?: string
   bairro?: string
   cidade?: string
-  /** UF, 2 letras. */
   estado?: string
 }
 
@@ -60,7 +59,6 @@ export interface Usuario extends EntidadeBase {
   escola: Escola
   pessoa: Pessoa
   username: string
-  /** Só de escrita: o back nunca devolve a senha (@JsonProperty WRITE_ONLY). */
   senha?: string
   tipoUsuario: TipoUsuario
   status?: StatusAtivoInativo

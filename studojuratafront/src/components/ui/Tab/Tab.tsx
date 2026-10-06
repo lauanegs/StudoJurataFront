@@ -4,10 +4,6 @@ import { theme as tokens } from '@/styles/theme'
 import { comTamanho } from '@/utils/redimensionarIcone'
 import type { TabProps } from './types'
 
-/**
- * Estilo de sublinhado: ativo e inativo variam só por fundo e borda inferior,
- * o texto mantém cor e peso.
- */
 export function Tab<V extends string = string>({
   options,
   value,

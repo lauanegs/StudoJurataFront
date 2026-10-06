@@ -103,7 +103,6 @@ export const BlocoUsuario = styled.div<{ $colapsada: boolean }>`
     `}
 `
 
-/* Select do curso do aluno (só aparece com mais de um curso); o rótulo acompanha o texto claro da sidebar. */
 export const BlocoCurso = styled.div`
   padding: 0 ${({ theme }) => theme.spacing.xs};
 
@@ -152,10 +151,6 @@ export const Navegacao = styled.nav`
   }
 `
 
-/**
- * Item ativo: além da cor, texto em peso maior e indicador na lateral, para
- * não depender só da cor.
- */
 export const ItemNav = styled.button<{ $ativo: boolean; $colapsada: boolean }>`
   position: relative;
 
@@ -291,7 +286,6 @@ export const TextoMarca = styled.div`
   strong {
     font-size: ${({ theme }) => theme.typography.sizes.sm};
     font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-    /* Mesmo cinza do "Portal Escolar": roxo e textStrong pesavam demais. */
     color: ${({ theme }) => theme.colors.textSecondary};
     line-height: 1.2;
   }

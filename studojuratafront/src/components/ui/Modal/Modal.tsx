@@ -3,7 +3,6 @@ import { Group, Modal as MantineModal, Text } from '@mantine/core'
 import { theme as tokens } from '@/styles/theme'
 import type { ModalProps } from './types'
 
-/** Componentes compostos em vez de <Modal> para o rodapé ficar fora da área que rola. */
 export function Modal({
   aberto,
   onClose,
@@ -48,7 +47,6 @@ export function Modal({
         <MantineModal.Body>{children}</MantineModal.Body>
 
         {rodape && (
-          // Mesmo padding lateral do Header/Body da Mantine.
           <Group
             justify="flex-end"
             gap="md"

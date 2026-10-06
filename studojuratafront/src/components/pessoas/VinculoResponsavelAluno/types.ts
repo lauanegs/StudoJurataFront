@@ -8,7 +8,6 @@ export interface ItemVinculo {
 
 export interface VinculoResponsavelAlunoProps {
   titulo: string
-  /** O que o primeiro campo escolhe: "Responsável" (na ficha do aluno) ou "Aluno" (na do responsável). */
   rotuloCampo: 'Responsável' | 'Aluno'
   opcoes: { value: number; label: string; descricao?: string }[]
   carregandoOpcoes?: boolean

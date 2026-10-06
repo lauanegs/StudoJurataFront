@@ -11,7 +11,6 @@ function lerDispensados(): number[] {
   }
 }
 
-/** Avisos (por id) já marcados como "ciente", persistidos no navegador. */
 export function useAvisosDispensados() {
   const [dispensados, setDispensados] = useState<number[]>(lerDispensados)
 

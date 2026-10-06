@@ -29,7 +29,6 @@ export function Chip({
       onRemove={onRemove}
       disabled={disabled}
       removeButtonProps={{ 'aria-label': rotuloRemover ?? `Remover ${String(children)}` }}
-      // Padding simétrico reserva o espaço do botão de remover (absolute) sem descentralizar o texto.
       styles={{
         root: {
           position: 'relative',

@@ -5,12 +5,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   titulo?: string
   icon?: ReactNode
   actions?: ReactNode
-  /** Remove o padding interno — útil quando o filho é uma tabela. */
   semPadding?: boolean
-  /**
-   * Corpo com fundo cinza-lilás, para que "tiles" brancos internos
-   * (estatísticas, conquistas, skins) se destaquem.
-   */
   corpoComFundo?: boolean
   elevacao?: 'none' | 'default' | 'medium'
 }

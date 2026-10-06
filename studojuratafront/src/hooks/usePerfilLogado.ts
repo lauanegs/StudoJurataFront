@@ -6,12 +6,6 @@ import { resolverImagemSkin } from '@/utils/skins'
 import { useAuth } from './useAuth'
 import { useRequisicao } from './useRequisicao'
 
-/**
- * O /auth/me devolve `pessoaId`, não o id do Aluno nem o do Professor — e
- * quase toda rota do back é indexada por essas duas entidades. Estes hooks
- * fazem a ponte: buscam a lista e casam pelo pessoaId do usuário logado.
- */
-
 export function useAlunoLogado() {
   const { usuario } = useAuth()
   const ehAluno = usuario?.tipoUsuario === 'ALUNO'
@@ -34,11 +28,6 @@ export function useAlunoLogado() {
   }
 }
 
-/**
- * Skin equipada pelo aluno — usada no banner da Home, no simulado em
- * andamento e na tela de resultado, para o mascote acompanhar a escolha
- * feita em "Meu perfil".
- */
 export function useSkinEquipadaDoAluno(alunoId: number | null) {
   const { data } = useRequisicao(
     () => gamificacao.skinsDoAluno(alunoId as number),

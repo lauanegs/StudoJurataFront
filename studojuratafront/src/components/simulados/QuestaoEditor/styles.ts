@@ -63,8 +63,6 @@ export const BotaoCorreta = styled.button<{ $correta: boolean }>`
   justify-content: center;
   flex-shrink: 0;
 
-  /* Quadrado do tamanho da altura do Input ao lado (56px, o padrão do
-     componente) — largura acompanha a altura, não um valor fixo à parte. */
   width: 56px;
   height: 56px;
 
@@ -98,7 +96,6 @@ export const CampoAlternativa = styled.div`
   min-width: 0;
 `
 
-/** Par V/F por linha — reaproveita o visual do BotaoCorreta, só emparelhado. */
 export const GrupoVF = styled.div`
   display: inline-flex;
   gap: ${({ theme }) => theme.spacing.xxs};
@@ -128,7 +125,6 @@ export const Dica = styled.span`
   color: ${({ theme }) => theme.colors.textTertiary};
 `
 
-/* Navegação entre questões dentro do card da questão atual, com a mesma borda superior do Rodape. */
 export const SecaoNavegador = styled.div`
   display: flex;
   align-items: center;

@@ -11,17 +11,11 @@ import type { LayoutProps } from './types'
 
 const CHAVE_COLAPSO = '@studojurata:sidebarColapsada'
 
-/**
- * Shell das telas autenticadas: sidebar + área de conteúdo.
- *
- * O perfil vem do usuário logado — nenhuma página passa `perfil` na mão, o que
- * elimina a chance de uma tela do professor renderizar o menu do admin.
- */
 export function Layout({ children, largura = 'default' }: LayoutProps) {
   const navegar = useNavigate()
   const confirmar = useConfirm()
   const { usuario, cargo, sair } = useAuth()
-  // Só aluno com mais de um curso ganha o atalho para escolher outro (a consulta nem roda para os demais perfis).
+  
   const { temVariosCursos, matriculas, turmaId, selecionar } = useCursoAluno()
 
   const [colapsada, setColapsada] = useState(

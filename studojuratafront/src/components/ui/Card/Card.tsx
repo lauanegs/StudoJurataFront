@@ -33,7 +33,6 @@ export function Card({
         overflow: 'hidden',
         boxShadow: el.shadow,
         border: el.border,
-        // O corpo tingido é o próprio Paper translúcido atrás de um cabeçalho branco sólido.
         background: corpoComFundo ? 'rgba(255, 255, 255, 0.2)' : undefined,
         ...style,
       }}
@@ -65,7 +64,6 @@ export function Card({
                   height: 28,
                   flexShrink: 0,
                   borderRadius: tokens.radius.sm,
-                  // Mesmas cores do botão "voltar" do Header.
                   background: tokens.colors.background,
                   color: tokens.colors.textSecondary,
                 }}

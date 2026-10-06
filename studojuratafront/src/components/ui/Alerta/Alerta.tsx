@@ -6,7 +6,6 @@ import { comTamanho } from '@/utils/redimensionarIcone'
 
 import type { AlertaProps } from './types'
 
-/** Aviso informativo fixo (não é toast): orienta o preenchimento de um campo ou tela. */
 export function Alerta({ titulo, children }: AlertaProps) {
   return (
     <Alert

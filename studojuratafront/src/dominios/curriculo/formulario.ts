@@ -41,11 +41,6 @@ export interface DadosGradeCurso {
   cargaHoraria: string
 }
 
-/**
- * Linha da grade curricular do curso. Tem schema próprio porque é salva ao
- * clicar em "Adicionar", sem passar pelo Salvar do cabeçalho: sem ele o campo
- * faltando só aparecia por toast, depois do clique.
- */
 export const gradeCursoSchema = yup.object({
   disciplinaId: yup.number().nullable().required('Selecione a disciplina'),
   cargaHoraria: yup

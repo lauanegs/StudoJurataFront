@@ -7,7 +7,6 @@ import { IconButton } from '@/components/ui/IconButton'
 import { Setas, Trilha } from './styles'
 import type { SeparadorCardProps } from './types'
 
-/** Card com uma grade paginada no cliente no lugar do corpo. */
 export function SeparadorCard({ titulo, icon, children, colunas }: SeparadorCardProps) {
   const [pagina, setPagina] = useState(0)
 

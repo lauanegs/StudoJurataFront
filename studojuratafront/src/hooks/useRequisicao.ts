@@ -9,11 +9,8 @@ interface RequestState<T> {
 }
 
 export interface RequestResult<T> extends RequestState<T> {
-  /** Recarrega mantendo a tela montada (mostra o estado de carregamento). */
   reload: () => Promise<void>
-  /** Atualiza os dados em memória sem ir ao servidor (updates otimistas). */
   setData: (updater: T | ((previous: T | null) => T | null)) => void
-  /** true quando terminou de carregar e não há nada para exibir. */
   isEmpty: boolean
 }
 
@@ -23,13 +20,6 @@ function isEmptyValue(data: unknown): boolean {
   return false
 }
 
-/**
- * Carrega dados do back cuidando de loading, erro e cancelamento.
- *
- * O array `dependencias` funciona como no useEffect: quando muda, refaz a
- * requisição. Passe `{ ativo: false }` para segurar a chamada enquanto um
- * parâmetro obrigatório ainda não existe (ex.: id do aluno logado).
- */
 export function useRequisicao<T>(
   buscar: () => Promise<T>,
   dependencias: unknown[] = [],
@@ -109,10 +99,6 @@ export function useRequisicao<T>(
   }
 }
 
-/**
- * Executa uma ação de escrita (salvar, excluir, aprovar...) controlando o
- * estado de "enviando" para desabilitar o botão e evitar duplo clique.
- */
 export function useAcao<Args extends unknown[], Retorno>(
   acao: (...args: Args) => Promise<Retorno>,
 ) {

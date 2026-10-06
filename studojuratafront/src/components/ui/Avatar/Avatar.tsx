@@ -18,11 +18,6 @@ const FONTES: Record<NonNullable<AvatarProps['size']>, string> = {
   extraLarge: '36px',
 }
 
-/**
- * Foto do usuário com fallback para as iniciais do nome — a Mantine já troca
- * pro `children` sozinha quando `src` falha ou não existe, sem precisar de
- * um `useState` de erro na mão.
- */
 export function Avatar({ nome, src, size = 'medium', destaque }: AvatarProps) {
   return (
     <MantineAvatar

@@ -18,8 +18,6 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  // `processando` só é zerado no próximo pedido: zerar aqui faria o botão
-  // piscar do spinner para o rótulo durante a transição de fechamento.
   const fechar = useCallback(() => {
     resolver.current?.()
     resolver.current = null

@@ -26,18 +26,10 @@ const estilosCampo = (error?: string) => ({
 
 const LARGURA_ICONE = '56px'
 
-// Roda antes do onChange interno da Mantine, que então já lê o texto mascarado.
 function aplicarMascara(evento: FormEvent<HTMLInputElement>) {
   evento.currentTarget.value = mascararData(evento.currentTarget.value)
 }
 
-/**
- * Componente à parte (não uma função chamada dentro do render do
- * `DatePicker`) só pra o ref cruzar a fronteira como prop — a forma
- * suportada de um clique disparar foco no input de verdade; ler `ref.current`
- * dentro de uma função comum, no meio do render de outro componente, é o que
- * a regra `react-hooks/refs` do projeto proíbe.
- */
 function IconeCampo({
   icon,
   campoRef,
@@ -65,15 +57,6 @@ function IconeCampo({
   )
 }
 
-/**
- * Entrada e saída continuam em string ISO (`YYYY-MM-DD` ou
- * `YYYY-MM-DDTHH:mm`); a conversão do formato da Mantine é feita aqui.
- *
- * Usa `DateInput`/`TimePicker` porque a data precisa ser digitável:
- * `DatePickerInput`/`DateTimePicker` renderizam um botão e não aceitam texto.
- * Como a Mantine não tem campo único de data+hora digitável, `dataHora`
- * combina os dois.
- */
 export function DatePicker({
   modo = 'data',
   label,
@@ -87,7 +70,6 @@ export function DatePicker({
   placeholder,
   maxWidth,
 }: DatePickerProps) {
-  // O ícone (leftSection) foca o campo para abrir o dropdown dele.
   const campoDataRef = useRef<HTMLInputElement>(null)
   const campoHoraRef = useRef<HTMLInputElement>(null)
 
@@ -109,10 +91,6 @@ export function DatePicker({
           valueFormat={dataIsoParaExibicao}
           dateParser={dataDigitadaParaIso}
           onInput={aplicarMascara}
-          // Blur com o padrão da Mantine (fixOnBlur: true) reescreve o texto a
-          // partir do valor: data digitada em formato aceito volta normalizada
-          // como DD/MM/YYYY, e texto que não é data não fica parecendo
-          // preenchido com o formulário vazio — o schema acusa no envio.
           leftSection={<IconeCampo icon={<Calendar />} campoRef={campoDataRef} disabled={disabled} />}
           leftSectionWidth={LARGURA_ICONE}
           leftSectionPointerEvents="auto"

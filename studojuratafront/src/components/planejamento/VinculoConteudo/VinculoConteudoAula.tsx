@@ -16,10 +16,6 @@ import { Stack } from '@/components/ui/Stack'
 
 import type { VinculoConteudoAulaProps } from './types'
 
-/**
- * Sem `aulaId` (aula ainda não salva), a escolha fica no estado local do
- * formulário pai até a aula existir, em vez de obrigar a salvar antes.
- */
 export function VinculoConteudoAula({
   aulaId,
   planoEnsinoId,
@@ -38,7 +34,6 @@ export function VinculoConteudoAula({
     { ativo: Boolean(aulaId) },
   )
 
-  // Carrega antes de abrir o modal: os chips do modo local também precisam dos títulos.
   const requisicaoConteudos = useRequisicao(() => conteudosPlano.listar(), [], { ativo: Boolean(planoEnsinoId) })
 
   const conteudosVinculados = useMemo(() => {

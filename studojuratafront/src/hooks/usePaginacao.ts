@@ -1,19 +1,10 @@
 import { useMemo, useState } from 'react'
 
-/**
- * Paginação no cliente.
- *
- * O back-end do Studo Jurata devolve as listas inteiras (não há endpoint
- * paginado em nenhum controller), então a paginação exibida na tabela é
- * calculada aqui a partir do array completo.
- */
 export function usePaginacao<T>(itens: T[], porPagina = 5) {
   const [paginaEscolhida, setPagina] = useState(1)
 
   const totalPaginas = Math.max(1, Math.ceil(itens.length / porPagina))
 
-  // Se a lista encolheu (filtro/busca), a página exibida é corrigida no
-  // próprio render — nada de efeito para "consertar" o estado depois.
   const pagina = Math.min(paginaEscolhida, totalPaginas)
 
   const itensDaPagina = useMemo(() => {

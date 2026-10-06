@@ -6,7 +6,6 @@ export const Setas = styled.div`
   flex-shrink: 0;
 `
 
-/** Grade que preenche a largura em `colunas` cartões de tamanho igual, com espaçamento uniforme. */
 export const Trilha = styled.div<{ $colunas: number }>`
   display: grid;
   grid-template-columns: repeat(${({ $colunas }) => $colunas}, 1fr);

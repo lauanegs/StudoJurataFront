@@ -1,10 +1,6 @@
 import type { AlternativeStatus } from './types'
 import styled from 'styled-components'
 
-/**
- * Letra fundida à borda esquerda, como no AlternativaButton; o card fica
- * branco, sem tingir o fundo de verde/vermelho.
- */
 export const Container = styled.div`
   display: flex;
   align-items: stretch;

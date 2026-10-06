@@ -13,7 +13,7 @@ export function SimuladoHeader({
   onExit,
   rotuloSair = 'Sair',
 }: SimuladoHeaderProps) {
-  // Alerta visual no último minuto de uma prova cronometrada.
+
   const alerta = regressivo && segundos <= 60
 
   return (

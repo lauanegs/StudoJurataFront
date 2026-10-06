@@ -12,10 +12,6 @@ import type { Coluna, DataTableProps } from './types'
 
 import type { Direcao } from './types'
 
-/**
- * Ordena no cliente porque nenhum endpoint do back aceita ordenação: todos
- * devolvem a lista inteira.
- */
 export function DataTable<T>({
   columns,
   data,
@@ -156,8 +152,6 @@ export function DataTable<T>({
               })}
 
               {actions && (
-                // width:1% + nowrap reserva só o espaço dos botões em uma linha;
-                // com quebrarAcoes a coluna segue o algoritmo normal da tabela.
                 <Table.Th
                   scope="col"
                   style={quebrarAcoes ? { textAlign: 'left' } : { textAlign: 'left', width: '1%', whiteSpace: 'nowrap' }}
@@ -185,7 +179,6 @@ export function DataTable<T>({
                 <Table.Tr
                   key={rowKey(item)}
                   tabIndex={onRowClick ? 0 : undefined}
-                  // A chave só entra na última linha: mesmo `undefined` apagaria a borda de todas no merge.
                   style={{
                     cursor: onRowClick ? 'pointer' : undefined,
                     ...(indice === dadosOrdenados.length - 1 ? { borderBottom: 'none' } : null),

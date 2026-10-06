@@ -85,8 +85,6 @@ export function Select<V extends string | number = string | number>({
         onDropdownClose={() => setEmFoco(false)}
         styles={{
           input: {
-            // height, não só minHeight: com minHeight a Mantine mantém a altura
-            // interna padrão e o texto fica cortado.
             height: '56px',
             minHeight: '56px',
             borderWidth: '2px',

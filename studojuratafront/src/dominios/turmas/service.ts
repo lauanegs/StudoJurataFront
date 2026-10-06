@@ -10,9 +10,7 @@ import type {
 export const turmas = {
   listar: () => api.get<Turma[]>('/turmas'),
   buscar: (id: number) => api.get<Turma>(`/turmas/${id}`),
-  /** Derivado das matrículas — a Turma não persiste esse número. */
   alunosAtivos: (id: number) => api.get<number>(`/turmas/${id}/alunos-ativos`),
-  /** Carga horária cursada e faltas de cada aluno ativo, calculadas no back. */
   frequenciaAlunos: (id: number) => api.get<ResumoFrequenciaAluno[]>(`/turmas/${id}/frequencia-alunos`),
   criar: (dados: Partial<Turma>) => api.post<Turma>('/turmas', dados),
   atualizar: (id: number, dados: Partial<Turma>) => api.put<Turma>(`/turmas/${id}`, dados),

@@ -14,7 +14,6 @@ export const cursos = {
   ativar: (id: number) => api.post<Curso>(`/cursos/${id}/ativar`),
 }
 
-/** Grade curricular: disciplinas + carga horária de cada curso (ver CursoDisciplina). */
 export const cursoDisciplinas = {
   listarPorCurso: (cursoId: number) => api.get<CursoDisciplina[]>(`/cursos/${cursoId}/disciplinas`),
   criar: (dados: Partial<CursoDisciplina>) => api.post<CursoDisciplina>('/curso-disciplina', dados),

@@ -6,7 +6,6 @@ export interface HeaderProps {
   voltarPara?: string
   rotuloVoltar?: string
   filtros?: ReactNode
-  /** Botões da tela. Ordem visual: secundários à esquerda, primário à direita. */
   actions?: ReactNode
   children?: ReactNode
 }

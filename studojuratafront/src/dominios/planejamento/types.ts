@@ -3,12 +3,10 @@ import type { Curso } from '@/dominios/curriculo/types'
 import type { Aluno, Professor } from '@/dominios/pessoas/types'
 import type { HorarioTurma, TurmaDisciplina } from '@/dominios/turmas/types'
 
-/** Próprio de PlanoEnsino/PlanoAula — matrícula cíclica não tem "inativo", só "concluído" (ciclo fechado). */
 export type StatusPlano = 'ATIVO' | 'CONCLUIDO'
 
 export interface PlanoEnsino extends EntidadeBase {
   turmaDisciplina?: TurmaDisciplina | null
-  /** Professor responsável pelo plano (turmaDisciplina é opcional). */
   professor?: Professor | null
   curso: Curso
   cargaHoraria?: number
@@ -17,7 +15,6 @@ export interface PlanoEnsino extends EntidadeBase {
   metodologia?: string
   dataInicio?: string
   dataFim?: string
-  /** Matrícula cíclica: um plano não é "inativado", ele conclui o ciclo (a turma pode receber um novo plano). */
   status?: StatusPlano
 }
 
@@ -37,14 +34,7 @@ export interface PlanoAula extends EntidadeBase {
 
 export interface Aula extends EntidadeBase {
   planoAula: PlanoAula
-  /**
-   * Horário semanal da turma a que esta aula corresponde — quando
-   * informado, cargaHoraria abaixo é CALCULADA a partir dele (hora fim -
-   * hora início) pelo back, não editável. Ausente só em aula fora do
-   * horário fixo (reposição etc.), onde cargaHoraria continua digitada.
-   */
   horarioTurma?: HorarioTurma | null
-  /** Em horas, aceita fração (ex.: 1.5 = 1h30). */
   cargaHoraria?: number
   dataPrevista?: string
   ordem?: number
@@ -54,15 +44,9 @@ export interface Aula extends EntidadeBase {
   status?: StatusAtivoInativo
 }
 
-/**
- * Geração em lote de aulas pra um plano de aula — segue os horários já
- * cadastrados na turma (HorarioTurma), ciclando entre eles a partir de
- * dataInicio até completar a quantidade pedida.
- */
 export interface GerarAulasLoteRequest {
   quantidade: number
   dataInicio?: string
-  /** Vira "{tituloBase} {ordem}" em cada aula gerada — default "Aula" quando vazio. */
   tituloBase?: string
 }
 
@@ -78,7 +62,6 @@ export interface Frequencia extends EntidadeBase {
   justificativa?: string
 }
 
-/** Corpo de POST /aulas/{id}/frequencias/chamada (dto/ChamadaRequest.java). */
 export interface ChamadaRequest {
   alunos: {
     alunoId: number
@@ -87,7 +70,6 @@ export interface ChamadaRequest {
   }[]
 }
 
-/** Estatísticas de GET /plano-aula/{id}/estatisticas (Map<String, Object>). */
 export interface EstatisticasPlanoAula {
   [chave: string]: number | string | null
 }

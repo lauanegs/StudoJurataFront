@@ -42,8 +42,6 @@ export const Direita = styled.span`
   gap: ${({ theme }) => theme.spacing.sm};
 `
 
-/* Cinza, não roxo: roxo é a cor de link/ação da marca — um resumo em roxo
-   parecia clicável por si só, sem ser (o clique é no cabeçalho inteiro). */
 export const Resumo = styled.span`
   display: inline-flex;
   align-items: center;

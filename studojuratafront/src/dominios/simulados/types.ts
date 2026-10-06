@@ -17,13 +17,6 @@ export type NivelDificuldade = 'FACIL' | 'MEDIA' | 'DIFICIL'
 
 export type OrigemQuestao = 'PROFESSOR' | 'IA'
 
-/**
- * Vínculo questão-conteúdo (aba "Conteúdo" do QuestaoEditor) — alimenta o
- * cálculo de desempenho por conteúdo/nível que decide o reforço (back:
- * RecomendacaoService). `questao` só carrega o `id`: o endpoint devolve a
- * entidade completa, mas nada na tela usa mais que isso — o resto do dado da
- * questão já está no estado local do editor.
- */
 export interface QuestaoConteudo extends EntidadeBase {
   questao: { id: number }
   conteudoPlano: ConteudoPlano
@@ -68,10 +61,8 @@ export interface SimuladoRequest {
   planoEnsinoId?: number | null
   turmaId?: number | null
   tipoDestinacao: TipoDestinacaoSimulado
-  /** LocalDateTime — "YYYY-MM-DDTHH:mm:ss". */
   dataInicio?: string | null
   dataFim?: string | null
-  /** Em minutos. */
   tempoLimite?: number | null
   notaMaxima?: number | null
   quantidadeQuestoes?: number | null
@@ -79,7 +70,6 @@ export interface SimuladoRequest {
 
 export interface SimuladoResponse extends SimuladoRequest {
   id: number
-  /** "Studo Jurata" quando gerado pela IA; senão o professor da turma/disciplina. */
   autor?: string
   status?: StatusSimulado
   createdAt?: string
@@ -107,11 +97,9 @@ export interface SimuladoAlunoResponse {
   alunoId: number
   quantidadeAcertos?: number
   nota?: number
-  /** Em segundos. */
   tempoGasto?: number
   finalizadoPorTempo?: boolean
   status?: StatusSimuladoAluno
-  /** Só vem preenchido na resposta de finalizar() — dias até a próxima revisão por repetição espaçada (undefined se o simulado não cobre conteúdo rastreado, ou já dominado). */
   diasProximaRevisao?: number
 }
 
@@ -120,44 +108,32 @@ export interface QuestaoAlunoResponse {
   simuladoAlunoId: number
   questaoId: number
   alternativaId?: number | null
-  /** Ids das afirmações que o aluno marcou como Verdadeiras (só questão VERDADEIRO_FALSO). */
   alternativasVerdadeirasIds?: number[]
-  /** false = questão deixada em branco. Sem isso, "respondeu e errou tudo" em V/F fica indistinguível de "em branco". */
   respondida?: boolean
   acertou?: boolean
   tempoResposta?: number
 }
 
-/** POST /simulados/{id}/lancar. */
 export interface LancarSimuladoRequest {
   alunoIds?: number[]
 }
 
-/** POST /simulado-aluno/{id}/conferir-questao: feedback imediato de uma questão. */
 export interface ConferenciaDaQuestao {
   acertou: boolean
   alternativasCorretasIds: number[]
 }
 
-/** POST /simulado-aluno/{id}/finalizar. */
 export interface FinalizarSimuladoRequest {
   respostas: {
     questaoId: number
-    /** Nulo quando a questão foi deixada em branco. Ignorado em questão VERDADEIRO_FALSO. */
     alternativaId: number | null
-    /**
-     * Só usado em questão VERDADEIRO_FALSO: ids das alternativas (afirmações)
-     * marcadas como Verdadeiras — as demais contam como marcadas Falsas.
-     */
     alternativasVerdadeiras?: number[]
     tempoResposta?: number
   }[]
-  /** Tempo total da tentativa, em segundos. */
   tempoGastoTotal: number
   finalizadoPorTempo: boolean
 }
 
-/** GET /professores/{id}/desempenho: tentativa concluída de um simulado das turmas do professor. */
 export interface TentativaDesempenho {
   id: number
   alunoId: number
@@ -169,21 +145,17 @@ export interface TentativaDesempenho {
   disciplina: string | null
   nota: number
   notaMaxima: number
-  /** 0 a 100. */
   percentual: number
-  /** dataInicio do simulado, com createdAt como reserva. */
   data: string | null
   tipoDestinacao: TipoDestinacaoSimulado
 }
 
-/** Alternativa como o aluno vê durante a prova: sem o campo `correta`. */
 export interface AlternativaDaTentativa {
   id: number
   texto: string
   ordem?: number
 }
 
-/** Questão da tentativa, com as alternativas já na ordem do servidor. */
 export interface QuestaoDaTentativa {
   questaoId: number
   enunciado: string
@@ -191,12 +163,6 @@ export interface QuestaoDaTentativa {
   alternativas: AlternativaDaTentativa[]
 }
 
-/**
- * Conteúdo da prova da própria tentativa.
- *
- * `gabarito` só vem do servidor quando a tentativa está CONCLUIDA — durante a
- * prova o campo não existe no payload.
- */
 export interface ProvaDaTentativa {
   simuladoAlunoId: number
   status: StatusSimuladoAluno

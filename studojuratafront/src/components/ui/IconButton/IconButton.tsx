@@ -1,7 +1,6 @@
 import * as S from './styles'
 import type { IconButtonProps } from './types'
 
-/** Botão só com ícone. O `label` vira aria-label e title — nunca é opcional. */
 export function IconButton({
   label,
   icon,

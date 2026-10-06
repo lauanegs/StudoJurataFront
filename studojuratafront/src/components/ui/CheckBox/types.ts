@@ -4,6 +4,5 @@ export interface CheckBoxProps extends Omit<InputHTMLAttributes<HTMLInputElement
   label?: ReactNode
   description?: string
   error?: string
-  /** Estado visual de "parcialmente marcado" (seleção em massa de tabela). */
   indeterminate?: boolean
 }

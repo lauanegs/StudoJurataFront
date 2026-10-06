@@ -51,16 +51,10 @@ export type FormularioTurma = ReturnType<typeof useFormularioTurma>
 
 export interface DadosHorarioTurma {
   diaSemana: DiaSemana | null
-  /** HH:mm, no formato do TimePicker. */
   horaInicio: string
   horaFim: string
 }
 
-/**
- * O horário é salvo assim que é adicionado, sem passar pelo Salvar do
- * cabeçalho, por isso tem schema próprio: sem ele o usuário só descobria o
- * campo faltando pelo toast, depois de clicar em Adicionar.
- */
 export const horarioTurmaSchema = yup.object({
   diaSemana: yup.string().nullable().required('Selecione o dia da semana'),
   horaInicio: yup.string().required('Informe a hora de início'),
@@ -85,7 +79,6 @@ export type FormularioHorarioTurma = ReturnType<typeof useFormularioHorarioTurma
 
 export interface DadosVinculoTurma {
   disciplinaId: number | null
-  /** Opcional de propósito: a turma pode ser organizada antes de definir o professor. */
   professorId: number | null
 }
 

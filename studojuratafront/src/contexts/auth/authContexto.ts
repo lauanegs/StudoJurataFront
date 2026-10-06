@@ -7,7 +7,6 @@ export interface ContextoAutenticacao {
   usuario: LoginResponse | null
   cargo: string
   autenticado: boolean
-  /** true enquanto a sessão do servidor ainda está sendo verificada. */
   loading: boolean
   entrar: (username: string, senha: string) => Promise<LoginResponse>
   sair: () => Promise<void>

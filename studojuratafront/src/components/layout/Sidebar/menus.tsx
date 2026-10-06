@@ -18,11 +18,6 @@ import {
 import type { TipoUsuario } from '@/dominios/comum/types'
 import type { ItemMenu } from './types'
 
-/**
- * Os itens espelham exatamente as áreas que o back autoriza em SecurityConfig
- * — por isso o Aluno não vê Turmas/Planos (só teria GET) e o Professor não vê
- * os cadastros de pessoas, que são POST/PUT/DELETE restritos ao Administrador.
- */
 export const MENUS: Record<TipoUsuario, ItemMenu[]> = {
   ADMINISTRADOR: [
     { label: 'Home', caminho: '/adm', icon: <Home /> },

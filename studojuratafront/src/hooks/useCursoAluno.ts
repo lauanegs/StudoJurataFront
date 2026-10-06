@@ -16,8 +16,6 @@ function lerSelecao(chave: string): number | null {
   }
 }
 
-// A escolha é lida por várias telas ao mesmo tempo (sidebar, Home, Reforço, Notas):
-// quando uma delas troca o curso, todas precisam reagir.
 const ouvintes = new Set<() => void>()
 const assinar = (aviso: () => void) => {
   ouvintes.add(aviso)
@@ -26,12 +24,6 @@ const assinar = (aviso: () => void) => {
   }
 }
 
-/**
- * Curso (turma) em que o aluno está navegando. Com mais de uma matrícula, quem
- * escolhe é o próprio aluno, na tela de seleção logo após o login; a escolha
- * vale na aba até ele pedir "Trocar curso". Com uma só, ela é usada direto.
- * Matrícula cancelada não entra: só ativas e concluídas (histórico).
- */
 export function useCursoAluno() {
   const { usuario } = useAuth()
   const { alunoId, loading: carregandoAluno } = useAlunoLogado()
@@ -49,10 +41,8 @@ export function useCursoAluno() {
     for (const matricula of requisicao.data ?? []) {
       if (matricula.status === 'CANCELADA' || !matricula.turma) continue
       const atual = porTurma.get(matricula.turma.id)
-      // Ativa vence concluída quando o aluno refez a mesma turma.
       if (!atual || (atual.status !== 'ATIVA' && matricula.status === 'ATIVA')) porTurma.set(matricula.turma.id, matricula)
     }
-    // Ativas primeiro; dentro de cada grupo, a mais recente.
     return [...porTurma.values()].sort(
       (a, b) =>
         Number(b.status === 'ATIVA') - Number(a.status === 'ATIVA') ||

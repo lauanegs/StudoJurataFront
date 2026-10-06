@@ -8,17 +8,8 @@ import { theme as tokens } from '@/styles/theme'
 import type { ImagemGrafico } from './types'
 
 const LARGURA_PADRAO = 640
-/** Tempo máximo esperando o gráfico desenhar antes de desistir — não pode travar a exportação inteira por causa de UM gráfico. */
 const TEMPO_LIMITE_MS = 4000
 
-/**
- * Serializa o próprio SVG do gráfico (não uma captura de tela da página
- * inteira) pra um JPEG — leve e rápido, sem depender de bibliotecas de
- * captura de DOM. Recharts desenha cor/traço como atributo direto no SVG
- * (não depende de classe CSS externa), então a aparência sai fiel; só a
- * fonte do texto dos eixos precisa de uma regra explícita porque a
- * serialização não carrega o CSS global da página.
- */
 function svgParaImagem(svg: SVGSVGElement): Promise<ImagemGrafico | null> {
   return new Promise((resolve) => {
     const bbox = svg.getBoundingClientRect()
@@ -52,7 +43,6 @@ function svgParaImagem(svg: SVGSVGElement): Promise<ImagemGrafico | null> {
       ctx.fillStyle = tokens.colors.white
       ctx.fillRect(0, 0, largura, altura)
       ctx.drawImage(img, 0, 0, largura, altura)
-      // JPEG: o jsPDF embute PNG quase sem compressão e incha o arquivo.
       resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.92), largura, altura })
     }
     img.onerror = () => resolve(null)
@@ -60,15 +50,6 @@ function svgParaImagem(svg: SVGSVGElement): Promise<ImagemGrafico | null> {
   })
 }
 
-/**
- * Renderiza um gráfico (Histograma/GraficoBarras/GraficoLinha — os MESMOS
- * componentes da tela, não uma reimplementação) fora da tela e captura o
- * desenho como JPEG, pra entrar nos relatórios exportados (PDF/Excel) além
- * da tabela de valores exatos que já ia. Envolve em MantineProvider próprio
- * porque o container fica fora da árvore React da aplicação
- * (BarChart/LineChart usam hooks do Mantine que exigem o provider por
- * perto).
- */
 export async function renderizarGraficoComoImagem(
   elemento: ReactElement,
   largura = LARGURA_PADRAO,
@@ -89,7 +70,6 @@ export async function renderizarGraficoComoImagem(
   const tempoLimite = new Promise<null>((resolve) => setTimeout(() => resolve(null), TEMPO_LIMITE_MS))
 
   const captura = (async () => {
-    // setTimeout em vez de rAF: o navegador pausa rAF em aba sem foco.
     let svg: SVGSVGElement | null = null
     const inicio = Date.now()
     while (!svg && Date.now() - inicio < TEMPO_LIMITE_MS - 200) {

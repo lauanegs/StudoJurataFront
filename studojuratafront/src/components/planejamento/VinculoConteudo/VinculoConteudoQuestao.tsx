@@ -17,13 +17,6 @@ import { Stack } from '@/components/ui/Stack'
 
 import type { VinculoConteudoQuestaoProps } from './types'
 
-/**
- * Sem o vínculo, a questão fica fora do cálculo de desempenho por conteúdo que
- * decide o reforço; só questões da IA já nascem vinculadas.
- *
- * Sem `questaoId` (questão ainda não salva), a escolha fica no estado local do
- * formulário pai até a questão existir.
- */
 export function VinculoConteudoQuestao({
   questaoId,
   disciplinaId,
@@ -41,7 +34,6 @@ export function VinculoConteudoQuestao({
     { ativo: Boolean(questaoId) },
   )
 
-  // Carrega antes de abrir o modal: os chips do modo local também precisam dos títulos.
   const requisicaoConteudos = useRequisicao(() => conteudosPlano.listar(), [], { ativo: Boolean(disciplinaId) })
 
   const conteudosVinculados = useMemo(() => {

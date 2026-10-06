@@ -5,11 +5,6 @@ import { corComOpacidade } from '@/utils/corComOpacidade'
 import { comTamanho } from '@/utils/redimensionarIcone'
 import type { TagProps, TagVariant } from './types'
 
-/**
- * Fundo na cor base do sistema (a mesma usada no bloco dos cards de
- * desempenho — success/error/warning) a 30% de opacidade. O texto é sempre
- * cinza (textSecondary), não acompanha a cor do fundo.
- */
 const CORES: Record<TagVariant, { bg: string }> = {
   success: { bg: corComOpacidade(tokens.colors.success, 0.3) },
   error: { bg: corComOpacidade(tokens.colors.error, 0.3) },
@@ -21,7 +16,6 @@ const CORES: Record<TagVariant, { bg: string }> = {
 const TAMANHOS: Record<NonNullable<TagProps['size']>, { fontSize: string; padding: string; icone: number }> = {
   small: { fontSize: '11px', padding: '2px 8px', icone: 12 },
   medium: { fontSize: tokens.typography.sizes.xs, padding: '4px 12px', icone: 12 },
-  // Usado no subtítulo do header, um pouco maior que o "medium".
   large: { fontSize: tokens.typography.sizes.sm, padding: '6px 14px', icone: 14 },
 }
 
@@ -45,7 +39,6 @@ export function Tag({ children, variant = 'neutral', icon, size = 'medium' }: Ta
           height: 'auto',
           lineHeight: tokens.typography.lineHeight.tight,
         },
-        // O Badge da Mantine trunca com "..."; aqui o texto quebra linha inteiro.
         label: {
           overflow: 'visible',
           textOverflow: 'unset',
