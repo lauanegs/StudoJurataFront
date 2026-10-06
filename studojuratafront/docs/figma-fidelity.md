@@ -104,7 +104,7 @@ Uma implementação **não deve ser considerada concluída apenas porque**:
 - compila;
 - não possui erros de TypeScript;
 - os componentes funcionam;
-- os testes passam (quando existirem).
+- `tsc -b`, `npm run lint` e `npm run build` passam.
 
 O resultado final deve ser avaliado em três dimensões, todas obrigatórias:
 

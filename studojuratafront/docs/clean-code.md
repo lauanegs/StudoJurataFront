@@ -11,7 +11,7 @@ O projeto já é consistente: **vocabulário de domínio em português** (`Aluno
 
 ## Componentes pequenos (tamanho como sintoma, não meta)
 
-`Alunos.tsx` (166 linhas: hook de busca, filtro, paginação, colunas, render) é o tamanho saudável de uma página de listagem neste projeto. `SimuladoFormulario.tsx` (820 linhas, 15+ `useState`) é o outro extremo — não porque "mais de X linhas é proibido", mas porque o componente genuinamente acumula responsabilidades que já têm solução própria no projeto (`@mantine/form` + schema yup (hooks em `formularios/`) para o estado do formulário, e possivelmente componentes locais para o editor de questões / modais). Ver `docs/react-guidelines.md` para o critério de quando extrair.
+`Alunos.tsx` (166 linhas: hook de busca, filtro, paginação, colunas, render) é o tamanho saudável de uma página de listagem neste projeto. `SimuladoFormulario.tsx` (820 linhas, 15+ `useState`) é o outro extremo — não porque "mais de X linhas é proibido", mas porque o componente genuinamente acumula responsabilidades que já têm solução própria no projeto (`@mantine/form` + schema yup (hooks em `dominios/<domínio>/formulario.ts`) para o estado do formulário, e possivelmente componentes locais para o editor de questões / modais). Ver `docs/react-guidelines.md` para o critério de quando extrair.
 
 **Quando não extrair:** uma página de listagem com filtro + tabela (`Alunos.tsx`, `Turmas.tsx`, etc.) que já delega loading/erro/paginação para hooks não precisa ser fatiada em sub-componentes — ela já é enxuta porque a lógica pesada mora nos hooks, não porque foi fragmentada artificialmente.
 
@@ -37,11 +37,11 @@ Remover import não usado, componente não referenciado, prop que nenhum call-si
 
 ## Tratamento de exceções
 
-O padrão do projeto é: hooks de dado (`useRequisicao`) capturam o erro e devolvem `error: string | null`; ações (`useAcao`, ou `try/catch` manual como em `Alunos.tsx.excluir()`) capturam `ApiError` especificamente e mostram um toast com a mensagem já traduzida por `services/api.ts`. Não usar `alert()`/`console.error` como tratamento de erro voltado ao usuário — sempre `useToast()`. Distinguir erro do usuário (mostrar mensagem) de erro inesperado (deixar propagar ou logar) usando `error instanceof ApiError`, como já é feito.
+O padrão do projeto é: hooks de dado (`useRequisicao`) capturam o erro e devolvem `error: string | null`; ações (`useAcao`, ou `try/catch` manual como em `Alunos.tsx.excluir()`) capturam `ApiError` especificamente e mostram um toast com a mensagem já traduzida por `dominios/comum/api.ts`. Não usar `alert()`/`console.error` como tratamento de erro voltado ao usuário — sempre `useToast()`. Distinguir erro do usuário (mostrar mensagem) de erro inesperado (deixar propagar ou logar) usando `error instanceof ApiError`, como já é feito.
 
 ## Validações
 
-Formato de campo → schema yup em `formularios/<domínio>.ts` (CPF/CEP/telefone via `@brazilian-utils/brazilian-utils`), plugado no `useForm` com `schemaResolver`. Não reimplementar uma regex/checagem que já existe em `validacao.ts` dentro de uma página.
+Formato de campo → schema yup em `dominios/<domínio>/formulario.ts` (CPF/CEP/telefone via `@brazilian-utils/brazilian-utils`), plugado no `useForm` com `schemaResolver`. Não reimplementar uma regex/checagem que já existe em `validacao.ts` dentro de uma página.
 
 ## Comentários
 
@@ -75,7 +75,7 @@ Um componente de página deve se ler de cima para baixo como: hooks de dado → 
 
 ## Testabilidade
 
-Os testes automatizados cobrem só a lógica pura (ver `docs/architecture.md` #4). Isso não isenta o código de ser escrito de forma testável: hooks que não dependem de módulo global mutável, componentes que recebem dados via props em vez de acessar contexto direto quando não precisam do contexto inteiro, funções puras em `utils/` sem efeito colateral — tudo isso já é seguido e deve continuar sendo, mesmo sem um `describe()` cobrando.
+Não há testes automatizados (ver `docs/architecture.md` #4). Isso não isenta o código de ser escrito de forma testável: hooks que não dependem de módulo global mutável, componentes que recebem dados via props em vez de acessar contexto direto quando não precisam do contexto inteiro, funções puras em `utils/` sem efeito colateral — tudo isso já é seguido e deve continuar sendo, mesmo sem um `describe()` cobrando.
 
 ## Referências
 - Robert C. Martin, *Clean Code* — síntese de nomes, funções, comentários.

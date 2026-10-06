@@ -34,7 +34,7 @@ Backend irmão: `../StudoJurataApi` (ver o `CLAUDE.md`/`docs/` dele para a API c
 
 ## Arquitetura atual
 
-Camadas: `pages/` (por perfil: `adm/professor/aluno/auth`) → compõe `components/ui/` + `components/layout/` → usa `hooks/` (busca/estado) → que usam `services/` (chamada HTTP tipada) → tipado por `types/`. Estado verdadeiramente global só em `contexts/` (Auth, Toast, Confirm). Ver [`docs/architecture.md`](docs/architecture.md) para o detalhamento completo, incluindo os "Problemas arquiteturais identificados" — **não corrigir esses problemas silenciosamente**; existem para orientar decisões futuras que exigem confirmação do usuário.
+Camadas: `pages/` (por perfil: `adm/professor/aluno/auth`) → compõe `components/ui/` + `components/layout/` → usa `hooks/` (busca/estado) → que usam `dominios/<domínio>/service.ts` (chamada HTTP tipada) → tipado por `dominios/<domínio>/types.ts`. Estado verdadeiramente global só em `contexts/` (Auth, Toast, Confirm). Ver [`docs/architecture.md`](docs/architecture.md) para o detalhamento completo, incluindo os "Problemas arquiteturais identificados" — **não corrigir esses problemas silenciosamente**; existem para orientar decisões futuras que exigem confirmação do usuário.
 
 ## Convenções de organização
 

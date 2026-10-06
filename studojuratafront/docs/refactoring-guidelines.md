@@ -20,7 +20,7 @@ Se, ao investigar, uma dessas tentações parecer genuinamente justificada, trat
 ## Ordem do processo
 
 ### 1. Entender o código
-Ler o componente/hook inteiro, não só o trecho aparentemente problemático, e os arquivos diretamente relacionados: o `types.ts` de um componente de `components/ui/`, o hook que uma página usa, o endpoint em `services/<domínio>.ts` que alimenta os dados. Ler os comentários — este projeto os usa para explicar decisões não óbvias (por que um `ref` existe, por que uma migração está em andamento), e ignorá-los é o erro mais caro aqui.
+Ler o componente/hook inteiro, não só o trecho aparentemente problemático, e os arquivos diretamente relacionados: o `types.ts` de um componente de `components/ui/`, o hook que uma página usa, o endpoint em `dominios/<domínio>/service.ts` que alimenta os dados. Ler os comentários — este projeto os usa para explicar decisões não óbvias (por que um `ref` existe, por que uma migração está em andamento), e ignorá-los é o erro mais caro aqui.
 
 ### 2. Identificar o comportamento atual
 Antes de mudar qualquer linha: o que o componente renderiza em cada estado (loading, erro, vazio, com dados)? O que acontece com uma lista vazia, um campo opcional ausente (`aluno.pessoa?.nome`), um usuário sem permissão para a tela? Se houver dúvida sobre o comportamento real, verificar no navegador antes de mexer (ver skill/processo `run` do projeto) — não presumir pelo nome do componente.
@@ -45,7 +45,7 @@ Priorizar Crítico e Alto. Não misturar uma correção Crítica com uma limpeza
 Definir o menor conjunto de mudanças que resolve o problema classificado, respeitando `docs/architecture.md` (onde cada tipo de lógica deve morar) e os padrões já existentes (`docs/react-guidelines.md`/`docs/typescript-guidelines.md`/`docs/mantine-guidelines.md`). Se a alteração:
 - muda layout ou aparência visual observável,
 - muda responsividade (breakpoint, comportamento em tela pequena),
-- muda o contrato com a API (`types/<domínio>.ts`, `services/<domínio>.ts`),
+- muda o contrato com a API (`dominios/<domínio>/types.ts`, `dominios/<domínio>/service.ts`),
 - muda uma regra de negócio/validação existente,
 - remove uma funcionalidade,
 
@@ -62,7 +62,7 @@ npm run lint
 Uma refatoração que introduz erro de tipo ou de lint não está pronta, independente de quão pequena pareça. `npm run build` (`tsc -b && vite build`) é o check mais completo antes de considerar a mudança finalizada em algo que toque múltiplos arquivos.
 
 ### 8. Verificar regressões
-Os testes automatizados (`npm test`) cobrem só a lógica pura (`docs/architecture.md` #4) — rodar sempre, mas o restante da verificação é manual:
+Não há testes automatizados (`docs/architecture.md` #4); o restante da verificação é manual:
 - Abrir a tela alterada no navegador (dev server) e conferir visualmente contra o que existia antes (layout, responsividade — testar em pelo menos uma largura pequena se o componente for usado em tabela/lista) **e contra o Figma**, não só contra o estado anterior do código — o estado anterior também pode ter divergido do protótipo.
 - Se a refatoração alterou espaçamento, tamanho, alinhamento, cores, tipografia, responsividade, posicionamento ou aparência de componentes (mesmo como efeito colateral de uma mudança "só de código"), reconferir especificamente contra o Figma antes de seguir — ver `docs/figma-fidelity.md`, seção "Durante refatorações".
 - Testar o fluxo funcional afetado de ponta a ponta (preencher formulário e salvar, filtrar lista, abrir modal) — não só que a tela renderiza sem erro no console.
@@ -80,7 +80,7 @@ Se a solução final tem mais componentes, mais props, mais hooks, ou mais linha
 - **Preservar layout** — mesma aparência visual, a não ser que a mudança de aparência seja o próprio objetivo pedido.
 - **Preservar fidelidade ao Figma** — se a tela/componente já batia com o protótipo antes da refatoração, continua batendo depois (ver `docs/figma-fidelity.md`). Refatoração de código nunca é desculpa para uma mudança visual acidental.
 - **Preservar responsividade** — mesmo comportamento em tela pequena/grande, e mesma correspondência com as versões do Figma por breakpoint quando existirem.
-- **Preservar contratos de API** — `types/<domínio>.ts`/`services/<domínio>.ts` continuam batendo com o que o backend real espera e devolve.
+- **Preservar contratos de API** — `dominios/<domínio>/types.ts`/`dominios/<domínio>/service.ts` continuam batendo com o que o backend real espera e devolve.
 - **Preservar regras de negócio** — validação, formatação, permissão de tela continuam as mesmas.
 - **Não substituir uma solução funcional só por preferência pessoal** (ex.: trocar `useState` múltiplo por `@mantine/form`, ou styled-components por Mantine) sem que isso resolva um problema real identificado nos passos 3-4. Isso vale tanto para código quanto para design — não simplificar um elemento visual do Figma só porque uma versão mais simples de implementá-lo existe (ver `docs/figma-fidelity.md`).
 

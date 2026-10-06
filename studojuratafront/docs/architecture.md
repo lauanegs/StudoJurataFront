@@ -1,6 +1,6 @@
 # Arquitetura — StudoJurataFront
 
-> Descreve a arquitetura **real** deste front-end, levantada por inspeção direta do código-fonte em 2026-08-10 — não uma arquitetura ideal. Complementa [`docs/architecture.md` do StudoJurataApi](../../StudoJurataApi/docs/architecture.md) (backend, repositório irmão).
+> Descreve a arquitetura **real** deste front-end, levantada por inspeção direta do código-fonte (atualizada em 2026-10-06, após a reorganização em pastas por componente e por domínio) — não uma arquitetura ideal. Complementa [`docs/architecture.md` do StudoJurataApi](../../StudoJurataApi/docs/architecture.md) (backend, repositório irmão).
 
 ## 1. Visão geral
 
@@ -12,39 +12,44 @@ SPA em **React 19 + TypeScript 5.9 (strict) + Vite 7**, roteada com **react-rout
 src/
 ├── components/
 │   ├── ui/            — ~46 componentes de design system (Button, Input, Card, DataTable, ...)
-│   ├── layout/         — Layout (casca da página) + Sidebar (menus por perfil)
-│   ├── <domínio>/      — graficos, simulados, desempenho, gamificacao, planejamento, pessoas, eventos
-│   └── feedback/        — ConfirmDialog, Toast, EstadoVazio, ErroCarregamento, Skeleton
+│   ├── layout/        — Layout (casca da página), Sidebar (menus por perfil), TelaComBanner
+│   ├── feedback/      — ConfirmDialog, Toast, EstadoVazio, ErroCarregamento, Skeleton, CarregandoTela
+│   └── <domínio>/     — graficos, simulados, desempenho, gamificacao, planejamento, pessoas, eventos
 ├── pages/
-│   ├── adm/             — telas do Administrador (CRUD de Alunos, Turmas, Cursos, ...)
-│   ├── professor/       — telas do Professor (Plano de Ensino, Plano de Aula, Reforço/Simulados, Notas)
-│   ├── aluno/            — telas do Aluno (Home, Simulado, Notas, Perfil, Reforço)
-│   └── auth/             — Login, NaoAutorizado, NaoEncontrada
-├── routes/               — definição de rotas (lazy-loaded) + guarda de rota por perfil
-├── services/             — api.ts (cliente HTTP) + um arquivo por domínio
-├── contexts/             — AuthContext, ToastContext, ConfirmContext
-├── formularios/         — hooks de formulário (@mantine/form + schemas yup) por domínio
-├── hooks/                — useRequisicao, useAcao, usePaginacao, useDebounce, useHidratar, useAuth, useEscola, usePerfilLogado
-├── types/                — um arquivo por domínio + comum.ts
-├── utils/                — formatação, labels, aniversariantes, ícones, cor, skins, exportacao/ (PDF, planilha, gráfico)
-└── styles/               — theme.ts (tokens styled-components) + mantineTheme.ts (mesmos tokens para Mantine) + global.ts + styled.d.ts
+│   ├── adm/           — telas do Administrador (CRUD de Alunos, Turmas, Cursos, ...)
+│   ├── professor/     — telas do Professor (Plano de Ensino, Plano de Aula, Reforço/Simulados, Notas)
+│   ├── aluno/         — telas do Aluno (Home, Simulado, Notas, Perfil, Reforço, SelecionarCurso)
+│   └── auth/          — Login, NaoAutorizado, NaoEncontrada, TelaAviso
+├── routes/            — definição de rotas (lazy-loaded) + guardas de rota (perfil e curso do aluno)
+├── dominios/          — um pacote por domínio: autenticacao, curriculo, eventos, gamificacao, ia, notas,
+│   │                    pessoas, planejamento, simulados, turmas
+│   ├── <domínio>/     — types.ts (DTOs), service.ts (chamadas HTTP), formulario.ts (@mantine/form + yup)
+│   └── comum/         — api.ts (cliente HTTP), types.ts e formulario.ts compartilhados
+├── contexts/          — auth/, toast/, confirm/ (cada um com XProvider.tsx + xContexto.ts)
+├── hooks/             — useRequisicao, useAcao, usePaginacao, useDebounce, useHidratar, useAuth, useEscola, usePerfilLogado, useCursoAluno
+├── utils/             — formatação, labels, aniversariantes, ícones, cor, skins, exportacao/ (PDF, planilha, gráfico)
+└── styles/            — theme.ts (tokens styled-components) + mantineTheme.ts (mesmos tokens para Mantine) + global.ts + styled.d.ts
+public/images/         — marca/, mascote/, gamificacao/ (moeda e skins jura/bit/lia, cada uma com padrao/feliz/triste)
 ```
 
+**Convenções:** imports com alias `@/` (= `src/`), nunca `../`; cada componente e página é uma pasta `Nome/` com `Nome.tsx`, `styles.ts`, `types.ts` e (componentes) `index.ts`; helpers de um grupo de páginas em `comum/`.
+
 ### `components/ui/`
-Design system próprio do projeto: um componente por "átomo" de interface (`Button`, `Input`, `Select`, `Card`, `Modal`, `DataTable`, `Tag`, `Chip`, `Toggle`, etc.), cada um em sua própria pasta com `ComponentName.tsx` + `types.ts` (+ `styles.ts` quando ainda usa styled-components) + `index.ts` de re-export. A maioria desses componentes **delega para o Mantine por baixo**, mantendo uma API própria estável — ver seção 4.
+Design system próprio do projeto: um componente por "átomo" de interface (`Button`, `Input`, `Select`, `Card`, `Modal`, `DataTable`, `Tag`, `Chip`, `Toggle`, etc.), cada um em sua própria pasta com `ComponentName.tsx` + `types.ts` (+ `styles.ts` quando usa styled-components) + `index.ts` de re-export. A maioria desses componentes **delega para o Mantine por baixo**, mantendo uma API própria estável — ver seção 4.
 
 ### `pages/`
-Organizadas **por perfil de usuário** (`adm/professor/aluno/auth`), espelhando a segmentação de papéis do backend (`TipoUsuario`: `ADMINISTRADOR`, `PROFESSOR`, `ALUNO`). Dentro de cada perfil, subpastas por domínio (`Alunos/`, `Turmas/`, `Reforco/`...). Padrão de arquivo: uma página de listagem (`Alunos.tsx`) e uma de formulário (`AlunoFormulario.tsx`, cobrindo criar E editar no mesmo componente) por entidade — não há páginas de "detalhe" somente-leitura separadas na maioria dos casos.
+Organizadas **por perfil de usuário** (`adm/professor/aluno/auth`), espelhando a segmentação de papéis do backend (`TipoUsuario`: `ADMINISTRADOR`, `PROFESSOR`, `ALUNO`). Dentro de cada perfil, subpastas por domínio (`Alunos/`, `Turmas/`, `Reforco/`...). Padrão de arquivo: uma página de listagem (`Alunos/Alunos.tsx`) e uma de formulário (`AlunoFormulario/AlunoFormulario.tsx`, cobrindo criar E editar no mesmo componente) por entidade — não há páginas de "detalhe" somente-leitura separadas na maioria dos casos.
 
 ### `routes/`
-`routes/index.tsx` (541 linhas) declara todas as rotas com `lazy()` + `Suspense` — o tamanho do arquivo é majoritariamente a lista de `const X = lazy(() => import(...))`, não complexidade real. `RotaProtegida.tsx` é o guard de acesso por perfil, usado ao redor de cada `<Route>`. **Importante**: esse guard é proteção de UX (evitar mostrar/piscar uma tela errada), não o limite de segurança real — a autorização de fato é sempre imposta pelo backend (`SecurityConfig`); o front nunca deve tratar `RotaProtegida` como suficiente para proteger um dado sensível.
+`routes/index.tsx` declara todas as rotas com `lazy()` + `Suspense` — o tamanho do arquivo é majoritariamente a lista de `const X = lazy(() => import(...))`, não complexidade real. `RotaProtegida.tsx` é o guard de acesso por perfil, usado ao redor de cada `<Route>`. **Importante**: esse guard é proteção de UX (evitar mostrar/piscar uma tela errada), não o limite de segurança real — a autorização de fato é sempre imposta pelo backend (`SecurityConfig`); o front nunca deve tratar `RotaProtegida` como suficiente para proteger um dado sensível.
 
-### `services/`
-- `api.ts`: cliente HTTP próprio sobre `fetch` (sem axios), com `credentials: 'include'` (sessão por cookie), `ApiError` tipado com getters semânticos (`naoAutenticado`, `semPermissao`, `naoEncontrado`, `erroDeNegocio`), mapeamento centralizado de mensagens de erro em português, e um pub/sub simples (`aoExpirarSessao`) para notificar qualquer parte da aplicação quando uma resposta 401 chega — é assim que `AuthContext` derruba a sessão local sem precisar de um interceptor de biblioteca.
-- `<domínio>.ts` (`autenticacao`, `pessoas`, `curriculo`, `turmas`, `planejamento`, `notas`, `eventos`, `simulados`, `gamificacao`, `ia`): uma função por rota real de um `@RestController` do back (`simulados.listar()`, `simulados.lancar(id, dados)`...) — nenhuma página monta URL na mão.
+### `dominios/`
+Cada domínio (`autenticacao`, `pessoas`, `curriculo`, `turmas`, `planejamento`, `notas`, `eventos`, `simulados`, `gamificacao`, `ia`) agrupa o que antes ficava espalhado em três pastas:
+- `service.ts`: uma função por rota real de um `@RestController` do back (`simulados.listar()`, `simulados.lancar(id, dados)`...) — nenhuma página monta URL na mão.
+- `types.ts`: tipos espelhando os DTOs do backend.
+- `formulario.ts`: hook de formulário (`useForm` do `@mantine/form` + schema yup) — ver abaixo.
 
-### `types/`
-Um arquivo por domínio (mesmos nomes de `services/`) com os tipos espelhando os DTOs do backend; `comum.ts` guarda o que é compartilhado entre domínios.
+`dominios/comum/` guarda o compartilhado: `api.ts` é o cliente HTTP próprio sobre `fetch` (sem axios), com `credentials: 'include'` (sessão por cookie), `ApiError` tipado com getters semânticos (`naoAutenticado`, `semPermissao`, `naoEncontrado`, `erroDeNegocio`), mapeamento centralizado de mensagens de erro em português e um pub/sub simples (`aoExpirarSessao`) para notificar qualquer parte da aplicação quando uma resposta 401 chega — é assim que o `AuthProvider` derruba a sessão local sem precisar de um interceptor de biblioteca.
 
 ### `hooks/`
 A base de reuso de lógica do projeto (ver `docs/react-guidelines.md` para detalhes de cada um):
@@ -53,11 +58,11 @@ A base de reuso de lógica do projeto (ver `docs/react-guidelines.md` para detal
 - `usePaginacao` — pagina uma lista **no cliente**, porque o backend não pagina nenhuma listagem (ver `StudoJurataApi/docs/architecture.md` #2) — é uma decisão consciente, documentada no próprio hook.
 - `useDebounce`, `useHidratar` (preenche formulário de edição uma única vez por objeto recebido, sem sobrescrever o que o usuário já digitou), `useAuth`, `useEscola`, `usePerfilLogado` (`useAlunoLogado`/`useProfessorLogado`/`useSkinEquipadaDoAluno` — ponte entre `pessoaId` do usuário logado e o id de domínio Aluno/Professor que a maioria das rotas do back exige).
 
-### `formularios/`
+### Formulários (`dominios/<domínio>/formulario.ts`)
 Um hook por formulário (`useFormularioPessoa`, `useFormularioTurma`, `useFormularioSimulado`...), feito com `useForm` do `@mantine/form` e `schemaResolver` de um schema yup. A validação é assíncrona (`await form.validate()`). CPF, CEP e telefone são validados com `@brazilian-utils/brazilian-utils`, que também busca o endereço por CEP em `components/pessoas/PessoaCampos`. `DatePicker`/`TimePicker` recebem `value` + `form.setFieldValue` em vez de `getInputProps`.
 
 ### `contexts/`
-Três contextos, cada um com um par `XContext.tsx` (provider) + `xContexto.ts` (o `createContext`/tipo, separado para reduzir re-render de quem só precisa do tipo) — `AuthContext` (usuário logado, cache em `localStorage`, fonte de verdade em `/auth/me`), `ToastContext`, `ConfirmContext` (substitui `window.confirm` por um modal consistente com o design system).
+Três contextos, cada um em sua pasta com um par `XProvider.tsx` (provider) + `xContexto.ts` (o `createContext`/tipo, separado para reduzir re-render de quem só precisa do tipo) — `auth/` (usuário logado, cache em `localStorage`, fonte de verdade em `/auth/me`), `toast/` e `confirm/` (substitui `window.confirm` por um modal consistente com o design system).
 
 ### `utils/`
 `format.ts` (formatação de CPF, data, idade), `labels.ts` (rótulos de enum em português — ex. `ROTULO_TIPO_USUARIO`), `corComOpacidade.ts`, `redimensionarIcone.tsx`, `skins.ts` (gamificação).
@@ -65,10 +70,10 @@ Três contextos, cada um com um par `XContext.tsx` (provider) + `xContexto.ts` (
 ## 3. Fluxo de dados (exemplo real: tela `Alunos`)
 
 ```
-Alunos.tsx
+Alunos/Alunos.tsx
   │
   ├─ useRequisicao(() => alunos.listar(), [])   — dispara GET /api/alunos ao montar
-  │     └─ services/<domínio>.ts → services/api.ts → fetch (cookie de sessão)
+  │     └─ dominios/<domínio>/service.ts → dominios/comum/api.ts → fetch (cookie de sessão)
   │
   ├─ useDebounce(busca) + useMemo               — filtro client-side por nome/CPF/matrícula
   ├─ usePaginacao(filtrados)                    — paginação client-side (back não pagina)
@@ -77,7 +82,7 @@ Alunos.tsx
         └─ ação de excluir: useConfirm() (modal) → alunos.excluir(id) → toast → reload()
 ```
 
-Esse é o fluxo padrão de uma tela de listagem: hook de requisição → filtro/paginação locais → composição de componentes `ui/` dentro de `Layout`. Telas de formulário seguem um fluxo parecido, adicionando `@mantine/form` + schema yup (hooks em `formularios/`) (ou, em alguns casos maiores, estado manual — ver seção 5, problema #1) e `useHidratar` para popular o formulário quando editando um registro existente.
+Esse é o fluxo padrão de uma tela de listagem: hook de requisição → filtro/paginação locais → composição de componentes `ui/` dentro de `Layout`. Telas de formulário seguem um fluxo parecido, adicionando `@mantine/form` + schema yup (hooks em `dominios/<domínio>/formulario.ts`) (ou, em alguns casos maiores, estado manual — ver seção 5, problema #1) e `useHidratar` para popular o formulário quando editando um registro existente.
 
 ## 4. Estilização — estado real (migração em andamento)
 
@@ -97,21 +102,21 @@ Registrados para orientar revisões futuras — **não devem ser corrigidos auto
 1. ~~Componentes de formulário muito grandes.~~ **Resolvido:** `SimuladoFormulario` e `TurmaFormulario` ficam cada um em sua pasta, divididos em cartão de configuração/dados, modais e abas.
 2. **Migração `styled-components` → Mantine incompleta** (seção 4). Não é, por si, um "bug", mas gera dois jeitos de estilizar coexistindo — uma revisão precisa saber distinguir "componente ainda não migrado" de "componente com CSS desnecessário que o Mantine já resolveria".
 3. ~~`types/index.ts` e `services/endpoints.ts` num único arquivo.~~ **Resolvido:** divididos por domínio.
-4. **Testes só da lógica pura.** Vitest cobre schemas yup (`formularios/`), `utils/format.ts` e helpers como `SimuladoFormulario/questoes.ts` (`npm test`). Não há testes de componente nem de tela: mudanças visuais e de fluxo continuam verificadas manualmente no navegador.
-5. **Validação duplicada manualmente entre front e back.** Os schemas yup em `formularios/` reimplementam regras que também existem como Bean Validation no backend (ex.: formato de `periodoLetivo`). Não há geração automática nem contrato compartilhado — um campo que muda de regra no back não avisa o front. Não é um problema a "resolver" nesta etapa (exigiria uma decisão de arquitetura maior, tipo geração de tipos a partir do OpenAPI), mas é bom estar ciente ao mexer em qualquer validação espelhada.
+4. **Sem testes automatizados.** Os testes (Vitest) foram removidos de propósito. Toda mudança é validada com `tsc -b`, `npm run lint`, `npm run build` e verificação manual no navegador.
+5. **Validação duplicada manualmente entre front e back.** Os schemas yup em `dominios/*/formulario.ts` reimplementam regras que também existem como Bean Validation no backend (ex.: formato de `periodoLetivo`). Não há geração automática nem contrato compartilhado — um campo que muda de regra no back não avisa o front. Não é um problema a "resolver" nesta etapa (exigiria uma decisão de arquitetura maior, tipo geração de tipos a partir do OpenAPI), mas é bom estar ciente ao mexer em qualquer validação espelhada.
 6. ~~Barrel file `components/ui/index.ts` sem uso consistente.~~ **Resolvido:** nenhum arquivo importava os barrels `components/ui/index.ts` e `components/feedback/index.ts`, que foram removidos. O padrão é importar pelo caminho específico (`'.../components/ui/Button'`).
 7. ~~Logs de execução do Vite na raiz do repositório.~~ **Resolvido:** removidos.
-8. **`dist/` presente no diretório de trabalho.** É build output; confirmar que está no `.gitignore` (está) e que não foi commitado por engano antes de qualquer limpeza.
-9. **Agregações de desempenho calculadas no cliente.** `pages/professor/Reforco/Desempenho.tsx` e `useDesempenhoDados.ts` baixam todos os simulados e tentativas e agregam no navegador (inclusive o recorte "turmas do professor"), porque não há endpoint agregado no back. Funciona com o volume atual, mas é regra/recorte que pertence ao backend — candidato a endpoint próprio, como já foi feito com a carga horária e as faltas por turma (`GET /turmas/{id}/frequencia-alunos`).
+8. ~~`dist/` presente no diretório de trabalho.~~ **Resolvido:** é build output, está no `.gitignore` e foi removido.
+9. **Agregações de desempenho calculadas no cliente.** `pages/professor/Reforco/Desempenho/Desempenho.tsx` e `Reforco/comum/useDesempenhoDados.ts` baixam todos os simulados e tentativas e agregam no navegador (inclusive o recorte "turmas do professor"), porque não há endpoint agregado no back. Funciona com o volume atual, mas é regra/recorte que pertence ao backend — candidato a endpoint próprio, como já foi feito com a carga horária e as faltas por turma (`GET /turmas/{id}/frequencia-alunos`).
 10. **i18n inexistente.** Textos de UI escritos direto nas telas, em português. Decisão: não adotar i18n por enquanto.
 
 ## 6. Onde colocar cada tipo de lógica (regra para páginas/componentes novos)
 
-- **Chamada de API** → sempre via `services/<domínio>.ts`, nunca `fetch`/URL montada na mão dentro de um componente.
+- **Chamada de API** → sempre via `dominios/<domínio>/service.ts`, nunca `fetch`/URL montada na mão dentro de um componente.
 - **Estado de carregamento/erro de uma busca** → `useRequisicao`, não `useState` + `useEffect` manual reimplementando o mesmo controle de corrida/cancelamento.
 - **Estado de "salvando"/"excluindo"** → `useAcao`.
-- **Estado e validação de formulário** → hook em `formularios/<domínio>.ts` (`@mantine/form` + yup), a não ser que o formulário seja trivial o bastante (1-2 campos) para não justificar o hook.
-- **Formatação/validação reaproveitável** → `utils/` (`format.ts`, `labels.ts`) e `formularios/` (schemas yup), nunca duplicada inline em múltiplas páginas.
+- **Estado e validação de formulário** → hook em `dominios/<domínio>/formulario.ts` (`@mantine/form` + yup), a não ser que o formulário seja trivial o bastante (1-2 campos) para não justificar o hook.
+- **Formatação/validação reaproveitável** → `utils/` (`format.ts`, `labels.ts`) e `dominios/*/formulario.ts` (schemas yup), nunca duplicada inline em múltiplas páginas.
 - **Peça de UI reaproveitável** (usada ou clara candidata a ser usada em mais de uma tela) → `components/ui/`, delegando para Mantine quando o Mantine já resolve (ver `docs/mantine-guidelines.md`).
 - **Espaçamento e grade de layout** → `Stack` (`components/ui/Stack`, reexporta o do Mantine) para colunas com `gap` e `GradeAutoAjuste` para grades `auto-fit`, em vez de um `styled.div` novo por tela.
 - **Peça de UI específica de uma única tela, sem reuso claro** → pode viver dentro do próprio arquivo da página como componente local, ou em `styled-components` pontual se for só um ajuste de layout — não precisa virar componente em `components/ui/` "por precaução".
@@ -120,11 +125,11 @@ Registrados para orientar revisões futuras — **não devem ser corrigidos auto
 ## 7. Dependências entre camadas (regra de sentido)
 
 ```
-pages/     → components/ui, components/layout, hooks, services, contexts, types, utils
-components/ui → (Mantine ou styled-components), types, utils — nunca importa de pages/
-hooks/     → services, contexts, types — nunca importa de pages/ nem components/ui
-services/  → types — não conhece React (sem hooks, sem JSX)
-contexts/  → services, hooks, types
+pages/     → components/ui, components/layout, hooks, dominios, contexts, utils
+components/ui → (Mantine ou styled-components), dominios/*/types, utils — nunca importa de pages/
+hooks/     → dominios, contexts — nunca importa de pages/ nem components/ui
+dominios/  → dominios/comum — service.ts não conhece React (sem hooks, sem JSX)
+contexts/  → dominios, hooks
 ```
 
-Nunca o inverso: `services/` e `utils/` não importam nada de `components/`, `pages/` ou `contexts/`; `components/ui/` não importa de `pages/`.
+Nunca o inverso: `dominios/*/service.ts` e `utils/` não importam nada de `components/`, `pages/` ou `contexts/`; `components/ui/` não importa de `pages/`.
