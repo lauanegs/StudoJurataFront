@@ -13,6 +13,14 @@ export const Tela = styled.div`
 
   width: 100%;
   min-height: 100vh;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    gap: 0;
+    overflow: hidden;
+  }
 `
 
 export const Conteudo = styled.div`
@@ -24,12 +32,67 @@ export const Conteudo = styled.div`
   max-width: 1100px;
   margin: 0 auto;
   padding: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex: 1;
+    min-height: 0;
+    gap: ${({ theme }) => theme.spacing.xs};
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.sm};
+  }
 `
 
 export const Alternativas = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xxs};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex: 1;
+    min-height: 0;
+    gap: ${({ theme }) => theme.spacing.xs};
+
+    & > * {
+      flex: 1 1 0;
+      min-height: 48px;
+      max-height: 96px;
+    }
+
+    & > div {
+      flex: 1 1 auto;
+      flex-wrap: nowrap;
+      gap: ${({ theme }) => theme.spacing.xs};
+      min-height: min-content;
+    }
+
+    & > div > button {
+      flex: none;
+      width: 48px;
+      min-height: 0;
+    }
+
+    & > div > div {
+      order: 0;
+      flex: 1 1 0;
+      min-height: 0;
+      padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+      font-size: ${({ theme }) => theme.typography.sizes.sm};
+    }
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) and (max-height: 640px) {
+    gap: ${({ theme }) => theme.spacing.xxs};
+
+    & > div > button {
+      width: 36px;
+      font-size: ${({ theme }) => theme.typography.sizes.sm};
+    }
+
+    & > div > div {
+      padding: ${({ theme }) => `${theme.spacing.xxs} ${theme.spacing.xs}`};
+      font-size: 13px;
+      line-height: 1.25;
+    }
+  }
 `
 
 export const Rodape = styled.div`
@@ -38,6 +101,25 @@ export const Rodape = styled.div`
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.sm};
   flex-wrap: wrap;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-wrap: nowrap;
+
+    & > button {
+      height: 44px !important;
+      padding-inline: ${({ theme }) => theme.spacing.sm} !important;
+      font-size: ${({ theme }) => theme.typography.sizes.sm} !important;
+    }
+
+    & > :first-child {
+      flex: 0 0 auto;
+    }
+
+    & > :last-child {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+  }
 `
 
 export const FrameResultado = styled.div`
@@ -140,24 +222,5 @@ export const NomeParabens = styled.strong`
 
 export const DescricaoParabens = styled.span`
   font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-export const QuestaoCabecalho = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-`
-
-export const QuestaoEnunciado = styled.p`
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-  font-size: ${({ theme }) => theme.typography.sizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`
-
-export const QuestaoTitulo = styled.strong`
   color: ${({ theme }) => theme.colors.textSecondary};
 `

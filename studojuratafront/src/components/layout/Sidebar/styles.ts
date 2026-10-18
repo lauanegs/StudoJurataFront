@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 
 import { corComOpacidade } from '@/utils/corComOpacidade'
 
@@ -97,10 +97,7 @@ export const BlocoUsuario = styled.div<{ $colapsada: boolean }>`
 
   ${({ $colapsada }) =>
     $colapsada &&
-    css`
-      justify-content: center;
-      padding: 0;
-    `}
+    'justify-content: center; padding: 0;'}
 `
 
 export const BlocoCurso = styled.div`
@@ -177,10 +174,7 @@ export const ItemNav = styled.button<{ $ativo: boolean; $colapsada: boolean }>`
 
   ${({ $colapsada }) =>
     $colapsada &&
-    css`
-      justify-content: center;
-      padding: 12px 0;
-    `}
+    'justify-content: center; padding: 12px 0;'}
 
   &:hover {
     background: ${({ theme }) => corComOpacidade(theme.colors.white, 0.14)};
@@ -267,9 +261,7 @@ export const Marca = styled.div<{ $colapsada: boolean }>`
 
   ${({ $colapsada }) =>
     $colapsada &&
-    css`
-      justify-content: center;
-    `}
+    'justify-content: center;'}
 `
 
 export const LogoMarca = styled.img`

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { CalendarPlus, Clock, GraduationCap, Users } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
-import { AlertaDesempenhoCard } from '@/components/desempenho/AlertaDesempenhoCard'
+import { Alerta } from '@/components/ui/Alerta'
 import { BuscaInput } from '@/components/ui/BuscaInput'
 import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
@@ -130,7 +130,7 @@ export default function TurmaDetalhada() {
       />
 
       {avisosCargaHoraria.map((matricula) => (
-        <AlertaDesempenhoCard
+        <Alerta
           key={matricula.id}
           tom="success"
           titulo={`${matricula.aluno?.pessoa?.nome ?? 'Aluno'} concluiu a carga horária`}

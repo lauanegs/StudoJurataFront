@@ -163,14 +163,14 @@ export default function Alunos() {
         actions={(aluno) => (
           <>
             <IconButton
-              label={`Editar ${aluno.pessoa?.nome}`}
+              label={`Editar ${aluno.pessoa?.nome}`} acao="Editar"
               icon={<Pencil />}
               disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/alunos/${aluno.id}`)}
             />
             {aluno.pessoa?.status === 'INATIVO' ? (
               <IconButton
-                label={`Ativar ${aluno.pessoa?.nome}`}
+                label={`Ativar ${aluno.pessoa?.nome}`} acao="Ativar"
                 icon={<ArchiveRestore />}
                 variant="success"
                 disabled={excluindo || ativando}
@@ -178,7 +178,7 @@ export default function Alunos() {
               />
             ) : (
               <IconButton
-                label={`Inativar ${aluno.pessoa?.nome}`}
+                label={`Inativar ${aluno.pessoa?.nome}`} acao="Inativar"
                 icon={<Archive />}
                 variant="danger"
                 disabled={excluindo || ativando}

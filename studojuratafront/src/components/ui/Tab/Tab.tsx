@@ -1,7 +1,7 @@
 import { Tabs } from '@mantine/core'
 
 import { comTamanho } from '@/utils/redimensionarIcone'
-import { Contador, Envelope, estiloLista, estilosAba } from './styles'
+import { Contador, Envelope, Lista } from './styles'
 import type { TabProps } from './types'
 
 export function Tab<V extends string = string>({
@@ -13,7 +13,7 @@ export function Tab<V extends string = string>({
   return (
     <Envelope>
       <Tabs value={value} onChange={(novoValor) => novoValor && onChange(novoValor as V)}>
-        <Tabs.List aria-label={rotuloAcessivel} style={estiloLista}>
+        <Lista aria-label={rotuloAcessivel}>
           {options.map((option) => {
             const ativa = option.value === value
 
@@ -28,13 +28,12 @@ export function Tab<V extends string = string>({
                     <Contador $ativa={ativa}>{option.contador}</Contador>
                   ) : undefined
                 }
-                styles={estilosAba(ativa)}
               >
                 {option.label}
               </Tabs.Tab>
             )
           })}
-        </Tabs.List>
+        </Lista>
       </Tabs>
     </Envelope>
   )

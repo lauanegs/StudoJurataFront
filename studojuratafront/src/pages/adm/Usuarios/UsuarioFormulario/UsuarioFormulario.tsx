@@ -5,6 +5,7 @@ import { Archive, ArchiveRestore, Save } from 'lucide-react'
 import { Layout } from '@/components/layout'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { GradeDuasColunas } from '@/components/ui/GradeAutoAjuste'
 import { Header } from '@/components/ui/Header'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -27,7 +28,6 @@ import { useFormularioUsuario } from '@/dominios/pessoas/formulario'
 import { OPCOES_ATIVO_INATIVO, OPCOES_TIPO_USUARIO } from '@/utils/labels'
 import type { StatusAtivoInativo, TipoUsuario } from '@/dominios/comum/types'
 
-import { Grade } from './styles'
 
 /** Cria um login vinculado a uma Pessoa já cadastrada (Aluno/Professor/ Responsável) */
 export default function UsuarioFormulario() {
@@ -241,7 +241,7 @@ export default function UsuarioFormulario() {
       ) : (
         <Card titulo="Dados do usuário">
           <Stack gap="md">
-            <Grade>
+            <GradeDuasColunas>
               <Select<number>
                 label="Pessoa"
                 required
@@ -286,7 +286,7 @@ export default function UsuarioFormulario() {
                 disabled={salvando}
                 hint={edicao ? 'Deixe vazio para não alterar a senha.' : undefined}
               />
-            </Grade>
+            </GradeDuasColunas>
 
             <Select<StatusAtivoInativo>
               label="Situação"

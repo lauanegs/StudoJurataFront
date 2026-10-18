@@ -4,8 +4,10 @@ import { useProfessorLogado } from '@/hooks/usePerfilLogado'
 import { useRequisicao } from '@/hooks/useRequisicao'
 import { professores as servicoProfessores } from '@/dominios/pessoas/service'
 import { matriculas } from '@/dominios/turmas/service'
+import { resumoFiltrosTexto } from './resumoFiltrosTexto'
 import { agruparPorSimulado, mediaPorDisciplina, tendenciaPorDisciplina } from './agregacoesDesempenho'
 
+import type { FiltrosDesempenhoProps } from './FiltrosDesempenho/types'
 import type { NotaDetalhada } from './types'
 export type { DesempenhoSimulado } from './types'
 
@@ -129,7 +131,35 @@ export function useDesempenhoDados() {
     setFiltrosAplicados({ turmaId: null, disciplinaId: null, alunoId: null, dataInicio: '', dataFim: '' })
   }
 
+  const carregandoAlunos = turmaId ? requisicaoMatriculas.loading : false
+
+  const propsFiltros: FiltrosDesempenhoProps = {
+    opcoesTurmas,
+    opcoesDisciplinas,
+    opcoesAlunos,
+    turmaId,
+    disciplinaId,
+    alunoId,
+    dataInicio,
+    dataFim,
+    carregandoTurmas: requisicaoVinculos.loading,
+    carregandoAlunos,
+    onTurmaChange: setTurmaId,
+    onDisciplinaChange: setDisciplinaId,
+    onAlunoChange: setAlunoId,
+    onDataInicioChange: setDataInicio,
+    onDataFimChange: setDataFim,
+    onBuscar: buscar,
+    onLimpar: limparFiltros,
+  }
+
+  // O recorte aplicado aparece só no modal "Detalhar" de cada gráfico e, em texto puro, no PDF exportado
+  const recorteAplicado = { opcoesTurmas, opcoesDisciplinas, opcoesAlunos, ...filtrosAplicados }
+
   return {
+    propsFiltros,
+    recorteAplicado,
+    resumoFiltrosTextoAtual: resumoFiltrosTexto(recorteAplicado),
     turmaId,
     setTurmaId: (valor: number | null) => {
       setTurmaId(valor)

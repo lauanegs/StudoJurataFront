@@ -1,24 +1,18 @@
 import styled from 'styled-components'
-export const CamposCabecalho = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: ${({ theme }) => theme.spacing.sm};
-`
-
-export const CampoLargura = styled.div<{ $largura: string }>`
-  width: ${({ $largura }) => $largura};
-  max-width: 100%;
-`
-
 export const BotoesFlutuantes = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: ${({ theme }) => theme.spacing.xs};
-`
 
-export const BotaoSalvar = styled.div`
-  flex-shrink: 0;
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+
+    & > button {
+      width: 100%;
+      min-height: 44px;
+      border: 2px solid ${({ theme }) => theme.colors.borderStrong};
+    }
+  }
 `
 
 export const ColunaCargaHoraria = styled.div`
@@ -26,6 +20,11 @@ export const ColunaCargaHoraria = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xxs};
   min-width: 130px;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
 `
 
 export const TrilhaCargaHoraria = styled.div`

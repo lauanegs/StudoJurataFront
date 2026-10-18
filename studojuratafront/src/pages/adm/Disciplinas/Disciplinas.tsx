@@ -151,14 +151,14 @@ export default function Disciplinas() {
         actions={(disciplina) => (
           <>
             <IconButton
-              label={`Editar ${disciplina.titulo}`}
+              label={`Editar ${disciplina.titulo}`} acao="Editar"
               icon={<Pencil />}
               disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/disciplinas/${disciplina.id}`)}
             />
             {disciplina.status === 'INATIVO' ? (
               <IconButton
-                label={`Ativar ${disciplina.titulo}`}
+                label={`Ativar ${disciplina.titulo}`} acao="Ativar"
                 icon={<ArchiveRestore />}
                 variant="success"
                 disabled={excluindo || ativando}
@@ -166,7 +166,7 @@ export default function Disciplinas() {
               />
             ) : (
               <IconButton
-                label={`Inativar ${disciplina.titulo}`}
+                label={`Inativar ${disciplina.titulo}`} acao="Inativar"
                 icon={<Archive />}
                 variant="danger"
                 disabled={excluindo || ativando}

@@ -3,11 +3,8 @@ import { useParams } from 'react-router-dom'
 import { Clock, GraduationCap, Target } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
-import { AlternativaCard } from '@/components/simulados/AlternativaCard'
-import { AlternativaVerdadeiroFalso } from '@/components/simulados/AlternativaVerdadeiroFalso'
-import { Card } from '@/components/ui/Card'
+import { QuestaoCorrigida } from '@/components/simulados/QuestaoCorrigida'
 import { Header, SubtituloItem } from '@/components/ui/Header'
-import { Tag } from '@/components/ui/Tag'
 import { Stack } from '@/components/ui/Stack'
 import { ErroCarregamento } from '@/components/feedback/ErroCarregamento'
 import { EstadoVazio } from '@/components/feedback/EstadoVazio'
@@ -19,9 +16,8 @@ import {
   simuladoAlunos,
   simulados as servicoSimulados,
 } from '@/dominios/simulados/service'
-import { formatarTempo, letraAlternativa } from '@/utils/format'
+import { formatarTempo } from '@/utils/format'
 
-import { Alternativas, QuestaoCabecalho, QuestaoTitulo, Enunciado } from './styles'
 
 export default function ResultadoAluno() {
   const { simuladoId, simuladoAlunoId } = useParams()
@@ -124,52 +120,19 @@ export default function ResultadoAluno() {
       ) : (
         <Stack gap="md">
           {correcao.map((item, indice) => (
-            <Card key={item.questaoId}>
-              <QuestaoCabecalho>
-                <QuestaoTitulo>Questão {indice + 1}</QuestaoTitulo>
-
-                {!item.respondida ? (
-                  <Tag variant="neutral">Em branco</Tag>
-                ) : item.acertou ? (
-                  <Tag variant="success">
-                    Acertou
-                  </Tag>
-                ) : (
-                  <Tag variant="error">
-                    Errou
-                  </Tag>
-                )}
-              </QuestaoCabecalho>
-
-              <Enunciado>{item.enunciado}</Enunciado>
-
-              <Alternativas>
-                {item.ehVF
-                  ? item.alternativas.map((alternativa) => (
-                      <AlternativaVerdadeiroFalso
-                        key={alternativa.id}
-                        texto={alternativa.texto}
-                        valor={item.respondida ? item.marcadasVerdadeiras.has(alternativa.id) : null}
-                        revelado
-                        correta={alternativa.correta}
-                        disabled
-                      />
-                    ))
-                  : item.alternativas.map((alternativa, posicao) => {
-                      const marcada = alternativa.id === item.alternativaMarcada
-
-                      return (
-                        <AlternativaCard
-                          key={alternativa.id}
-                          letra={letraAlternativa(posicao)}
-                          texto={alternativa.texto}
-                          status={alternativa.correta ? 'correct' : marcada ? 'incorrect' : 'neutral'}
-                          legenda=""
-                        />
-                      )
-                    })}
-              </Alternativas>
-            </Card>
+            <QuestaoCorrigida
+              key={item.questaoId}
+              numero={indice + 1}
+              enunciado={item.enunciado}
+              ehVF={item.ehVF}
+              respondida={item.respondida}
+              acertou={item.acertou}
+              rotuloAcerto="Acertou"
+              rotuloErro="Errou"
+              alternativas={item.alternativas}
+              marcadasVerdadeiras={item.marcadasVerdadeiras}
+              alternativaMarcada={item.alternativaMarcada}
+            />
           ))}
         </Stack>
       )}

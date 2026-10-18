@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 
 import type { LetterState } from './types'
 
@@ -8,6 +8,13 @@ export const Container = styled.span<{ $state: LetterState }>`
   justify-content: center;
   flex-shrink: 0;
   align-self: stretch;
+  min-width: 72px;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    min-width: 48px;
+    padding: 0 ${({ theme }) => theme.spacing.xs};
+    font-size: ${({ theme }) => theme.typography.sizes.md};
+  }
 
   padding: 0 ${({ theme }) => theme.spacing.lg};
 
@@ -19,19 +26,11 @@ export const Container = styled.span<{ $state: LetterState }>`
   letter-spacing: -0.9px;
   color: ${({ theme }) => theme.colors.white};
 
-  ${({ theme, $state }) =>
+  background: ${({ theme, $state }) =>
     ({
-      default: css`
-        background: ${theme.gradients.sidebar};
-      `,
-      selected: css`
-        background: ${theme.gradients.sidebar};
-      `,
-      correct: css`
-        background: ${theme.gradients.success};
-      `,
-      incorrect: css`
-        background: ${theme.gradients.danger};
-      `,
-    })[$state]}
+      default: theme.gradients.sidebar,
+      selected: theme.gradients.sidebar,
+      correct: theme.gradients.success,
+      incorrect: theme.gradients.danger,
+    })[$state]};
 `

@@ -1,11 +1,11 @@
 import { AlertTriangle } from 'lucide-react'
 
+import { Icone } from '@/components/ui/Alerta/styles'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 
-import { Corpo, Descricao, Icone } from './styles'
+import { Corpo, Descricao } from './styles'
 import type { ConfirmDialogProps } from './types'
-
 
 export function ConfirmDialog({
   aberto,
@@ -43,7 +43,7 @@ export function ConfirmDialog({
       }
     >
       <Corpo>
-        <Icone $perigo={perigo} aria-hidden="true">
+        <Icone $tom={perigo ? 'error' : 'warning'} aria-hidden="true">
           <AlertTriangle />
         </Icone>
 

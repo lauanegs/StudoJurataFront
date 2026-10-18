@@ -156,10 +156,10 @@ export default function ConteudoFormulario() {
               />
             </GradeAutoAjuste>
 
-            <Alerta titulo="Conteúdo detalhado">
-              É importante que o conteúdo seja detalhadamente explicado, a fim de que o portal elabore
-              questões bem alinhadas ao conteúdo desenvolvido durante o curso.
-            </Alerta>
+            <Alerta
+              titulo="Conteúdo detalhado"
+              descricao="É importante que o conteúdo seja detalhadamente explicado, a fim de que o portal elabore questões bem alinhadas ao conteúdo desenvolvido durante o curso."
+            />
 
             <TextArea
               label="Conteúdo"

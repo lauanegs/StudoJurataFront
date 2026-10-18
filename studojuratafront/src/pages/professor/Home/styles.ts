@@ -1,6 +1,7 @@
 import styled from 'styled-components'
-export const ItemEvento = styled.div`
-  width: 100%;
-  min-width: 0;
-  height: 160px;
+
+export const GradeEventos = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: ${({ theme }) => theme.spacing.md};
 `

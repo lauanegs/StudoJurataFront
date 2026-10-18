@@ -468,11 +468,14 @@ export default function AprovarSimulado() {
             </GradeAutoAjuste>
 
             {vinculoIA && (
-              <SVinculo.ChipsVinculo>
-                <Chip variant="neutral" disabled>
-                  {alunoAlvo?.pessoa?.nome ?? `Aluno ${vinculoIA.alunoId}`}
-                </Chip>
-              </SVinculo.ChipsVinculo>
+              <Stack gap="xs">
+                <SVinculo.TituloVinculo>Aluno do reforço</SVinculo.TituloVinculo>
+                <SVinculo.ChipsVinculo>
+                  <Chip variant="neutral" disabled>
+                    {alunoAlvo?.pessoa?.nome ?? `Aluno ${vinculoIA.alunoId}`}
+                  </Chip>
+                </SVinculo.ChipsVinculo>
+              </Stack>
             )}
           </Stack>
         </Card>

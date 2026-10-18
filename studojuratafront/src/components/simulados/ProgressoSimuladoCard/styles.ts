@@ -25,6 +25,11 @@ export const Container = styled.div`
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${CINZA_ESMAECIDO};
   border-radius: ${({ theme }) => theme.radius.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    gap: ${({ theme }) => theme.spacing.xxs};
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  }
 `
 
 export const Title = styled.p`
@@ -43,6 +48,11 @@ export const Track = styled.div`
   justify-content: center;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-wrap: nowrap;
+    gap: ${({ theme }) => theme.spacing.xs};
+  }
 `
 
 export const SegmentColumn = styled.div`
@@ -50,10 +60,26 @@ export const SegmentColumn = styled.div`
   flex-direction: column;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xxs};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) and (max-height: 640px) {
+    & > span {
+      display: none;
+    }
+  }
 `
 
 export const Segment = styled.button<{ $color: string; $navigable: boolean; $pending: boolean }>`
   width: 40px;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    width: 100%;
+  }
+
   height: 8px;
 
   border-radius: ${({ theme }) => theme.radius.sm};

@@ -159,14 +159,14 @@ export default function Responsaveis() {
         actions={(responsavel) => (
           <>
             <IconButton
-              label={`Editar ${responsavel.pessoa?.nome}`}
+              label={`Editar ${responsavel.pessoa?.nome}`} acao="Editar"
               icon={<Pencil />}
               disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/responsaveis/${responsavel.id}`)}
             />
             {responsavel.pessoa?.status === 'INATIVO' ? (
               <IconButton
-                label={`Ativar ${responsavel.pessoa?.nome}`}
+                label={`Ativar ${responsavel.pessoa?.nome}`} acao="Ativar"
                 icon={<ArchiveRestore />}
                 variant="success"
                 disabled={excluindo || ativando}
@@ -174,7 +174,7 @@ export default function Responsaveis() {
               />
             ) : (
               <IconButton
-                label={`Inativar ${responsavel.pessoa?.nome}`}
+                label={`Inativar ${responsavel.pessoa?.nome}`} acao="Inativar"
                 icon={<Archive />}
                 variant="danger"
                 disabled={excluindo || ativando}

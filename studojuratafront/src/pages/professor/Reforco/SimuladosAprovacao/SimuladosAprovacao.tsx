@@ -13,11 +13,12 @@ import { Tag } from '@/components/ui/Tag'
 import { Skeleton } from '@/components/feedback/Skeleton'
 import { useConfirm } from '@/contexts/confirm/confirmContexto'
 import { useToast } from '@/contexts/toast/toastContexto'
-import { useProfessorLogado } from '@/hooks/usePerfilLogado'
+import type { TipoFiltro } from '@/hooks/types'
+import { useFiltroTurmaProfessor } from '@/hooks/useFiltroTurmaProfessor'
 import { useRequisicao } from '@/hooks/useRequisicao'
 import { ApiError } from '@/dominios/comum/api'
 import { ia as servicoIa } from '@/dominios/ia/service'
-import { alunos as servicoAlunos, professores as servicoProfessores } from '@/dominios/pessoas/service'
+import { alunos as servicoAlunos } from '@/dominios/pessoas/service'
 import { conteudosPlano } from '@/dominios/planejamento/service'
 import {
   questoes as servicoQuestoes,
@@ -25,12 +26,13 @@ import {
   simulados as servicoSimulados,
 } from '@/dominios/simulados/service'
 import { matriculas } from '@/dominios/turmas/service'
+import { nivelDesempenho, VARIANTE_TAG_POR_NIVEL } from '@/utils/desempenho'
 import { formatarData, formatarPorcentagem } from '@/utils/format'
 import { ROTULO_MOTIVO_RECOMENDACAO } from '@/utils/labels'
 import type { MotivoRecomendacao } from '@/dominios/ia/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-import type { TipoFiltro, Aba, FiltroAplicado, LinhaAprovacao, ProximaGeracaoIA } from './types'
+import type { Aba, LinhaAprovacao, ProximaGeracaoIA } from './types'
 
 function rotuloMotivos(motivos?: MotivoRecomendacao[]): string {
   if (!motivos || motivos.length === 0) return '—'
@@ -53,71 +55,26 @@ export default function SimuladosAprovacao() {
   const navegar = useNavigate()
   const toast = useToast()
   const confirmar = useConfirm()
-  const { professorId } = useProfessorLogado()
 
   const [gerando, setGerando] = useState<string | null>(null)
 
   const [aba, setAba] = useState<Aba>('aprovacao')
 
-  const [turmaId, setTurmaId] = useState<number | null>(null)
-  const [tipo, setTipo] = useState<TipoFiltro | null>(null)
-  const [especificoId, setEspecificoId] = useState<number | null>(null)
-  const [filtro, setFiltro] = useState<FiltroAplicado | null>(null)
-
-  const requisicaoVinculos = useRequisicao(
-    () => servicoProfessores.turmasLecionadas(professorId as number),
-    [professorId],
-    { ativo: Boolean(professorId) },
-  )
-
-  const opcoesTurmas = useMemo(() => {
-    const unicas = new Map<number, string>()
-    for (const vinculo of requisicaoVinculos.data ?? []) {
-      if (vinculo.turma) unicas.set(vinculo.turma.id, vinculo.turma.titulo)
-    }
-    return [...unicas.entries()].map(([value, label]) => ({ value, label }))
-  }, [requisicaoVinculos.data])
-
-  const opcoesTipo: { value: TipoFiltro; label: string }[] = [
-    { value: 'disciplina', label: 'Disciplina' },
-    { value: 'aluno', label: 'Aluno' },
-  ]
-
-  const disciplinasDaTurma = useMemo(
-    () =>
-      (requisicaoVinculos.data ?? [])
-        .filter((vinculo) => vinculo.turma?.id === turmaId && vinculo.disciplina)
-        .map((vinculo) => ({ value: vinculo.disciplina!.id, label: vinculo.disciplina?.titulo ?? '—' })),
-    [requisicaoVinculos.data, turmaId],
-  )
-
-  const requisicaoMatriculasTurma = useRequisicao(
-    () => matriculas.ativosPorTurma(turmaId as number),
-    [turmaId],
-    { ativo: Boolean(turmaId) && tipo === 'aluno' },
-  )
-
-  const opcoesEspecifico = useMemo(() => {
-    if (tipo === 'disciplina') return disciplinasDaTurma
-
-    if (tipo === 'aluno') {
-      return (requisicaoMatriculasTurma.data ?? []).map((matricula) => ({
-        value: matricula.aluno.id,
-        label: matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`,
-      }))
-    }
-
-    return []
-  }, [tipo, disciplinasDaTurma, requisicaoMatriculasTurma.data])
-
-  function buscar() {
-    if (!turmaId || !tipo || !especificoId) {
-      toast.warning('Selecione turma, tipo de filtro e o item específico antes de buscar.')
-      return
-    }
-
-    setFiltro({ turmaId, tipo, especificoId })
-  }
+  const {
+    requisicaoVinculos,
+    turmaId,
+    setTurmaId,
+    tipo,
+    setTipo,
+    especificoId,
+    setEspecificoId,
+    filtro,
+    opcoesTurmas,
+    opcoesTipo,
+    opcoesEspecifico,
+    requisicaoMatriculasTurma,
+    buscar,
+  } = useFiltroTurmaProfessor()
 
   // Sempre ativas — a tela abre com a lista completa (todas as turmas do professor)
   const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])
@@ -384,7 +341,11 @@ export default function SimuladosAprovacao() {
     {
       key: 'aproveitamento',
       cabecalho: 'Aproveitamento',
-      render: (item) => (typeof item.taxaAcerto === 'number' ? formatarPorcentagem(item.taxaAcerto * 100) : '—'),
+      render: (item) => {
+        if (typeof item.taxaAcerto !== 'number') return '—'
+        const percentual = item.taxaAcerto * 100
+        return <Tag variant={VARIANTE_TAG_POR_NIVEL[nivelDesempenho(percentual)]}>{formatarPorcentagem(percentual)}</Tag>
+      },
     },
     {
       key: 'dataGeracao',

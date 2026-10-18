@@ -79,6 +79,7 @@ export default function Perfil() {
     return [
       {
         id: 'primeiro',
+        imagem: '/images/conquistas/primeiro-passo.png',
         titulo: 'Primeiro passo',
         descricao: 'Conclua seu primeiro simulado',
         conquistada: concluidas.length >= 1,
@@ -86,6 +87,7 @@ export default function Perfil() {
       },
       {
         id: 'dedicado',
+        imagem: '/images/conquistas/dedicado.png',
         titulo: 'Dedicado',
         descricao: 'Conclua 5 simulados',
         conquistada: concluidas.length >= 5,
@@ -93,6 +95,7 @@ export default function Perfil() {
       },
       {
         id: 'maratonista',
+        imagem: '/images/conquistas/maratonista.png',
         titulo: 'Maratonista',
         descricao: 'Conclua 10 simulados',
         conquistada: concluidas.length >= 10,
@@ -100,6 +103,7 @@ export default function Perfil() {
       },
       {
         id: 'estudante',
+        imagem: '/images/conquistas/estudante-maximo.png',
         titulo: 'Estudante máximo',
         descricao: 'Some pontos em 3 simulados diferentes',
         conquistada: notasMaximas.length >= 3,
@@ -177,6 +181,7 @@ export default function Perfil() {
                 key={conquista.id}
                 titulo={conquista.titulo}
                 descricao={conquista.descricao}
+                imagem={conquista.imagem}
                 conquistada={conquista.conquistada}
                 progresso={conquista.conquistada ? undefined : conquista.progresso}
               />

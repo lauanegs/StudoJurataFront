@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Pencil, UserPlus, Users } from 'lucide-react'
 
-import { AlertaDesempenhoCard } from '@/components/desempenho/AlertaDesempenhoCard'
+import { Alerta } from '@/components/ui/Alerta'
 import { BuscaInput } from '@/components/ui/BuscaInput'
 import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
@@ -55,7 +55,7 @@ export function AbaAlunos({ turmaId, requisicaoAtivos, historico, vinculos }: Ab
   return (
     <>
       {avisosCargaHoraria.map((matricula) => (
-        <AlertaDesempenhoCard
+        <Alerta
           key={matricula.id}
           tom="success"
           titulo={`${matricula.aluno?.pessoa?.nome ?? 'Aluno'} concluiu a carga horária`}

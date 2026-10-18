@@ -4,6 +4,17 @@ export const Grupo = styled.div`
   display: inline-flex;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.xxs};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    display: flex;
+    width: 100%;
+
+    & > button {
+      flex: 1 1 0;
+      min-width: 0;
+      padding-inline: ${({ theme }) => theme.spacing.xs};
+    }
+  }
 `
 
 export const Opcao = styled.button<{ $ativa: boolean }>`

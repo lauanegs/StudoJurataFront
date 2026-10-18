@@ -12,6 +12,7 @@ import '@mantine/dates/styles.css'
 import '@mantine/charts/styles.css'
 
 import { AuthProvider } from '@/contexts/auth/AuthProvider'
+import { CursoAlunoProvider } from '@/contexts/cursoAluno/CursoAlunoProvider'
 import { ConfirmProvider } from '@/contexts/confirm/ConfirmProvider'
 import { ToastProvider } from '@/contexts/toast/ToastProvider'
 import { AppRoutes } from './routes'
@@ -32,7 +33,9 @@ createRoot(document.getElementById('root')!).render(
             <ToastProvider>
               <ConfirmProvider>
                 <AuthProvider>
-                  <AppRoutes />
+                  <CursoAlunoProvider>
+                    <AppRoutes />
+                  </CursoAlunoProvider>
                 </AuthProvider>
               </ConfirmProvider>
             </ToastProvider>

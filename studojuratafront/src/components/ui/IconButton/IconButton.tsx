@@ -3,6 +3,7 @@ import type { IconButtonProps } from './types'
 
 export function IconButton({
   label,
+  acao,
   icon,
   variant = 'neutral',
   size = 'medium',
@@ -16,6 +17,7 @@ export function IconButton({
       $size={size}
       aria-label={label}
       title={label}
+      data-acao={acao ?? label}
       {...rest}
     >
       {icon}

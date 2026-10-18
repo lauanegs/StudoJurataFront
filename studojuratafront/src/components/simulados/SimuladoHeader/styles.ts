@@ -15,6 +15,16 @@ export const Container = styled.header`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
 
   background: ${({ theme }) => theme.colors.white};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-wrap: wrap;
+    gap: ${({ theme }) => theme.spacing.xs};
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+
+    button {
+      height: 40px !important;
+    }
+  }
 `
 
 export const Esquerda = styled.div`
@@ -22,12 +32,22 @@ export const Esquerda = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   min-width: 0;
+  flex: 1;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex: 1 1 100%;
+  }
 `
 
 export const Logo = styled.img`
   width: 44px;
   height: 44px;
   object-fit: contain;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    width: 32px;
+    height: 32px;
+  }
 `
 
 export const Titulo = styled.strong`
@@ -38,12 +58,27 @@ export const Titulo = styled.strong`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    font-size: ${({ theme }) => theme.typography.sizes.md};
+    letter-spacing: 0;
+  }
 `
 
 export const Direita = styled.div`
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: ${({ theme }) => theme.spacing.sm};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex: 1 1 100%;
+    gap: ${({ theme }) => theme.spacing.xs};
+
+    & > * {
+      flex: 1 1 0;
+    }
+  }
 `
 
 export const Cronometro = styled.div<{ $alerta: boolean }>`
@@ -54,6 +89,11 @@ export const Cronometro = styled.div<{ $alerta: boolean }>`
 
   height: 56px;
   padding: 0 ${({ theme }) => theme.spacing.xl};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    height: 40px;
+    padding: 0 ${({ theme }) => theme.spacing.sm};
+  }
   border-radius: ${({ theme }) => theme.radius.md};
   border: 1px solid ${({ theme, $alerta }) => ($alerta ? theme.colors.error : theme.colors.borderSoft)};
 

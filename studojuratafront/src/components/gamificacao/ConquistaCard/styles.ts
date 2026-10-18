@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 
 export const Container = styled.article<{ $conquistada: boolean }>`
   display: flex;
@@ -7,7 +7,7 @@ export const Container = styled.article<{ $conquistada: boolean }>`
   gap: ${({ theme }) => theme.spacing.xs};
 
   width: 100%;
-  min-width: 160px;
+  min-width: 0;
   padding: ${({ theme }) => theme.spacing.md};
 
   background: ${({ theme }) => theme.colors.white};
@@ -15,31 +15,26 @@ export const Container = styled.article<{ $conquistada: boolean }>`
   border-radius: ${({ theme }) => theme.radius.md};
   text-align: center;
 
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    padding: ${({ theme }) => theme.spacing.sm};
+  }
+
   ${({ $conquistada }) =>
     !$conquistada &&
-    css`
-      opacity: 0.6;
-    `}
+    'opacity: 0.6;'}
 `
 
-export const Medalha = styled.span<{ $conquistada: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+export const Imagem = styled.img<{ $conquistada: boolean }>`
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
 
-  width: 56px;
-  height: 56px;
-
-  border-radius: ${({ theme }) => theme.radius.circle};
-  background: ${({ theme, $conquistada }) =>
-    $conquistada ? theme.colors.warningBackground : theme.colors.background};
-  color: ${({ theme, $conquistada }) =>
-    $conquistada ? theme.colors.warning : theme.colors.textTertiary};
-
-  svg {
-    width: 26px;
-    height: 26px;
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    width: 72px;
+    height: 72px;
   }
+
+  filter: ${({ $conquistada }) => ($conquistada ? 'none' : 'grayscale(1)')};
 `
 
 export const Titulo = styled.strong`

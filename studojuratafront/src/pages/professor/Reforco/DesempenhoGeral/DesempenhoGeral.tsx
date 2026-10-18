@@ -19,7 +19,6 @@ import { calcularFaixasHistograma, estaNaFaixaHistograma } from '@/utils/desempe
 import { formatarPorcentagem } from '@/utils/format'
 import { FiltrosDesempenho } from '@/pages/professor/Reforco/comum/FiltrosDesempenho/FiltrosDesempenho'
 import { ResumoFiltrosDesempenho } from '@/pages/professor/Reforco/comum/ResumoFiltrosDesempenho/ResumoFiltrosDesempenho'
-import { resumoFiltrosTexto } from '@/pages/professor/Reforco/comum/resumoFiltrosTexto'
 import { useDesempenhoDados } from '@/pages/professor/Reforco/comum/useDesempenhoDados'
 
 import { PreenchidoDetalhe, CabecalhoDetalhe, TituloDetalhe } from './styles'
@@ -27,24 +26,9 @@ import { PreenchidoDetalhe, CabecalhoDetalhe, TituloDetalhe } from './styles'
 /** Versão filtrável do card "Visão geral" do painel de Desempenho */
 export default function DesempenhoGeral() {
   const {
-    turmaId,
-    setTurmaId,
-    disciplinaId,
-    setDisciplinaId,
-    alunoId,
-    setAlunoId,
-    dataInicio,
-    setDataInicio,
-    dataFim,
-    setDataFim,
-    filtrosAplicados,
-    buscar,
-    limparFiltros,
-    opcoesTurmas,
-    opcoesDisciplinas,
-    opcoesAlunos,
-    carregandoAlunos,
-    carregandoVinculos,
+    propsFiltros,
+    recorteAplicado,
+    resumoFiltrosTextoAtual,
     notasPercentuais,
     notasDetalhadas,
     desempenhoPorDisciplina,
@@ -106,20 +90,7 @@ export default function DesempenhoGeral() {
     [notasPercentuais],
   )
 
-  // O recorte aplicado aparece só no modal "Detalhar" de cada gráfico
-  const recorteAplicado = {
-    opcoesTurmas,
-    opcoesDisciplinas,
-    opcoesAlunos,
-    turmaId: filtrosAplicados.turmaId,
-    disciplinaId: filtrosAplicados.disciplinaId,
-    alunoId: filtrosAplicados.alunoId,
-    dataInicio: filtrosAplicados.dataInicio,
-    dataFim: filtrosAplicados.dataFim,
-  }
   const resumoFiltros = <ResumoFiltrosDesempenho {...recorteAplicado} />
-  // Mesmo recorte, em texto puro — vai no PDF exportado de cada gráfico
-  const resumoFiltrosTextoAtual = resumoFiltrosTexto(recorteAplicado)
 
   return (
     <Layout>
@@ -128,25 +99,7 @@ export default function DesempenhoGeral() {
         voltarPara="/professor/desempenho"
         rotuloVoltar="Desempenho"
         filtros={
-          <FiltrosDesempenho
-            opcoesTurmas={opcoesTurmas}
-            opcoesDisciplinas={opcoesDisciplinas}
-            opcoesAlunos={opcoesAlunos}
-            turmaId={turmaId}
-            disciplinaId={disciplinaId}
-            alunoId={alunoId}
-            dataInicio={dataInicio}
-            dataFim={dataFim}
-            carregandoTurmas={carregandoVinculos}
-            carregandoAlunos={carregandoAlunos}
-            onTurmaChange={setTurmaId}
-            onDisciplinaChange={setDisciplinaId}
-            onAlunoChange={setAlunoId}
-            onDataInicioChange={setDataInicio}
-            onDataFimChange={setDataFim}
-            onBuscar={buscar}
-            onLimpar={limparFiltros}
-          />
+          <FiltrosDesempenho {...propsFiltros} />
         }
       />
 

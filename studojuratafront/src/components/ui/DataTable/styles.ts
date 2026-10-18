@@ -1,9 +1,8 @@
-import type { CSSProperties } from 'react'
+import { Table } from '@mantine/core'
 import styled from 'styled-components'
 
-import { theme as tokens } from '@/styles/theme'
 import { corComOpacidade } from '@/utils/corComOpacidade'
-import type { Coluna, Densidade } from './types'
+import type { Alinhamento, Densidade } from './types'
 
 export const Envelope = styled.div`
   width: 100%;
@@ -24,42 +23,150 @@ export const RotuloOrdenavel = styled.span`
   gap: ${({ theme }) => theme.spacing.xxs};
 `
 
-export const estilosTabela = (densidade: Densidade) => ({
-  table: { width: '100%' },
-  thead: { background: corComOpacidade(tokens.colors.background, 0.3) },
-  th: {
-    padding: `${tokens.spacing.md} ${tokens.spacing.xl}`,
-    fontSize: tokens.typography.sizes.md,
-    fontWeight: tokens.typography.weights.semiBold,
-    letterSpacing: '-0.8px',
-    color: tokens.colors.textSecondary,
-    whiteSpace: 'nowrap',
-  },
-  tr: { borderBottom: `2px solid ${corComOpacidade(tokens.colors.textTertiary, 0.1)}` },
-  td: {
-    padding: `${densidade === 'compacta' ? tokens.spacing.xs : tokens.spacing.sm} ${tokens.spacing.lg}`,
-    fontSize: tokens.typography.sizes.sm,
-    color: tokens.colors.textSecondary,
-    verticalAlign: 'middle',
-  },
-} satisfies Record<string, CSSProperties>)
+export const Tabela = styled(Table)<{ $densidade: Densidade }>`
+  width: 100%;
 
-export const estiloCabecalhoColuna = <T,>(coluna: Coluna<T>): CSSProperties => ({
-  width: coluna.largura,
-  textAlign: coluna.alinhamento ?? 'left',
-  cursor: coluna.ordenavel ? 'pointer' : undefined,
-  userSelect: coluna.ordenavel ? 'none' : undefined,
-})
+  thead {
+    background: ${({ theme }) => corComOpacidade(theme.colors.background, 0.3)};
+  }
 
-export const estiloCabecalhoAcoes = (quebrarAcoes: boolean): CSSProperties =>
-  quebrarAcoes ? { textAlign: 'left' } : { textAlign: 'left', width: '1%', whiteSpace: 'nowrap' }
+  th {
+    padding: ${({ theme }) => `${theme.spacing.md} ${theme.spacing.xl}`};
+    font-size: ${({ theme }) => theme.typography.sizes.md};
+    font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+    letter-spacing: -0.8px;
+    color: ${({ theme }) => theme.colors.textSecondary};
+    white-space: nowrap;
+  }
 
-export const estiloLinha = (clicavel: boolean, ultima: boolean): CSSProperties => ({
-  cursor: clicavel ? 'pointer' : undefined,
-  ...(ultima ? { borderBottom: 'none' } : null),
-})
+  tr {
+    border-bottom: 2px solid ${({ theme }) => corComOpacidade(theme.colors.textTertiary, 0.1)};
+  }
 
-export const estiloCelula = <T,>(coluna: Coluna<T>): CSSProperties => ({ textAlign: coluna.alinhamento ?? 'left' })
+  tbody tr:last-child {
+    border-bottom: none;
+  }
 
-export const estiloCelulaAcoes = (quebrarAcoes: boolean): CSSProperties =>
-  quebrarAcoes ? { textAlign: 'left' } : { textAlign: 'left', whiteSpace: 'nowrap' }
+  td {
+    padding: ${({ $densidade, theme }) => `${$densidade === 'compacta' ? theme.spacing.xs : theme.spacing.sm} ${theme.spacing.lg}`};
+    font-size: ${({ theme }) => theme.typography.sizes.sm};
+    color: ${({ theme }) => theme.colors.textSecondary};
+    vertical-align: middle;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    &,
+    tbody {
+      display: block;
+      width: 100%;
+    }
+
+    thead {
+      display: none;
+    }
+
+    tr {
+      display: flex;
+      flex-direction: column;
+      gap: ${({ theme }) => theme.spacing.xxs};
+      padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
+    }
+
+    td {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: ${({ theme }) => theme.spacing.sm};
+      padding: ${({ theme }) => theme.spacing.xxs} 0;
+      text-align: right;
+      border: none;
+    }
+
+    td.oculta-tela-pequena {
+      display: flex;
+    }
+
+    td[data-label]::before {
+      content: attr(data-label);
+      flex-shrink: 0;
+      font-size: ${({ theme }) => theme.typography.sizes.xs};
+      font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+      color: ${({ theme }) => theme.colors.textTertiary};
+      text-align: left;
+    }
+
+    td:first-child {
+      justify-content: flex-start;
+      text-align: left;
+      font-size: ${({ theme }) => theme.typography.sizes.md};
+      font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+      color: ${({ theme }) => theme.colors.textStrong};
+    }
+
+    td:first-child::before {
+      display: none;
+    }
+
+    td:not([data-label]):last-child {
+      justify-content: flex-end;
+    }
+  }
+`
+
+export const Cabecalho = styled(Table.Th)<{ $largura?: string; $alinhamento?: Alinhamento; $ordenavel?: boolean }>`
+  width: ${({ $largura }) => $largura ?? 'auto'};
+  text-align: ${({ $alinhamento }) => $alinhamento ?? 'left'};
+  cursor: ${({ $ordenavel }) => ($ordenavel ? 'pointer' : 'auto')};
+  user-select: ${({ $ordenavel }) => ($ordenavel ? 'none' : 'auto')};
+`
+
+export const CabecalhoAcoes = styled(Table.Th)<{ $quebrar: boolean }>`
+  text-align: left;
+  width: ${({ $quebrar }) => ($quebrar ? 'auto' : '1%')};
+  white-space: ${({ $quebrar }) => ($quebrar ? 'normal' : 'nowrap')};
+`
+
+export const Linha = styled(Table.Tr)<{ $clicavel: boolean }>`
+  cursor: ${({ $clicavel }) => ($clicavel ? 'pointer' : 'auto')};
+`
+
+export const Celula = styled(Table.Td)<{ $alinhamento?: Alinhamento }>`
+  text-align: ${({ $alinhamento }) => $alinhamento ?? 'left'};
+`
+
+export const CelulaAcoes = styled(Table.Td)<{ $quebrar: boolean }>`
+  text-align: left;
+  white-space: ${({ $quebrar }) => ($quebrar ? 'normal' : 'nowrap')};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    padding-top: ${({ theme }) => theme.spacing.xs};
+
+    & > div {
+      flex-direction: column;
+      align-items: stretch;
+      gap: ${({ theme }) => theme.spacing.xs};
+      width: 100%;
+    }
+
+    & > div > button {
+      width: 100%;
+      height: auto;
+      min-height: 44px;
+      gap: ${({ theme }) => theme.spacing.xs};
+      padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.md}`};
+      border: 2px solid ${({ theme }) => theme.colors.borderStrong};
+      font-size: ${({ theme }) => theme.typography.sizes.sm};
+      font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+    }
+
+    & > div > button[data-acao]::after {
+      content: attr(data-acao);
+    }
+
+    & > div > button svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+`

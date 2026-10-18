@@ -1,14 +1,6 @@
 import type { MotivoRecomendacao } from '@/dominios/ia/types'
 
-export type TipoFiltro = 'disciplina' | 'aluno'
-
 export type Aba = 'aprovacao' | 'proximas'
-
-export interface FiltroAplicado {
-  turmaId: number
-  tipo: TipoFiltro
-  especificoId: number
-}
 
 export interface LinhaAprovacao {
   simuladoId: number

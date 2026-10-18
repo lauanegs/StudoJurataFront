@@ -12,69 +12,25 @@ import { Tag } from '@/components/ui/Tag'
 import { ErroCarregamento } from '@/components/feedback/ErroCarregamento'
 import { EstadoVazio } from '@/components/feedback/EstadoVazio'
 import { Skeleton } from '@/components/feedback/Skeleton'
-import { useToast } from '@/contexts/toast/toastContexto'
-import { useProfessorLogado } from '@/hooks/usePerfilLogado'
+import type { TipoFiltro } from '@/hooks/types'
+import { useFiltroTurmaProfessor } from '@/hooks/useFiltroTurmaProfessor'
 import { useRequisicao } from '@/hooks/useRequisicao'
 import { notas as servicoNotas } from '@/dominios/notas/service'
-import { professores as servicoProfessores } from '@/dominios/pessoas/service'
 import { simuladoAlunos, simulados as servicoSimulados } from '@/dominios/simulados/service'
 import { matriculas } from '@/dominios/turmas/service'
-import { nivelDesempenho } from '@/utils/desempenho'
+import { VARIANTE_TAG_POR_NIVEL, nivelDesempenho } from '@/utils/desempenho'
 import { formatarNota } from '@/utils/format'
-import type { TagVariant } from '@/components/ui/Tag'
 
-const VARIANTE_POR_NIVEL: Record<'baixo' | 'medio' | 'alto', TagVariant> = {
-  baixo: 'error',
-  medio: 'warning',
-  alto: 'success',
-}
 import { ROTULO_STATUS_MATRICULA } from '@/utils/labels'
 import type { SimuladoAlunoResponse } from '@/dominios/simulados/types'
 import type { AlunoTurma } from '@/dominios/turmas/types'
 
 import { Lista } from './styles'
-import type { TipoFiltro, Visao, FiltroAplicado, LinhaAcordeao } from './types'
+import type { Visao, LinhaAcordeao } from './types'
 
 /** Notas por turma, filtradas por disciplina ou por aluno, em acordeão */
 export default function Notas() {
-  const toast = useToast()
-  const { professorId } = useProfessorLogado()
-
   const [visao, setVisao] = useState<Visao>('ativos')
-  const [turmaId, setTurmaId] = useState<number | null>(null)
-  const [tipo, setTipo] = useState<TipoFiltro | null>(null)
-  const [especificoId, setEspecificoId] = useState<number | null>(null)
-  const [filtro, setFiltro] = useState<FiltroAplicado | null>(null)
-
-  const requisicaoVinculos = useRequisicao(
-    () => servicoProfessores.turmasLecionadas(professorId as number),
-    [professorId],
-    { ativo: Boolean(professorId) },
-  )
-
-  const opcoesTurmas = useMemo(() => {
-    const unicas = new Map<number, string>()
-    for (const vinculo of requisicaoVinculos.data ?? []) {
-      if (vinculo.turma && vinculo.status !== 'INATIVO') {
-        unicas.set(vinculo.turma.id, vinculo.turma.titulo)
-      }
-    }
-    return [...unicas.entries()].map(([value, label]) => ({ value, label }))
-  }, [requisicaoVinculos.data])
-
-  const opcoesTipo: { value: TipoFiltro; label: string }[] = [
-    { value: 'disciplina', label: 'Disciplina' },
-    { value: 'aluno', label: 'Aluno' },
-  ]
-
-  const disciplinasDaTurma = useMemo(
-    () =>
-      (requisicaoVinculos.data ?? [])
-        .filter((vinculo) => vinculo.turma?.id === turmaId && vinculo.status !== 'INATIVO' && vinculo.disciplina)
-        .map((vinculo) => ({ value: vinculo.disciplina!.id, label: vinculo.disciplina?.titulo ?? '—' })),
-    [requisicaoVinculos.data, turmaId],
-  )
-
   // Matrículas ATIVAS ficam só na outra aba
   async function matriculasDaVisao(idTurma: number, visaoAtual: Visao): Promise<AlunoTurma[]> {
     if (visaoAtual === 'ativos') return matriculas.ativosPorTurma(idTurma)
@@ -83,41 +39,32 @@ export default function Notas() {
     return todas.filter((matricula) => matricula.status !== 'ATIVA')
   }
 
-  const requisicaoMatriculasTurma = useRequisicao(
-    () => matriculasDaVisao(turmaId as number, visao),
-    [turmaId, visao],
-    { ativo: Boolean(turmaId) && tipo === 'aluno' },
-  )
-
-  const opcoesEspecifico = useMemo(() => {
-    if (tipo === 'disciplina') return disciplinasDaTurma
-
-    if (tipo === 'aluno') {
-      return (requisicaoMatriculasTurma.data ?? []).map((matricula) => ({
-        value: matricula.aluno.id,
-        label: matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`,
-      }))
-    }
-
-    return []
-  }, [tipo, disciplinasDaTurma, requisicaoMatriculasTurma.data])
+  const {
+    requisicaoVinculos,
+    turmaId,
+    setTurmaId,
+    tipo,
+    setTipo,
+    especificoId,
+    setEspecificoId,
+    filtro,
+    opcoesTurmas,
+    opcoesTipo,
+    disciplinasDaTurma,
+    opcoesEspecifico,
+    requisicaoMatriculasTurma,
+    buscar,
+    limpar,
+  } = useFiltroTurmaProfessor({
+    apenasAtivos: true,
+    buscarMatriculas: (id) => matriculasDaVisao(id, visao),
+    dependenciasMatriculas: [visao],
+  })
 
   // Trocar de aba limpa os filtros, já que o conjunto de alunos muda
   function trocarVisao(nova: Visao) {
     setVisao(nova)
-    setTurmaId(null)
-    setTipo(null)
-    setEspecificoId(null)
-    setFiltro(null)
-  }
-
-  function buscar() {
-    if (!turmaId || !tipo || !especificoId) {
-      toast.warning('Selecione turma, tipo de filtro e o item específico antes de buscar.')
-      return
-    }
-
-    setFiltro({ turmaId, tipo, especificoId })
+    limpar()
   }
 
   // Só monta os acordeões depois de um filtro aplicado
@@ -325,7 +272,7 @@ export default function Notas() {
                   titulo={linha.titulo}
                   resumo={
                     typeof nota?.total === 'number' && distribuido > 0 ? (
-                      <Tag variant={VARIANTE_POR_NIVEL[nivelDesempenho(percentual)]}>
+                      <Tag variant={VARIANTE_TAG_POR_NIVEL[nivelDesempenho(percentual)]}>
                         Nota: {formatarNota(nota.total)}/{formatarNota(distribuido)}
                       </Tag>
                     ) : (

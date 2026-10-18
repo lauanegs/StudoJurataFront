@@ -33,5 +33,15 @@ export const ChipsVinculo = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.xs};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+
+    & > * {
+      flex: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
 `
 

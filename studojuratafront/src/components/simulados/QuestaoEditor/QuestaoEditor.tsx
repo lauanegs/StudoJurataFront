@@ -264,8 +264,8 @@ export function QuestaoEditor({
       <S.Rodape>
         <S.Dica>
           {verdadeiroFalso
-            ? 'Clique em V ou F em cada linha para julgar a afirmação.'
-            : 'Clique na letra para definir a alternativa correta.'}
+            ? `Clique em V ou F em cada linha para julgar a afirmação. Máximo de ${MAXIMO_ALTERNATIVAS} afirmações por questão.`
+            : `Clique na letra para definir a alternativa correta. Máximo de ${MAXIMO_ALTERNATIVAS} alternativas por questão.`}
         </S.Dica>
 
         {!somenteLeitura && (

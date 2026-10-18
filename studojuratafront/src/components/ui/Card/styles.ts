@@ -21,6 +21,12 @@ export const Cabecalho = styled.header<{ $comFundo: boolean }>`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   ${({ $comFundo, theme }) => $comFundo && `background: ${theme.colors.white};`}
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: ${({ theme }) => theme.spacing.md};
+  }
 `
 
 export const Titulo = styled.div`
@@ -53,6 +59,17 @@ export const Acoes = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   flex-wrap: wrap;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+    align-items: stretch;
+
+    & > button {
+      width: 100%;
+      min-height: 44px;
+      border: 2px solid ${({ theme }) => theme.colors.borderStrong};
+    }
+  }
 `
 
 export const Corpo = styled.div<{ $semPadding: boolean }>`

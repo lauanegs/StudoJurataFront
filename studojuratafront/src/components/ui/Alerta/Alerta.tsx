@@ -1,20 +1,30 @@
-import { Alert } from '@mantine/core'
-import { Info } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Info, XCircle } from 'lucide-react'
 
-import { comTamanho } from '@/utils/redimensionarIcone'
+import { Acao, Container, Conteudo, Descricao, Icone, Titulo } from './styles'
+import type { AlertaProps, TomAlerta } from './types'
 
-import { estilosAlerta } from './styles'
-import type { AlertaProps } from './types'
+const ICONES: Record<TomAlerta, typeof Info> = {
+  success: CheckCircle2,
+  warning: AlertTriangle,
+  error: XCircle,
+  info: Info,
+}
 
-export function Alerta({ titulo, children }: AlertaProps) {
+export function Alerta({ titulo, descricao, acao, tom = 'info' }: AlertaProps) {
+  const IconeDoTom = ICONES[tom]
+
   return (
-    <Alert
-      title={titulo}
-      icon={comTamanho(<Info />, 18)}
-      radius="md"
-      styles={estilosAlerta}
-    >
-      {children}
-    </Alert>
+    <Container role={tom === 'error' ? 'alert' : 'status'} $tom={tom}>
+      <Icone aria-hidden="true" $tom={tom}>
+        <IconeDoTom />
+      </Icone>
+
+      <Conteudo>
+        {titulo && <Titulo>{titulo}</Titulo>}
+        <Descricao>{descricao}</Descricao>
+      </Conteudo>
+
+      {acao && <Acao>{acao}</Acao>}
+    </Container>
   )
 }

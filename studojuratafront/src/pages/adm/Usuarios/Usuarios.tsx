@@ -167,14 +167,14 @@ export default function Usuarios() {
         actions={(usuario) => (
           <>
             <IconButton
-              label={`Editar ${usuario.username}`}
+              label={`Editar ${usuario.username}`} acao="Editar"
               icon={<Pencil />}
               disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/usuarios/${usuario.id}`)}
             />
             {usuario.status === 'INATIVO' ? (
               <IconButton
-                label={`Ativar ${usuario.username}`}
+                label={`Ativar ${usuario.username}`} acao="Ativar"
                 icon={<ArchiveRestore />}
                 variant="success"
                 disabled={excluindo || ativando}
@@ -182,7 +182,7 @@ export default function Usuarios() {
               />
             ) : (
               <IconButton
-                label={`Inativar ${usuario.username}`}
+                label={`Inativar ${usuario.username}`} acao="Inativar"
                 icon={<Archive />}
                 variant="danger"
                 disabled={excluindo || ativando}

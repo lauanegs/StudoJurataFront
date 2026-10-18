@@ -261,27 +261,27 @@ export default function QuestoesPendentes() {
             >
               Revisar
             </Button>
-            {questao.status === 'PENDENTE' && (
-              <>
-                <Button
-                  variant="subtle"
-                  size="small"
-                  icon={<Check />}
-                  disabled={processando === questao.id}
-                  onClick={() => aprovar(questao)}
-                >
-                  Aprovar
-                </Button>
-                <Button
-                  variant="subtle"
-                  size="small"
-                  icon={<X />}
-                  disabled={processando === questao.id}
-                  onClick={() => rejeitar(questao)}
-                >
-                  Rejeitar
-                </Button>
-              </>
+            {questao.status !== 'APROVADA' && (
+              <Button
+                variant="subtle"
+                size="small"
+                icon={<Check />}
+                disabled={processando === questao.id}
+                onClick={() => aprovar(questao)}
+              >
+                Aprovar
+              </Button>
+            )}
+            {questao.status !== 'REJEITADA' && (
+              <Button
+                variant="subtle"
+                size="small"
+                icon={<X />}
+                disabled={processando === questao.id}
+                onClick={() => rejeitar(questao)}
+              >
+                Rejeitar
+              </Button>
             )}
           </>
         )}

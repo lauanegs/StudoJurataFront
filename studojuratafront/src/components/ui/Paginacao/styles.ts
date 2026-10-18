@@ -1,12 +1,10 @@
-import type { CSSProperties } from 'react'
+import { Group } from '@mantine/core'
 import styled from 'styled-components'
 
-import { theme as tokens } from '@/styles/theme'
-
-export const estiloNavegacao: CSSProperties = {
-  padding: `${tokens.spacing.sm} ${tokens.spacing.md}`,
-  borderTop: `1px solid ${tokens.colors.border}`,
-}
+export const Navegacao = styled(Group)`
+  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
+`
 
 export const Rotulo = styled.span`
   font-size: ${({ theme }) => theme.typography.sizes.sm};

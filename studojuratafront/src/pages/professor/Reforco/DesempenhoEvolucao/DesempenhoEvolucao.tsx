@@ -14,7 +14,6 @@ import { Skeleton } from '@/components/feedback/Skeleton'
 import { formatarPorcentagem } from '@/utils/format'
 import { FiltrosDesempenho } from '@/pages/professor/Reforco/comum/FiltrosDesempenho/FiltrosDesempenho'
 import { ResumoFiltrosDesempenho } from '@/pages/professor/Reforco/comum/ResumoFiltrosDesempenho/ResumoFiltrosDesempenho'
-import { resumoFiltrosTexto } from '@/pages/professor/Reforco/comum/resumoFiltrosTexto'
 import { useDesempenhoDados } from '@/pages/professor/Reforco/comum/useDesempenhoDados'
 
 import type { PontoTabela } from './types'
@@ -27,43 +26,16 @@ const colunasPontos: Coluna<PontoTabela>[] = [
 /** Versão filtrável do card "Evolução ao longo do tempo" do painel de Desempenho */
 export default function DesempenhoEvolucao() {
   const {
-    turmaId,
-    setTurmaId,
-    disciplinaId,
-    setDisciplinaId,
-    alunoId,
-    setAlunoId,
-    dataInicio,
-    setDataInicio,
-    dataFim,
-    setDataFim,
-    filtrosAplicados,
-    buscar,
-    limparFiltros,
-    opcoesTurmas,
-    opcoesDisciplinas,
-    opcoesAlunos,
-    carregandoAlunos,
-    carregandoVinculos,
+    propsFiltros,
+    recorteAplicado,
+    resumoFiltrosTextoAtual,
     tendenciaPorDisciplina,
     loading,
     error,
     reload,
   } = useDesempenhoDados()
 
-  // O recorte aplicado aparece só no modal "Detalhar" de cada gráfico
-  const recorteAplicado = {
-    opcoesTurmas,
-    opcoesDisciplinas,
-    opcoesAlunos,
-    turmaId: filtrosAplicados.turmaId,
-    disciplinaId: filtrosAplicados.disciplinaId,
-    alunoId: filtrosAplicados.alunoId,
-    dataInicio: filtrosAplicados.dataInicio,
-    dataFim: filtrosAplicados.dataFim,
-  }
   const resumoFiltros = <ResumoFiltrosDesempenho {...recorteAplicado} />
-  const resumoFiltrosTextoAtual = resumoFiltrosTexto(recorteAplicado)
 
   return (
     <Layout>
@@ -72,25 +44,7 @@ export default function DesempenhoEvolucao() {
         voltarPara="/professor/desempenho"
         rotuloVoltar="Desempenho"
         filtros={
-          <FiltrosDesempenho
-            opcoesTurmas={opcoesTurmas}
-            opcoesDisciplinas={opcoesDisciplinas}
-            opcoesAlunos={opcoesAlunos}
-            turmaId={turmaId}
-            disciplinaId={disciplinaId}
-            alunoId={alunoId}
-            dataInicio={dataInicio}
-            dataFim={dataFim}
-            carregandoTurmas={carregandoVinculos}
-            carregandoAlunos={carregandoAlunos}
-            onTurmaChange={setTurmaId}
-            onDisciplinaChange={setDisciplinaId}
-            onAlunoChange={setAlunoId}
-            onDataInicioChange={setDataInicio}
-            onDataFimChange={setDataFim}
-            onBuscar={buscar}
-            onLimpar={limparFiltros}
-          />
+          <FiltrosDesempenho {...propsFiltros} />
         }
       />
 

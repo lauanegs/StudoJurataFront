@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from 'react'
 import { BookOpen, CalendarClock, FileDown, FileSpreadsheet, GraduationCap, Target, Users } from 'lucide-react'
 
-import { AlertaDesempenhoCard } from '@/components/desempenho/AlertaDesempenhoCard'
+import { Alerta } from '@/components/ui/Alerta'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { DataTable } from '@/components/ui/DataTable'
@@ -258,7 +258,7 @@ export function DetalheSimuladoModal({
       ) : (
         <ColunaConteudo>
           {alunoFiltrado ? (
-            <AlertaDesempenhoCard
+            <Alerta
               tom={alunoAbaixoDoLimiar ? 'warning' : 'success'}
               titulo={`Aproveitamento de ${formatarPorcentagem(mediaAluno)} — ${
                 alunoAbaixoDoLimiar ? 'abaixo do esperado' : 'dentro do esperado'
@@ -270,12 +270,13 @@ export function DetalheSimuladoModal({
               }
             />
           ) : pedeReforcoManual ? (
-            <AlertaDesempenhoCard
+            <Alerta
+              tom="warning"
               titulo={`${formatarPorcentagem(percentualTurmaAbaixo)} da turma abaixo de ${LIMIAR_BAIXO_DESEMPENHO}%`}
               descricao="Pela regra de acompanhamento, isso pede um reforço lançado manualmente pelo professor — a IA fica reservada a casos individuais."
             />
           ) : (
-            <AlertaDesempenhoCard
+            <Alerta
               tom="success"
               titulo={`Só ${formatarPorcentagem(percentualTurmaAbaixo)} da turma abaixo de ${LIMIAR_BAIXO_DESEMPENHO}%`}
               descricao="Dentro do esperado — sem gatilho de reforço geral pra esta turma."

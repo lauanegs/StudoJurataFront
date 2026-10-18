@@ -17,10 +17,8 @@ import { useRequisicao } from '@/hooks/useRequisicao'
 import { notas as servicoNotas } from '@/dominios/notas/service'
 import { disciplinas as servicoDisciplinas } from '@/dominios/curriculo/service'
 import { simuladoAlunos, simulados as servicoSimulados } from '@/dominios/simulados/service'
-import { nivelDesempenho } from '@/utils/desempenho'
+import { VARIANTE_TAG_POR_NIVEL, nivelDesempenho } from '@/utils/desempenho'
 import { formatarNota } from '@/utils/format'
-
-const VARIANTE_POR_NIVEL = { baixo: 'error', medio: 'warning', alto: 'success' } as const
 
 /** O back devolve a Nota consolidada por disciplina e turma */
 export default function AlunoNotas() {
@@ -153,7 +151,7 @@ export default function AlunoNotas() {
                   key={nota.id}
                   titulo={nota.disciplina?.titulo ?? `Disciplina ${nota.disciplina?.id}`}
                   resumo={
-                    <Tag variant={VARIANTE_POR_NIVEL[nivelDesempenho(percentual)]}>
+                    <Tag variant={VARIANTE_TAG_POR_NIVEL[nivelDesempenho(percentual)]}>
                       Nota: {formatarNota(nota.total ?? 0)}/{formatarNota(distribuido)}
                     </Tag>
                   }

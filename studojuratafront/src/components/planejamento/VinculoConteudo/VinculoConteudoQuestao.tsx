@@ -1,190 +1,26 @@
-import { useMemo, useState } from 'react'
-import { ListTree } from 'lucide-react'
-
-import { Button } from '@/components/ui/Button'
-import { CheckBox } from '@/components/ui/CheckBox'
-import { Chip } from '@/components/ui/Chip'
-import { Modal } from '@/components/ui/Modal'
-import { EstadoVazio } from '@/components/feedback/EstadoVazio'
-import { useToast } from '@/contexts/toast/toastContexto'
-import { useAcao, useRequisicao } from '@/hooks/useRequisicao'
-import { ApiError } from '@/dominios/comum/api'
-import { conteudosPlano } from '@/dominios/planejamento/service'
 import { questoes as servicoQuestoes } from '@/dominios/simulados/service'
 import type { ConteudoPlano } from '@/dominios/planejamento/types'
-import * as S from './styles'
-import { Stack } from '@/components/ui/Stack'
+import { VinculoConteudo } from './VinculoConteudo'
+import type { TextosVinculoConteudo, VinculoConteudoQuestaoProps } from './types'
 
-import type { VinculoConteudoQuestaoProps } from './types'
+const TEXTOS: TextosVinculoConteudo = {
+  vinculado: 'Conteúdo vinculado à questão',
+  removido: 'Conteúdo removido da questão',
+  semEscopo: 'Selecione a disciplina do simulado para vincular conteúdos.',
+  semVinculos: 'Nenhum conteúdo vinculado — sem isso, esta questão fica fora do cálculo de desempenho por conteúdo.',
+  descricaoModal: 'Selecione um ou mais conteúdos do plano de ensino desta disciplina para vincular a esta questão.',
+  modalVazio: 'Todos os conteúdos desta disciplina já foram vinculados, ou ainda não há plano de ensino cadastrado para ela.',
+}
 
-export function VinculoConteudoQuestao({
-  questaoId,
-  disciplinaId,
-  somenteLeitura = false,
-  conteudoPlanoIdsPendentes = [],
-  onChangePendentes,
-}: VinculoConteudoQuestaoProps) {
-  const toast = useToast()
-  const [modalAberto, setModalAberto] = useState(false)
-  const [selecionados, setSelecionados] = useState<Set<number>>(new Set())
-
-  const requisicaoVinculos = useRequisicao(
-    () => servicoQuestoes.listarConteudos(questaoId as number),
-    [questaoId],
-    { ativo: Boolean(questaoId) },
-  )
-
-  const requisicaoConteudos = useRequisicao(() => conteudosPlano.listar(), [], { ativo: Boolean(disciplinaId) })
-
-  const conteudosVinculados = useMemo(() => {
-    if (questaoId) {
-      return (requisicaoVinculos.data ?? [])
-        .map((vinculo) => vinculo.conteudoPlano)
-        .filter((item): item is ConteudoPlano => Boolean(item))
-    }
-
-    const porId = new Map((requisicaoConteudos.data ?? []).map((conteudo) => [conteudo.id, conteudo]))
-    return conteudoPlanoIdsPendentes
-      .map((id) => porId.get(id))
-      .filter((item): item is ConteudoPlano => Boolean(item))
-  }, [questaoId, requisicaoVinculos.data, requisicaoConteudos.data, conteudoPlanoIdsPendentes])
-
-  const vinculadosIds = useMemo(() => new Set(conteudosVinculados.map((item) => item.id)), [conteudosVinculados])
-
-  const conteudosDisponiveis = useMemo(() => {
-    if (!disciplinaId) return []
-
-    return (requisicaoConteudos.data ?? [])
-      .filter(
-        (conteudo) =>
-          conteudo.planoEnsino?.turmaDisciplina?.disciplina?.id === disciplinaId &&
-          conteudo.status !== 'INATIVO' &&
-          !vinculadosIds.has(conteudo.id),
-      )
-      .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
-  }, [requisicaoConteudos.data, vinculadosIds, disciplinaId])
-
-  function alternarSelecionado(id: number) {
-    setSelecionados((atuais) => {
-      const proximo = new Set(atuais)
-      if (proximo.has(id)) proximo.delete(id)
-      else proximo.add(id)
-      return proximo
-    })
-  }
-
-  const { executar: vincular, executando: vinculando } = useAcao(async () => {
-    if (selecionados.size === 0) return
-
-    if (!questaoId) {
-      onChangePendentes?.([...conteudoPlanoIdsPendentes, ...selecionados])
-      setSelecionados(new Set())
-      setModalAberto(false)
-      return
-    }
-
-    try {
-      await Promise.all(
-        [...selecionados].map((conteudoId) => servicoQuestoes.vincularConteudo(questaoId, conteudoId)),
-      )
-      toast.success('Conteúdo vinculado à questão')
-      setSelecionados(new Set())
-      setModalAberto(false)
-      await requisicaoVinculos.reload()
-    } catch (erro) {
-      toast.error('Não foi possível vincular', erro instanceof ApiError ? erro.message : undefined)
-    }
-  })
-
-  async function desvincular(conteudoPlanoId: number) {
-    if (!questaoId) {
-      onChangePendentes?.(conteudoPlanoIdsPendentes.filter((id) => id !== conteudoPlanoId))
-      return
-    }
-
-    try {
-      await servicoQuestoes.desvincularConteudo(questaoId, conteudoPlanoId)
-      toast.success('Conteúdo removido da questão')
-      await requisicaoVinculos.reload()
-    } catch (erro) {
-      toast.error('Não foi possível remover', erro instanceof ApiError ? erro.message : undefined)
-    }
-  }
-
+export function VinculoConteudoQuestao({ questaoId, disciplinaId, ...resto }: VinculoConteudoQuestaoProps) {
   return (
-    <S.SecaoVinculo>
-      <S.CabecalhoVinculo>
-        <S.TituloVinculo>Conteúdo</S.TituloVinculo>
-
-        {!somenteLeitura && (
-          <Button
-            size="small"
-            icon={<ListTree />}
-            disabled={!disciplinaId}
-            onClick={() => setModalAberto(true)}
-          >
-            Vincular conteúdo
-          </Button>
-        )}
-      </S.CabecalhoVinculo>
-
-      {!disciplinaId ? (
-        <S.DicaVinculo>Selecione a disciplina do simulado para vincular conteúdos.</S.DicaVinculo>
-      ) : conteudosVinculados.length === 0 ? (
-        <S.DicaVinculo>
-          Nenhum conteúdo vinculado — sem isso, esta questão fica fora do cálculo de desempenho por conteúdo.
-        </S.DicaVinculo>
-      ) : (
-        <S.ChipsVinculo>
-          {conteudosVinculados.map((conteudo) => (
-            <Chip
-              key={conteudo.id}
-              variant="neutral"
-              onRemove={somenteLeitura ? undefined : () => desvincular(conteudo.id)}
-              rotuloRemover={`Remover ${conteudo.titulo}`}
-            >
-              {conteudo.titulo ?? 'Conteúdo'}
-            </Chip>
-          ))}
-        </S.ChipsVinculo>
-      )}
-
-      <Modal
-        aberto={modalAberto}
-        onClose={() => setModalAberto(false)}
-        titulo="Vincular conteúdo"
-        descricao="Selecione um ou mais conteúdos do plano de ensino desta disciplina para vincular a esta questão."
-        largura="600px"
-        rodape={
-          <>
-            <Button variant="secondary" onClick={() => setModalAberto(false)}>
-              Cancelar
-            </Button>
-            <Button variant="success" loading={vinculando} disabled={selecionados.size === 0} onClick={vincular}>
-              Salvar
-            </Button>
-          </>
-        }
-      >
-        {conteudosDisponiveis.length === 0 ? (
-          <EstadoVazio
-            titulo="Nenhum conteúdo disponível"
-            descricao="Todos os conteúdos desta disciplina já foram vinculados, ou ainda não há plano de ensino cadastrado para ela."
-            icon={<ListTree />}
-          />
-        ) : (
-          <Stack gap="md">
-            {conteudosDisponiveis.map((conteudo) => (
-              <CheckBox
-                key={conteudo.id}
-                label={`${conteudo.ordem ? `${conteudo.ordem}. ` : ''}${conteudo.titulo ?? 'Conteúdo'}`}
-                checked={selecionados.has(conteudo.id)}
-                onChange={() => alternarSelecionado(conteudo.id)}
-              />
-            ))}
-          </Stack>
-        )}
-      </Modal>
-    </S.SecaoVinculo>
+    <VinculoConteudo
+      {...resto}
+      entidadeId={questaoId}
+      escopoId={disciplinaId}
+      pertenceAoEscopo={(conteudo: ConteudoPlano) => conteudo.planoEnsino?.turmaDisciplina?.disciplina?.id === disciplinaId}
+      servico={servicoQuestoes}
+      textos={TEXTOS}
+    />
   )
 }

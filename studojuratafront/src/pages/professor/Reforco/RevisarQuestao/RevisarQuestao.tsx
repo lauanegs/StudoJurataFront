@@ -210,12 +210,16 @@ export default function RevisarQuestao() {
               >
                 Editar
               </Button>
-              <Button size="large" variant="danger" icon={<X />} onClick={rejeitar} disabled={processando}>
-                Rejeitar
-              </Button>
-              <Button size="large" variant="success" icon={<Check />} loading={processando} onClick={aprovar}>
-                Aprovar
-              </Button>
+              {questao?.status !== 'REJEITADA' && (
+                <Button size="large" variant="danger" icon={<X />} onClick={rejeitar} disabled={processando}>
+                  Rejeitar
+                </Button>
+              )}
+              {questao?.status !== 'APROVADA' && (
+                <Button size="large" variant="success" icon={<Check />} loading={processando} onClick={aprovar}>
+                  Aprovar
+                </Button>
+              )}
             </>
           )
         }

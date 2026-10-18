@@ -1,12 +1,7 @@
 import styled from 'styled-components'
 
 import { theme as tokens } from '@/styles/theme'
-
-interface CoresChip {
-  bg: string
-  texto: string
-  borda?: string
-}
+import type { CoresChip } from './types'
 
 export const estilosChip = (cor: CoresChip, comRemover: boolean, desabilitado?: boolean) => ({
   root: {

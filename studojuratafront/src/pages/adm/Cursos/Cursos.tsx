@@ -161,14 +161,14 @@ export default function Cursos() {
         actions={(curso) => (
           <>
             <IconButton
-              label={`Editar ${curso.nome}`}
+              label={`Editar ${curso.nome}`} acao="Editar"
               icon={<Pencil />}
               disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/cursos/${curso.id}`)}
             />
             {curso.status === 'INATIVO' ? (
               <IconButton
-                label={`Ativar ${curso.nome}`}
+                label={`Ativar ${curso.nome}`} acao="Ativar"
                 icon={<ArchiveRestore />}
                 variant="success"
                 disabled={excluindo || ativando}
@@ -176,7 +176,7 @@ export default function Cursos() {
               />
             ) : (
               <IconButton
-                label={`Inativar ${curso.nome}`}
+                label={`Inativar ${curso.nome}`} acao="Inativar"
                 icon={<Archive />}
                 variant="danger"
                 disabled={excluindo || ativando}

@@ -1,4 +1,9 @@
+import { TimePicker } from '@mantine/dates'
 import styled from 'styled-components'
+
+export const CampoHorario = styled(TimePicker)<{ $maxWidth?: string }>`
+  max-width: ${({ $maxWidth }) => $maxWidth ?? 'none'};
+`
 
 export const BotaoRelogio = styled.button`
   display: inline-flex;

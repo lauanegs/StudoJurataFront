@@ -16,3 +16,10 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   alternarVisibilidade?: boolean
   mostrarContador?: boolean
 }
+
+export interface OpcoesEstiloCampo {
+  altura: string
+  corBase: string
+  temErro: boolean
+  destacada: boolean
+}

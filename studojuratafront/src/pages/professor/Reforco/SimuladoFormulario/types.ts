@@ -95,3 +95,15 @@ export interface ResultadoDaImportacao {
   importadas: number
   cortadas: number
 }
+
+export interface ParametrosRemocaoQuestao<T extends { id?: number }> {
+  questoes: T[]
+  indice: number
+  simuladoId: number | null
+  desvincular: (simuladoId: number, questaoId: number) => Promise<void>
+}
+
+export interface ResultadoRemocaoQuestao<T> {
+  questoes: T[]
+  erro?: Error
+}

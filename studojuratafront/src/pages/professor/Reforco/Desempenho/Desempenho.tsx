@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
-import { AlertaDesempenhoCard } from '@/components/desempenho/AlertaDesempenhoCard'
+import { Alerta } from '@/components/ui/Alerta'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { DesempenhoCard } from '@/components/desempenho/DesempenhoCard'
@@ -388,7 +388,8 @@ export default function Desempenho() {
       </GradeAutoAjuste>
 
       {criticos.length > 0 && (
-        <AlertaDesempenhoCard
+        <Alerta
+          tom="warning"
           titulo="Desempenho abaixo de 50%"
           descricao={`${criticos.map((item) => item.titulo).join(', ')} ${
             criticos.length === 1 ? 'está' : 'estão'

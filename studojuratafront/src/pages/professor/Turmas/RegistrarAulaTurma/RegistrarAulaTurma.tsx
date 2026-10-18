@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { CheckBox } from '@/components/ui/CheckBox'
 import { DataTable } from '@/components/ui/DataTable'
 import { DatePicker } from '@/components/ui/DatePicker'
-import { Header } from '@/components/ui/Header'
+import { CampoFiltro, CamposFiltro, Header } from '@/components/ui/Header'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Tab } from '@/components/ui/Tab'
@@ -35,7 +35,7 @@ import type { Coluna } from '@/components/ui/DataTable/types'
 import { Stack } from '@/components/ui/Stack'
 import { GradeAutoAjuste } from '@/components/ui/GradeAutoAjuste'
 
-import { CamposCabecalho, CampoLargura, BotoesFlutuantes, BotaoSalvar, ColunaCargaHoraria, TrilhaCargaHoraria, PreenchimentoCargaHoraria } from './styles'
+import { BotoesFlutuantes, ColunaCargaHoraria, TrilhaCargaHoraria, PreenchimentoCargaHoraria } from './styles'
 import type { Aba, LinhaChamada } from './types'
 
 /** O professor escolhe a disciplina e a aula do plano; sem escolha, a próxima aula pendente vem pré-selecionada */
@@ -351,8 +351,8 @@ export default function RegistrarAulaTurma() {
         voltarPara={`/professor/turmas/${idTurma}`}
         rotuloVoltar="Turma"
         filtros={
-          <CamposCabecalho>
-            <CampoLargura $largura="320px">
+          <CamposFiltro>
+            <CampoFiltro $largura="320px">
               <Select
                 label="Disciplina"
                 options={disciplinasDaTurma}
@@ -361,9 +361,9 @@ export default function RegistrarAulaTurma() {
                 emptyText="Você não leciona disciplinas nesta turma"
                 onChange={setTurmaDisciplinaId}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <CampoLargura $largura="360px">
+            <CampoFiltro $largura="360px">
               <Select
                 label="Aula do plano de aula"
                 options={opcoesAulasPlano}
@@ -374,21 +374,19 @@ export default function RegistrarAulaTurma() {
                 emptyText="Este plano de aula ainda não tem aulas cadastradas"
                 onChange={setAulaSelecionadaManualId}
               />
-            </CampoLargura>
+            </CampoFiltro>
 
-            <BotaoSalvar>
-              <Button
-                size="large"
-                variant="success"
-                icon={<Save />}
-                loading={salvando}
-                disabled={!planoAtual}
-                onClick={salvar}
-              >
-                Salvar
-              </Button>
-            </BotaoSalvar>
-          </CamposCabecalho>
+            <Button
+              size="large"
+              variant="success"
+              icon={<Save />}
+              loading={salvando}
+              disabled={!planoAtual}
+              onClick={salvar}
+            >
+              Salvar
+            </Button>
+          </CamposFiltro>
         }
       />
 
@@ -488,9 +486,9 @@ export default function RegistrarAulaTurma() {
                 onChange={(evento) => setDataPrevista(evento.target.value)}
               />
               <DatePicker
-                label="Data publicação"
+                label="Data de realização"
                 value={dataPublicacao}
-                disabled={!aulaAlvo}
+                disabled={!planoAtual}
                 hint="Data em que a aula foi (ou será) realizada."
                 onChange={(evento) => setDataPublicacao(evento.target.value)}
               />

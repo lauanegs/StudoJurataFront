@@ -1,15 +1,12 @@
+import type { ParametrosRemocaoQuestao, ResultadoRemocaoQuestao } from './types'
+
 /** Remove a questão da lista do formulário do simulado */
 export async function removerQuestaoDoSimulado<T extends { id?: number }>({
   questoes,
   indice,
   simuladoId,
   desvincular,
-}: {
-  questoes: T[]
-  indice: number
-  simuladoId: number | null
-  desvincular: (simuladoId: number, questaoId: number) => Promise<void>
-}): Promise<{ questoes: T[]; erro?: unknown }> {
+}: ParametrosRemocaoQuestao<T>): Promise<ResultadoRemocaoQuestao<T>> {
   const questao = questoes[indice]
   if (!questao) {
     return { questoes }
@@ -19,7 +16,7 @@ export async function removerQuestaoDoSimulado<T extends { id?: number }>({
     try {
       await desvincular(simuladoId, questao.id)
     } catch (erro) {
-      return { questoes, erro }
+      return { questoes, erro: erro instanceof Error ? erro : new Error('Erro ao remover a questão') }
     }
   }
 

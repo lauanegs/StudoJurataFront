@@ -1,5 +1,5 @@
 import type { EstadoBotaoVF } from './types'
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 
 export const Container = styled.div`
   display: flex;
@@ -7,6 +7,11 @@ export const Container = styled.div`
   gap: ${({ theme }) => theme.spacing.xs};
   width: 100%;
   min-height: 60px;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-wrap: wrap;
+    gap: ${({ theme }) => theme.spacing.sm};
+  }
 `
 
 export const BotaoJulgamento = styled.button<{ $estado: EstadoBotaoVF; $blocked: boolean }>`
@@ -17,6 +22,12 @@ export const BotaoJulgamento = styled.button<{ $estado: EstadoBotaoVF; $blocked:
 
   width: 64px;
 
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex: 1 1 0;
+    width: auto;
+    min-height: 52px;
+  }
+
   border-radius: ${({ theme }) => theme.radius.md};
   font-size: ${({ theme }) => theme.typography.sizes.lg};
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};
@@ -26,22 +37,22 @@ export const BotaoJulgamento = styled.button<{ $estado: EstadoBotaoVF; $blocked:
 
   ${({ theme, $estado }) =>
     ({
-      default: css`
+      default: `
         background: ${theme.colors.white};
         border: 2px solid ${theme.colors.blueLight};
         color: ${theme.colors.blue};
       `,
-      selected: css`
+      selected: `
         background: ${theme.colors.blue};
         border: 2px solid ${theme.colors.blue};
         color: ${theme.colors.white};
       `,
-      correct: css`
+      correct: `
         background: ${theme.gradients.success};
         border: 2px solid transparent;
         color: ${theme.colors.white};
       `,
-      incorrect: css`
+      incorrect: `
         background: ${theme.gradients.danger};
         border: 2px solid transparent;
         color: ${theme.colors.white};
@@ -50,9 +61,7 @@ export const BotaoJulgamento = styled.button<{ $estado: EstadoBotaoVF; $blocked:
 
   ${({ $blocked }) =>
     $blocked &&
-    css`
-      cursor: default;
-    `}
+    'cursor: default;'}
 
   &:focus-visible {
     outline: none;
@@ -74,4 +83,11 @@ export const CardTexto = styled.div`
   font-size: ${({ theme }) => theme.typography.sizes.md};
   color: ${({ theme }) => theme.colors.textSecondary};
   overflow-wrap: anywhere;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    order: -1;
+    flex: 1 1 100%;
+    padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
+    min-height: 56px;
+  }
 `

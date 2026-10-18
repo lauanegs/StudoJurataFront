@@ -1,5 +1,6 @@
 import { theme as tokens } from '@/styles/theme'
 
+import type { TagVariant } from '@/components/ui/Tag'
 import type { NivelDesempenho } from './types'
 export const LIMIAR_BAIXO_DESEMPENHO = 60
 
@@ -13,6 +14,12 @@ export const CORES_NIVEL_DESEMPENHO: Record<NivelDesempenho, string> = {
   baixo: tokens.colors.error,
   medio: tokens.colors.warning,
   alto: tokens.colors.success,
+}
+
+export const VARIANTE_TAG_POR_NIVEL: Record<NivelDesempenho, TagVariant> = {
+  baixo: 'error',
+  medio: 'warning',
+  alto: 'success',
 }
 
 const FAIXAS_HISTOGRAMA = [

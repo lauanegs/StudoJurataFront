@@ -26,11 +26,13 @@ export const estilosTag = (cor: { bg: string }, tamanho: { fontSize: string; pad
     padding: tamanho.padding,
     height: 'auto',
     lineHeight: tokens.typography.lineHeight.tight,
+    flexShrink: 0,
+    width: 'fit-content',
+    maxWidth: 'none',
   },
   label: {
     overflow: 'visible',
     textOverflow: 'unset',
-    whiteSpace: 'normal',
-    wordBreak: 'break-word',
+    whiteSpace: 'nowrap',
   },
 } as const)

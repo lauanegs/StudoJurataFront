@@ -8,3 +8,9 @@ export interface ChipProps {
   variant?: 'neutral' | 'purple' | 'blue'
   disabled?: boolean
 }
+
+export interface CoresChip {
+  bg: string
+  texto: string
+  borda?: string
+}

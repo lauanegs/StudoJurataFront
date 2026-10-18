@@ -1,4 +1,4 @@
-import styled, { css, keyframes } from 'styled-components'
+import styled, { keyframes } from 'styled-components'
 
 import type { TipoToast } from '@/contexts/toast/types'
 export const entrar = keyframes`
@@ -37,22 +37,10 @@ export const Item = styled.div<{ $tipo: TipoToast }>`
 
   ${({ theme, $tipo }) =>
     ({
-      success: css`
-        border-left-color: ${theme.colors.success};
-        color: ${theme.colors.successText};
-      `,
-      error: css`
-        border-left-color: ${theme.colors.error};
-        color: ${theme.colors.errorText};
-      `,
-      warning: css`
-        border-left-color: ${theme.colors.warning};
-        color: ${theme.colors.warningText};
-      `,
-      info: css`
-        border-left-color: ${theme.colors.blue};
-        color: ${theme.colors.infoText};
-      `,
+      success: `border-left-color: ${theme.colors.success}; color: ${theme.colors.successText};`,
+      error: `border-left-color: ${theme.colors.error}; color: ${theme.colors.errorText};`,
+      warning: `border-left-color: ${theme.colors.warning}; color: ${theme.colors.warningText};`,
+      info: `border-left-color: ${theme.colors.blue}; color: ${theme.colors.infoText};`,
     })[$tipo]}
 `
 

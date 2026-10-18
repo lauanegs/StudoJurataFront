@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
 
+import { criarFalaDivertida } from '@/utils/vozNarrador'
 import { Container, Mascote, Balao, Texto, BotaoAudio } from './styles'
 import type { EnunciadoSimuladoCardProps } from './types'
 
@@ -21,9 +22,7 @@ export function EnunciadoSimuladoCard({
       return
     }
 
-    const fala = new SpeechSynthesisUtterance(enunciado)
-    fala.lang = 'pt-BR'
-    fala.rate = 0.95
+    const fala = criarFalaDivertida(enunciado)
     fala.onend = () => setFalando(false)
     fala.onerror = () => setFalando(false)
 

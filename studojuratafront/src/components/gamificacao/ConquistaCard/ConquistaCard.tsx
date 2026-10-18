@@ -1,19 +1,16 @@
-import { Award, Lock } from 'lucide-react'
-
-import { Container, Medalha, Titulo, Descricao, Progresso } from './styles'
+import { Container, Imagem, Titulo, Descricao, Progresso } from './styles'
 import type { ConquistaCardProps } from './types'
 
 export function ConquistaCard({
   titulo,
   descricao,
+  imagem,
   conquistada = true,
   progresso,
 }: ConquistaCardProps) {
   return (
     <Container $conquistada={conquistada}>
-      <Medalha $conquistada={conquistada} aria-hidden="true">
-        {conquistada ? <Award /> : <Lock />}
-      </Medalha>
+      <Imagem src={imagem} alt="" aria-hidden="true" $conquistada={conquistada} />
 
       <Titulo>{titulo}</Titulo>
       <Descricao>{descricao}</Descricao>

@@ -1,4 +1,3 @@
-import type { useFormularioGradeCurso } from './formulario'
 
 import type { EntidadeBase, StatusAtivoInativo } from '@/dominios/comum/types'
 
@@ -44,5 +43,3 @@ export interface DadosGradeCurso {
   disciplinaId: number | null
   cargaHoraria: string
 }
-
-export type FormularioGradeCurso = ReturnType<typeof useFormularioGradeCurso>

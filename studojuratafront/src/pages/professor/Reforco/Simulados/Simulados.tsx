@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { BarChart3, BookOpen, ClipboardCheck, FileText, Pencil, Plus, Rocket, Square } from 'lucide-react'
 
 import { Layout } from '@/components/layout'
-import { AlertaDesempenhoCard } from '@/components/desempenho/AlertaDesempenhoCard'
+import { Alerta } from '@/components/ui/Alerta'
 import { Button } from '@/components/ui/Button'
 import { DataTable } from '@/components/ui/DataTable'
-import { Header } from '@/components/ui/Header'
+import { BarraFiltros, CampoFiltro, CamposFiltro, Header } from '@/components/ui/Header'
 import { Select } from '@/components/ui/Select'
 import { Tab } from '@/components/ui/Tab'
 import { Tag } from '@/components/ui/Tag'
@@ -30,7 +30,7 @@ import { ROTULO_STATUS_SIMULADO, STATUS_SIMULADO_VARIANT } from '@/utils/labels'
 import type { SimuladoResponse } from '@/dominios/simulados/types'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-import { LinhaFiltrosFlutuante, CampoLargura, SemValor } from './styles'
+import { SemValor } from './styles'
 import type { Filtro } from './types'
 
 export default function Simulados() {
@@ -302,7 +302,8 @@ export default function Simulados() {
       />
 
       {simuladosAtrasados.length > 0 && (
-        <AlertaDesempenhoCard
+        <Alerta
+          tom="warning"
           titulo="Revisões de reforço atrasadas"
           descricao={`${simuladosAtrasados.length} simulado(s) gerado(s) pela IA passou(aram) do prazo de revisão e ainda não ${
             simuladosAtrasados.length === 1 ? 'foi lançado' : 'foram lançados'
@@ -331,8 +332,9 @@ export default function Simulados() {
         ]}
       />
 
-      <LinhaFiltrosFlutuante>
-        <CampoLargura>
+      <BarraFiltros>
+        <CamposFiltro>
+        <CampoFiltro $largura="211px">
           <Select<number>
             placeholder="Todas as turmas"
             options={opcoesTurmasFiltro}
@@ -341,8 +343,8 @@ export default function Simulados() {
             searchable
             onChange={setTurmaFiltroId}
           />
-        </CampoLargura>
-        <CampoLargura>
+        </CampoFiltro>
+        <CampoFiltro $largura="211px">
           <Select<number>
             placeholder="Todas as disciplinas"
             options={opcoesDisciplinasFiltro}
@@ -351,8 +353,9 @@ export default function Simulados() {
             searchable
             onChange={setDisciplinaFiltroId}
           />
-        </CampoLargura>
-      </LinhaFiltrosFlutuante>
+        </CampoFiltro>
+        </CamposFiltro>
+      </BarraFiltros>
 
       <DataTable
         descricao="Lista de simulados"

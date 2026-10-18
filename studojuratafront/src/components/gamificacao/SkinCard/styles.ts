@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 
 export const Container = styled.article<{ $ativa: boolean }>`
   display: flex;
@@ -7,7 +7,7 @@ export const Container = styled.article<{ $ativa: boolean }>`
   gap: ${({ theme }) => theme.spacing.sm};
 
   width: 100%;
-  min-width: 170px;
+  min-width: 0;
   padding: ${({ theme }) => theme.spacing.md};
 
   background: ${({ theme }) => theme.colors.white};
@@ -36,10 +36,7 @@ export const Moldura = styled.div<{ $bloqueada: boolean }>`
 
     ${({ $bloqueada }) =>
       $bloqueada &&
-      css`
-        filter: grayscale(1) brightness(0.9);
-        opacity: 0.65;
-      `}
+      'filter: grayscale(1) brightness(0.9); opacity: 0.65;'}
   }
 `
 
@@ -50,13 +47,12 @@ export const Nome = styled.strong`
   text-align: center;
 `
 
-export const Preco = styled.span<{ $insuficiente: boolean }>`
+export const Preco = styled.span`
   display: inline-flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xxs};
 
   font-size: ${({ theme }) => theme.typography.sizes.xs};
   font-weight: ${({ theme }) => theme.typography.weights.semiBold};
-  color: ${({ theme, $insuficiente }) =>
-    $insuficiente ? theme.colors.errorText : theme.colors.warningText};
+  color: ${({ theme }) => theme.colors.warningText};
 `

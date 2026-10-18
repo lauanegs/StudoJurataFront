@@ -1,9 +1,8 @@
-import { Group } from '@mantine/core'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { IconButton } from '@/components/ui/IconButton'
 import { theme as tokens } from '@/styles/theme'
-import { estiloNavegacao, Rotulo } from './styles'
+import { Navegacao, Rotulo } from './styles'
 import type { PaginacaoProps } from './types'
 
 export function Paginacao({
@@ -16,12 +15,11 @@ export function Paginacao({
   onNext,
 }: PaginacaoProps) {
   return (
-    <Group
+    <Navegacao
       component="nav"
       justify="center"
       gap={tokens.spacing.md}
       aria-label={`Paginação, página ${pagina} de ${totalPaginas}`}
-      style={estiloNavegacao}
     >
       <IconButton
         label="Página anterior"
@@ -38,6 +36,6 @@ export function Paginacao({
         disabled={!temProxima}
         onClick={onNext}
       />
-    </Group>
+    </Navegacao>
   )
 }

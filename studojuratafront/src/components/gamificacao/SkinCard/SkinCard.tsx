@@ -28,10 +28,9 @@ export function SkinCard({
       <Nome>{nome}</Nome>
 
       {locked && (
-        <Preco $insuficiente={semSaldo}>
+        <Preco>
           <MoedaIcone size={14} aria-hidden="true" />
           {custoMoedas}
-          {semSaldo && ' · saldo insuficiente'}
         </Preco>
       )}
 

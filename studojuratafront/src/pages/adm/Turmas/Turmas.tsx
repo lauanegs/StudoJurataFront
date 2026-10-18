@@ -189,14 +189,14 @@ export default function Turmas() {
         actions={(turma) => (
           <>
             <IconButton
-              label={`Editar ${turma.titulo}`}
+              label={`Editar ${turma.titulo}`} acao="Editar"
               icon={<Pencil />}
               disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/turmas/${turma.id}`)}
             />
             {turma.status === 'INATIVA' ? (
               <IconButton
-                label={`Ativar ${turma.titulo}`}
+                label={`Ativar ${turma.titulo}`} acao="Ativar"
                 icon={<ArchiveRestore />}
                 variant="success"
                 disabled={excluindo || ativando}
@@ -204,7 +204,7 @@ export default function Turmas() {
               />
             ) : (
               <IconButton
-                label={`Inativar ${turma.titulo}`}
+                label={`Inativar ${turma.titulo}`} acao="Inativar"
                 icon={<Archive />}
                 variant="danger"
                 disabled={excluindo || ativando}

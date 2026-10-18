@@ -1,18 +1,15 @@
 import { Clock } from 'lucide-react'
 
-import { AlternativaCard } from '@/components/simulados/AlternativaCard'
-import { AlternativaVerdadeiroFalso } from '@/components/simulados/AlternativaVerdadeiroFalso'
+import { QuestaoCorrigida } from '@/components/simulados/QuestaoCorrigida'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import { MoedaIcone } from '@/components/gamificacao/MoedaIcone'
 import { SimuladoHeader } from '@/components/simulados/SimuladoHeader'
 import { Stack } from '@/components/ui/Stack'
-import { Tag } from '@/components/ui/Tag'
 import { theme } from '@/styles/theme'
-import { formatarMoedas, formatarNota, formatarTempo, letraAlternativa, nomeCurto } from '@/utils/format'
+import { formatarMoedas, formatarNota, formatarTempo, nomeCurto } from '@/utils/format'
 import { ganhouMoedas, mensagemDoResultado } from './feedbackProva'
-import { Alternativas, CINZA_ESMAECIDO, Conteudo, Tela } from './styles'
-import { FrameResultado, Mascote, CardResultado, ColunaResultado, TextoSecundario, Etiquetas, Etiqueta, ValorMoedas, NomeParabens, DescricaoParabens, QuestaoCabecalho, QuestaoEnunciado, QuestaoTitulo } from './styles'
+import { CINZA_ESMAECIDO, Conteudo, Tela } from './styles'
+import { FrameResultado, Mascote, CardResultado, ColunaResultado, TextoSecundario, Etiquetas, Etiqueta, ValorMoedas, NomeParabens, DescricaoParabens } from './styles'
 import type { ResultadoDoSimuladoProps } from './types'
 
 /** Espelha PontuacaoAlunoService.MOEDAS_POR_SIMULADO_CONCLUIDO no back */
@@ -136,52 +133,19 @@ export function ResultadoDoSimulado({
             (ehVF ? (resposta?.alternativasVerdadeirasIds?.length ?? 0) > 0 : resposta?.alternativaId != null)
 
           return (
-            <Card key={questao.questaoId}>
-              <QuestaoCabecalho>
-                <QuestaoTitulo>Questão {indice + 1}</QuestaoTitulo>
-
-                {!respondida ? (
-                  <Tag variant="neutral">Em branco</Tag>
-                ) : resposta?.acertou ? (
-                  <Tag variant="success">
-                    Você acertou
-                  </Tag>
-                ) : (
-                  <Tag variant="error">
-                    Você errou
-                  </Tag>
-                )}
-              </QuestaoCabecalho>
-
-              <QuestaoEnunciado>{questao.enunciado}</QuestaoEnunciado>
-
-              <Alternativas>
-                {ehVF
-                  ? questao.alternativas.map((alternativa) => (
-                      <AlternativaVerdadeiroFalso
-                        key={alternativa.id}
-                        texto={alternativa.texto}
-                        valor={respondida ? marcadasVerdadeiras.has(alternativa.id) : null}
-                        revelado
-                        correta={alternativa.correta}
-                        disabled
-                      />
-                    ))
-                  : questao.alternativas.map((alternativa, posicao) => {
-                      const marcada = alternativa.id === resposta?.alternativaId
-
-                      return (
-                        <AlternativaCard
-                          key={alternativa.id}
-                          letra={letraAlternativa(posicao)}
-                          texto={alternativa.texto}
-                          status={alternativa.correta ? 'correct' : marcada ? 'incorrect' : 'neutral'}
-                          legenda=""
-                        />
-                      )
-                    })}
-              </Alternativas>
-            </Card>
+            <QuestaoCorrigida
+              key={questao.questaoId}
+              numero={indice + 1}
+              enunciado={questao.enunciado}
+              ehVF={ehVF}
+              respondida={respondida}
+              acertou={Boolean(resposta?.acertou)}
+              rotuloAcerto="Você acertou"
+              rotuloErro="Você errou"
+              alternativas={questao.alternativas}
+              marcadasVerdadeiras={marcadasVerdadeiras}
+              alternativaMarcada={resposta?.alternativaId ?? null}
+            />
           )
         })}
       </Stack>

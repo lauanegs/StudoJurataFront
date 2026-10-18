@@ -1,13 +1,12 @@
-import type { CSSProperties } from 'react'
+import { Group, Modal } from '@mantine/core'
+import styled from 'styled-components'
 
-import { theme as tokens } from '@/styles/theme'
+export const Titulo = styled(Modal.Title)`
+  font-size: ${({ theme }) => theme.typography.sizes.md};
+  font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+  color: ${({ theme }) => theme.colors.textSecondary};
+`
 
-export const estiloTitulo: CSSProperties = {
-  fontSize: tokens.typography.sizes.md,
-  fontWeight: tokens.typography.weights.semiBold,
-  color: tokens.colors.textSecondary,
-}
-
-export const estiloRodape: CSSProperties = {
-  padding: `0 var(--mantine-spacing-md) ${tokens.spacing.xl}`,
-}
+export const Rodape = styled(Group)`
+  padding: ${({ theme }) => `0 var(--mantine-spacing-md) ${theme.spacing.xl}`};
+`

@@ -4,36 +4,56 @@ import { Pencil } from 'lucide-react'
 
 import { BuscaInput } from '@/components/ui/BuscaInput'
 import { DataTable } from '@/components/ui/DataTable'
+import { BarraFiltros, CampoFiltro, CamposFiltro } from '@/components/ui/Header'
 import { IconButton } from '@/components/ui/IconButton'
+import { Select } from '@/components/ui/Select'
 import { Tag } from '@/components/ui/Tag'
 import { useDebounce } from '@/hooks/useDebounce'
 import { usePaginacao } from '@/hooks/usePaginacao'
 import { formatarData, normalizar } from '@/utils/format'
 import { ROTULO_STATUS_MATRICULA, STATUS_MATRICULA_VARIANT } from '@/utils/labels'
-import type { AlunoTurma } from '@/dominios/turmas/types'
-import { LinhaAcaoFlutuante } from './styles'
+import type { AlunoTurma, StatusMatricula } from '@/dominios/turmas/types'
 
 import type { AbaHistoricoProps } from './types'
+
+const OPCOES_SITUACAO = (Object.entries(ROTULO_STATUS_MATRICULA) as [StatusMatricula, string][]).map(([value, label]) => ({
+  value,
+  label,
+}))
 
 export function AbaHistorico({ turmaId, requisicaoHistorico }: AbaHistoricoProps) {
   const navegar = useNavigate()
   const [busca, setBusca] = useState('')
   const buscaAtrasada = useDebounce(busca)
+  const [situacao, setSituacao] = useState<StatusMatricula | null>(null)
 
   const filtrado = useMemo(() => {
-    const lista = requisicaoHistorico.data ?? []
-    if (!buscaAtrasada.trim()) return lista
     const termo = normalizar(buscaAtrasada)
-    return lista.filter((matricula) => normalizar(matricula.aluno?.pessoa?.nome).includes(termo))
-  }, [requisicaoHistorico.data, buscaAtrasada])
+    return (requisicaoHistorico.data ?? []).filter(
+      (matricula) =>
+        (!situacao || matricula.status === situacao) &&
+        (!termo.trim() || normalizar(matricula.aluno?.pessoa?.nome).includes(termo)),
+    )
+  }, [requisicaoHistorico.data, buscaAtrasada, situacao])
 
   const paginacao = usePaginacao(filtrado)
 
   return (
     <>
-      <LinhaAcaoFlutuante>
-        <BuscaInput value={busca} onChange={setBusca} placeholder="Buscar aluno por nome..." />
-      </LinhaAcaoFlutuante>
+      <BarraFiltros>
+        <CamposFiltro>
+          <CampoFiltro $largura="211px">
+            <Select<StatusMatricula>
+              placeholder="Todas as situações"
+              options={OPCOES_SITUACAO}
+              value={situacao}
+              clearable
+              onChange={setSituacao}
+            />
+          </CampoFiltro>
+          <BuscaInput value={busca} onChange={setBusca} placeholder="Buscar aluno por nome..." />
+        </CamposFiltro>
+      </BarraFiltros>
 
       <DataTable<AlunoTurma>
         descricao="Histórico completo de matrículas da turma"
@@ -74,8 +94,9 @@ export function AbaHistorico({ turmaId, requisicaoHistorico }: AbaHistoricoProps
           onNext: paginacao.proxima,
         }}
         empty={{
-          titulo: busca ? 'Nenhum aluno encontrado' : 'Sem histórico',
-          descricao: busca ? 'Revise o termo buscado ou limpe o filtro.' : 'Nenhuma matrícula foi registrada nesta turma.',
+          titulo: busca || situacao ? 'Nenhum aluno encontrado' : 'Sem histórico',
+          descricao:
+            busca || situacao ? 'Revise a busca ou a situação selecionada.' : 'Nenhuma matrícula foi registrada nesta turma.',
         }}
         actions={(matricula) => (
           <IconButton

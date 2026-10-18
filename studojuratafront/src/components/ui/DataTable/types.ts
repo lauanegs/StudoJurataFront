@@ -2,11 +2,13 @@ import type { ReactNode } from 'react'
 
 import type { PaginacaoProps } from '@/components/ui/Paginacao/types'
 
+export type Alinhamento = 'left' | 'center' | 'right'
+
 export interface Coluna<T> {
   key: string
   cabecalho: string
   largura?: string
-  alinhamento?: 'left' | 'center' | 'right'
+  alinhamento?: Alinhamento
   ordenavel?: boolean
   valorOrdenacao?: (item: T) => string | number | null | undefined
   render: (item: T) => ReactNode

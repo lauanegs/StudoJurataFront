@@ -19,6 +19,11 @@ export const Cartao = styled.div`
   background: ${({ theme }) => theme.colors.white};
   border-radius: ${({ theme }) => theme.radius.md};
   box-shadow: ${({ theme }) => theme.shadow.base};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    gap: ${({ theme }) => theme.spacing.md};
+    padding: ${({ theme }) => theme.spacing.md};
+  }
 `
 
 export const LinhaTitulo = styled.div`
@@ -107,6 +112,11 @@ export const LinhaAcoes = styled.div`
   flex-wrap: wrap;
 
   width: 100%;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `
 
 export const Acoes = styled.div`
@@ -114,6 +124,17 @@ export const Acoes = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   flex-wrap: wrap;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+
+    & > *,
+    & > button {
+      width: 100%;
+    }
+  }
 `
 
 export const Filtros = styled.div`
@@ -122,6 +143,18 @@ export const Filtros = styled.div`
   justify-content: flex-end;
   width: max-content;
   max-width: 100%;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: ${({ theme }) => theme.spacing.sm};
+    width: 100%;
+
+    & > * {
+      width: 100%;
+    }
+  }
 `
 
 export const CamposFiltro = styled.div`
@@ -129,11 +162,27 @@ export const CamposFiltro = styled.div`
   flex-wrap: wrap;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: ${({ theme }) => theme.spacing.sm};
+    width: 100%;
+
+    & > * {
+      width: 100%;
+    }
+  }
 `
 
 export const CampoFiltro = styled.div<{ $largura: string; $encolher?: boolean }>`
   width: ${({ $largura }) => $largura};
   ${({ $encolher }) => ($encolher ? 'flex-shrink: 0;' : '')}
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    width: 100%;
+  }
 `
 
 export const BotaoFiltro = styled.div`
@@ -142,5 +191,19 @@ export const BotaoFiltro = styled.div`
 
   button {
     width: 100%;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    width: 100%;
+  }
+`
+
+export const BarraFiltros = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    justify-content: flex-start;
   }
 `

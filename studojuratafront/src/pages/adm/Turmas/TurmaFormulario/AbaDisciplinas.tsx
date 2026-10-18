@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Archive, Plus } from 'lucide-react'
 
-import { AlertaDesempenhoCard } from '@/components/desempenho/AlertaDesempenhoCard'
+import { Alerta } from '@/components/ui/Alerta'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { DataTable } from '@/components/ui/DataTable'
@@ -135,7 +135,7 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
   return (
     <>
       {gradeTotalmenteVinculada && (
-        <AlertaDesempenhoCard
+        <Alerta
           tom="success"
           titulo="Todas as disciplinas já estão vinculadas"
           descricao="A grade curricular do curso desta turma está totalmente vinculada. Para vincular outra disciplina, adicione-a primeiro à grade curricular do curso."
@@ -187,7 +187,8 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
       </Card>
 
       {disciplinasIncompletas.length > 0 && (
-        <AlertaDesempenhoCard
+        <Alerta
+          tom="warning"
           titulo="Disciplinas pendentes de organização"
           descricao={`${disciplinasIncompletas.length} disciplina(s) da grade curricular ${
             disciplinasIncompletas.length === 1 ? 'está' : 'estão'

@@ -4,6 +4,7 @@ import { Archive, ArchiveRestore, Save } from 'lucide-react'
 import { Layout } from '@/components/layout'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { GradeDuasColunas } from '@/components/ui/GradeAutoAjuste'
 import { Header } from '@/components/ui/Header'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
@@ -21,7 +22,6 @@ import { useFormularioDisciplina } from '@/dominios/curriculo/formulario'
 import { OPCOES_ATIVA_INATIVA } from '@/utils/labels'
 import type { StatusAtivoInativo } from '@/dominios/comum/types'
 
-import { Grade } from './styles'
 
 export default function DisciplinaFormulario() {
   const { id } = useParams()
@@ -194,7 +194,7 @@ export default function DisciplinaFormulario() {
       ) : (
         <Card titulo="Dados da disciplina">
           <Stack gap="md">
-            <Grade>
+            <GradeDuasColunas>
               <Input
                 label="Nome da disciplina"
                 required
@@ -211,7 +211,7 @@ export default function DisciplinaFormulario() {
                 disabled={salvando}
                 onChange={(valor) => form.setFieldValue('ativa', valor !== 'INATIVO')}
               />
-            </Grade>
+            </GradeDuasColunas>
           </Stack>
         </Card>
       )}

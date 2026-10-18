@@ -1,7 +1,5 @@
 import { theme as tokens } from '@/styles/theme'
-import type { AvatarProps } from './types'
-
-type TamanhoAvatar = NonNullable<AvatarProps['size']>
+import type { TamanhoAvatar } from './types'
 
 export const TAMANHOS: Record<TamanhoAvatar, string> = {
   small: '32px',

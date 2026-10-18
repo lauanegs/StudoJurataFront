@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClipboardList, FileText, Search } from 'lucide-react'
 
@@ -10,81 +10,33 @@ import { Header, CamposFiltro, CampoFiltro, BotaoFiltro } from '@/components/ui/
 import { Select } from '@/components/ui/Select'
 import { Tag } from '@/components/ui/Tag'
 import { Skeleton } from '@/components/feedback/Skeleton'
-import { useToast } from '@/contexts/toast/toastContexto'
-import { useProfessorLogado } from '@/hooks/usePerfilLogado'
+import type { TipoFiltro } from '@/hooks/types'
+import { useFiltroTurmaProfessor } from '@/hooks/useFiltroTurmaProfessor'
 import { useRequisicao } from '@/hooks/useRequisicao'
-import { professores as servicoProfessores } from '@/dominios/pessoas/service'
 import { simuladoAlunos, simulados as servicoSimulados } from '@/dominios/simulados/service'
-import { matriculas } from '@/dominios/turmas/service'
 import { formatarPorcentagem } from '@/utils/format'
 import type { Coluna } from '@/components/ui/DataTable/types'
 
-import type { TipoFiltro, FiltroAplicado, LinhaSimulado } from './types'
+import type { LinhaSimulado } from './types'
 
 export default function SimuladosRealizados() {
   const navegar = useNavigate()
-  const toast = useToast()
-  const { professorId } = useProfessorLogado()
 
-  const [turmaId, setTurmaId] = useState<number | null>(null)
-  const [tipo, setTipo] = useState<TipoFiltro | null>(null)
-  const [especificoId, setEspecificoId] = useState<number | null>(null)
-  const [filtro, setFiltro] = useState<FiltroAplicado | null>(null)
-
-  const requisicaoVinculos = useRequisicao(
-    () => servicoProfessores.turmasLecionadas(professorId as number),
-    [professorId],
-    { ativo: Boolean(professorId) },
-  )
-
-  const opcoesTurmas = useMemo(() => {
-    const unicas = new Map<number, string>()
-    for (const vinculo of requisicaoVinculos.data ?? []) {
-      if (vinculo.turma) unicas.set(vinculo.turma.id, vinculo.turma.titulo)
-    }
-    return [...unicas.entries()].map(([value, label]) => ({ value, label }))
-  }, [requisicaoVinculos.data])
-
-  const opcoesTipo: { value: TipoFiltro; label: string }[] = [
-    { value: 'disciplina', label: 'Disciplina' },
-    { value: 'aluno', label: 'Aluno' },
-  ]
-
-  const disciplinasDaTurma = useMemo(
-    () =>
-      (requisicaoVinculos.data ?? [])
-        .filter((vinculo) => vinculo.turma?.id === turmaId && vinculo.disciplina)
-        .map((vinculo) => ({ value: vinculo.disciplina!.id, label: vinculo.disciplina?.titulo ?? '—' })),
-    [requisicaoVinculos.data, turmaId],
-  )
-
-  const requisicaoMatriculasTurma = useRequisicao(
-    () => matriculas.ativosPorTurma(turmaId as number),
-    [turmaId],
-    { ativo: Boolean(turmaId) && tipo === 'aluno' },
-  )
-
-  const opcoesEspecifico = useMemo(() => {
-    if (tipo === 'disciplina') return disciplinasDaTurma
-
-    if (tipo === 'aluno') {
-      return (requisicaoMatriculasTurma.data ?? []).map((matricula) => ({
-        value: matricula.aluno.id,
-        label: matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`,
-      }))
-    }
-
-    return []
-  }, [tipo, disciplinasDaTurma, requisicaoMatriculasTurma.data])
-
-  function buscar() {
-    if (!turmaId || !tipo || !especificoId) {
-      toast.warning('Selecione turma, tipo de filtro e o item específico antes de buscar.')
-      return
-    }
-
-    setFiltro({ turmaId, tipo, especificoId })
-  }
+  const {
+    requisicaoVinculos,
+    turmaId,
+    setTurmaId,
+    tipo,
+    setTipo,
+    especificoId,
+    setEspecificoId,
+    filtro,
+    opcoesTurmas,
+    opcoesTipo,
+    opcoesEspecifico,
+    requisicaoMatriculasTurma,
+    buscar,
+  } = useFiltroTurmaProfessor()
 
   // Sempre ativas — a tela abre com a lista completa (todas as turmas do professor)
   const requisicaoSimulados = useRequisicao(() => servicoSimulados.listar(), [])

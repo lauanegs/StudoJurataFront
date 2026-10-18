@@ -14,3 +14,12 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   fullWidth?: boolean
   noBorder?: boolean
 }
+
+export interface OpcoesEstiloBotao {
+  size: ButtonSize
+  variant: ButtonVariant
+  fundo?: { background: string; border: string }
+  corDaBorda?: string
+  noBorder: boolean
+  disabled?: boolean
+}

@@ -1,4 +1,4 @@
-import type { useFormularioTurma, useFormularioHorarioTurma, useFormularioVinculoTurma } from './formulario'
+import type { useFormularioTurma } from './formulario'
 
 import type { EntidadeBase, StatusAtivoInativo } from '@/dominios/comum/types'
 import type { Curso, Disciplina, Escola } from '@/dominios/curriculo/types'
@@ -71,11 +71,7 @@ export interface DadosHorarioTurma {
   horaFim: string
 }
 
-export type FormularioHorarioTurma = ReturnType<typeof useFormularioHorarioTurma>
-
 export interface DadosVinculoTurma {
   disciplinaId: number | null
   professorId: number | null
 }
-
-export type FormularioVinculoTurma = ReturnType<typeof useFormularioVinculoTurma>

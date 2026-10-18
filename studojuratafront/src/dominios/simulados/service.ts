@@ -8,6 +8,7 @@ import type {
   QuestaoAlunoResponse,
   QuestaoConteudo,
   QuestaoRequest,
+  ProvaDaTentativa,
   QuestaoResponse,
   SimuladoAlunoResponse,
   SimuladoQuestaoRequest,
@@ -15,7 +16,6 @@ import type {
   SimuladoRequest,
   SimuladoResponse,
 } from './types'
-import type { ProvaDaTentativa } from './types'
 
 export const questoes = {
   listar: () => api.get<QuestaoResponse[]>('/questoes'),

@@ -1,29 +1,14 @@
-import styled, { css } from 'styled-components'
+import styled, { type DefaultTheme } from 'styled-components'
 
 import type { BadgeColor } from './types'
 
-export const colors = {
-  purple: css`
-    background: ${({ theme }) => theme.gradients.primary};
-    color: ${({ theme }) => theme.colors.white};
-  `,
-  green: css`
-    background: ${({ theme }) => theme.colors.success};
-    color: ${({ theme }) => theme.colors.white};
-  `,
-  red: css`
-    background: ${({ theme }) => theme.colors.error};
-    color: ${({ theme }) => theme.colors.white};
-  `,
-  blue: css`
-    background: ${({ theme }) => theme.colors.blue};
-    color: ${({ theme }) => theme.colors.white};
-  `,
-  gray: css`
-    background: ${({ theme }) => theme.colors.background};
-    color: ${({ theme }) => theme.colors.textSecondary};
-  `,
-} satisfies Record<BadgeColor, ReturnType<typeof css>>
+const cores = (theme: DefaultTheme): Record<BadgeColor, string> => ({
+  purple: `background: ${theme.gradients.primary}; color: ${theme.colors.white};`,
+  green: `background: ${theme.colors.success}; color: ${theme.colors.white};`,
+  red: `background: ${theme.colors.error}; color: ${theme.colors.white};`,
+  blue: `background: ${theme.colors.blue}; color: ${theme.colors.white};`,
+  gray: `background: ${theme.colors.background}; color: ${theme.colors.textSecondary};`,
+})
 
 export const Container = styled.button<{
   $color: BadgeColor
@@ -46,25 +31,25 @@ export const Container = styled.button<{
 
   ${({ $shape, theme }) =>
     ({
-      rectangle: css`
+      rectangle: `
         min-width: 72px;
         height: 28px;
         padding: 0 ${theme.spacing.sm};
         border-radius: ${theme.radius.sm};
       `,
-      square: css`
+      square: `
         width: 36px;
         height: 36px;
         border-radius: ${theme.radius.md};
       `,
-      circle: css`
+      circle: `
         width: 36px;
         height: 36px;
         border-radius: ${theme.radius.circle};
       `,
     })[$shape]}
 
-  ${({ $color }) => colors[$color]}
+  ${({ $color, theme }) => cores(theme)[$color]}
 
   &:hover:not(:disabled) {
     transform: ${({ $clickable }) => ($clickable ? 'translateY(-1px)' : 'none')};

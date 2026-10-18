@@ -9,38 +9,15 @@ import { Tag } from '@/components/ui/Tag'
 import { DetalheSimuladoModal } from '@/pages/professor/Reforco/comum/DetalheSimuladoModal/DetalheSimuladoModal'
 import { FiltrosDesempenho } from '@/pages/professor/Reforco/comum/FiltrosDesempenho/FiltrosDesempenho'
 import { useDesempenhoDados, type DesempenhoSimulado } from '@/pages/professor/Reforco/comum/useDesempenhoDados'
-import { nivelDesempenho } from '@/utils/desempenho'
-import type { TagVariant } from '@/components/ui/Tag'
+import { VARIANTE_TAG_POR_NIVEL, nivelDesempenho } from '@/utils/desempenho'
 import type { Coluna } from '@/components/ui/DataTable/types'
-
-// Padronizado com as outras telas que mostram nível de desempenho em tabela (ex
-const VARIANTE_POR_NIVEL: Record<'baixo' | 'medio' | 'alto', TagVariant> = {
-  baixo: 'error',
-  medio: 'warning',
-  alto: 'success',
-}
 
 /** Versão filtrável, em tabela, do card "Desempenho por simulado" do painel de Desempenho */
 export default function DesempenhoSimulados() {
   const {
-    turmaId,
-    setTurmaId,
-    disciplinaId,
-    setDisciplinaId,
-    alunoId,
-    setAlunoId,
-    dataInicio,
-    setDataInicio,
-    dataFim,
-    setDataFim,
+    propsFiltros,
     filtrosAplicados,
-    buscar,
-    limparFiltros,
-    opcoesTurmas,
-    opcoesDisciplinas,
     opcoesAlunos,
-    carregandoAlunos,
-    carregandoVinculos,
     desempenhos,
     tentativas,
     loading,
@@ -79,7 +56,7 @@ export default function DesempenhoSimulados() {
       ordenavel: true,
       valorOrdenacao: (item) => item.percentual,
       render: (item) => (
-        <Tag variant={VARIANTE_POR_NIVEL[nivelDesempenho(item.percentual)]}>{Math.round(item.percentual)}%</Tag>
+        <Tag variant={VARIANTE_TAG_POR_NIVEL[nivelDesempenho(item.percentual)]}>{Math.round(item.percentual)}%</Tag>
       ),
     },
   ]
@@ -91,25 +68,7 @@ export default function DesempenhoSimulados() {
         voltarPara="/professor/desempenho"
         rotuloVoltar="Desempenho"
         filtros={
-          <FiltrosDesempenho
-            opcoesTurmas={opcoesTurmas}
-            opcoesDisciplinas={opcoesDisciplinas}
-            opcoesAlunos={opcoesAlunos}
-            turmaId={turmaId}
-            disciplinaId={disciplinaId}
-            alunoId={alunoId}
-            dataInicio={dataInicio}
-            dataFim={dataFim}
-            carregandoTurmas={carregandoVinculos}
-            carregandoAlunos={carregandoAlunos}
-            onTurmaChange={setTurmaId}
-            onDisciplinaChange={setDisciplinaId}
-            onAlunoChange={setAlunoId}
-            onDataInicioChange={setDataInicio}
-            onDataFimChange={setDataFim}
-            onBuscar={buscar}
-            onLimpar={limparFiltros}
-          />
+          <FiltrosDesempenho {...propsFiltros} />
         }
       />
 

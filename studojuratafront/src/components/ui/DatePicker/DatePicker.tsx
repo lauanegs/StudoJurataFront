@@ -1,13 +1,12 @@
-import { useRef, type ChangeEvent, type FormEvent, type ReactNode, type RefObject } from 'react'
-import { DateInput, TimePicker } from '@mantine/dates'
+import { useRef, type ChangeEvent, type FormEvent } from 'react'
 import dayjs from 'dayjs'
 import { Calendar, Clock } from 'lucide-react'
 
 import { Field } from '@/components/ui/Field'
 import { comTamanho } from '@/utils/redimensionarIcone'
 import { FORMATO_API_DATA, FORMATO_API_DATA_HORA, dataDigitadaParaIso, dataIsoParaExibicao, mascararData } from './conversaoData'
-import { estiloCampoData, estiloCampoHora, estiloLarguraMaxima, estilosCampo, IconeClicavel, LinhaDataHora } from './styles'
-import type { DatePickerProps } from './types'
+import { CampoData, CampoHora, estilosCampo, IconeClicavel, LinhaDataHora } from './styles'
+import type { DatePickerProps, IconeCampoProps } from './types'
 
 const FORMATO_SAIDA: Record<'data' | 'dataHora', string> = {
   data: FORMATO_API_DATA,
@@ -20,15 +19,7 @@ function aplicarMascara(evento: FormEvent<HTMLInputElement>) {
   evento.currentTarget.value = mascararData(evento.currentTarget.value)
 }
 
-function IconeCampo({
-  icon,
-  campoRef,
-  disabled,
-}: {
-  icon: ReactNode
-  campoRef: RefObject<HTMLInputElement | null>
-  disabled?: boolean
-}) {
+function IconeCampo({ icon, campoRef, disabled }: IconeCampoProps) {
   return (
     <IconeClicavel aria-hidden="true" onClick={() => campoRef.current?.focus()} $desabilitado={disabled}>
       {comTamanho(icon, 18)}
@@ -59,7 +50,7 @@ export function DatePicker({
   if (modo === 'data') {
     return (
       <Field label={label} required={required} hint={hint} error={error}>
-        <DateInput
+        <CampoData
           ref={campoDataRef}
           id={id}
           value={(value as string) || null}
@@ -75,7 +66,7 @@ export function DatePicker({
           leftSectionPointerEvents="auto"
           clearable
           radius="md"
-          style={estiloLarguraMaxima(maxWidth)}
+          $maxWidth={maxWidth}
           styles={estilosCampo(error)}
         />
       </Field>
@@ -101,7 +92,7 @@ export function DatePicker({
   return (
     <Field label={label} required={required} hint={hint} error={error}>
       <LinhaDataHora $maxWidth={maxWidth}>
-        <DateInput
+        <CampoData
           ref={campoDataRef}
           id={id}
           value={dataParte}
@@ -117,10 +108,10 @@ export function DatePicker({
           leftSectionPointerEvents="auto"
           clearable
           radius="md"
-          style={estiloCampoData}
+          $flex={2}
           styles={estilosCampo(error)}
         />
-        <TimePicker
+        <CampoHora
           hoursRef={campoHoraRef}
           aria-label="Horário"
           value={horaParte}
@@ -134,7 +125,6 @@ export function DatePicker({
           leftSectionWidth={LARGURA_ICONE}
           leftSectionPointerEvents="auto"
           radius="md"
-          style={estiloCampoHora}
           styles={estilosCampo(error)}
         />
       </LinhaDataHora>

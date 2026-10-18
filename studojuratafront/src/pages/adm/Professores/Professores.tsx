@@ -168,14 +168,14 @@ export default function Professores() {
         actions={(professor) => (
           <>
             <IconButton
-              label={`Editar ${professor.pessoa?.nome}`}
+              label={`Editar ${professor.pessoa?.nome}`} acao="Editar"
               icon={<Pencil />}
               disabled={excluindo || ativando}
               onClick={() => navegar(`/adm/professores/${professor.id}`)}
             />
             {professor.status === 'INATIVO' ? (
               <IconButton
-                label={`Ativar ${professor.pessoa?.nome}`}
+                label={`Ativar ${professor.pessoa?.nome}`} acao="Ativar"
                 icon={<ArchiveRestore />}
                 variant="success"
                 disabled={excluindo || ativando}
@@ -183,7 +183,7 @@ export default function Professores() {
               />
             ) : (
               <IconButton
-                label={`Inativar ${professor.pessoa?.nome}`}
+                label={`Inativar ${professor.pessoa?.nome}`} acao="Inativar"
                 icon={<Archive />}
                 variant="danger"
                 disabled={excluindo || ativando}

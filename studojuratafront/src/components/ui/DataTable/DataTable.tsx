@@ -8,15 +8,15 @@ import { Skeleton } from '@/components/feedback/Skeleton'
 import { Paginacao } from '@/components/ui/Paginacao'
 import { theme as tokens } from '@/styles/theme'
 import {
+  Cabecalho,
+  CabecalhoAcoes,
+  Celula,
+  CelulaAcoes,
   Envelope,
-  estiloCabecalhoAcoes,
-  estiloCabecalhoColuna,
-  estiloCelula,
-  estiloCelulaAcoes,
-  estiloLinha,
-  estilosTabela,
-  RotuloOrdenavel,
+  Linha,
   Rolagem,
+  RotuloOrdenavel,
+  Tabela,
 } from './styles'
 import type { Coluna, DataTableProps, Direcao } from './types'
 
@@ -89,13 +89,13 @@ export function DataTable<T>({
   return (
     <Envelope>
       <Rolagem>
-        <Table
+        <Tabela
           aria-label={descricao}
           aria-busy={loading || undefined}
           highlightOnHover={Boolean(onRowClick)}
           highlightOnHoverColor={tokens.colors.background}
           withRowBorders
-          styles={estilosTabela(densidade)}
+          $densidade={densidade}
         >
           <Table.Thead>
             <Table.Tr>
@@ -103,7 +103,7 @@ export function DataTable<T>({
                 const ativa = ordenacao?.key === coluna.key
 
                 return (
-                  <Table.Th
+                  <Cabecalho
                     key={coluna.key}
                     scope="col"
                     className={
@@ -111,7 +111,9 @@ export function DataTable<T>({
                         .filter(Boolean)
                         .join(' ') || undefined
                     }
-                    style={estiloCabecalhoColuna(coluna)}
+                    $largura={coluna.largura}
+                    $alinhamento={coluna.alinhamento}
+                    $ordenavel={coluna.ordenavel}
                     aria-sort={
                       ativa ? (ordenacao.direcao === 'asc' ? 'ascending' : 'descending') : undefined
                     }
@@ -130,14 +132,14 @@ export function DataTable<T>({
                           <ArrowUpDown size={14} opacity={0.4} />
                         ))}
                     </RotuloOrdenavel>
-                  </Table.Th>
+                  </Cabecalho>
                 )
               })}
 
               {actions && (
-                <Table.Th scope="col" style={estiloCabecalhoAcoes(quebrarAcoes)}>
+                <CabecalhoAcoes scope="col" $quebrar={quebrarAcoes}>
                   {rotuloColunaAcoes}
-                </Table.Th>
+                </CabecalhoAcoes>
               )}
             </Table.Tr>
           </Table.Thead>
@@ -155,11 +157,11 @@ export function DataTable<T>({
               ))}
 
             {!loading &&
-              dadosOrdenados.map((item, indice) => (
-                <Table.Tr
+              dadosOrdenados.map((item) => (
+                <Linha
                   key={rowKey(item)}
                   tabIndex={onRowClick ? 0 : undefined}
-                  style={estiloLinha(Boolean(onRowClick), indice === dadosOrdenados.length - 1)}
+                  $clicavel={Boolean(onRowClick)}
                   onClick={() => onRowClick?.(item)}
                   onKeyDown={(evento) => {
                     if (onRowClick && (evento.key === 'Enter' || evento.key === ' ')) {
@@ -169,26 +171,27 @@ export function DataTable<T>({
                   }}
                 >
                   {columns.map((coluna) => (
-                    <Table.Td
+                    <Celula
                       key={coluna.key}
                       className={coluna.ocultarEmTelaPequena ? 'oculta-tela-pequena' : undefined}
-                      style={estiloCelula(coluna)}
+                      data-label={coluna.cabecalho}
+                      $alinhamento={coluna.alinhamento}
                     >
                       {coluna.render(item)}
-                    </Table.Td>
+                    </Celula>
                   ))}
 
                   {actions && (
-                    <Table.Td style={estiloCelulaAcoes(quebrarAcoes)} onClick={(evento) => evento.stopPropagation()}>
+                    <CelulaAcoes $quebrar={quebrarAcoes} onClick={(evento) => evento.stopPropagation()}>
                       <Group justify="flex-start" gap={tokens.spacing.xxs} wrap={quebrarAcoes ? 'wrap' : 'nowrap'}>
                         {actions(item)}
                       </Group>
-                    </Table.Td>
+                    </CelulaAcoes>
                   )}
-                </Table.Tr>
+                </Linha>
               ))}
           </Table.Tbody>
-        </Table>
+        </Tabela>
       </Rolagem>
 
       {!loading && dadosOrdenados.length === 0 && (

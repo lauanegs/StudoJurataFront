@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import { DateInput, TimePicker } from '@mantine/dates'
 import styled from 'styled-components'
 
 import { theme as tokens } from '@/styles/theme'
@@ -13,16 +13,34 @@ export const estilosCampo = (error?: string) => ({
   },
 })
 
-export const estiloLarguraMaxima = (maxWidth?: string): CSSProperties => ({ maxWidth })
+export const CampoData = styled(DateInput)<{ $maxWidth?: string; $flex?: number }>`
+  max-width: ${({ $maxWidth }) => $maxWidth ?? 'none'};
+  flex: ${({ $flex }) => $flex ?? 'initial'};
+  min-width: 0;
 
-export const estiloCampoData: CSSProperties = { flex: 2, minWidth: 0 }
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex: none;
+  }
+`
 
-export const estiloCampoHora: CSSProperties = { flex: 1, minWidth: '128px' }
+export const CampoHora = styled(TimePicker)`
+  flex: 1;
+  min-width: 128px;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex: none;
+    min-width: 0;
+  }
+`
 
 export const LinhaDataHora = styled.div<{ $maxWidth?: string }>`
   display: flex;
   gap: ${({ theme }) => theme.spacing.xs};
   max-width: ${({ $maxWidth }) => $maxWidth ?? 'none'};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+  }
 `
 
 export const IconeClicavel = styled.span<{ $desabilitado?: boolean }>`

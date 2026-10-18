@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { LogIn } from 'lucide-react'
 
 import { TelaComBanner } from '@/components/layout/TelaComBanner'
+import { Alerta } from '@/components/ui/Alerta'
+import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { ROTA_INICIAL_POR_PERFIL } from '@/contexts/auth/authContexto'
 import { useAuth } from '@/hooks/useAuth'
@@ -10,7 +12,7 @@ import { ApiError } from '@/dominios/comum/api'
 import { theme as tokens } from '@/styles/theme'
 import { useFormularioLogin } from '@/dominios/autenticacao/formulario'
 
-import { Cartao, Logo, Titulos, Titulo, Subtitulo, Campos, LinkEsqueciSenha, Alerta, BotaoEntrar } from './styles'
+import { Cartao, Logo, Titulos, Titulo, Subtitulo, Campos, LinkEsqueciSenha } from './styles'
 
 export default function Login() {
   const navegar = useNavigate()
@@ -93,17 +95,18 @@ export default function Login() {
           Esqueci minha senha
         </LinkEsqueciSenha>
 
-        {erroGeral && <Alerta role="alert">{erroGeral}</Alerta>}
+        {erroGeral && <Alerta tom="error" descricao={erroGeral} />}
 
-        <BotaoEntrar
+        <Button
           type="submit"
+          variant="info"
           fullWidth
           size="large"
           icon={<LogIn />}
           loading={enviando}
         >
           Entrar
-        </BotaoEntrar>
+        </Button>
       </Cartao>
     </TelaComBanner>
   )

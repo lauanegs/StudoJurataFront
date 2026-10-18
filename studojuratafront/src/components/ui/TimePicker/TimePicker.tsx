@@ -1,11 +1,10 @@
 import { useRef, type ChangeEvent } from 'react'
-import { TimePicker as MantineTimePicker } from '@mantine/dates'
 import { Clock } from 'lucide-react'
 
 import { Field } from '@/components/ui/Field'
-import { estiloLarguraMaxima, estilosCampo } from '@/components/ui/DatePicker/styles'
+import { estilosCampo } from '@/components/ui/DatePicker/styles'
 import { comTamanho } from '@/utils/redimensionarIcone'
-import { BotaoRelogio } from './styles'
+import { BotaoRelogio, CampoHorario } from './styles'
 import type { TimePickerProps } from './types'
 
 export function TimePicker({
@@ -33,7 +32,7 @@ export function TimePicker({
 
   return (
     <Field label={label} required={required} hint={hint} error={error}>
-      <MantineTimePicker
+      <CampoHorario
         id={id}
         value={(value as string) ?? ''}
         onChange={disparar}
@@ -45,7 +44,7 @@ export function TimePicker({
         leftSectionWidth="56px"
         leftSectionPointerEvents="auto"
         radius="md"
-        style={estiloLarguraMaxima(maxWidth)}
+        $maxWidth={maxWidth}
         styles={estilosCampo(error)}
       />
     </Field>

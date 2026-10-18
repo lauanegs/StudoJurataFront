@@ -48,7 +48,7 @@ export const aulas = {
   criar: (dados: Partial<Aula>) => api.post<Aula>('/aulas', dados),
   atualizar: (id: number, dados: Partial<Aula>) => api.put<Aula>(`/aulas/${id}`, dados),
   publicar: (id: number, dataPublicacao?: string) =>
-    api.post<Aula>(`/aulas/${id}/publicar`, undefined, { dataPublicacao }),
+    api.post<Aula>(`/aulas/${id}/publicar${dataPublicacao ? `?dataPublicacao=${encodeURIComponent(dataPublicacao)}` : ''}`),
   excluir: (id: number) => api.delete(`/aulas/${id}`),
   gerarLote: (planoAulaId: number, dados: GerarAulasLoteRequest) =>
     api.post<Aula[]>(`/aulas/plano-aula/${planoAulaId}/gerar-lote`, dados),

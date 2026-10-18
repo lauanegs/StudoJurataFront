@@ -1,14 +1,8 @@
-import type { CSSProperties } from 'react'
+import styled from 'styled-components'
 
 import { theme as tokens } from '@/styles/theme'
 import { corComOpacidade } from '@/utils/corComOpacidade'
-
-interface OpcoesEstiloCampo {
-  altura: string
-  corBase: string
-  temErro: boolean
-  destacada: boolean
-}
+import type { OpcoesEstiloCampo } from './types'
 
 export const estilosCampo = ({ altura, corBase, temErro, destacada }: OpcoesEstiloCampo) => ({
   input: {
@@ -20,7 +14,6 @@ export const estilosCampo = ({ altura, corBase, temErro, destacada }: OpcoesEsti
   },
 })
 
-export const estiloLarguraMaxima = (maxWidth: string | undefined, style?: CSSProperties): CSSProperties => ({
-  maxWidth,
-  ...style,
-})
+export const LarguraMaxima = styled.div<{ $maxWidth?: string }>`
+  max-width: ${({ $maxWidth }) => $maxWidth ?? 'none'};
+`

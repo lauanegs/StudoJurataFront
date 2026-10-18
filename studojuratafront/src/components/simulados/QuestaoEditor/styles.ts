@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 
 export const Cabecalho = styled.header`
   display: flex;
@@ -8,6 +8,11 @@ export const Cabecalho = styled.header`
   flex-wrap: wrap;
 
   margin-bottom: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `
 
 export const Identificacao = styled.div`
@@ -27,6 +32,28 @@ export const Acoes = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
   flex-wrap: wrap;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+
+    & > button {
+      width: 100%;
+      min-height: 44px;
+    }
+
+    & > button[data-acao] {
+      gap: ${({ theme }) => theme.spacing.xs};
+      border: 2px solid ${({ theme }) => theme.colors.borderStrong};
+      font-size: ${({ theme }) => theme.typography.sizes.sm};
+      font-weight: ${({ theme }) => theme.typography.weights.semiBold};
+    }
+
+    & > button[data-acao]::after {
+      content: attr(data-acao);
+    }
+  }
 `
 
 export const Grade = styled.div`
@@ -52,9 +79,7 @@ export const LinhaAlternativa = styled.div<{ $correta: boolean }>`
 
   ${({ $correta, theme }) =>
     $correta &&
-    css`
-      background: ${theme.colors.successBackground};
-    `}
+    `background: ${theme.colors.successBackground};`}
 `
 
 export const BotaoCorreta = styled.button<{ $correta: boolean }>`

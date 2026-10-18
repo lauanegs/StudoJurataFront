@@ -15,7 +15,8 @@ export const Container = styled.div`
   box-shadow: ${({ theme }) => theme.shadow.floating};
 
   @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
-    flex-direction: column;
+    gap: ${({ theme }) => theme.spacing.xs};
+    padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
   }
 `
 
@@ -25,6 +26,16 @@ export const Mascote = styled.img`
   flex-shrink: 0;
   object-fit: contain;
   ${animacaoFlutuar}
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    width: 56px;
+    height: 56px;
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) and (max-height: 640px) {
+    width: 40px;
+    height: 40px;
+  }
 `
 
 export const Balao = styled.div`
@@ -41,6 +52,14 @@ export const Balao = styled.div`
   background: ${({ theme }) => theme.colors.white};
   border-radius: 50px;
   box-shadow: ${({ theme }) => theme.shadow.floating};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    gap: ${({ theme }) => theme.spacing.xs};
+    padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.md}`};
+    border-radius: 24px;
+    max-height: 30vh;
+    overflow-y: auto;
+  }
 
   &::before {
     content: '';
@@ -65,6 +84,16 @@ export const Texto = styled.p`
 
   font-size: ${({ theme }) => theme.typography.sizes.xl};
   font-weight: ${({ theme }) => theme.typography.weights.bold};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    font-size: ${({ theme }) => theme.typography.sizes.md};
+  }
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) and (max-height: 640px) {
+    font-size: ${({ theme }) => theme.typography.sizes.sm};
+    line-height: 1.25;
+  }
+
   line-height: ${({ theme }) => theme.typography.lineHeight.normal};
   color: ${({ theme }) => theme.colors.blue};
   text-align: center;
@@ -79,6 +108,11 @@ export const BotaoAudio = styled.button<{ $falando: boolean }>`
 
   width: 48px;
   height: 48px;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    width: 36px;
+    height: 36px;
+  }
 
   border-radius: ${({ theme }) => theme.radius.circle};
   background: ${({ theme, $falando }) => ($falando ? theme.colors.purple : theme.colors.blue)};

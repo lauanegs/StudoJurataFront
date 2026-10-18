@@ -1,5 +1,5 @@
 import { theme as tokens } from '@/styles/theme'
-import type { ButtonSize, ButtonVariant } from './types'
+import type { ButtonSize, ButtonVariant, OpcoesEstiloBotao } from './types'
 
 const SIZE_STYLES: Record<ButtonSize, { height: string; paddingInline: string; fontSize: string }> = {
   small: { height: '36px', paddingInline: tokens.spacing.sm, fontSize: tokens.typography.sizes.xs },
@@ -27,15 +27,6 @@ export const GRADIENTS: Partial<Record<ButtonVariant, { from: string; to: string
 
 export const FUNDOS: Partial<Record<ButtonVariant, { background: string; border: string }>> = {
   info: { background: tokens.gradients.sidebar, border: tokens.colors.blue },
-}
-
-interface OpcoesEstiloBotao {
-  size: ButtonSize
-  variant: ButtonVariant
-  fundo?: { background: string; border: string }
-  corDaBorda?: string
-  noBorder: boolean
-  disabled?: boolean
 }
 
 export const estilosBotao = ({ size, variant, fundo, corDaBorda, noBorder, disabled }: OpcoesEstiloBotao) => ({

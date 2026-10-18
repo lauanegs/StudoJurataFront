@@ -1,35 +1,23 @@
-import type { Parametros, OpcoesRequisicao } from './types'
-/** Cliente HTTP do StudoJurata */
+import type { Parametros } from './types'
 
-/** Base das requisições */
-export const API_BASE_URL =
-  (import.meta.env?.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? '/api'
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/$/, '')
+
+const MENSAGENS_PADRAO: Record<number, string> = {
+  400: 'Dados inválidos. Revise os campos e tente novamente.',
+  401: 'Sua sessão expirou. Faça login novamente.',
+  403: 'Você não tem permissão para executar esta ação.',
+  404: 'Registro não encontrado.',
+  409: 'Já existe um registro com estes dados.',
+  500: 'Erro interno no servidor. Tente novamente em instantes.',
+}
 
 export class ApiError extends Error {
   readonly status: number
-  readonly corpo: unknown
 
-  constructor(status: number, mensagem: string, corpo?: unknown) {
+  constructor(status: number, mensagem: string) {
     super(mensagem)
     this.name = 'ApiError'
     this.status = status
-    this.corpo = corpo
-  }
-
-  get naoAutenticado() {
-    return this.status === 401
-  }
-
-  get semPermissao() {
-    return this.status === 403
-  }
-
-  get naoEncontrado() {
-    return this.status === 404
-  }
-
-  get erroDeNegocio() {
-    return this.status === 400 || this.status === 409 || this.status === 422
   }
 }
 
@@ -41,108 +29,64 @@ export function aoExpirarSessao(ouvinte: () => void) {
 }
 
 function montarUrl(caminho: string, params?: Parametros) {
-  const rota = caminho.startsWith('/') ? caminho : `/${caminho}`
-  // `origin` é só a referência para bases relativas ("/api"); quando API_BASE_URL é absoluta, ela prevalece
-  const url = new URL(
-    `${API_BASE_URL}${rota}`,
-    typeof window === 'undefined' ? 'http://localhost' : window.location.origin,
-  )
+  const url = new URL(`${BASE_URL}${caminho}`, window.location.origin)
 
-  if (params) {
-    Object.entries(params).forEach(([chave, valor]) => {
-      if (valor !== undefined && valor !== null && valor !== '') {
-        url.searchParams.set(chave, String(valor))
-      }
-    })
-  }
+  Object.entries(params ?? {}).forEach(([chave, valor]) => {
+    if (valor !== undefined && valor !== null && valor !== '') url.searchParams.set(chave, String(valor))
+  })
 
   return url.toString()
 }
 
-/** Extrai a mensagem mais útil do corpo de erro do GlobalExceptionHandler */
-function mensagemDoErro(status: number, corpo: unknown): string {
-  if (corpo && typeof corpo === 'object') {
-    const dados = corpo as Record<string, unknown>
-
-    if (typeof dados.mensagem === 'string') return dados.mensagem
-    if (typeof dados.message === 'string') return dados.message
-    if (typeof dados.error === 'string') return dados.error
-
-    // Erros de @Valid chegam como { campo: "mensagem" }
-    const primeiro = Object.values(dados).find((v) => typeof v === 'string')
-    if (typeof primeiro === 'string') return primeiro
+function lerCorpo(texto: string) {
+  try {
+    return JSON.parse(texto)
+  } catch {
+    return texto
   }
-
-  const padroes: Record<number, string> = {
-    400: 'Dados inválidos. Revise os campos e tente novamente.',
-    401: 'Sua sessão expirou. Faça login novamente.',
-    403: 'Você não tem permissão para executar esta ação.',
-    404: 'Registro não encontrado.',
-    409: 'Já existe um registro com estes dados.',
-    500: 'Erro interno no servidor. Tente novamente em instantes.',
-  }
-
-  return padroes[status] ?? `Erro ${status} ao comunicar com o servidor.`
 }
 
-async function requisitar<T>(caminho: string, opcoes: OpcoesRequisicao = {}): Promise<T> {
-  const { params, body, headers, ...resto } = opcoes
+// Erros do GlobalExceptionHandler chegam como { mensagem } ou, em @Valid, como { campo: "mensagem" }
+function mensagemDoErro(status: number, corpo: Record<string, string> | string | null) {
+  if (corpo && typeof corpo === 'object') {
+    const mensagem = [corpo.mensagem, corpo.message, corpo.error, ...Object.values(corpo)].find(
+      (valor) => typeof valor === 'string',
+    )
+    if (mensagem) return mensagem
+  }
 
+  return MENSAGENS_PADRAO[status] ?? `Erro ${status} ao comunicar com o servidor.`
+}
+
+async function requisitar<T>(metodo: string, caminho: string, params?: Parametros, body?: object): Promise<T> {
   let resposta: Response
 
   try {
     resposta = await fetch(montarUrl(caminho, params), {
+      method: metodo,
       credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-        ...headers,
-      },
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-      ...resto,
+      headers: { Accept: 'application/json', ...(body && { 'Content-Type': 'application/json' }) },
+      body: body && JSON.stringify(body),
     })
   } catch {
     throw new ApiError(0, 'Não foi possível conectar ao servidor. Verifique sua conexão.')
   }
 
-  if (resposta.status === 204 || resposta.status === 205) {
-    return undefined as T
-  }
-
   const texto = await resposta.text()
-  const corpo = texto ? (safeJson(texto) ?? texto) : null
+  const corpo = texto ? lerCorpo(texto) : null
 
   if (!resposta.ok) {
-    if (resposta.status === 401) {
-      ouvintesSessaoExpirada.forEach((ouvinte) => ouvinte())
-    }
-    throw new ApiError(resposta.status, mensagemDoErro(resposta.status, corpo), corpo)
+    if (resposta.status === 401) ouvintesSessaoExpirada.forEach((ouvinte) => ouvinte())
+    throw new ApiError(resposta.status, mensagemDoErro(resposta.status, corpo))
   }
 
-  return corpo as T
-}
-
-function safeJson(texto: string): unknown {
-  try {
-    return JSON.parse(texto)
-  } catch {
-    return null
-  }
+  return corpo
 }
 
 export const api = {
-  get: <T>(caminho: string, params?: Parametros) =>
-    requisitar<T>(caminho, { method: 'GET', params }),
-
-  post: <T>(caminho: string, body?: unknown, params?: Parametros) =>
-    requisitar<T>(caminho, { method: 'POST', body, params }),
-
-  put: <T>(caminho: string, body?: unknown, params?: Parametros) =>
-    requisitar<T>(caminho, { method: 'PUT', body, params }),
-
-  patch: <T>(caminho: string, body?: unknown, params?: Parametros) =>
-    requisitar<T>(caminho, { method: 'PATCH', body, params }),
-
-  delete: <T = void>(caminho: string, params?: Parametros) =>
-    requisitar<T>(caminho, { method: 'DELETE', params }),
+  get: <T>(caminho: string, params?: Parametros) => requisitar<T>('GET', caminho, params),
+  post: <T>(caminho: string, body?: object) => requisitar<T>('POST', caminho, undefined, body),
+  put: <T>(caminho: string, body?: object) => requisitar<T>('PUT', caminho, undefined, body),
+  patch: <T>(caminho: string, body?: object) => requisitar<T>('PATCH', caminho, undefined, body),
+  delete: <T = void>(caminho: string) => requisitar<T>('DELETE', caminho),
 }

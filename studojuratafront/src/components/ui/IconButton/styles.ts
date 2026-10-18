@@ -1,34 +1,34 @@
-import styled, { css } from 'styled-components'
+import styled, { type DefaultTheme } from 'styled-components'
 
 import type { IconButtonVariant } from './types'
 
-export const variants = {
-  neutral: css`
-    color: ${({ theme }) => theme.colors.textSecondary};
+const variantes = (theme: DefaultTheme): Record<IconButtonVariant, string> => ({
+  neutral: `
+    color: ${theme.colors.textSecondary};
     &:hover:not(:disabled) {
-      background: ${({ theme }) => theme.colors.background};
-      color: ${({ theme }) => theme.colors.textStrong};
+      background: ${theme.colors.background};
+      color: ${theme.colors.textStrong};
     }
   `,
-  purple: css`
-    color: ${({ theme }) => theme.colors.purple};
+  purple: `
+    color: ${theme.colors.purple};
     &:hover:not(:disabled) {
-      background: ${({ theme }) => theme.colors.purpleSoft};
+      background: ${theme.colors.purpleSoft};
     }
   `,
-  danger: css`
-    color: ${({ theme }) => theme.colors.error};
+  danger: `
+    color: ${theme.colors.error};
     &:hover:not(:disabled) {
-      background: ${({ theme }) => theme.colors.errorBackground};
+      background: ${theme.colors.errorBackground};
     }
   `,
-  success: css`
-    color: ${({ theme }) => theme.colors.successText};
+  success: `
+    color: ${theme.colors.successText};
     &:hover:not(:disabled) {
-      background: ${({ theme }) => theme.colors.successBackground};
+      background: ${theme.colors.successBackground};
     }
   `,
-} satisfies Record<IconButtonVariant, ReturnType<typeof css>>
+})
 
 export const Container = styled.button<{
   $variant: IconButtonVariant
@@ -48,7 +48,7 @@ export const Container = styled.button<{
     background ${({ theme }) => theme.transition.base},
     color ${({ theme }) => theme.transition.base};
 
-  ${({ $variant }) => variants[$variant]}
+  ${({ $variant, theme }) => variantes(theme)[$variant]}
 
   &:focus-visible {
     outline: none;

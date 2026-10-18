@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 import type { LetterState } from '@/components/simulados/LetterBadge/types'
 
 export const Container = styled.button<{ $state: LetterState; $blocked: boolean }>`
@@ -7,6 +7,10 @@ export const Container = styled.button<{ $state: LetterState; $blocked: boolean 
 
   width: 100%;
   min-height: 60px;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    min-height: 48px;
+  }
 
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.borderSoft};
@@ -31,13 +35,14 @@ export const Container = styled.button<{ $state: LetterState; $blocked: boolean 
 
   ${({ $state, theme }) =>
     $state === 'selected' &&
-    css`
-      border: 3px solid ${theme.colors.blue};
+    `
+      border-color: ${theme.colors.blue};
+      box-shadow: 0 0 0 2px ${theme.colors.blue};
     `}
 
   ${({ $blocked }) =>
     $blocked &&
-    css`
+    `
       cursor: default;
 
       &:hover {
@@ -53,6 +58,11 @@ export const Texto = styled.span`
   justify-content: center;
   min-width: 0;
   padding: 0 ${({ theme }) => theme.spacing.lg};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.mobile}) {
+    padding: 0 ${({ theme }) => theme.spacing.sm};
+    font-size: ${({ theme }) => theme.typography.sizes.md};
+  }
 
   font-size: ${({ theme }) => theme.typography.sizes.lg};
   font-weight: ${({ theme }) => theme.typography.weights.bold};

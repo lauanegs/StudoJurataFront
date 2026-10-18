@@ -14,7 +14,7 @@ import { eventos as servicoEventos } from '@/dominios/eventos/service'
 import { pessoas as servicoPessoas } from '@/dominios/pessoas/service'
 import { aniversariantesDaSemana } from '@/utils/aniversariantes'
 
-import { ItemEvento } from './styles'
+import { GradeEventos } from './styles'
 
 export default function ProfessorHome() {
   const requisicaoPessoas = useRequisicao(() => servicoPessoas.listar(), [])
@@ -65,18 +65,19 @@ export default function ProfessorHome() {
           />
         </Card>
       ) : (
-        <SeparadorCard titulo="Próximos eventos" icon={<CalendarDays />} colunas={4}>
-          {proximosEventos.map((evento) => (
-            <ItemEvento key={evento.id}>
+        <Card titulo="Próximos eventos" icon={<CalendarDays />} corpoComFundo>
+          <GradeEventos>
+            {proximosEventos.map((evento) => (
               <EventoCard
+                key={evento.id}
                 titulo={evento.titulo}
                 dataHorario={evento.dataHorario}
                 descricao={evento.descricao}
                 concluido={evento.concluido}
               />
-            </ItemEvento>
-          ))}
-        </SeparadorCard>
+            ))}
+          </GradeEventos>
+        </Card>
       )}
     </Layout>
   )
