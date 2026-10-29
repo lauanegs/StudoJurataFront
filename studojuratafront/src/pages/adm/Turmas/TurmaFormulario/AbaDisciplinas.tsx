@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Archive, Plus } from 'lucide-react'
+import { Archive, Pencil, Plus } from 'lucide-react'
 
 import { Alerta } from '@/components/ui/Alerta'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { DataTable } from '@/components/ui/DataTable'
 import { IconButton } from '@/components/ui/IconButton'
+import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { Tag } from '@/components/ui/Tag'
 import { useConfirm } from '@/contexts/confirm/confirmContexto'
@@ -29,6 +30,8 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
   const { disciplinaId, professorId } = form.values
   const erros = form.errors as Record<string, string | undefined>
   const [salvando, setSalvando] = useState(false)
+  const [vinculoEditando, setVinculoEditando] = useState<TurmaDisciplina | null>(null)
+  const [professorEditado, setProfessorEditado] = useState<number | null>(null)
 
   const requisicaoDisciplinas = useRequisicao(() => servicoDisciplinas.listar(), [])
   const requisicaoProfessores = useRequisicao(() => servicoProfessores.listar(), [])
@@ -108,6 +111,32 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
       await requisicaoVinculos.reload()
     } catch (erroVincular) {
       toast.error('Não foi possível vincular', erroVincular instanceof ApiError ? erroVincular.message : undefined)
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  function abrirTrocaProfessor(vinculo: TurmaDisciplina) {
+    setVinculoEditando(vinculo)
+    setProfessorEditado(vinculo.professor?.id ?? null)
+  }
+
+  // Troca (ou remove) o professor de um vínculo já existente, sem recriar o vínculo
+  async function salvarTrocaProfessor() {
+    if (!vinculoEditando) return
+
+    setSalvando(true)
+    try {
+      await turmaDisciplinas.atualizar(vinculoEditando.id, {
+        ...vinculoEditando,
+        professor: (requisicaoProfessores.data ?? []).find((item) => item.id === professorEditado),
+      })
+
+      toast.success('Professor atualizado')
+      setVinculoEditando(null)
+      await requisicaoVinculos.reload()
+    } catch (erroTrocar) {
+      toast.error('Não foi possível trocar o professor', erroTrocar instanceof ApiError ? erroTrocar.message : undefined)
     } finally {
       setSalvando(false)
     }
@@ -219,14 +248,53 @@ export function AbaDisciplinas({ turma, cursoId, vinculosDaTurma, requisicaoVinc
           descricao: 'Vincule as disciplinas para que os professores possam criar planos de aula.',
         }}
         actions={(vinculo) => (
-          <IconButton
-            label="Inativar vínculo"
-            icon={<Archive />}
-            variant="danger"
-            onClick={() => removerVinculo(vinculo)}
-          />
+          <>
+            <IconButton
+              label={`Trocar professor de ${vinculo.disciplina?.titulo ?? 'disciplina'}`}
+              acao="Trocar professor"
+              icon={<Pencil />}
+              disabled={salvando}
+              onClick={() => abrirTrocaProfessor(vinculo)}
+            />
+            <IconButton
+              label="Inativar vínculo"
+              icon={<Archive />}
+              variant="danger"
+              onClick={() => removerVinculo(vinculo)}
+            />
+          </>
         )}
       />
+
+      <Modal
+        aberto={vinculoEditando !== null}
+        onClose={() => setVinculoEditando(null)}
+        titulo="Trocar professor"
+        descricao={vinculoEditando?.disciplina?.titulo}
+        bloqueado={salvando}
+        rodape={
+          <>
+            <Button variant="secondary" disabled={salvando} onClick={() => setVinculoEditando(null)}>
+              Cancelar
+            </Button>
+            <Button variant="success" loading={salvando} onClick={salvarTrocaProfessor}>
+              Salvar
+            </Button>
+          </>
+        }
+      >
+        <Select<number>
+          label="Professor responsável"
+          options={opcoesProfessores}
+          value={professorEditado}
+          loading={requisicaoProfessores.loading}
+          disabled={salvando}
+          searchable
+          clearable
+          placeholder="Selecionar professor..."
+          onChange={(valor) => setProfessorEditado(valor)}
+        />
+      </Modal>
     </>
   )
 }

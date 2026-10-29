@@ -29,6 +29,9 @@ export const turmaDisciplinas = {
   listar: () => api.get<TurmaDisciplina[]>('/turma-disciplina'),
   criar: (dados: Partial<TurmaDisciplina>) =>
     api.post<TurmaDisciplina>('/turma-disciplina', dados),
+  // O backend não tem PUT: o mesmo POST com id atualiza o vínculo existente
+  atualizar: (id: number, dados: Partial<TurmaDisciplina>) =>
+    api.post<TurmaDisciplina>('/turma-disciplina', { ...dados, id }),
   excluir: (id: number) => api.delete(`/turma-disciplina/${id}`),
 }
 

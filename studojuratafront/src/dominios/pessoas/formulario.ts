@@ -3,7 +3,7 @@ import { schemaResolver, useForm } from '@mantine/form'
 import { useMemo } from 'react'
 import * as yup from 'yup'
 
-import { formatarCpf } from '@/utils/format'
+import { formatarCep, formatarCpf, formatarTelefone } from '@/utils/format'
 import type { Pessoa } from './types'
 
 import type { DadosPessoa, OpcoesFormularioPessoa, DadosUsuario } from './types'
@@ -92,10 +92,10 @@ export function dePessoa(pessoa: Pessoa): DadosPessoa {
     nome: pessoa.nome ?? '',
     cpf: pessoa.cpf ?? '',
     dataNascimento: pessoa.dataNascimento?.slice(0, 10) ?? '',
-    telefone: pessoa.telefone ?? '',
+    telefone: pessoa.telefone ? formatarTelefone(pessoa.telefone) : '',
     email: pessoa.email ?? '',
     sexo: pessoa.sexo ?? null,
-    cep: pessoa.endereco?.cep ?? '',
+    cep: pessoa.endereco?.cep ? formatarCep(pessoa.endereco.cep) : '',
     logradouro: pessoa.endereco?.logradouro ?? '',
     numero: pessoa.endereco?.numero ?? '',
     complemento: pessoa.endereco?.complemento ?? '',
