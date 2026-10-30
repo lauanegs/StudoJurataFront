@@ -135,7 +135,9 @@ export function ConfiguracaoSimulado({
           <DatePicker
             label="Disponível a partir de"
             modo="dataHora"
+            required
             value={dataInicio}
+            error={erros.dataInicio}
             hint="O simulado para a turma toda é publicado sozinho nesta data."
             disabled={somenteLeitura}
             onChange={(evento) => form.setFieldValue('dataInicio', evento.target.value)}

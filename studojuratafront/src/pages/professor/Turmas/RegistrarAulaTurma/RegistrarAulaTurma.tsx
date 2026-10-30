@@ -182,6 +182,7 @@ export default function RegistrarAulaTurma() {
     setObservacoes(aulaAlvo?.observacoes ?? '')
     setTitulo(aulaAlvo?.titulo ?? '')
     setConteudoPlanoIdsPendentes([])
+    setEdicoesChamada({})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aulaAlvo?.id])
 
@@ -192,7 +193,7 @@ export default function RegistrarAulaTurma() {
         .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
         .map((aula) => ({
           value: aula.id,
-          label: `${aula.ordem ? `Aula ${aula.ordem} — ` : ''}${aula.titulo ?? 'Sem título'}`,
+          label: aula.titulo ?? `Aula ${aula.ordem ?? aula.id}`,
           description: aula.dataPublicacao ? 'Já ministrada' : 'Planejada',
         })),
     [aulasDoPlano],
@@ -224,17 +225,30 @@ export default function RegistrarAulaTurma() {
     { ativo: Boolean(planoAtual) && !requisicaoMatriculas.loading },
   )
 
+  // Chamada já lançada da aula escolhida: sem ela, reabrir a aula mostraria todos presentes
+  const requisicaoFrequenciasAula = useRequisicao(
+    () => servicoAulas.listarFrequencias(aulaAlvo?.id as number),
+    [aulaAlvo?.id],
+    { ativo: Boolean(aulaAlvo) },
+  )
+
   const linhasChamada = useMemo<LinhaChamada[]>(() => {
     const alunos = requisicaoMatriculas.data ?? []
     const cargaHoraria = requisicaoCargaHoraria.data ?? new Map<number, number>()
+    const lancadas = new Map(
+      (aulaAlvo ? (requisicaoFrequenciasAula.data ?? []) : []).map((frequencia) => [
+        frequencia.aluno?.id,
+        Boolean(frequencia.presente),
+      ]),
+    )
 
     return alunos.map((matricula: AlunoTurma) => ({
       alunoId: matricula.aluno.id,
       nome: matricula.aluno?.pessoa?.nome ?? `Aluno ${matricula.aluno.id}`,
-      presente: edicoesChamada[matricula.aluno.id] ?? true,
+      presente: edicoesChamada[matricula.aluno.id] ?? lancadas.get(matricula.aluno.id) ?? true,
       cargaHorariaAtingida: cargaHoraria.get(matricula.aluno.id) ?? 0,
     }))
-  }, [requisicaoMatriculas.data, requisicaoCargaHoraria.data, edicoesChamada])
+  }, [requisicaoMatriculas.data, requisicaoCargaHoraria.data, requisicaoFrequenciasAula.data, aulaAlvo, edicoesChamada])
 
   /** Um único Salvar: sem aula, cria no plano (o back barra se estourar a carga horária) e registra chamada */
   const { executar: salvar, executando: salvando } = useAcao(async () => {
@@ -292,7 +306,11 @@ export default function RegistrarAulaTurma() {
       })
 
       toast.success('Aula registrada', 'Chamada e dados da aula salvos.')
-      await requisicaoAulasPlano.reload()
+      await Promise.all([
+        requisicaoAulasPlano.reload(),
+        requisicaoCargaHoraria.reload(),
+        requisicaoFrequenciasAula.reload(),
+      ])
     } catch (erroSalvar) {
       toast.error('Não foi possível salvar', erroSalvar instanceof ApiError ? erroSalvar.message : undefined)
     }
